@@ -11,7 +11,7 @@
 <script>
     function load_page() {
         if(screen.availHeight > screen.availWidth){
-            window.location = "/portrait.shtml"; 
+            window.location = "<!--#porpge-->"; 
         }
         else {
             window.location = "<!--#calpge-->";

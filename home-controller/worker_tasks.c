@@ -26,9 +26,8 @@
 WORKER_TASK_T worker_tasks[] =
 {
     //  function        name                    stack   priority        
-#ifdef INCORPORATE_HOME_CONTROLLER    
-    {   hc_task,        "Home Controller Task", 8096,   6},      
-    {   discovery_task, "Discovery Task",       8096,   7},          
+#ifdef INCORPORATE_THERMOSTAT    
+    {   thermostat_task,"Thermostat Task",      8096,   5},       
 #endif
 
     // end of table

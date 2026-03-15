@@ -97,18 +97,28 @@
         <link rel="icon" type="image/x-icon" href="/sprinkler.ico">
     </head>
     <body>
-        <h1 style="font-family:Lato,sans-serif; color: #070000;">HVAC &nbsp;&nbsp;&nbsp;<!--#tct--></h1>
+        <h1 style="font-family:Lato,sans-serif; color: #070000;">Temperature <!--#tct--> &deg;<!--#tmpu--></h1>
         <br>
         <div class="btn-group-title" style="width:100%">
             <a href="/t_schedule.cgi?day=0">   <button style="width:9%">&nbsp;</button></a> 
+            <a href="/t_schedule.cgi?day=0">   <button style="width:13%">Sunday</button></a>        
             <a href="/t_schedule.cgi?day=1">   <button style="width:13%">Monday</button></a>     
             <a href="/t_schedule.cgi?day=2">  <button style="width:13%">Tuesday</button></a>     
             <a href="/t_schedule.cgi?day=3"><button style="width:13%">Wednesday</button></a>     
             <a href="/t_schedule.cgi?day=4"> <button style="width:13%">Thursday</button></a>     
             <a href="/t_schedule.cgi?day=5">   <button style="width:13%">Friday</button></a>     
-            <a href="/t_schedule.cgi?day=6"> <button style="width:13%">Saturday</button></a>    
-            <a href="/t_schedule.cgi?day=0">   <button style="width:13%">Sunday</button></a>               
+            <a href="/t_schedule.cgi?day=6"> <button style="width:13%">Saturday</button></a>     
           </div>              
+          <div class="btn-group" style="width:100%">
+            <a href="/t_schedule.cgi?day=0">   <button style="width:9%"><!--#tg0_0--></button></a>             
+            <a href="/t_schedule.cgi?day=0">   <button style="width:13%"><!--#tg0_1--> </button></a> 
+            <a href="/t_schedule.cgi?day=1">   <button style="width:13%"><!--#tg0_2--> </button></a> 
+            <a href="/t_schedule.cgi?day=2">   <button style="width:13%"><!--#tg0_3--> </button></a> 
+            <a href="/t_schedule.cgi?day=3">   <button style="width:13%"><!--#tg0_4--> </button></a> 
+            <a href="/t_schedule.cgi?day=4">   <button style="width:13%"><!--#tg0_5--> </button></a> 
+            <a href="/t_schedule.cgi?day=5">   <button style="width:13%"><!--#tg0_6--> </button></a> 
+            <a href="/t_schedule.cgi?day=6">   <button style="width:13%"><!--#tg0_7--> </button></a> 
+          </div>
           
           <div class="btn-group" style="width:100%">
             <a href="/t_schedule.cgi?day=0">   <button style="width:9%"><!--#tg1_0--></button></a>              
@@ -186,17 +196,6 @@
             <a href="/t_schedule.cgi?day=5">   <button style="width:13%"><!--#tg7_6--> </button></a> 
             <a href="/t_schedule.cgi?day=6">   <button style="width:13%"><!--#tg7_7--> </button></a> 
           </div> 
-
-          <div class="btn-group" style="width:100%">
-            <a href="/t_schedule.cgi?day=0">   <button style="width:9%"><!--#tg0_0--></button></a>             
-            <a href="/t_schedule.cgi?day=0">   <button style="width:13%"><!--#tg0_1--> </button></a> 
-            <a href="/t_schedule.cgi?day=1">   <button style="width:13%"><!--#tg0_2--> </button></a> 
-            <a href="/t_schedule.cgi?day=2">   <button style="width:13%"><!--#tg0_3--> </button></a> 
-            <a href="/t_schedule.cgi?day=3">   <button style="width:13%"><!--#tg0_4--> </button></a> 
-            <a href="/t_schedule.cgi?day=4">   <button style="width:13%"><!--#tg0_5--> </button></a> 
-            <a href="/t_schedule.cgi?day=5">   <button style="width:13%"><!--#tg0_6--> </button></a> 
-            <a href="/t_schedule.cgi?day=6">   <button style="width:13%"><!--#tg0_7--> </button></a> 
-          </div>                    
-          <p><a href="/powerwall.shtml" style="text-decoration:none">&#9881 <small>Settings</small></a></p>                           
+          <p><a href="/network.shtml" style="text-decoration:none">&#9881 <small>Settings</small></a></p>                           
     </body>
 </html>

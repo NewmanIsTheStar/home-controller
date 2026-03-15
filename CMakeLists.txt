@@ -48,7 +48,7 @@ add_compile_definitions(FAKE_RTC)
 include(pico-sdk/pico_sdk_init.cmake)
 
 # set the project name ${PROJECT_NAME}
-project(remote-switch C CXX ASM)
+project(home-controller C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
@@ -131,17 +131,17 @@ endif()
 
 
 # ====================================================================================
-# remote-switch
+# home-controller
 
-message("Creating HTML binary blob for remote-switch")
+message("Creating HTML binary blob for home-controller")
 execute_process(COMMAND
         ../makefsdata.py
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/remote-switch/
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/home-controller/
         )
 
 if(NOT PICO_BOARD STREQUAL "pico_w")
-        set(remote-switch_source_files ${common_source_files}
-                remote-switch/worker_tasks.c        
+        set(home-controller_source_files ${common_source_files}
+                home-controller/worker_tasks.c        
                 thermostat_task.c
                 thermostat_aht10.c
                 thermostat_metrics.c
@@ -153,27 +153,27 @@ if(NOT PICO_BOARD STREQUAL "pico_w")
                 tm1637.c)        
 endif()  
 
-add_executable(remote-switch ${remote-switch_source_files})  
-target_compile_definitions(remote-switch PRIVATE APP_NAME="remote-switch" HTTPD_FSDATA_FILE="remote-switch/htmldata.c")
+add_executable(home-controller ${home-controller_source_files})  
+target_compile_definitions(home-controller PRIVATE APP_NAME="home-controller" HTTPD_FSDATA_FILE="home-controller/htmldata.c")
 if(NOT PICO_BOARD STREQUAL "pico_w") 
-target_compile_definitions(remote-switch PRIVATE INCORPORATE_REMOTE_SWITCH)
+target_compile_definitions(home-controller PRIVATE INCORPORATE_REMOTE_SWITCH)
 endif()
 
-pico_generate_pio_header(remote-switch ${CMAKE_CURRENT_LIST_DIR}/tm1637.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)
+pico_generate_pio_header(home-controller ${CMAKE_CURRENT_LIST_DIR}/tm1637.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)
 
-pico_set_program_name(remote-switch "remote-switch")
-pico_set_program_version(remote-switch ${APP_VERSION})
+pico_set_program_name(home-controller "home-controller")
+pico_set_program_version(home-controller ${APP_VERSION})
 
 # enable/disable output over UART/USB  ***TODO: had to disable stdio over usb in Release builds as it causes random crashes/resets during startup
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        pico_enable_stdio_usb(remote-switch 0)
-        pico_enable_stdio_uart(remote-switch 0)        
+        pico_enable_stdio_usb(home-controller 0)
+        pico_enable_stdio_uart(home-controller 0)        
 else() 
-        pico_enable_stdio_usb(remote-switch 0)
-        pico_enable_stdio_uart(remote-switch 1)        
+        pico_enable_stdio_usb(home-controller 0)
+        pico_enable_stdio_uart(home-controller 1)        
 endif()
 
-target_include_directories(remote-switch PRIVATE
+target_include_directories(home-controller PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/pico-sdk/lib/lwip/contrib/ports/freertos/include/ 
         if(PICO_BOARD STREQUAL "pico_w")
@@ -190,12 +190,12 @@ target_include_directories(remote-switch PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/pico-sdk/lib/lwip/contrib/apps/ping/
         )
 
-target_link_libraries(remote-switch ${pluto_link_libraries})
+target_link_libraries(home-controller ${pluto_link_libraries})
 
-#pico_set_linker_script(remote-switch ${CMAKE_CURRENT_LIST_DIR}/memmap_remote-switch_hi.ld)
+#pico_set_linker_script(home-controller ${CMAKE_CURRENT_LIST_DIR}/memmap_home-controller_hi.ld)
 
 # create uf2 
-pico_add_extra_outputs(remote-switch)
+pico_add_extra_outputs(home-controller)
 
 
 
@@ -213,7 +213,7 @@ pico_add_extra_outputs(remote-switch)
 # )
 
 # set(WEB_FILES)
-# file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/remote-switch/html_files/*.shtml")
+# file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/home-controller/html_files/*.shtml")
 # pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${WEB_FILES})
 
-#pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${CMAKE_CURRENT_LIST_DIR}/remote-switch/html_files/t_gpio.shtml)
+#pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${CMAKE_CURRENT_LIST_DIR}/home-controller/html_files/t_gpio.shtml)
