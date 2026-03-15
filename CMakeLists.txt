@@ -141,7 +141,10 @@ execute_process(COMMAND
 
 if(NOT PICO_BOARD STREQUAL "pico_w")
         set(home-controller_source_files ${common_source_files}
-                home-controller/worker_tasks.c        
+                home-controller/worker_tasks.c 
+                hc_task.c
+                discovery_task.c
+                shelly.c       
                 thermostat_task.c
                 thermostat_aht10.c
                 thermostat_metrics.c
@@ -156,7 +159,7 @@ endif()
 add_executable(home-controller ${home-controller_source_files})  
 target_compile_definitions(home-controller PRIVATE APP_NAME="home-controller" HTTPD_FSDATA_FILE="home-controller/htmldata.c")
 if(NOT PICO_BOARD STREQUAL "pico_w") 
-target_compile_definitions(home-controller PRIVATE INCORPORATE_REMOTE_SWITCH)
+target_compile_definitions(home-controller PRIVATE INCORPORATE_HOME_CONTROLLER)
 endif()
 
 pico_generate_pio_header(home-controller ${CMAKE_CURRENT_LIST_DIR}/tm1637.pio OUTPUT_DIR ${CMAKE_CURRENT_LIST_DIR}/generated)
