@@ -145,15 +145,20 @@ if(NOT PICO_BOARD STREQUAL "pico_w")
                 hc_task.c
                 discovery_task.c
                 shelly.c       
-                thermostat_task.c
-                thermostat_aht10.c
-                thermostat_metrics.c
-                thermostat_physical_ui.c
-                thermostat_web_ui.c
-                thermostat_hvac.c
-                powerwall.c
+                #thermostat_task.c
+                #thermostat_aht10.c
+                #thermostat_metrics.c
+                #thermostat_physical_ui.c
+                #thermostat_web_ui.c
+                #thermostat_hvac.c
+                #powerwall.c
                 json_parser.c
-                tm1637.c)        
+                basic_commands.c
+                basic_extensions.c
+                basic_interpreter.c
+                basic_parser.c
+                #tm1637.c
+                )        
 endif()  
 
 add_executable(home-controller ${home-controller_source_files})  

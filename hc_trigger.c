@@ -76,43 +76,65 @@ extern WEB_VARIABLES_T web;
 
 //static variables
 
+TRIGGER_CONDITION_T test_condition =
+{
+    {0, COND_AND, 1}, 3
+};
+
 
 /*!
- * \brief home controller task
+ * \brief evaluate trigger condition
  *
- * \param[in]  params  alive counter that must be incremented periodically to prevent watchdog reset
+ * \param[in]  condition  logical expression
+ * \param[in]  length     length of expression
+ *   
  * 
- * \return nothing
+ * \return trigger: true or false
  */
-void hc_task(__unused void *params) 
+bool hc_test_trigger(void) 
 {
-    SOCKADDR_IN sClientAddress;  
-    int received_bytes = 0;    
-    
-    if (strcasecmp(APP_NAME, "home-controller") == 0)
-    {
-        // force personality to match single purpose application
-        config.personality = HOME_CONTROLLER;
-    }    
-    
-    printf("home controller task started\n");
-    while (true)
-    {        
-        if ((config.personality == HOME_CONTROLLER))
-        {
-            //TEST TEST TEST
-            // printf("Begin shelly test\n");
-            // discover_shelly_devices();
-            // printf("End shelly test\n");
-            printf("Home Controller\n");
-            SLEEP_MS(60000);
-        }
-        else
-        {
-            SLEEP_MS(1000);
-        }
+    bool trigger = false;
 
-        // tell watchdog task that we are still alive
-        watchdog_pulse((int *)params);  
-    } 
+    hc_trigger(&test_condition);
+
+    return(trigger);
+}
+
+/*!
+ * \brief evaluate trigger condition
+ *
+ * \param[in]  condition  logical expression
+ * \param[in]  length     length of expression
+ *   
+ * 
+ * \return trigger: true or false
+ */
+bool hc_trigger(TRIGGER_CONDITION_T *condition) 
+{
+    bool trigger = false;
+    int i = 0;
+
+    while (i < condition->occupancy)
+    {
+        switch(condition->expresssion[i])
+        {
+        case COND_NULL:
+            printf("NULL in condition -- terminating evalaation\n");
+            i = condition->occupancy;
+            break;
+        case COND_NOT:
+            break;
+        case COND_OR:
+            break;
+        case COND_AND:
+            break;
+        case COND_OPEN_BRACKET:
+            break;
+        case COND_CLOSE_BRACKET:
+            break;            
+        }
+    }
+
+
+    return(trigger);
 }

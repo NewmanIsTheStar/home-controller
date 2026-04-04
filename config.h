@@ -159,7 +159,13 @@ typedef struct
     int thermostat_display_brightness;
     int thermostat_display_num_digits;
     int setpoint_heating_temperaturex10[32]; 
-    int setpoint_cooling_temperaturex10[32];     
+    int setpoint_cooling_temperaturex10[32];
+    uint8_t shelly_device_ip[64][4];
+    uint8_t shelly_device_type[64];
+    uint8_t shelly_parameter_device_index[128];
+    uint8_t shelly_parameter_name_index[128];
+    char shelly_parameter_value[128][32];
+    char shelly_parameter_name[64][32];     
     uint16_t crc;
 } NON_VOL_VARIABLES_T;
 

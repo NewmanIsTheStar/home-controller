@@ -54,6 +54,7 @@ typedef struct
 } DISCOVERED_SHELLY_T;
 
 // external variables
+extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 
 // global variables
@@ -68,6 +69,7 @@ int shelly_parse_header(char *buffer);
 char *find_next_space_on_line(char *buffer);
 int shelly_add_discovered_device(u32_t ip, SHELLY_DEVICE_TYPE_T type);
 int shelly_dump_discovered_devices(void);
+void ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array);
 
 
 /*!
@@ -75,7 +77,7 @@ int shelly_dump_discovered_devices(void);
  * 
  * \return 0 on success, -1 on error
  */
-int discover_shelly_devices(void)
+int shelly_discover_devices(void)
 {
     u32_t ip;
     u32_t mask;
@@ -435,3 +437,210 @@ int shelly_dump_discovered_devices(void)
 
     return(err);
 }
+
+int shelly_cache_set_value(char *device_ip, char *parameter_name, char *parameter_value)
+{
+    int err = 0;
+    uint8_t device_index;
+    uint8_t parameter_index;
+
+    err = shelly_cache_insert_device(device_ip, &device_index);
+
+    if(!err)
+    {
+        err = shelly_cache_insert_parameter(device_index, parameter_name, &parameter_index);
+    }
+
+    if(!err)
+    {
+        CLIP(parameter_index, 0, 128);
+        strncpy(config.shelly_parameter_value[parameter_index], parameter_value, sizeof(config.shelly_parameter_value[parameter_index])); 
+    }
+
+    return(err);
+}
+
+int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value, size_t value_len)
+{
+    int err = -1;
+    uint8_t device_index;
+    uint8_t name_index;
+    uint8_t parameter_index;
+
+
+    for(device_index=0; device_index<64; device_index++)
+    {
+        if ((device_ip[0] == config.shelly_device_ip[device_index][0]) &&
+            (device_ip[1] == config.shelly_device_ip[device_index][1]) &&
+            (device_ip[2] == config.shelly_device_ip[device_index][2]) &&
+            (device_ip[3] == config.shelly_device_ip[device_index][3]))
+        {
+            // ip match
+            err = 0;
+            break;
+        }
+    }
+
+    if (!err)
+    {
+        for(name_index=0; name_index<64; name_index++)
+        {
+            err = -2;
+
+            if (strcmp(parameter_name, config.shelly_parameter_name[name_index]) == 0)
+            {
+                // name match
+                err = 0;
+                break;
+            }
+        }
+    }
+
+    if (!err)
+    {
+        for(parameter_index=0; parameter_index<64; parameter_index++)
+        {
+            err = -3;
+
+            if ((config.shelly_parameter_device_index[parameter_index] == device_index) &&
+                (config.shelly_parameter_name_index[parameter_index] == name_index))
+            {
+                // ip and name match
+                strncpy(value, config.shelly_parameter_value[parameter_index], value_len);
+                err = 0;
+                break;
+            }
+        }
+    }
+
+    return(err);
+}
+
+int shelly_cache_insert_parameter(uint8_t device_index, char *parameter_name, uint8_t *parameter_index)
+{
+    int err = -1;
+    uint8_t i = 0;
+    uint8_t j = 0;
+
+    for(j=0; j<128; j++)
+    {
+        if (config.shelly_parameter_device_index[j] == 255)
+        {
+            // found empty parameter row j
+            err = 0;
+            break;
+        }
+    }
+
+    if (!err)
+    {
+        err = -1;
+
+        for(i=0; i < 128; i++)
+        {
+            if (strcmp(parameter_name, config.shelly_parameter_name[i]) == 0)
+            {
+                // found parameter name already exists
+                config.shelly_parameter_name_index[j] = i;
+                err = 0;
+                break;
+            }
+        }
+    }
+
+    if (!err)
+    {
+        err = -1;
+
+        for(i=0; i < 64; i++)
+        {
+            // find empty row
+            if (config.shelly_parameter_name[i] == 0)
+            {
+                // insert new name into row
+                strncpy(config.shelly_parameter_name[i], parameter_name, sizeof(config.shelly_parameter_name[i]));
+                
+                // insert index of new name into parameter row 
+                config.shelly_parameter_name_index[j] = i;
+                err = 0;
+                break;
+            }
+        }
+    }    
+
+    return(err);
+}
+
+int shelly_cache_insert_device(uint8_t *device_ip, uint8_t *device_index)
+{
+    int err = -1;
+    uint8_t i = 0;
+
+    for(i=0; i < 64; i++)
+    {
+        if ((config.shelly_device_ip[i][0] == device_ip[0]) &&
+            (config.shelly_device_ip[i][1] == device_ip[1]) &&
+            (config.shelly_device_ip[i][2] == device_ip[2]) &&
+            (config.shelly_device_ip[i][3] == device_ip[3]))
+        {
+            err = 0;
+            *device_index = i;
+            break;
+        }
+    }
+
+    if (err)
+    {
+        for(i=0; i < 64; i++)
+        {
+           if ((config.shelly_device_ip[i][0] == 0) &&
+                (config.shelly_device_ip[i][1] == 0) &&
+                (config.shelly_device_ip[i][2] == 0) &&
+                (config.shelly_device_ip[i][3] == 0))
+            {
+                err = 0;
+                *device_index = i;
+
+                config.shelly_device_ip[i][0] = device_ip[0];
+                config.shelly_device_ip[i][1] = device_ip[1];
+                config.shelly_device_ip[i][2] = device_ip[2];
+                config.shelly_device_ip[i][3] = device_ip[3];  
+                break;
+            }
+        }               
+    }
+
+    return(err);
+}
+
+int shelly_cache_clear(void)
+{
+    int i;
+
+    for(i=0; i<64; i++)
+    {
+        config.shelly_device_ip[i][0] = 0;
+        config.shelly_device_ip[i][1] = 0;
+        config.shelly_device_ip[i][2] = 0;
+        config.shelly_device_ip[i][3] = 0;
+
+        config.shelly_device_type[i] = 255;
+    }
+
+    for (i=0; i<128; i++)
+    {
+        config.shelly_parameter_device_index[i] = 255;
+        config.shelly_parameter_name_index[i] = 255;
+    }
+
+    for(i=0; i<64; i++)
+    {
+        config.shelly_parameter_name[i][0] = 0;   
+    }
+
+    return(0);
+}
+
+
+
+

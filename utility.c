@@ -1060,3 +1060,27 @@ int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/
     return(socket);
 }
 #endif
+
+void ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array) 
+{
+    struct in_addr sa;
+    // Use inet_pton to convert the IP string to a network address structure
+    if (inet_pton(AF_INET, ip_str, &sa) != 1) 
+    {
+        perror("inet_pton failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // sa.s_addr is a uint32_t in network byte order.
+    // Copy the bytes into the array.
+    memcpy(ip_array, &sa.s_addr, 4);
+
+    // Note: On little-endian systems, the bytes in ip_array will be reversed
+    // unless a byte-swap is performed to get the 'human-readable' order of octets
+    // in the array. For most network operations, keeping it in network order is correct.
+    // To get the octets in the order 192, 168, 1, 1:
+    ip_array[0] = (sa.s_addr >> 24) & 0xFF;
+    ip_array[1] = (sa.s_addr >> 16) & 0xFF;
+    ip_array[2] = (sa.s_addr >> 8) & 0xFF;
+    ip_array[3] = sa.s_addr & 0xFF;
+}

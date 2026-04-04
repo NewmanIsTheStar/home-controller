@@ -95,7 +95,7 @@ void discovery_task(__unused void *params)
         if ((config.personality == HOME_CONTROLLER))
         {
             printf("Begin shelly device discovery\n");
-            discover_shelly_devices();
+            shelly_discover_devices();
             printf("End shelly shelly device discovery\n");
         }
         else
