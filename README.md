@@ -1,9 +1,15 @@
-# Thermostat
+# Home Controller
 
 ## Description
-Thermostat for ordinary residential central heating and cooling systems based on Raspberry Pi Pico2 W. 
-- Provides a web inteface for configuration.
-- Supports monitoring Tesla Powerwall 2 to control power consumption during grid failure.
+- Simple home controller that supports monitoring sensors and performing automated actions e.g. turning on lights according to scheudle or when a sensor is activated.
+- Suports selected devices from these brands
+ - Shelly
+ - Govee
+ - Ecowitt
+ - Tesla
+- Provides a BASIC interpreter
+ - Automation scripts
+ - Live control and debugging
 
 ## Installation of tools on Ubuntu Linux
 ```
@@ -28,10 +34,7 @@ Upon completion of a successful build the file thermostat.uf2 should be created.
 
 ## Hardware
 - Raspberry Pi Pico2 W
-- Raspberry Pi Pico Relay Board (with at least 3 relays)
-- AHT10 temperature sensor
-- Seven Segment Display (4 digit or 6 digit)
-- Momentary Push buttons (3)
+- 
 
 ## Licenses
 - SPDX-License-Identifier: BSD-3-Clause

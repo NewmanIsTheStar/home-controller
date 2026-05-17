@@ -24,13 +24,13 @@
 
 #include "stdarg.h"
 
-#include "weather.h"
+// #include "weather.h"
 #include "flash.h"
 #include "calendar.h"
 #include "utility.h"
 #include "config.h"
 #include "watchdog.h"
-#include "powerwall.h"
+// #include "powerwall.h"
 #include "shelly.h"
 #include "json_parser.h"
 #include "pluto.h"
@@ -208,7 +208,7 @@ int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *c
     char request[2048];
     int length = 0;
     char length_string[8];
-    lwip_err_t lwip_err = -1;
+    // lwip_err_t lwip_err = -1;
     int sent_bytes = 0;
     int received_bytes = 0;
     int retry;

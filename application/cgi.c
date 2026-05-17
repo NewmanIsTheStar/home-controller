@@ -22,12 +22,13 @@
 #include "task.h"
 
 #include "flash.h"
-#include "weather.h"
+//#include "weather.h"
 #include "calendar.h"
 #include "utility.h"
 #include "config.h"
-#include "led_strip.h"
-#include "thermostat.h"
+//#include "led_strip.h"
+// #include "rmtsw.h"
+// #include "mqtt.h"
 #include "worker_tasks.h"
 #include "pluto.h"
 
@@ -105,91 +106,215 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     return(new_value);
 // }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    // Check if a request for SCHEDULE has been made (/schedule.cgi?schedule=x)
-    if (strcmp(pcParam[0] , "schedule") == 0)
-    {
-        // Look at the argument to check if schedule is to be turned on (x=1) or off (x=0)
-        if(strcmp(pcValue[0], "0") == 0)
-            config.irrigation_enable = 0;
-        else if(strcmp(pcValue[0], "1") == 0)
-            config.irrigation_enable = 1;
-    }
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     // Check if a request for SCHEDULE has been made (/schedule.cgi?schedule=x)
+//     if (strcmp(pcParam[0] , "schedule") == 0)
+//     {
+//         // Look at the argument to check if schedule is to be turned on (x=1) or off (x=0)
+//         if(strcmp(pcValue[0], "0") == 0)
+//             config.irrigation_enable = 0;
+//         else if(strcmp(pcValue[0], "1") == 0)
+//             config.irrigation_enable = 1;
+//     }
     
-    // Send the index page back to the user
-    config_changed();
-    return "/index.shtml";
-}
+//     // Send the index page back to the user
+//     config_changed();
+//     return "/index.shtml";
+// }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_weekday_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{   
-    CLIP(iIndex, 1, 7);
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_weekday_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {   
+//     CLIP(iIndex, 1, 7);
 
-    //toggle the state (assumes index 1-7 used in cgi_handlers[] for weekdays)
-    config.day_schedule_enable[iIndex-1] = !config.day_schedule_enable[iIndex-1];
+//     //toggle the state (assumes index 1-7 used in cgi_handlers[] for weekdays)
+//     config.day_schedule_enable[iIndex-1] = !config.day_schedule_enable[iIndex-1];
 
-    config_changed();
+//     config_changed();
 
-    // Send the current page back to the user
-    return(current_calendar_web_page);
-}
+//     // Send the current page back to the user
+//     return(current_calendar_web_page);
+// }
 
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_inc_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_inc_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
     
-    if (iNumParams == 1)
-    {
-        if (pcParam[0]!= NULL)
-        {
-            if (pcParam[0][0] == 'x')
-            {
-                i = pcValue[0][0] - '0';
-                //printf("INDEX = %d\n", i);
-            }
-        }
-    }
+//     if (iNumParams == 1)
+//     {
+//         if (pcParam[0]!= NULL)
+//         {
+//             if (pcParam[0][0] == 'x')
+//             {
+//                 i = pcValue[0][0] - '0';
+//                 //printf("INDEX = %d\n", i);
+//             }
+//         }
+//     }
 
-    CLIP(i, 0, 6);
+//     CLIP(i, 0, 6);
 
-    config.zone_duration[0][i]++;
+//     config.zone_duration[0][i]++;
 
-    // Send the next page back to the user
-    config_changed();
-    return(current_calendar_web_page);
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return(current_calendar_web_page);
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_dec_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+    
+//     if (iNumParams == 1)
+//     {
+//         if (pcParam[0]!= NULL)
+//         {
+//             if (pcParam[0][0] == 'x')
+//             {
+//                 i = pcValue[0][0] - '0';
+//                 //printf("INDEX = %d\n", i);
+//             }
+//         }
+//     }
+
+//     CLIP(i, 0, 6);
+
+//     //toggle the state (assumes index 1-7 used in cgi_handlers[] for weekdays)
+//     if(config.zone_duration[0][i] > 0)
+//     {
+//         config.zone_duration[0][i]--;
+//     }
+
+//     // Send the next page back to the user
+//     config_changed();
+//     return(current_calendar_web_page);
+// }
+
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_inc_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+    
+//     if (iNumParams == 1)
+//     {
+//         if (pcParam[0]!= NULL)
+//         {
+//             if (pcParam[0][0] == 'x')
+//             {
+//                 i = pcValue[0][0] - '0';
+//                 //printf("INDEX = %d\n", i);
+//             }
+//         }
+//     }
+
+//     CLIP(i, 0, 6);
+
+//     // add 60 minutes
+//     config.day_start[i] += 60;
+
+//     // wrap around at 24 hours
+//     if (config.day_start[i] >= (24*60))
+//     {
+//         config.day_start[i] -= (24*60);
+//     }
+
+//     // Send the next page back to the user
+//     config_changed();
+//     return(current_calendar_web_page);
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_dec_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+    
+//     if (iNumParams == 1)
+//     {
+//         if (pcParam[0]!= NULL)
+//         {
+//             if (pcParam[0][0] == 'x')
+//             {
+//                 i = pcValue[0][0] - '0';
+//                 //printf("INDEX = %d\n", i);
+//             }
+//         }
+//     }
+
+//     CLIP(i, 0, 6);
+
+//     // add 60 minutes
+//     config.day_start[i] -= 60;
+
+//     // wrap around at 0 hours
+//     if (config.day_start[i] < 0)
+//     {
+//         config.day_start[i] += (24*60);
+//     }
+
+//     // Send the next page back to the user
+//     config_changed();
+//     return(current_calendar_web_page);
+// }
 
 /*!
  * \brief cgi handler
@@ -201,221 +326,97 @@ const char * cgi_inc_duration_handler(int iIndex, int iNumParams, char *pcParam[
  * 
  * \return nothing
  */
-const char * cgi_dec_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
+// const char * cgi_inc_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     int hour;
+//     int minute;
     
-    if (iNumParams == 1)
-    {
-        if (pcParam[0]!= NULL)
-        {
-            if (pcParam[0][0] == 'x')
-            {
-                i = pcValue[0][0] - '0';
-                //printf("INDEX = %d\n", i);
-            }
-        }
-    }
+//     if (iNumParams == 1)
+//     {
+//         if (pcParam[0]!= NULL)
+//         {
+//             if (pcParam[0][0] == 'x')
+//             {
+//                 i = pcValue[0][0] - '0';
+//                 //printf("INDEX = %d\n", i);
+//             }
+//         }
+//     }
 
-    CLIP(i, 0, 6);
+//     CLIP(i, 0, 6);
 
-    //toggle the state (assumes index 1-7 used in cgi_handlers[] for weekdays)
-    if(config.zone_duration[0][i] > 0)
-    {
-        config.zone_duration[0][i]--;
-    }
+//     // extract original hour and minute
+//     hour = config.day_start[i]/60;
+//     minute = config.day_start[i]%60;
 
-    // Send the next page back to the user
-    config_changed();
-    return(current_calendar_web_page);
-}
+//     // add 1 minute
+//     minute++;
 
+//     // wrap at 60 minutes
+//     if (minute >= 60)
+//     {
+//         minute -=60;
+//     }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_inc_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
+//     // set adjusted minute, while retaining original hour
+//     config.day_start[i] = hour*60 + minute;
+
+//     // Send the next page back to the user
+//     config_changed();
+//     return(current_calendar_web_page);
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_dec_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     int hour;
+//     int minute;    
     
-    if (iNumParams == 1)
-    {
-        if (pcParam[0]!= NULL)
-        {
-            if (pcParam[0][0] == 'x')
-            {
-                i = pcValue[0][0] - '0';
-                //printf("INDEX = %d\n", i);
-            }
-        }
-    }
+//     if (iNumParams == 1)
+//     {
+//         if (pcParam[0]!= NULL)
+//         {
+//             if (pcParam[0][0] == 'x')
+//             {
+//                 i = pcValue[0][0] - '0';
+//                 //printf("INDEX = %d\n", i);
+//             }
+//         }
+//     }
 
-    CLIP(i, 0, 6);
+//     CLIP(i, 0, 6);
 
-    // add 60 minutes
-    config.day_start[i] += 60;
+//     // extract original hour and minute
+//     hour = config.day_start[i]/60;
+//     minute = config.day_start[i]%60;
 
-    // wrap around at 24 hours
-    if (config.day_start[i] >= (24*60))
-    {
-        config.day_start[i] -= (24*60);
-    }
+//     // subtract 1 minute
+//     minute--;
 
-    // Send the next page back to the user
-    config_changed();
-    return(current_calendar_web_page);
-}
+//     // wrap at 0 minutes
+//     if (minute < 0)
+//     {
+//         minute +=60;
+//     }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_dec_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    
-    if (iNumParams == 1)
-    {
-        if (pcParam[0]!= NULL)
-        {
-            if (pcParam[0][0] == 'x')
-            {
-                i = pcValue[0][0] - '0';
-                //printf("INDEX = %d\n", i);
-            }
-        }
-    }
+//     // set adjusted minute, while retaining original hour
+//     config.day_start[i] = hour*60 + minute;
 
-    CLIP(i, 0, 6);
-
-    // add 60 minutes
-    config.day_start[i] -= 60;
-
-    // wrap around at 0 hours
-    if (config.day_start[i] < 0)
-    {
-        config.day_start[i] += (24*60);
-    }
-
-    // Send the next page back to the user
-    config_changed();
-    return(current_calendar_web_page);
-}
-
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_inc_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    int hour;
-    int minute;
-    
-    if (iNumParams == 1)
-    {
-        if (pcParam[0]!= NULL)
-        {
-            if (pcParam[0][0] == 'x')
-            {
-                i = pcValue[0][0] - '0';
-                //printf("INDEX = %d\n", i);
-            }
-        }
-    }
-
-    CLIP(i, 0, 6);
-
-    // extract original hour and minute
-    hour = config.day_start[i]/60;
-    minute = config.day_start[i]%60;
-
-    // add 1 minute
-    minute++;
-
-    // wrap at 60 minutes
-    if (minute >= 60)
-    {
-        minute -=60;
-    }
-
-    // set adjusted minute, while retaining original hour
-    config.day_start[i] = hour*60 + minute;
-
-    // Send the next page back to the user
-    config_changed();
-    return(current_calendar_web_page);
-}
-
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_dec_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    int hour;
-    int minute;    
-    
-    if (iNumParams == 1)
-    {
-        if (pcParam[0]!= NULL)
-        {
-            if (pcParam[0][0] == 'x')
-            {
-                i = pcValue[0][0] - '0';
-                //printf("INDEX = %d\n", i);
-            }
-        }
-    }
-
-    CLIP(i, 0, 6);
-
-    // extract original hour and minute
-    hour = config.day_start[i]/60;
-    minute = config.day_start[i]%60;
-
-    // subtract 1 minute
-    minute--;
-
-    // wrap at 0 minutes
-    if (minute < 0)
-    {
-        minute +=60;
-    }
-
-    // set adjusted minute, while retaining original hour
-    config.day_start[i] = hour*60 + minute;
-
-    // Send the next page back to the user
-    config_changed();
-    return(current_calendar_web_page);
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return(current_calendar_web_page);
+// }
 
 
 /*!
@@ -530,87 +531,87 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
     return "/time.shtml";
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_ecowitt_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL; 
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_ecowitt_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL; 
 
-    // despicable but necessary as we only receive parameter when checked
-    config.weather_station_enable = 0;
+//     // despicable but necessary as we only receive parameter when checked
+//     config.weather_station_enable = 0;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
-            if (strcasecmp("wse", param) == 0)
-            {
-                if (value[0])
-                {
-                    config.weather_station_enable = 1;
-                } 
-                else
-                {
-                    config.weather_station_enable = 0;  // should never happen
-                }                             
-            } 
+//             if (strcasecmp("wse", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     config.weather_station_enable = 1;
+//                 } 
+//                 else
+//                 {
+//                     config.weather_station_enable = 0;  // should never happen
+//                 }                             
+//             } 
 
-            if (strcasecmp("ecoip", param) == 0)
-            {
-                STRNCPY(config.weather_station_ip, value, sizeof(config.weather_station_ip));
-            }
+//             if (strcasecmp("ecoip", param) == 0)
+//             {
+//                 STRNCPY(config.weather_station_ip, value, sizeof(config.weather_station_ip));
+//             }
 
-            if (strcasecmp("wkrn", param) == 0)
-            {
-                config.rain_week_threshold = get_int_with_tenths_from_string(value);  
-            }
+//             if (strcasecmp("wkrn", param) == 0)
+//             {
+//                 config.rain_week_threshold = get_int_with_tenths_from_string(value);  
+//             }
 
-            if (strcasecmp("dyrn", param) == 0)
-            {
-                config.rain_day_threshold = get_int_with_tenths_from_string(value); 
-            }
+//             if (strcasecmp("dyrn", param) == 0)
+//             {
+//                 config.rain_day_threshold = get_int_with_tenths_from_string(value); 
+//             }
 
-            if (strcasecmp("soilt1", param) == 0)
-            {
-                sscanf(value, "%d", &config.soil_moisture_threshold[0]); 
-            }                                     
+//             if (strcasecmp("soilt1", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.soil_moisture_threshold[0]); 
+//             }                                     
     
-            if (strcasecmp("wndt", param) == 0)
-            {
-                config.wind_threshold = get_int_with_tenths_from_string(value);                
-            }     
+//             if (strcasecmp("wndt", param) == 0)
+//             {
+//                 config.wind_threshold = get_int_with_tenths_from_string(value);                
+//             }     
 
-            if (strcasecmp("tempth", param) == 0)
-            {
-                config.outside_temperature_threshold= get_int_with_tenths_from_string(value);                
-            }               
-        }
+//             if (strcasecmp("tempth", param) == 0)
+//             {
+//                 config.outside_temperature_threshold= get_int_with_tenths_from_string(value);                
+//             }               
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    // Send the next page back to the user
-    config_changed();
-    return "/weather.shtml";
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/weather.shtml";
+// }
 
 
 /*!
@@ -659,7 +660,12 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
                 {
                     STRNCPY(config.wifi_password, value, sizeof(config.wifi_password));
                 }
-            }        
+            }   
+
+            if (strcasecmp("hostn", param) == 0)
+            {
+                STRNCPY(config.host_name, value, sizeof(config.host_name));
+            }
 
             if (strcasecmp("ipad", param) == 0)
             {
@@ -728,111 +734,111 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
     return "/network.shtml";
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_led_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_led_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
 
-    config.use_led_strip_to_indicate_irrigation_status = 0;   
-    config.led_rgbw = 0;   
+//     config.use_led_strip_to_indicate_irrigation_status = 0;   
+//     config.led_rgbw = 0;   
 
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
             
-            if (strcasecmp("lpat", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_pattern);    
+//             if (strcasecmp("lpat", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_pattern);    
 
-                set_led_pattern_local(config.led_pattern);         
-            }
+//                 set_led_pattern_local(config.led_pattern);         
+//             }
 
-            if (strcasecmp("lspd", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_speed);
+//             if (strcasecmp("lspd", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_speed);
 
-                set_led_speed_local(config.led_speed);              
-            }  
+//                 set_led_speed_local(config.led_speed);              
+//             }  
 
-            if (strcasecmp("lpin", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_pin);             
-            }
+//             if (strcasecmp("lpin", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_pin);             
+//             }
 
-            if (strcasecmp("lrgbw", param) == 0)
-            {
-                if (value[0])
-                {
-                    config.led_rgbw = 1;
-                } 
-                else
-                {
-                    config.led_rgbw = 0;
-                }                             
-            }            
+//             if (strcasecmp("lrgbw", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     config.led_rgbw = 1;
+//                 } 
+//                 else
+//                 {
+//                     config.led_rgbw = 0;
+//                 }                             
+//             }            
 
-            if (strcasecmp("lnum", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_number);             
-            }  
+//             if (strcasecmp("lnum", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_number);             
+//             }  
 
-            if (strcasecmp("lie", param) == 0)
-            {
-                if (value[0])
-                {
-                    config.use_led_strip_to_indicate_irrigation_status = 1;
-                } 
-                else
-                {
-                    config.use_led_strip_to_indicate_irrigation_status = 0;
-                }                             
-            }
+//             if (strcasecmp("lie", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     config.use_led_strip_to_indicate_irrigation_status = 1;
+//                 } 
+//                 else
+//                 {
+//                     config.use_led_strip_to_indicate_irrigation_status = 0;
+//                 }                             
+//             }
 
-            if (strcasecmp("lia", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_pattern_when_irrigation_active);             
-            }  
+//             if (strcasecmp("lia", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_pattern_when_irrigation_active);             
+//             }  
 
-            if (strcasecmp("liu", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_pattern_when_irrigation_terminated);             
-            }  
+//             if (strcasecmp("liu", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_pattern_when_irrigation_terminated);             
+//             }  
 
-            if (strcasecmp("lis", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_sustain_duration);             
-            }                          
+//             if (strcasecmp("lis", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_sustain_duration);             
+//             }                          
 
-        }
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
 
-    // Send the next page back to the user
-    config_changed();
-    return "/addressable_led.shtml";
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/addressable_led.shtml";
+// }
 
 /*!
  * \brief cgi handler
@@ -854,280 +860,280 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
     return "/index.shtml";    
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_portrait_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    //int whole_part = 0;
-    //int tenths_part = 0;
-    char *param = NULL;
-    char *value = NULL;
-    //int new_value = 0;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_portrait_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     //int whole_part = 0;
+//     //int tenths_part = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     //int new_value = 0;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
-            if (strcasecmp("sunday", param) == 0)
-            {
-                config.day_schedule_enable[0] = 1;             
-            }
+//             if (strcasecmp("sunday", param) == 0)
+//             {
+//                 config.day_schedule_enable[0] = 1;             
+//             }
             
-            if (strcasecmp("strt1", param) == 0)
-            {
-                sscanf(value, "%d", &config.day_start[0]);             
-            }
+//             if (strcasecmp("strt1", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.day_start[0]);             
+//             }
 
-            if (strcasecmp("dur1", param) == 0)
-            {
-                sscanf(value, "%d", &config.day_duration[0]);             
-            } 
+//             if (strcasecmp("dur1", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.day_duration[0]);             
+//             } 
 
-            if (strcasecmp("monday", param) == 0)
-            {
-                config.day_schedule_enable[1] = 1;             
-            }
+//             if (strcasecmp("monday", param) == 0)
+//             {
+//                 config.day_schedule_enable[1] = 1;             
+//             }
             
-            if (strcasecmp("strt2", param) == 0)
-            {
-                sscanf(value, "%d", &config.day_start[1]);             
-            }
+//             if (strcasecmp("strt2", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.day_start[1]);             
+//             }
 
-            if (strcasecmp("dur2", param) == 0)
-            {
-                sscanf(value, "%d", &config.day_duration[1]);             
-            }              
-        }
+//             if (strcasecmp("dur2", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.day_duration[1]);             
+//             }              
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
 
-    // Send the next page back to the user
-    config_changed();
-    return "/portrait.shtml";
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/portrait.shtml";
+// }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_day_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    //int whole_part = 0;
-    //int tenths_part = 0;
-    char *param = NULL;
-    char *value = NULL;
-    //int new_value = 0;
-    int day = -1;
-    int dur_zone = -1;
-    int dur_day = -1;
-    bool checked = false;
-    int start_hour = -1;
-    int start_minute = -1;
-    int duration = -1;
-    static char weekday_page[32] = "/index.shtml";
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_day_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     //int whole_part = 0;
+//     //int tenths_part = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     //int new_value = 0;
+//     int day = -1;
+//     int dur_zone = -1;
+//     int dur_day = -1;
+//     bool checked = false;
+//     int start_hour = -1;
+//     int start_minute = -1;
+//     int duration = -1;
+//     static char weekday_page[32] = "/index.shtml";
            
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
             
-            if (strcasecmp("day", param) == 0) 
-            {
-                sscanf(value, "%d", &day);   
+//             if (strcasecmp("day", param) == 0) 
+//             {
+//                 sscanf(value, "%d", &day);   
 
-                CLIP(day, 0, 6);
-                sprintf(weekday_page, "/%s.shtml", day_name(day));    
-                weekday_page[1] = tolower(weekday_page[1]);      
-            }
+//                 CLIP(day, 0, 6);
+//                 sprintf(weekday_page, "/%s.shtml", day_name(day));    
+//                 weekday_page[1] = tolower(weekday_page[1]);      
+//             }
 
-            if (strcasecmp("currentday", param) == 0)
-            {
-                if (strcasecmp(value, "ON") == 0)
-                {
-                    checked = true;
-                }         
-            }
+//             if (strcasecmp("currentday", param) == 0)
+//             {
+//                 if (strcasecmp(value, "ON") == 0)
+//                 {
+//                     checked = true;
+//                 }         
+//             }
             
-            if (strncasecmp("strt", param, 4) == 0)
-            {
-                sscanf(value, "%d%%3A%d", &start_hour, &start_minute); 
-                sscanf(value, "%d+%%3A+%d", &start_hour, &start_minute);       
+//             if (strncasecmp("strt", param, 4) == 0)
+//             {
+//                 sscanf(value, "%d%%3A%d", &start_hour, &start_minute); 
+//                 sscanf(value, "%d+%%3A+%d", &start_hour, &start_minute);       
 
-                CLIP(start_hour, 0, 23);
-                CLIP(start_minute, 0, 59);      
-            }
+//                 CLIP(start_hour, 0, 23);
+//                 CLIP(start_minute, 0, 59);      
+//             }
 
-            if (strncasecmp("dur", param, 3) == 0)
-            {
-                sscanf(value, "%d", &duration);             
-            } 
+//             if (strncasecmp("dur", param, 3) == 0)
+//             {
+//                 sscanf(value, "%d", &duration);             
+//             } 
 
-            sscanf(param, "z%dd%dd", &dur_zone, &dur_day);
-            if ((dur_zone >= 1) && (dur_zone <= 8) && (dur_day >= 1) && (dur_day <= 7))
-            {
-                // adjust to zero base
-                dur_zone--;
-                dur_day--;
+//             sscanf(param, "z%dd%dd", &dur_zone, &dur_day);
+//             if ((dur_zone >= 1) && (dur_zone <= 8) && (dur_day >= 1) && (dur_day <= 7))
+//             {
+//                 // adjust to zero base
+//                 dur_zone--;
+//                 dur_day--;
 
-                sscanf(value, "%d", &config.zone_duration[dur_zone][dur_day]);  
-            }             
-        }
+//                 sscanf(value, "%d", &config.zone_duration[dur_zone][dur_day]);  
+//             }             
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    if ((day >=0) && (day <=6))
-    {
-        //printf("got valid day = %d storing new schedule parameters\n", day);
+//     if ((day >=0) && (day <=6))
+//     {
+//         //printf("got valid day = %d storing new schedule parameters\n", day);
 
-        config.day_schedule_enable[day] = checked;
-        if ((start_hour != -1) && (start_minute != -1)) config.day_start[day] = start_hour*60 + start_minute;
-        if (duration != -1) config.day_duration[day] = duration;
-    }
-    else
-    {
-        sprintf(weekday_page, "/index.shtml"); 
-    }
-
-
-    config_changed();
+//         config.day_schedule_enable[day] = checked;
+//         if ((start_hour != -1) && (start_minute != -1)) config.day_start[day] = start_hour*60 + start_minute;
+//         if (duration != -1) config.day_duration[day] = duration;
+//     }
+//     else
+//     {
+//         sprintf(weekday_page, "/index.shtml"); 
+//     }
 
 
-    // Send the current page back to the user
-    //printf("Redirecting browser to : %s\n", weekday_page);
-    return(weekday_page);
+//     config_changed();
 
-    //return "/index.shtml";
-}
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_mood_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    //int whole_part = 0;
-    //int tenths_part = 0;
-    char *param = NULL;
-    char *value = NULL;
-    //int new_value = 0;
-    int red = -1;
-    int green = -1;
-    int blue = -1;
+//     // Send the current page back to the user
+//     //printf("Redirecting browser to : %s\n", weekday_page);
+//     return(weekday_page);
+
+//     //return "/index.shtml";
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_mood_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     //int whole_part = 0;
+//     //int tenths_part = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     //int new_value = 0;
+//     int red = -1;
+//     int green = -1;
+//     int blue = -1;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    config.use_govee_to_indicate_irrigation_status = 0;
+//     config.use_govee_to_indicate_irrigation_status = 0;
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
             
-            if (strcasecmp("gvea", param) == 0)
-            {
-                STRNCPY(config.govee_light_ip, value, sizeof(config.govee_light_ip));
-            }  
+//             if (strcasecmp("gvea", param) == 0)
+//             {
+//                 STRNCPY(config.govee_light_ip, value, sizeof(config.govee_light_ip));
+//             }  
 
-            if (strcasecmp("gvee", param) == 0)
-            {
-                if (value[0])
-                {
-                    config.use_govee_to_indicate_irrigation_status = 1;
-                } 
-                else
-                {
-                    config.use_govee_to_indicate_irrigation_status = 0;
-                }                             
-            } 
+//             if (strcasecmp("gvee", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     config.use_govee_to_indicate_irrigation_status = 1;
+//                 } 
+//                 else
+//                 {
+//                     config.use_govee_to_indicate_irrigation_status = 0;
+//                 }                             
+//             } 
 
-            if (strcasecmp("gvei", param) == 0)
-            {
-                sscanf(value, "%d.%d.%d", &red, &green, &blue); 
-                sscanf(value, "%d+.+%d+.+%d", &red, &green, &blue);   
+//             if (strcasecmp("gvei", param) == 0)
+//             {
+//                 sscanf(value, "%d.%d.%d", &red, &green, &blue); 
+//                 sscanf(value, "%d+.+%d+.+%d", &red, &green, &blue);   
 
-                if ((red != -1) && (green != -1) && (blue != -1))
-                {
-                    config.govee_irrigation_active_red = CLIP(red, 0, 255);
-                    config.govee_irrigation_active_green = CLIP(green, 0, 255);
-                    config.govee_irrigation_active_blue = CLIP(blue, 0, 255);                                         
-                }          
-            }
+//                 if ((red != -1) && (green != -1) && (blue != -1))
+//                 {
+//                     config.govee_irrigation_active_red = CLIP(red, 0, 255);
+//                     config.govee_irrigation_active_green = CLIP(green, 0, 255);
+//                     config.govee_irrigation_active_blue = CLIP(blue, 0, 255);                                         
+//                 }          
+//             }
 
-            if (strcasecmp("gveu", param) == 0)
-            {
-                sscanf(value, "%d.%d.%d", &red, &green, &blue); 
-                sscanf(value, "%d+.+%d+.+%d", &red, &green, &blue);   
+//             if (strcasecmp("gveu", param) == 0)
+//             {
+//                 sscanf(value, "%d.%d.%d", &red, &green, &blue); 
+//                 sscanf(value, "%d+.+%d+.+%d", &red, &green, &blue);   
 
-                if ((red != -1) && (green != -1) && (blue != -1))
-                {
-                    config.govee_irrigation_usurped_red = CLIP(red, 0, 255);
-                    config.govee_irrigation_usurped_green = CLIP(green, 0, 255);
-                    config.govee_irrigation_usurped_blue = CLIP(blue, 0, 255);                                         
-                }          
-            }            
+//                 if ((red != -1) && (green != -1) && (blue != -1))
+//                 {
+//                     config.govee_irrigation_usurped_red = CLIP(red, 0, 255);
+//                     config.govee_irrigation_usurped_green = CLIP(green, 0, 255);
+//                     config.govee_irrigation_usurped_blue = CLIP(blue, 0, 255);                                         
+//                 }          
+//             }            
 
-            if (strcasecmp("gves", param) == 0)
-            {
-                sscanf(value, "%d", &config.govee_sustain_duration);             
-            }   
+//             if (strcasecmp("gves", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.govee_sustain_duration);             
+//             }   
 
-        }
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
 
-    // Send the next page back to the user
-    config_changed();
-    return "/moodlight.shtml";
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/moodlight.shtml";
+// }
 
 /*!
  * \brief cgi handler
@@ -1270,28 +1276,15 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
         switch (new_use_archaic_units)
         {
             case false:  // convert from archaic units to SI
-                config.wind_threshold = (1000*config.wind_threshold + 1641)/3281;
-                config.rain_week_threshold = (254*config.rain_week_threshold + 5)/10;
-                config.rain_day_threshold = (254*config.rain_day_threshold + 5)/10;
-                config.outside_temperature_threshold = ((config.outside_temperature_threshold*9)/5) + 320;
-
+                printf("TODO:  units changed: convert archiac to metric here.\n");
             break;
             case true:   // convert from SI to archaic units
-                config.wind_threshold = (config.wind_threshold*3281 + 500)/1000;
-                config.rain_week_threshold = (10*config.rain_week_threshold + 127)/254;
-                config.rain_day_threshold = (10*config.rain_day_threshold + 127)/254; 
-                config.outside_temperature_threshold = ((config.outside_temperature_threshold - 320)*5)/9;                   
+                printf("TODO:  units changed: convert metric to archiac here.\n");                
                 break;
             default:
             break;
         }
-#ifdef INCORPORATE_THERMOSTAT
-        // convert thermostat scheduled temperatures
-        sanatize_schedule_temperatures();
-        make_schedule_grid();
-#endif
     }     
-
 
     // Send the next page back to the user
     config_changed();
@@ -1350,82 +1343,82 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
     return "/software_load.shtml";
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_remote_led_strips(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_remote_led_strips(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    // set off by default
-    config.led_strip_remote_enable  = 0; 
+//     // set off by default
+//     config.led_strip_remote_enable  = 0; 
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
-            if (strcasecmp("rsadr1", param) == 0)
-            {
-                STRNCPY(config.led_strip_remote_ip[0], value, sizeof(config.led_strip_remote_ip[0]));
-            }
-            if (strcasecmp("rsadr2", param) == 0)
-            {
-                STRNCPY(config.led_strip_remote_ip[1], value, sizeof(config.led_strip_remote_ip[1]));
-            }
-            if (strcasecmp("rsadr3", param) == 0)
-            {
-                STRNCPY(config.led_strip_remote_ip[2], value, sizeof(config.led_strip_remote_ip[2]));
-            }
-            if (strcasecmp("rsadr4", param) == 0)
-            {
-                STRNCPY(config.led_strip_remote_ip[3], value, sizeof(config.led_strip_remote_ip[3]));
-            }
-            if (strcasecmp("rsadr5", param) == 0)
-            {
-                STRNCPY(config.led_strip_remote_ip[4], value, sizeof(config.led_strip_remote_ip[4]));
-            }
-            if (strcasecmp("rsadr6", param) == 0)
-            {
-                STRNCPY(config.led_strip_remote_ip[5], value, sizeof(config.led_strip_remote_ip[5]));
-            }
+//             if (strcasecmp("rsadr1", param) == 0)
+//             {
+//                 STRNCPY(config.led_strip_remote_ip[0], value, sizeof(config.led_strip_remote_ip[0]));
+//             }
+//             if (strcasecmp("rsadr2", param) == 0)
+//             {
+//                 STRNCPY(config.led_strip_remote_ip[1], value, sizeof(config.led_strip_remote_ip[1]));
+//             }
+//             if (strcasecmp("rsadr3", param) == 0)
+//             {
+//                 STRNCPY(config.led_strip_remote_ip[2], value, sizeof(config.led_strip_remote_ip[2]));
+//             }
+//             if (strcasecmp("rsadr4", param) == 0)
+//             {
+//                 STRNCPY(config.led_strip_remote_ip[3], value, sizeof(config.led_strip_remote_ip[3]));
+//             }
+//             if (strcasecmp("rsadr5", param) == 0)
+//             {
+//                 STRNCPY(config.led_strip_remote_ip[4], value, sizeof(config.led_strip_remote_ip[4]));
+//             }
+//             if (strcasecmp("rsadr6", param) == 0)
+//             {
+//                 STRNCPY(config.led_strip_remote_ip[5], value, sizeof(config.led_strip_remote_ip[5]));
+//             }
             
-            if (strcasecmp("rse", param) == 0)
-            {
-                if (value[0])
-                {
-                    config.led_strip_remote_enable = 1;
-                } 
-                else
-                {
-                    config.led_strip_remote_enable = 0;  // this should never happen, since the parameter is only passed if "on"
-                }   
-            } 
-        }
+//             if (strcasecmp("rse", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     config.led_strip_remote_enable = 1;
+//                 } 
+//                 else
+//                 {
+//                     config.led_strip_remote_enable = 0;  // this should never happen, since the parameter is only passed if "on"
+//                 }   
+//             } 
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    // Send the next page back to the user
-    config_changed();
-    return "/remote_led_strips.shtml";
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/remote_led_strips.shtml";
+// }
 
 /*!
  * \brief cgi handler
@@ -1462,40 +1455,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 
                 switch(new_personality)
                 {
-                    case SPRINKLER_USURPER:
-                        config.personality = new_personality;
-                        config.zone_max = 1;
-                        set_calendar_html_page();
-                        break;
-
-                    case SPRINKLER_CONTROLLER:
-                        if (config.personality != new_personality)
-                        {
-                            // default gpio for waveshare industrial relay module
-                            config.zone_gpio[0] = 21;
-                            config.zone_gpio[1] = 20;
-                            config.zone_gpio[2] = 19;
-                            config.zone_gpio[3] = 18;
-                            config.zone_gpio[4] = 17;
-                            config.zone_gpio[5] = 16;
-                            config.zone_gpio[6] = 15;
-                            config.zone_gpio[7] = 14;                            
-                        }
-                        config.personality = new_personality;
-                        config.zone_max = 8;
-                        set_calendar_html_page();
-                        break;
-
-                    case LED_STRIP_CONTROLLER:
-                        config.personality = new_personality;
-                        set_calendar_html_page();
-                        break;
-
-                    case HVAC_THERMOSTAT:
-                        config.personality = new_personality;
-                        break;    
-
-                    case HOME_CONTROLLER:
+                    case REMOTE_SWITCH:
                         config.personality = new_personality;
                         break;                                              
                     
@@ -1514,147 +1474,147 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
     return "/personality.shtml";
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_relay_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-    int new_relay_normally_open = 0; 
-    int new_irrigation_test_enable = 0;      
-    int new_gpio = 0;
-    int gpio_zone = -1;  
-    int new_zone_max = 0;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int gpio_zone = -1;  
+//     int new_zone_max = 0;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);  
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);  
 
-            if (strcasecmp("rly", param) == 0)
-            {
-                if (value[0])
-                {
-                    new_relay_normally_open = 1;
-                } 
-                else
-                {
-                    new_relay_normally_open = 0;  // this should never happen, since the parameter is only passed if "on"
-                }   
-            }
+//             if (strcasecmp("rly", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     new_relay_normally_open = 1;
+//                 } 
+//                 else
+//                 {
+//                     new_relay_normally_open = 0;  // this should never happen, since the parameter is only passed if "on"
+//                 }   
+//             }
 
-            if (strcasecmp("gpio", param) == 0)
-            {
-                new_gpio = atoi(value);
-                if (!initialize_relay_gpio(new_gpio))
-                {
-                    gpio_put(new_gpio, config.relay_normally_open?0:1); 
-                    config.gpio_number = new_gpio; 
-                }                                
-            } 
+//             if (strcasecmp("gpio", param) == 0)
+//             {
+//                 new_gpio = atoi(value);
+//                 if (!initialize_relay_gpio(new_gpio))
+//                 {
+//                     gpio_put(new_gpio, config.relay_normally_open?0:1); 
+//                     config.gpio_number = new_gpio; 
+//                 }                                
+//             } 
 
-            sscanf(param, "z%dgpio", &gpio_zone);
-            if ((gpio_zone >= 1) && (gpio_zone < 8))
-            {
-                // adjust to zero base
-                gpio_zone--;
+//             sscanf(param, "z%dgpio", &gpio_zone);
+//             if ((gpio_zone >= 1) && (gpio_zone < 8))
+//             {
+//                 // adjust to zero base
+//                 gpio_zone--;
 
-                sscanf(value, "%d", &config.zone_gpio[gpio_zone]);  
-            }   
+//                 sscanf(value, "%d", &config.zone_gpio[gpio_zone]);  
+//             }   
 
-            if (strcasecmp("zmax", param) == 0)
-            {
-                sscanf(value, "%d", &new_zone_max);
+//             if (strcasecmp("zmax", param) == 0)
+//             {
+//                 sscanf(value, "%d", &new_zone_max);
                 
-                if ((new_zone_max > 0) && (new_zone_max <= 8))
-                {
-                    config.zone_max = new_zone_max;
-                }                           
-            }
+//                 if ((new_zone_max > 0) && (new_zone_max <= 8))
+//                 {
+//                     config.zone_max = new_zone_max;
+//                 }                           
+//             }
 
-            if (strcasecmp("irgnow", param) == 0)
-            {
-                if (value[0])
-                {
-                    new_irrigation_test_enable = 1;
-                } 
-                else
-                {
-                    new_irrigation_test_enable = 0;  // this should never happen, since the parameter is only passed if "on"
-                }   
+//             if (strcasecmp("irgnow", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     new_irrigation_test_enable = 1;
+//                 } 
+//                 else
+//                 {
+//                     new_irrigation_test_enable = 0;  // this should never happen, since the parameter is only passed if "on"
+//                 }   
 
-                if (value[0] && !web.irrigation_test_enable)
-                {
-                    web.irrigation_test_enable = 1;
-                    snprintf(web.status_message, sizeof(web.status_message), "Preparing for irrigation test");
-                } 
-            }
-        }
-        i++;
-    }
+//                 if (value[0] && !web.irrigation_test_enable)
+//                 {
+//                     web.irrigation_test_enable = 1;
+//                     snprintf(web.status_message, sizeof(web.status_message), "Preparing for irrigation test");
+//                 } 
+//             }
+//         }
+//         i++;
+//     }
 
-    // handle normally open checkbox
-    if (config.relay_normally_open != new_relay_normally_open)
-    {
-        config.relay_normally_open = new_relay_normally_open;
-    }
+//     // handle normally open checkbox
+//     if (config.relay_normally_open != new_relay_normally_open)
+//     {
+//         config.relay_normally_open = new_relay_normally_open;
+//     }
 
-    // handle irrigation test checkbox
-    if (web.irrigation_test_enable != new_irrigation_test_enable)
-    {
-        web.irrigation_test_enable = new_irrigation_test_enable;
+//     // handle irrigation test checkbox
+//     if (web.irrigation_test_enable != new_irrigation_test_enable)
+//     {
+//         web.irrigation_test_enable = new_irrigation_test_enable;
 
-        if (web.irrigation_test_enable == 1)
-        {
-           snprintf(web.status_message, sizeof(web.status_message), "Preparing for irrigation test"); 
-        }
-        else
-        {
-           snprintf(web.status_message, sizeof(web.status_message), "Irrigation test terminated");  
-        }
-    }    
+//         if (web.irrigation_test_enable == 1)
+//         {
+//            snprintf(web.status_message, sizeof(web.status_message), "Preparing for irrigation test"); 
+//         }
+//         else
+//         {
+//            snprintf(web.status_message, sizeof(web.status_message), "Irrigation test terminated");  
+//         }
+//     }    
 
-    // normally open must be used in controller mode
-    if (config.personality == SPRINKLER_CONTROLLER)
-    {
-        config.relay_normally_open = 1;
-    }
+//     // normally open must be used in controller mode
+//     if (config.personality == SPRINKLER_CONTROLLER)
+//     {
+//         config.relay_normally_open = 1;
+//     }
 
-    config_changed();
+//     config_changed();
 
-    // Send the next page back to the user
-    if (config.personality == SPRINKLER_CONTROLLER)
-    {
-        if (!web.irrigation_test_enable)
-        {    
-            return "/z_relay.shtml";
-        }
-        else
-        {
-            return "/z_relay_test.shtml";
-        }
-    }
-    else
-    {
-        return "/relay.shtml";
-    }
-}
+//     // Send the next page back to the user
+//     if (config.personality == SPRINKLER_CONTROLLER)
+//     {
+//         if (!web.irrigation_test_enable)
+//         {    
+//             return "/z_relay.shtml";
+//         }
+//         else
+//         {
+//             return "/z_relay_test.shtml";
+//         }
+//     }
+//     else
+//     {
+//         return "/relay.shtml";
+//     }
+// }
 
 
 /*!
@@ -1701,274 +1661,274 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
     return "/network.shtml";
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_relay_test_stop_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    //TODO: proper intertask communication
-    snprintf(web.status_message, sizeof(web.status_message), "Irrigation test terminated");  
-    web.irrigation_test_enable = 0;
-    set_irrigation_relay_test_zone(-1);    
-    test_end_redirect = false;
-    xTaskNotifyGiveIndexed(worker_tasks[0].task_handle, 0);
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_test_stop_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     //TODO: proper intertask communication
+//     snprintf(web.status_message, sizeof(web.status_message), "Irrigation test terminated");  
+//     web.irrigation_test_enable = 0;
+//     set_irrigation_relay_test_zone(-1);    
+//     test_end_redirect = false;
+//     xTaskNotifyGiveIndexed(worker_tasks[0].task_handle, 0);
                
-    // Send the next page back to the user
-    if (config.personality == SPRINKLER_CONTROLLER)
-    {
-        if (!web.irrigation_test_enable)
-        {    
-            return "/index.shtml";
-        }
-        else
-        {
-            return "/z_relay_test.shtml";
-        }
-    }
-    else
-    {
-        return "/index.shtml";
-    }
-}
+//     // Send the next page back to the user
+//     if (config.personality == SPRINKLER_CONTROLLER)
+//     {
+//         if (!web.irrigation_test_enable)
+//         {    
+//             return "/index.shtml";
+//         }
+//         else
+//         {
+//             return "/z_relay_test.shtml";
+//         }
+//     }
+//     else
+//     {
+//         return "/index.shtml";
+//     }
+// }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_relay_test_start_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int zone = -1;
-    bool start_test = false;
-    char *next_page_url = "/index.shtml";
-    static int last_zone = -1;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_test_start_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int zone = -1;
+//     bool start_test = false;
+//     char *next_page_url = "/index.shtml";
+//     static int last_zone = -1;
 
-    if (iNumParams == 1)
-    {
-        // get zone parameter sent by browser
-        if (pcParam[0]!= NULL)
-        {
-            if (pcParam[0][0] == 'x')
-            {
-                zone = pcValue[0][0] - '0';
-                CLIP(zone, 0, config.zone_max);
-            }
-        }
+//     if (iNumParams == 1)
+//     {
+//         // get zone parameter sent by browser
+//         if (pcParam[0]!= NULL)
+//         {
+//             if (pcParam[0][0] == 'x')
+//             {
+//                 zone = pcValue[0][0] - '0';
+//                 CLIP(zone, 0, config.zone_max);
+//             }
+//         }
 
-        // check if we have a valid zone
-        if ((zone >=0) && (zone <config.zone_max))
-        {
-            // check if test in progress
-            if (web.irrigation_test_enable)
-            {
-                // check if test zone altered
-                if (zone != get_irrigation_relay_test_zone())
-                {
-                    snprintf(web.status_message, sizeof(web.status_message), "Changing irrigation test to Zone %d", zone+1);
-                    start_test = true; 
-                }
-                else
-                {
-                    // presume this is a browser page refresh during running test
-                    next_page_url = "/z_relay_test.shtml";
-                }
-            } 
-            else 
-            {
-                // check if a test just ended
-                if (test_end_redirect && (zone == last_zone))
-                {
-                    // redirect browser to main page to avoid refresh restarting the test
-                    test_end_redirect = false;
-                    printf("Redirecting to index due to test end.  zone = %d get_zone = %d\n", zone, get_irrigation_relay_test_zone());
-                }
-                else
-                {
-                    snprintf(web.status_message, sizeof(web.status_message), "Starting irrigation test for Zone %d", zone+1); 
-                    start_test = true; 
-                }
-            }
+//         // check if we have a valid zone
+//         if ((zone >=0) && (zone <config.zone_max))
+//         {
+//             // check if test in progress
+//             if (web.irrigation_test_enable)
+//             {
+//                 // check if test zone altered
+//                 if (zone != get_irrigation_relay_test_zone())
+//                 {
+//                     snprintf(web.status_message, sizeof(web.status_message), "Changing irrigation test to Zone %d", zone+1);
+//                     start_test = true; 
+//                 }
+//                 else
+//                 {
+//                     // presume this is a browser page refresh during running test
+//                     next_page_url = "/z_relay_test.shtml";
+//                 }
+//             } 
+//             else 
+//             {
+//                 // check if a test just ended
+//                 if (test_end_redirect && (zone == last_zone))
+//                 {
+//                     // redirect browser to main page to avoid refresh restarting the test
+//                     test_end_redirect = false;
+//                     printf("Redirecting to index due to test end.  zone = %d get_zone = %d\n", zone, get_irrigation_relay_test_zone());
+//                 }
+//                 else
+//                 {
+//                     snprintf(web.status_message, sizeof(web.status_message), "Starting irrigation test for Zone %d", zone+1); 
+//                     start_test = true; 
+//                 }
+//             }
 
-            // initiate irrigation test
-            if (start_test)
-            {
-                printf("%s\n", web.status_message);        
-                set_irrigation_relay_test_zone(zone);
-                web.irrigation_test_enable = 1;
-                test_end_redirect = true;
-                last_zone = zone;
+//             // initiate irrigation test
+//             if (start_test)
+//             {
+//                 printf("%s\n", web.status_message);        
+//                 set_irrigation_relay_test_zone(zone);
+//                 web.irrigation_test_enable = 1;
+//                 test_end_redirect = true;
+//                 last_zone = zone;
 
-                xTaskNotifyGiveIndexed(worker_tasks[0].task_handle, 0);
+//                 xTaskNotifyGiveIndexed(worker_tasks[0].task_handle, 0);
 
-                next_page_url = "/z_relay_test.shtml";
-            }
-        }
-    }
+//                 next_page_url = "/z_relay_test.shtml";
+//             }
+//         }
+//     }
 
-    return(next_page_url);
-}
+//     return(next_page_url);
+// }
 
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_led_pattern_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-    int new_pattern = -1;
-    static int pattern_type = -1;
-    bool pattern_set = false;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_led_pattern_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_pattern = -1;
+//     static int pattern_type = -1;
+//     bool pattern_set = false;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             printf("Parameter: %s has Value: %s\n", param, value);
 
-            if (strcasecmp("ledp", param) == 0)
-            {
-                new_pattern = pcValue[0][0] - '0'; 
-                CLIP(new_pattern, 0, 7);           
-            } 
+//             if (strcasecmp("ledp", param) == 0)
+//             {
+//                 new_pattern = pcValue[0][0] - '0'; 
+//                 CLIP(new_pattern, 0, 7);           
+//             } 
 
-            if (strcasecmp("p", param) == 0)
-            {
-                pattern_type = pcValue[0][0] - '0'; 
-                CLIP(pattern_type, -1, 3);           
-            }                                                                   
-        }
+//             if (strcasecmp("p", param) == 0)
+//             {
+//                 pattern_type = pcValue[0][0] - '0'; 
+//                 CLIP(pattern_type, -1, 3);           
+//             }                                                                   
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    if ((new_pattern >= 0) && (new_pattern < 8))
-    {
-        printf("got a valid new pattern\n");
+//     if ((new_pattern >= 0) && (new_pattern < 8))
+//     {
+//         printf("got a valid new pattern\n");
 
-        switch(pattern_type)
-        {
-        case 0:
-            printf("acitve pattern = %d\n", new_pattern);
-            config.led_pattern_when_irrigation_active = new_pattern;
-            pattern_set = true;
-            break;
-        case 1:
-            printf("skipped pattern = %d\n", new_pattern);
-            config.led_pattern_when_irrigation_terminated = new_pattern;
-            pattern_set = true;            
-            break;
-        case 2:
-            printf("default pattern = %d\n", new_pattern);
-            config.led_pattern = new_pattern;
-            pattern_set = true;            
-            break;
-        default:
-            printf("pattern type not established\n");
-            break;
-        }        
-    }
+//         switch(pattern_type)
+//         {
+//         case 0:
+//             printf("acitve pattern = %d\n", new_pattern);
+//             config.led_pattern_when_irrigation_active = new_pattern;
+//             pattern_set = true;
+//             break;
+//         case 1:
+//             printf("skipped pattern = %d\n", new_pattern);
+//             config.led_pattern_when_irrigation_terminated = new_pattern;
+//             pattern_set = true;            
+//             break;
+//         case 2:
+//             printf("default pattern = %d\n", new_pattern);
+//             config.led_pattern = new_pattern;
+//             pattern_set = true;            
+//             break;
+//         default:
+//             printf("pattern type not established\n");
+//             break;
+//         }        
+//     }
 
-    if (pattern_set)
-    {
-        pattern_type = -1;
-        config_changed();
-        return "/addressable_led.shtml";
-    }
-    else
-    {
-        return "/led_pattern.shtml";
-    }
-}
+//     if (pattern_set)
+//     {
+//         pattern_type = -1;
+//         config_changed();
+//         return "/addressable_led.shtml";
+//     }
+//     else
+//     {
+//         return "/led_pattern.shtml";
+//     }
+// }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_led_strip_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-
-
-    config.led_rgbw = 0;       
-
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
-
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
-
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value); 
-
-            if (strcasecmp("lpin", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_pin);             
-            }
-
-            if (strcasecmp("lrgbw", param) == 0)
-            {
-                if (value[0])
-                {
-                    config.led_rgbw = 1;
-                } 
-                else
-                {
-                    config.led_rgbw = 0;
-                }                             
-            }   
-
-            if (strcasecmp("lnum", param) == 0)
-            {
-                sscanf(value, "%d", &config.led_number);             
-            }                         
-        }
-
-        i++;
-    }
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_led_strip_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
 
 
-    // Send the next page back to the user
-    config_changed();
-    return "/led_strip.shtml";
-}
+//     config.led_rgbw = 0;       
+
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value); 
+
+//             if (strcasecmp("lpin", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_pin);             
+//             }
+
+//             if (strcasecmp("lrgbw", param) == 0)
+//             {
+//                 if (value[0])
+//                 {
+//                     config.led_rgbw = 1;
+//                 } 
+//                 else
+//                 {
+//                     config.led_rgbw = 0;
+//                 }                             
+//             }   
+
+//             if (strcasecmp("lnum", param) == 0)
+//             {
+//                 sscanf(value, "%d", &config.led_number);             
+//             }                         
+//         }
+
+//         i++;
+//     }
+
+
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/led_strip.shtml";
+// }
 
 /*!
  * \brief cgi handler
@@ -2046,111 +2006,111 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
     
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_periods_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-    int new_relay_normally_open = 0; 
-    int new_irrigation_test_enable = 0;      
-    int new_gpio = 0;
-    int period_number = -1;  
-    int setpoint_index = -1;
-    int new_zone_max = 0;
-    int len = 0;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_periods_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
        
-    dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            printf("Parameter: %s has Value: %s\n", param, value);  
+//         if (param && value)
+//         {
+//             printf("Parameter: %s has Value: %s\n", param, value);  
 
-            len = strlen(param);
-            if ((len > 4) && (param[len-1] == 't') && (param[len-2] == 's'))
-            { 
-                period_number = -1;
-                sscanf(param, "ts%dst", &period_number);
-                if ((period_number >= 1) && (period_number <= 12))
-                {
-                    // adjust to zero base
-                    period_number--;
+//             len = strlen(param);
+//             if ((len > 4) && (param[len-1] == 't') && (param[len-2] == 's'))
+//             { 
+//                 period_number = -1;
+//                 sscanf(param, "ts%dst", &period_number);
+//                 if ((period_number >= 1) && (period_number <= 12))
+//                 {
+//                     // adjust to zero base
+//                     period_number--;
 
-                    //sscanf(value, "%s", &config.setpoint_name[period_number]);
-                    config.setpoint_start_mow[period_number] = string_to_mow(value, 32);
+//                     //sscanf(value, "%s", &config.setpoint_name[period_number]);
+//                     config.setpoint_start_mow[period_number] = string_to_mow(value, 32);
 
-                }
-            } 
+//                 }
+//             } 
 
-            len = strlen(param);
-            if ((len > 4) && (param[len-1] == 'n') && (param[len-2] == 'e'))
-            { 
-                period_number = -1;
-                sscanf(param, "ts%den", &period_number);
-                if ((period_number >= 1) && (period_number <= 12))
-                {
-                    // adjust to zero base
-                    period_number--;
+//             len = strlen(param);
+//             if ((len > 4) && (param[len-1] == 'n') && (param[len-2] == 'e'))
+//             { 
+//                 period_number = -1;
+//                 sscanf(param, "ts%den", &period_number);
+//                 if ((period_number >= 1) && (period_number <= 12))
+//                 {
+//                     // adjust to zero base
+//                     period_number--;
 
-                    //sscanf(value, "%d", &config.setpoint_temperaturex10[period_number]); 
-                    //config.thermostat_period_end_mow[period_number] = string_to_mow(value, 32); 
-                    printf("CGI error - thermostat_period_end not longer supported\n");
-                } 
-            } 
-            len = strlen(param);
-            if ((len > 4) && (param[len-1] == 'n') && (param[len-2] == 'i'))
-            { 
-                period_number = -1;
-                sscanf(param, "ts%din", &period_number);
-                if ((period_number >= 1) && (period_number <= 12))
-                {
-                    // adjust to zero base
-                    period_number--;
+//                     //sscanf(value, "%d", &config.setpoint_temperaturex10[period_number]); 
+//                     //config.thermostat_period_end_mow[period_number] = string_to_mow(value, 32); 
+//                     printf("CGI error - thermostat_period_end not longer supported\n");
+//                 } 
+//             } 
+//             len = strlen(param);
+//             if ((len > 4) && (param[len-1] == 'n') && (param[len-2] == 'i'))
+//             { 
+//                 period_number = -1;
+//                 sscanf(param, "ts%din", &period_number);
+//                 if ((period_number >= 1) && (period_number <= 12))
+//                 {
+//                     // adjust to zero base
+//                     period_number--;
 
-                    //sscanf(value, "%d", &(config.thermostat_period_setpoint_index[period_number])); 
-                    printf("CGI error - thermostat_period_setpoint_index not longer supported\n"); 
-                }
-            }    
-            len = strlen(param);
-            if ((len > 4) && (param[len-1] == 'p') && (param[len-2] == 'm') && (param[len-2] == 't'))
-            { 
-                period_number = -1;
-                sscanf(param, "ts%dtmp", &period_number);
-                if ((period_number >= 0) && (period_number < NUM_ROWS(config.setpoint_temperaturex10)))
-                {
-                    // adjust to zero base
-                    period_number--;
+//                     //sscanf(value, "%d", &(config.thermostat_period_setpoint_index[period_number])); 
+//                     printf("CGI error - thermostat_period_setpoint_index not longer supported\n"); 
+//                 }
+//             }    
+//             len = strlen(param);
+//             if ((len > 4) && (param[len-1] == 'p') && (param[len-2] == 'm') && (param[len-2] == 't'))
+//             { 
+//                 period_number = -1;
+//                 sscanf(param, "ts%dtmp", &period_number);
+//                 if ((period_number >= 0) && (period_number < NUM_ROWS(config.setpoint_temperaturex10)))
+//                 {
+//                     // adjust to zero base
+//                     period_number--;
 
-                    sscanf(value, "%d", &(config.setpoint_temperaturex10[period_number])); 
-                    config.setpoint_temperaturex10[period_number] *=10; 
-                }
-            }                               
+//                     sscanf(value, "%d", &(config.setpoint_temperaturex10[period_number])); 
+//                     config.setpoint_temperaturex10[period_number] *=10; 
+//                 }
+//             }                               
 
-        }
-        i++;
-    }
+//         }
+//         i++;
+//     }
 
-    config_changed();
+//     config_changed();
 
-    // Send the next page back to the user
-    return "/ts_periods.shtml";
+//     // Send the next page back to the user
+//     return "/ts_periods.shtml";
     
-}
+// }
 
 /*!
  * \brief cgi handler
@@ -2182,7 +2142,7 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
     int new_zone_max = 0;
     int len = 0;
        
-    printf("Got request to change schedule\n");
+    //printf("Got request to change schedule\n");
 
     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
@@ -2194,7 +2154,7 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
 
         if (param && value)
         {
-            printf("Parameter: %s has Value: %s\n", param, value);  
+            //printf("Parameter: %s has Value: %s\n", param, value);  
 
             len = strlen(param);
             if ((len >= 1) && (param[0] == 'x'))
@@ -2457,7 +2417,7 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
        
 
 
-    printf("Got request to delete thermostat period. row = %d\n", web.thermostat_period_row);
+    //printf("Got request to delete thermostat period. row = %d\n", web.thermostat_period_row);
 
     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
@@ -2469,17 +2429,17 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
 
         if (param && value)
         {
-            printf("Parameter: %s has Value: %s\n", param, value);  
+            //printf("Parameter: %s has Value: %s\n", param, value);  
 
             len = strlen(param);
             if ((len >= 1) && (param[0] == 'x'))
             { 
                 sscanf(value, "%d", &(web.thermostat_period_row));
-                printf("Got request to delete thermostat period. row = %d\n", web.thermostat_period_row);
+                //printf("Got request to delete thermostat period. row = %d\n", web.thermostat_period_row);
                 CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));  
                 if ((web.thermostat_period_row >=0) && (web.thermostat_period_row < NUM_ROWS(config.setpoint_start_mow)))
                 {
-                    printf("Deleting row %d by setting mow to -1\n", web.thermostat_period_row);
+                    //printf("Deleting row %d by setting mow to -1\n", web.thermostat_period_row);
                     config.setpoint_start_mow[web.thermostat_period_row] = -1;
 
                     // update the schedule grid
@@ -2498,119 +2458,119 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
     
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_thermostat_period_add_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-    int new_relay_normally_open = 0; 
-    int new_irrigation_test_enable = 0;      
-    int new_gpio = 0;
-    int period_number = -1;  
-    int setpoint_index = -1;
-    int new_zone_max = 0;
-    int len = 0;
-    char *next_page = "/t_schedule.shtml";
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_thermostat_period_add_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
+//     char *next_page = "/t_schedule.shtml";
        
 
 
-    printf("Got request to add thermostat period. row = %d\n", web.thermostat_period_row);
+//     printf("Got request to add thermostat period. row = %d\n", web.thermostat_period_row);
 
-    dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    for(i=0; i < NUM_ROWS(config.setpoint_start_mow); i++)
-    {
-        if (config.setpoint_start_mow[i] < 0)  // TODO: should we use the setpoint valid function? slower
-        {
-            web.thermostat_period_row = i;
-            config.setpoint_start_mow[i] = web.thermostat_day*24*60;
-            if (config.use_archaic_units)
-            {
-                config.setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
-                config.setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
-                config.setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;                                
-            }
-            else
-            {
-                config.setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
-                config.setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
-                config.setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;                                
-            }
-            config.setpoint_mode[i] = HVAC_AUTO;
-            next_page = "/tp_edit.shtml";
-            break;
-        }
-    }
+//     for(i=0; i < NUM_ROWS(config.setpoint_start_mow); i++)
+//     {
+//         if (config.setpoint_start_mow[i] < 0)  // TODO: should we use the setpoint valid function? slower
+//         {
+//             web.thermostat_period_row = i;
+//             config.setpoint_start_mow[i] = web.thermostat_day*24*60;
+//             if (config.use_archaic_units)
+//             {
+//                 config.setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
+//                 config.setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
+//                 config.setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;                                
+//             }
+//             else
+//             {
+//                 config.setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
+//                 config.setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
+//                 config.setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;                                
+//             }
+//             config.setpoint_mode[i] = HVAC_AUTO;
+//             next_page = "/tp_edit.shtml";
+//             break;
+//         }
+//     }
 
-    // Send the next page back to the user
-    return(next_page);
+//     // Send the next page back to the user
+//     return(next_page);
     
-}
+// }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_thermostat_period_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-    int new_relay_normally_open = 0; 
-    int new_irrigation_test_enable = 0;      
-    int new_gpio = 0;
-    int period_number = -1;  
-    int setpoint_index = -1;
-    int new_zone_max = 0;
-    int len = 0;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_thermostat_period_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
        
 
 
-    printf("Got request to edit thermostat period. row = %d\n", web.thermostat_period_row);
+//     printf("Got request to edit thermostat period. row = %d\n", web.thermostat_period_row);
 
-    dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            printf("Parameter: %s has Value: %s\n", param, value);  
+//         if (param && value)
+//         {
+//             printf("Parameter: %s has Value: %s\n", param, value);  
 
-            len = strlen(param);
-            if ((len >= 1) && (param[0] == 'x'))
-            { 
-                sscanf(value, "%d", &(web.thermostat_period_row));
-                printf("Got request to edit thermostat period. row = %d\n", web.thermostat_period_row);
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));                
-            } 
-        }
-        i++;
-    }
+//             len = strlen(param);
+//             if ((len >= 1) && (param[0] == 'x'))
+//             { 
+//                 sscanf(value, "%d", &(web.thermostat_period_row));
+//                 printf("Got request to edit thermostat period. row = %d\n", web.thermostat_period_row);
+//                 CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));                
+//             } 
+//         }
+//         i++;
+//     }
 
-    // Send the next page back to the user
-    return "/tp_edit.shtml";
+//     // Send the next page back to the user
+//     return "/tp_edit.shtml";
     
-}
+// }
 
 /*!
  * \brief cgi handler
@@ -2637,7 +2597,7 @@ const char * cgi_thermostat_period_cancel_handler(int iIndex, int iNumParams, ch
        
 
 
-    printf("Got request to cancel editing thermostat period. row = %d\n", web.thermostat_period_row);
+    //printf("Got request to cancel editing thermostat period. row = %d\n", web.thermostat_period_row);
 
     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
@@ -2671,7 +2631,7 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
        
 
 
-    printf("Got request to display thermostat schedule. row = %d\n", web.thermostat_period_row);
+    //printf("Got request to display thermostat schedule. row = %d\n", web.thermostat_period_row);
 
     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
@@ -2683,7 +2643,7 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
 
         if (param && value)
         {
-            printf("Parameter: %s has Value: %s\n", param, value);    
+            //printf("Parameter: %s has Value: %s\n", param, value);    
 
             len = strlen(param);
             if ((len >= 3) && (param[0] == 'd') && (param[1] == 'a') && (param[2] == 'y'))
@@ -2700,96 +2660,96 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
     return "/t_schedule.shtml";    
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_powerwall_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL; 
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_powerwall_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL; 
 
-    // despicable but necessary as we only receive parameter when checked
-    config.weather_station_enable = 0;
+//     // despicable but necessary as we only receive parameter when checked
+//     config.weather_station_enable = 0;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
 
-            if (strcasecmp("pwip", param) == 0)
-            {
-                STRNCPY(config.powerwall_ip, value, sizeof(config.powerwall_ip));
-            }
+//             if (strcasecmp("pwip", param) == 0)
+//             {
+//                 STRNCPY(config.powerwall_ip, value, sizeof(config.powerwall_ip));
+//             }
 
-            if (strcasecmp("pwhost", param) == 0)
-            {
-                STRNCPY(config.powerwall_hostname, value, sizeof(config.powerwall_hostname));
-            }      
+//             if (strcasecmp("pwhost", param) == 0)
+//             {
+//                 STRNCPY(config.powerwall_hostname, value, sizeof(config.powerwall_hostname));
+//             }      
             
-            if (strcasecmp("pwpass", param) == 0)
-            {
-                if (strcasecmp(value, "********") != 0)
-                {
-                    STRNCPY(config.powerwall_password, value, sizeof(config.powerwall_password));
-                }
-            }              
+//             if (strcasecmp("pwpass", param) == 0)
+//             {
+//                 if (strcasecmp(value, "********") != 0)
+//                 {
+//                     STRNCPY(config.powerwall_password, value, sizeof(config.powerwall_password));
+//                 }
+//             }              
             
-            if (strcasecmp("pwgdhd", param) == 0)
-            {
-                config.grid_down_heating_setpoint_decrease = get_int_with_tenths_from_string(value);  
-                printf("CGI setting grid down heating setpoint decrease to %d\n", config.grid_down_heating_setpoint_decrease);
-            }
+//             if (strcasecmp("pwgdhd", param) == 0)
+//             {
+//                 config.grid_down_heating_setpoint_decrease = get_int_with_tenths_from_string(value);  
+//                 printf("CGI setting grid down heating setpoint decrease to %d\n", config.grid_down_heating_setpoint_decrease);
+//             }
 
-            if (strcasecmp("pwgdci", param) == 0)
-            {
-                config.grid_down_cooling_setpoint_increase = get_int_with_tenths_from_string(value);  
-            }
+//             if (strcasecmp("pwgdci", param) == 0)
+//             {
+//                 config.grid_down_cooling_setpoint_increase = get_int_with_tenths_from_string(value);  
+//             }
 
-            if (strcasecmp("pwblhd", param) == 0)
-            {
-                config.grid_down_heating_disable_battery_level = get_int_with_tenths_from_string(value);  
-            }
+//             if (strcasecmp("pwblhd", param) == 0)
+//             {
+//                 config.grid_down_heating_disable_battery_level = get_int_with_tenths_from_string(value);  
+//             }
 
-            if (strcasecmp("pwblhe", param) == 0)
-            {
-                config.grid_down_heating_enable_battery_level = get_int_with_tenths_from_string(value);  
-            } 
+//             if (strcasecmp("pwblhe", param) == 0)
+//             {
+//                 config.grid_down_heating_enable_battery_level = get_int_with_tenths_from_string(value);  
+//             } 
             
-            if (strcasecmp("pwblcd", param) == 0)
-            {
-                config.grid_down_cooling_disable_battery_level = get_int_with_tenths_from_string(value);  
-            }     
+//             if (strcasecmp("pwblcd", param) == 0)
+//             {
+//                 config.grid_down_cooling_disable_battery_level = get_int_with_tenths_from_string(value);  
+//             }     
 
-            if (strcasecmp("pwblce", param) == 0)
-            {
-                config.grid_down_cooling_enable_battery_level = get_int_with_tenths_from_string(value);  
-            }                                       
-        }
+//             if (strcasecmp("pwblce", param) == 0)
+//             {
+//                 config.grid_down_cooling_enable_battery_level = get_int_with_tenths_from_string(value);  
+//             }                                       
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    // Send the next page back to the user
-    config_changed();
+//     // Send the next page back to the user
+//     config_changed();
 
-    return "/powerwall.shtml";
-}
+//     return "/powerwall.shtml";
+// }
 
 
 /*!
@@ -2819,7 +2779,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
        
 
 
-    printf("Got request to copy thermostat schedule from day %sd\n", web.thermostat_day);
+    //printf("Got request to copy thermostat schedule from day %sd\n", web.thermostat_day);
 
     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
@@ -2831,7 +2791,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
         if (param && value)
         {
-            printf("Parameter: %s has Value: %s\n", param, value);    
+            //printf("Parameter: %s has Value: %s\n", param, value);    
 
             len = strlen(param);
             if ((len >= 3) && (param[0] == 'd') && (param[1] == 'a') && (param[2] == 'y'))
@@ -2846,7 +2806,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
                 sscanf(value, "%d", &(copy_destination));
                 CLIP(copy_destination, 0, 9);  
 
-                printf("copy destination is %d\n", copy_destination);
+                //printf("copy destination is %d\n", copy_destination);
                 copy_schedule(web.thermostat_day, copy_destination);
             }             
         }
@@ -2865,179 +2825,179 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 }
 
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_thermostat_gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-    int len = 0;
-    int temp = 0;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_thermostat_gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int len = 0;
+//     int temp = 0;
        
 
-    dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            printf("Parameter: %s has Value: %s\n", param, value);    
+//         if (param && value)
+//         {
+//             printf("Parameter: %s has Value: %s\n", param, value);    
 
-            len = strlen(param);
+//             len = strlen(param);
 
-            if (strcasecmp("thgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("thgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.heating_gpio = temp;
-                    }
-                }                
-            }     
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.heating_gpio = temp;
+//                     }
+//                 }                
+//             }     
             
-            if (strcasecmp("tcgpio", param) == 0)
-            { 
-                if (!strcasestr(value, "none"))
-                {                 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tcgpio", param) == 0)
+//             { 
+//                 if (!strcasestr(value, "none"))
+//                 {                 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.cooling_gpio = temp;
-                    } 
-                }               
-            }    
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.cooling_gpio = temp;
+//                     } 
+//                 }               
+//             }    
             
-            if (strcasecmp("tfgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tfgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.fan_gpio = temp;
-                    }    
-                }            
-            }  
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.fan_gpio = temp;
+//                     }    
+//                 }            
+//             }  
 
 
-            if (strcasecmp("tacgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tacgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.thermostat_temperature_sensor_clock_gpio = temp;
-                    }    
-                }            
-            } 
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.thermostat_temperature_sensor_clock_gpio = temp;
+//                     }    
+//                 }            
+//             } 
 
-            if (strcasecmp("tadgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tadgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.thermostat_temperature_sensor_data_gpio = temp;
-                    }    
-                }            
-            } 
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.thermostat_temperature_sensor_data_gpio = temp;
+//                     }    
+//                 }            
+//             } 
 
-            if (strcasecmp("tlcgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tlcgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.thermostat_seven_segment_display_clock_gpio = temp;
-                    }    
-                }            
-            } 
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.thermostat_seven_segment_display_clock_gpio = temp;
+//                     }    
+//                 }            
+//             } 
 
-            if (strcasecmp("tldgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tldgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.thermostat_seven_segment_display_data_gpio = temp;
-                    }    
-                }            
-            } 
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.thermostat_seven_segment_display_data_gpio = temp;
+//                     }    
+//                 }            
+//             } 
 
-            if (strcasecmp("tbugpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tbugpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.thermostat_increase_button_gpio = temp;
-                    }    
-                }            
-            } 
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.thermostat_increase_button_gpio = temp;
+//                     }    
+//                 }            
+//             } 
 
-            if (strcasecmp("tbdgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tbdgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.thermostat_decrease_button_gpio = temp;
-                    }    
-                }            
-            } 
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.thermostat_decrease_button_gpio = temp;
+//                     }    
+//                 }            
+//             } 
 
-            if (strcasecmp("tbmgpio", param) == 0)
-            {
-                if (!strcasestr(value, "none"))
-                { 
-                    sscanf(value, "%d", &temp);
+//             if (strcasecmp("tbmgpio", param) == 0)
+//             {
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &temp);
 
-                    if (gpio_valid(temp))
-                    {
-                        config.thermostat_mode_button_gpio = temp;
-                    }    
-                }            
-            }                       
-        }
-        i++;
-    }
+//                     if (gpio_valid(temp))
+//                     {
+//                         config.thermostat_mode_button_gpio = temp;
+//                     }    
+//                 }            
+//             }                       
+//         }
+//         i++;
+//     }
 
-    // write config changes to flash
-    config_changed();
+//     // write config changes to flash
+//     config_changed();
  
-    // Send the next page back to the user
-    return "/t_gpio.shtml";    
-}
+//     // Send the next page back to the user
+//     return "/t_gpio.shtml";    
+// }
 
 /*!
  * \brief cgi handler
@@ -3070,7 +3030,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 
         if (param && value)
         {
-            printf("Parameter: %s has Value: %s\n", param, value);    
+            //printf("Parameter: %s has Value: %s\n", param, value);    
 
             len = strlen(param);
 
@@ -3111,209 +3071,1000 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
     return "/gpio_defaults.shtml";    
 }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_temperature_sensors(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_temperature_sensors(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    // set off by default
-    config.led_strip_remote_enable  = 0; 
+//     // set off by default
+//     config.led_strip_remote_enable  = 0; 
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
-            if (strcasecmp("tsadr1", param) == 0)
-            {
-                STRNCPY(config.temperature_sensor_remote_ip[0], value, sizeof(config.temperature_sensor_remote_ip[0]));
-            }
-            if (strcasecmp("tsadr2", param) == 0)
-            {
-                STRNCPY(config.temperature_sensor_remote_ip[1], value, sizeof(config.temperature_sensor_remote_ip[1]));
-            }
-            if (strcasecmp("tsadr3", param) == 0)
-            {
-                STRNCPY(config.temperature_sensor_remote_ip[2], value, sizeof(config.temperature_sensor_remote_ip[2]));
-            }
-            if (strcasecmp("tsadr4", param) == 0)
-            {
-                STRNCPY(config.temperature_sensor_remote_ip[3], value, sizeof(config.temperature_sensor_remote_ip[3]));
-            }
-            if (strcasecmp("tsadr5", param) == 0)
-            {
-                STRNCPY(config.temperature_sensor_remote_ip[4], value, sizeof(config.temperature_sensor_remote_ip[4]));
-            }
-            if (strcasecmp("tsadr6", param) == 0)
-            {
-                STRNCPY(config.temperature_sensor_remote_ip[5], value, sizeof(config.temperature_sensor_remote_ip[5]));
-            }
-        }
+//             if (strcasecmp("tsadr1", param) == 0)
+//             {
+//                 STRNCPY(config.temperature_sensor_remote_ip[0], value, sizeof(config.temperature_sensor_remote_ip[0]));
+//             }
+//             if (strcasecmp("tsadr2", param) == 0)
+//             {
+//                 STRNCPY(config.temperature_sensor_remote_ip[1], value, sizeof(config.temperature_sensor_remote_ip[1]));
+//             }
+//             if (strcasecmp("tsadr3", param) == 0)
+//             {
+//                 STRNCPY(config.temperature_sensor_remote_ip[2], value, sizeof(config.temperature_sensor_remote_ip[2]));
+//             }
+//             if (strcasecmp("tsadr4", param) == 0)
+//             {
+//                 STRNCPY(config.temperature_sensor_remote_ip[3], value, sizeof(config.temperature_sensor_remote_ip[3]));
+//             }
+//             if (strcasecmp("tsadr5", param) == 0)
+//             {
+//                 STRNCPY(config.temperature_sensor_remote_ip[4], value, sizeof(config.temperature_sensor_remote_ip[4]));
+//             }
+//             if (strcasecmp("tsadr6", param) == 0)
+//             {
+//                 STRNCPY(config.temperature_sensor_remote_ip[5], value, sizeof(config.temperature_sensor_remote_ip[5]));
+//             }
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    // Send the next page back to the user
-    config_changed();
-    return "/t_sensors.shtml";
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/t_sensors.shtml";
+// }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-const char * cgi_advanced_settings(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
-{
-    int i = 0;
-    char *param = NULL;
-    char *value = NULL;
-    int setting = 0;
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_advanced_settings(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int setting = 0;
        
-    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    i = 0;
-    while (i < iNumParams)
-    {
-        param = pcParam[i];
-        value = pcValue[i];
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
 
-        if (param && value)
-        {
-            //printf("Parameter: %s has Value: %s\n", param, value);
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);
 
-            if (strcasecmp("htclm", param) == 0)
-            {
-                sscanf(value, "%d", &setting);
-                CLIP(setting, 1, 60);
-                config.heating_to_cooling_lockout_mins = setting;
-            }
-            if (strcasecmp("mhonm", param) == 0)
-            {
-                sscanf(value, "%d", &setting);
-                CLIP(setting, 1, 60);
-                config.minimum_heating_on_mins = setting;
-            }
-            if (strcasecmp("mconm", param) == 0)
-            {
-                sscanf(value, "%d", &setting);
-                CLIP(setting, 1, 60);
-                config.minimum_cooling_on_mins = setting;
-            }
-            if (strcasecmp("mhoffm", param) == 0)
-            {
-                sscanf(value, "%d", &setting);
-                CLIP(setting, 1, 60);
-                config.minimum_heating_off_mins = setting;
-            }
-            if (strcasecmp("mcoffm", param) == 0)
-            {
-                sscanf(value, "%d", &setting);
-                CLIP(setting, 1, 60);
-                config.minimum_cooling_off_mins = setting;
-            }
-            if (strcasecmp("hvachys", param) == 0)
-            {
-                setting = get_int_with_tenths_from_string(value); 
-                CLIP(setting, 10, 100);
-                config.thermostat_hysteresis = setting; 
-            }
-            if (strcasecmp("disbri", param) == 0)
-            {
-                sscanf(value, "%d", &setting);
-                CLIP(setting, 0, 7);
-                config.thermostat_display_brightness = setting; 
-            }  
-            if (strcasecmp("disdig", param) == 0)
-            {
-                sscanf(value, "%d", &setting);
-                CLIP(setting, 0, 6);
-                config.thermostat_display_num_digits = setting; 
-            }                       
-        }
+//             if (strcasecmp("htclm", param) == 0)
+//             {
+//                 sscanf(value, "%d", &setting);
+//                 CLIP(setting, 1, 60);
+//                 config.heating_to_cooling_lockout_mins = setting;
+//             }
+//             if (strcasecmp("mhonm", param) == 0)
+//             {
+//                 sscanf(value, "%d", &setting);
+//                 CLIP(setting, 1, 60);
+//                 config.minimum_heating_on_mins = setting;
+//             }
+//             if (strcasecmp("mconm", param) == 0)
+//             {
+//                 sscanf(value, "%d", &setting);
+//                 CLIP(setting, 1, 60);
+//                 config.minimum_cooling_on_mins = setting;
+//             }
+//             if (strcasecmp("mhoffm", param) == 0)
+//             {
+//                 sscanf(value, "%d", &setting);
+//                 CLIP(setting, 1, 60);
+//                 config.minimum_heating_off_mins = setting;
+//             }
+//             if (strcasecmp("mcoffm", param) == 0)
+//             {
+//                 sscanf(value, "%d", &setting);
+//                 CLIP(setting, 1, 60);
+//                 config.minimum_cooling_off_mins = setting;
+//             }
+//             if (strcasecmp("hvachys", param) == 0)
+//             {
+//                 setting = get_int_with_tenths_from_string(value); 
+//                 CLIP(setting, 10, 100);
+//                 config.thermostat_hysteresis = setting; 
+//             }
+//             if (strcasecmp("disbri", param) == 0)
+//             {
+//                 sscanf(value, "%d", &setting);
+//                 CLIP(setting, 0, 7);
+//                 config.thermostat_display_brightness = setting; 
+//             }  
+//             if (strcasecmp("disdig", param) == 0)
+//             {
+//                 sscanf(value, "%d", &setting);
+//                 CLIP(setting, 0, 6);
+//                 config.thermostat_display_num_digits = setting; 
+//             }                       
+//         }
 
-        i++;
-    }
+//         i++;
+//     }
 
-    // Send the next page back to the user
-    config_changed();
-    return "/t_advanced.shtml";
-}
+//     // Send the next page back to the user
+//     config_changed();
+//     return "/t_advanced.shtml";
+// }
  
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_remote_switch_relay_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int relay_num = -1;  
+//     int new_zone_max = 0;
+//     char value_string[32];
+       
+//     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+ 
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);  
+
+
+//             sscanf(param, "rsrly%d", &relay_num);
+//             if ((relay_num >= 1) && (relay_num <= 8))  //TODO: fix condition on sprinkler controller should be <= 8
+//             {
+//                 // adjust to zero base
+//                 relay_num--;
+
+//                 sscanf(value, "%s", &value_string);  
+
+//                 //printf("Got relay_default[%d] = %s\n", relay_num, value_string);
+
+//                 if (strcasecmp("ON", value_string) == 0)
+//                 {
+//                     config.rmtsw_relay_default_state[relay_num] = true;
+//                     web.rmtsw_relay_desired_state[relay_num] = true;
+//                 }
+//                 else
+//                 {
+//                     config.rmtsw_relay_default_state[relay_num] = false;
+//                     web.rmtsw_relay_desired_state[relay_num] = false;
+//                 }
+//             }   
+//         }
+//         i++;
+//     }
+
+//     // tell rmtsw_task that a relay state change might have occured
+//     rmtsw_queue_send((uint8_t)relay_num);
+
+//     // tell mqtt_task that a relay state change might have occured
+//     mqtt_relay_refresh();
+
+//     config_changed();
+
+
+//     return "/rs_relay_default.shtml";
+    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_rs_gpio_max_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_zone_max = 0;
+       
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+ 
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);  
+
+//             if (strcasecmp("rsmax", param) == 0)
+//             {
+//                 sscanf(value, "%d", &new_zone_max);
+                
+//                 if ((new_zone_max > 0) && (new_zone_max <= 8))
+//                 {
+//                     config.rmtsw_relay_max = new_zone_max;
+//                 }                           
+//             }              
+//         }
+//         i++;
+//     }   
+
+//     config_changed();
+
+//     return "/rs_gpio.shtml";
+    
+// }
+
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_rs_gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int gpio_zone = -1;  
+//     int new_zone_max = 0;
+//     bool new_normally_closed[8] = {false, false, false, false, false, false, false, false};
+       
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+ 
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value); 
+            
+//             gpio_zone = -1; 
+//             sscanf(param, "rs%dgpio", &gpio_zone);
+//             if ((gpio_zone >= 1) && (gpio_zone <= 8))
+//             {
+//                 // adjust to zero base
+//                 gpio_zone--;
+
+//                 if (!strcasestr(value, "none"))
+//                 { 
+//                     sscanf(value, "%d", &config.rmtsw_relay_gpio[gpio_zone]);
+//                 }
+//             }   
+
+//             gpio_zone = -1;
+//             sscanf(param, "rsnc%d", &gpio_zone);
+//             if ((gpio_zone >= 1) && (gpio_zone <= 8))
+//             {
+//                 // adjust to zero base
+//                 gpio_zone--;
+
+//                 new_normally_closed[gpio_zone] = true;  
+
+//                 //printf("hit %d with param %s\n", gpio_zone, param);
+//             }              
+//         }
+//         i++;
+//     }   
+
+//     // copy new normally closed states to config
+//     for (i=0; i<config.rmtsw_relay_max; i++)
+//     {
+//         config.rmtsw_relay_normally_closed[i] = new_normally_closed[i];
+//         //printf("set relay[%d] normally closed to %d\n", i, config.rmtsw_relay_normally_closed[i]);
+//     }
+
+//     config_changed();
+
+//     return "/rs_gpio.shtml";
+    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_rs_names_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int gpio_zone = -1;  
+//     int new_zone_max = 0;
+//     char decoded_string[32];
+       
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+ 
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);  
+//             sscanf(param, "rs%dnme", &gpio_zone);
+//             if ((gpio_zone >= 1) && (gpio_zone <= 8))
+//             {
+//                 // adjust to zero base
+//                 gpio_zone--;
+                
+//                 // copy value to temporary buffer for decoding
+//                 STRNCPY(decoded_string, value, sizeof(decoded_string));
+
+//                 // in-place decode the url
+//                 urldecode(decoded_string, decoded_string);
+
+//                 // copy decoded value to configuration
+//                 STRNCPY(config.rmtsw_relay_name[gpio_zone], decoded_string, sizeof(config.rmtsw_relay_name[gpio_zone]));
+//             }             
+//         }
+//         i++;
+//     }   
+
+//     config_changed();
+
+//     return "/rs_names.shtml";
+    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_schedule_change_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     int j = 0;
+//     int key_mow = 0;
+//     int key_action_on = 0;
+//     int key_action_off = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
+//     int relay_number = 0;
+//     char action_number;  // 0 = do nothing, 1 = off, 2 = on
+       
+//     //printf("Got request to change relay schedule.  row initially = %d\n", web.rmtsw_relay_period_row);
+
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+ 
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);  
+
+//             len = strlen(param);
+//             if ((len >= 1) && (param[0] == 'x'))
+//             { 
+//                 sscanf(value, "%d", &(web.rmtsw_relay_period_row));
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));  
+
+//                 //printf("Parameter x used to set web.rmtsw_relay_period_row = %d\n", web.rmtsw_relay_period_row);
+//             } 
+
+//             // rsst -- relay start mow
+//             len = strlen(param);
+//             if ((len >= 4) && (param[0] == 'r') && (param[1] == 's') && (param[2] == 's') && (param[3] == 't'))
+//             {
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow)); 
+//                 config.rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row] = time_string_to_mow(value, 32, web.rmtsw_relay_day);
+//             } 
+
+//             //rsarx -- action for relay X 
+//             len = strlen(param);
+//             if ((len >= 5) && (param[0] == 'r') && (param[1] == 's') && (param[2] == 'a') && (param[3] == 'r') && (isdigit(param[4])))
+//             {
+//                 // extract relay number
+//                 relay_number = param[4] - '0';
+//                 CLIP(relay_number, 1, 8); // one based in html
+//                 relay_number--;           // shift to zero based
+
+//                 // ensure row is valid
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));
+
+//                 // get action number
+//                 sscanf(value, "%d", &action_number);
+//                 CLIP(action_number, 0, NUM_RMSW_ACTIONS-1);
+
+//                 //printf("Setting row = %d bit = %d ", web.rmtsw_relay_period_row, relay_number);
+//                 switch(action_number)
+//                 {
+//                 default:
+//                 case RMSW_ACTION_DO_NOTHING:
+//                     config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] &= ~(1<<relay_number);
+//                     config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] &= ~(1<<relay_number); 
+//                     //printf("DO NOTHING ON=%08b OFF=%08b\n", config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row], config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row]);
+//                     break;
+//                 case RMSW_ACTION_OFF:
+//                     config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] |= (1<<relay_number);
+//                     config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] &= ~(1<<relay_number);
+//                     //printf("TURN OFF OFF=%08b\n", config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row]); 
+//                     break;
+//                 case RMSW_ACTION_ON:
+//                     config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] |= (1<<relay_number);
+//                     config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] &= ~(1<<relay_number); 
+//                     //printf("TURN ON ON=%08b\n", config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row]);
+//                     break;                                        
+//                 }
+
+                
+//             } 
+             
+//             // day
+//             len = strlen(param);
+//             if ((len >= 3) && (param[0] == 'd') && (param[1] == 'a') && (param[2] == 'y'))
+//             { 
+//                 sscanf(value, "%d", &(web.rmtsw_relay_day));
+//                 CLIP(web.rmtsw_relay_day, 0, 6);  
+//             } 
+//         }
+//         i++;
+//     }
+
+//     // check for duplicates and remove
+//     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));
+//     for(i=0; i<NUM_ROWS(config.rmtsw_relay_schedule_start_mow); i++)
+//     {
+//         if ((i != web.rmtsw_relay_period_row) &&
+//             (config.rmtsw_relay_schedule_start_mow[i] >= 0) &&
+//             (config.rmtsw_relay_schedule_start_mow[i] == config.rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row]))
+//         {
+//             printf("Duplicate relay period deleted\n");
+//             config.rmtsw_relay_schedule_start_mow[i] = -1;
+//         }
+//     }    
+
+//     // sort the schedule into ascending order by mow
+//     for(i=1; i<NUM_ROWS(config.rmtsw_relay_schedule_start_mow); i++)
+//     {
+//         key_mow = config.rmtsw_relay_schedule_start_mow[i];
+//         key_action_on = config.rmtsw_relay_schedule_action_on[i];  
+//         key_action_off = config.rmtsw_relay_schedule_action_off[i]; 
+
+//         j = i - 1;
+
+//         while ((j >= 0) && (config.rmtsw_relay_schedule_start_mow[j] > key_mow))
+//         {
+//             config.rmtsw_relay_schedule_start_mow[j+1] = config.rmtsw_relay_schedule_start_mow[j];
+//             config.rmtsw_relay_schedule_action_on[j+1] = config.rmtsw_relay_schedule_action_on[j]; 
+//             config.rmtsw_relay_schedule_action_off[j+1] = config.rmtsw_relay_schedule_action_off[j];           
+//             j = j - 1;
+//         }
+
+//         config.rmtsw_relay_schedule_start_mow[j+1] = key_mow;
+//         config.rmtsw_relay_schedule_action_on[j+1] = key_action_on; 
+//         config.rmtsw_relay_schedule_action_off[j+1] = key_action_off; 
+            
+//     }
+
+//     // write config changes to flash
+//     config_changed();
+
+//     // Send the next page back to the user
+//     return "/rs_schedule.shtml";
+    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_period_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
+       
+
+
+//     //printf("Got request to edit relay period. initially row = %d\n", web.rmtsw_relay_period_row);
+
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+ 
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);  
+
+//             len = strlen(param);
+//             if ((len >= 1) && (param[0] == 'x'))
+//             { 
+//                 sscanf(value, "%d", &(web.rmtsw_relay_period_row));
+//                 //printf("Got request to edit relay period. row = %d\n", web.rmtsw_relay_period_row);
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));                
+//             } 
+//         }
+//         i++;
+//     }
+
+//     // Send the next page back to the user
+//     return "/rs_edit.shtml";
+    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_period_delete_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
+       
+
+
+//     //printf("Got request to delete relay period. row = %d\n", web.rmtsw_relay_period_row);
+
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+ 
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);  
+
+//             len = strlen(param);
+//             if ((len >= 1) && (param[0] == 'x'))
+//             { 
+//                 sscanf(value, "%d", &(web.rmtsw_relay_period_row));
+//                 //printf("Got request to delete relay period. row = %d\n", web.rmtsw_relay_period_row);
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));  
+//                 if ((web.rmtsw_relay_period_row >=0) && (web.rmtsw_relay_period_row < NUM_ROWS(config.rmtsw_relay_schedule_start_mow)))
+//                 {
+//                     //printf("Deleting row %d by setting mow to -1\n", web.rmtsw_relay_period_row);
+//                     config.rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row] = -1;
+
+//                     // TEST TEST TEST
+//                     rmtsw_sort_schedule();
+
+//                     // update the schedule grid
+//                     //rmtsw_make_schedule_grid();  TODO do we need a grid view?
+
+//                     // write config changes to flash
+//                     config_changed();
+//                 }                
+//             } 
+//         }
+//         i++;
+//     }
+
+//     // Send the next page back to the user
+//     return "/rs_schedule.shtml";
+    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_period_add_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
+//     char *next_page = "/rs_schedule.shtml";
+       
+
+
+//     //printf("Got request to add relay period. initially row = %d\n", web.rmtsw_relay_period_row);
+
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+//     for(i=0; i < NUM_ROWS(config.rmtsw_relay_schedule_start_mow); i++)
+//     {
+//         if (config.rmtsw_relay_schedule_start_mow[i] < 0)
+//         {
+//             web.rmtsw_relay_period_row = i;
+//             config.rmtsw_relay_schedule_start_mow[i] = web.rmtsw_relay_day*24*60;
+//             config.rmtsw_relay_schedule_action_off[i] = 0;
+//             config.rmtsw_relay_schedule_action_on[i] = 0; 
+
+//             //printf("Found empty row for add.  row = %d\n", web.rmtsw_relay_period_row);
+
+//             next_page = "/rs_edit.shtml";
+//             break;
+//         }
+//     }
+
+//     // Send the next page back to the user
+//     return(next_page);
+    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
+       
+
+
+//     //printf("Got request to display relay schedule. row = %d\n", web.rmtsw_relay_period_row);
+
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);    
+
+//             len = strlen(param);
+//             if ((len >= 3) && (param[0] == 'd') && (param[1] == 'a') && (param[2] == 'y'))
+//             { 
+//                 sscanf(value, "%d", &(web.rmtsw_relay_day));
+//                 CLIP(web.rmtsw_relay_day, 0, 6);  
+//             } 
+//         }
+//         i++;
+//     }
+
+ 
+//     // Send the next page back to the user
+//     return "/rs_schedule.shtml";    
+// }
+
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_relay_copy_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// {
+//     int i = 0;
+//     char *param = NULL;
+//     char *value = NULL;
+//     int new_relay_normally_open = 0; 
+//     int new_irrigation_test_enable = 0;      
+//     int new_gpio = 0;
+//     int period_number = -1;  
+//     int setpoint_index = -1;
+//     int new_zone_max = 0;
+//     int len = 0;
+//     int copy_destination;
+       
+
+
+//     //printf("Got request to copy relay schedule from day %sd\n", web.rmtsw_relay_day);
+
+//     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+//     i = 0;
+//     while (i < iNumParams)
+//     {
+//         param = pcParam[i];
+//         value = pcValue[i];
+
+//         if (param && value)
+//         {
+//             //printf("Parameter: %s has Value: %s\n", param, value);    
+
+//             len = strlen(param);
+//             if ((len >= 3) && (param[0] == 'd') && (param[1] == 'a') && (param[2] == 'y'))
+//             { 
+//                 sscanf(value, "%d", &(web.rmtsw_relay_day));
+//                 CLIP(web.rmtsw_relay_day, 0, 6);  
+//             } 
+
+//             len = strlen(param);
+//             if (strcasecmp("rscpy", param) == 0)
+//             { 
+//                 sscanf(value, "%d", &(copy_destination));
+//                 CLIP(copy_destination, 0, 9);  
+
+//                 //printf("copy destination is %d\n", copy_destination);
+//                 rmtsw_copy_schedule(web.rmtsw_relay_day, copy_destination);
+//             }             
+//         }
+//         i++;
+//     }
+
+//     // TEST TEST TEST
+//     rmtsw_sort_schedule();
+
+//     // update the schedule grid
+//     //make_schedule_grid();   //TODO do we need grid?
+
+//     // write config changes to flash
+//     config_changed();
+ 
+//     // Send the next page back to the user
+//     return "/rs_schedule.shtml";    
+// }
+
+/*!
+ * \brief cgi handler
+ *
+ * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+ * \param[in]  iNumParams   number of parameters
+ * \param[in]  pcParam      parameter name
+ * \param[in]  pcValue      parameter value 
+ * 
+ * \return nothing
+ */
+const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+{
+    int i = 0;
+    //int whole_part = 0;
+    //int tenths_part = 0;
+    char *param = NULL;
+    char *value = NULL;
+    //int new_value = 0;
+       
+    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+    i = 0;
+    while (i < iNumParams)
+    {
+        param = pcParam[i];
+        value = pcValue[i];
+
+        if (param && value)
+        {
+            //printf("Parameter: %s has Value: %s\n", param, value);
+            
+            if (strcasecmp("mquser", param) == 0)
+            {
+                STRNCPY(config.mqtt_user, value, sizeof(config.mqtt_user));
+            }
+
+            if (strcasecmp("mqpass", param) == 0)
+            {
+                if (strcasecmp(value, "********") != 0)
+                {
+                    STRNCPY(config.mqtt_password, value, sizeof(config.mqtt_password));
+                }
+            }   
+
+            if (strcasecmp("mqaddr", param) == 0)
+            {
+                STRNCPY(config.mqtt_broker_address, value, sizeof(config.mqtt_broker_address));
+            }            
+        }
+
+        i++;
+    }
+
+
+    // Send the next page back to the user
+    config_changed();
+    return "/mqtt.shtml";
+}
 
 // CGI requests and their respective handlers  --Add new entires at bottom--
 static const tCGI cgi_handlers[] = {
-    {"/schedule.cgi",                   cgi_schedule_handler},
-    {"/sunday.cgi",                     cgi_weekday_handler},   //-START- days of week must be consecutive AND start at index 1
-    {"/monday.cgi",                     cgi_weekday_handler},
-    {"/tuesday.cgi",                    cgi_weekday_handler},
-    {"/wednesday.cgi",                  cgi_weekday_handler},
-    {"/thursday.cgi",                   cgi_weekday_handler},
-    {"/friday.cgi",                     cgi_weekday_handler},
-    {"/saturday.cgi",                   cgi_weekday_handler},   //-END- days of week must be consecutive 
-    {"/durinc.cgi",                     cgi_inc_duration_handler}, 
-    {"/durdec.cgi",                     cgi_dec_duration_handler},    
-    {"/hrinc.cgi",                      cgi_inc_hour_handler}, 
-    {"/mininc.cgi",                     cgi_inc_minute_handler},  
-    {"/hrdec.cgi",                      cgi_dec_hour_handler}, 
-    {"/mindec.cgi",                     cgi_dec_minute_handler}, 
-    {"/time.cgi",                       cgi_time_handler},      
-    {"/ecowitt.cgi",                    cgi_ecowitt_handler},   
-    {"/network.cgi",                    cgi_network_handler},    
-    {"/reboot.cgi",                     cgi_reboot_handler},    
-    {"/aled.cgi",                       cgi_led_handler},   
-    {"/psched.cgi",                     cgi_portrait_schedule_handler},     
-    {"/dsched.cgi",                     cgi_day_schedule_handler},   
-    {"/mood.cgi",                       cgi_mood_handler},       
+
+    // *** system handlers start ***
+    {"/gpio_default.cgi",               cgi_gpio_default_handler}, 
+    {"/wificountry.cgi",                cgi_wificountry_handler},      
+    {"/network.cgi",                    cgi_network_handler}, 
+    {"/reboot.cgi",                     cgi_reboot_handler},              
+    {"/time.cgi",                       cgi_time_handler},
     {"/syslog.cgi",                     cgi_syslog_handler}, 
+    {"/mqtt.cgi",                       cgi_mqtt_handler},    
     {"/units.cgi",                      cgi_units_handler},   
-    {"/swload.cgi",                     cgi_software_load_handler},     
-    {"/remote_led_strips.cgi",          cgi_remote_led_strips},  
-    {"/personality.cgi",                cgi_personality_handler},   
-    {"/relay.cgi",                      cgi_relay_handler}, 
-    {"/wificountry.cgi",                cgi_wificountry_handler}, 
-    {"/relay_test_stop.cgi",            cgi_relay_test_stop_handler}, 
-    {"/relay_test_start.cgi",           cgi_relay_test_start_handler},     
-    {"/led_pattern.cgi",                cgi_led_pattern_handler},   
-    {"/led_strip.cgi",                  cgi_led_strip_handler},  
-    {"/setpoints.cgi",                  cgi_setpoints_handler},      
-    {"/periods.cgi",                    cgi_periods_handler},      
-    {"/ts_change.cgi",                  cgi_thermostat_schedule_change_handler},   
-    {"/tp_delete.cgi",                  cgi_thermostat_period_delete_handler},    
-    {"/tp_add.cgi",                     cgi_thermostat_period_add_handler}, 
-    {"/tp_edit.cgi",                    cgi_thermostat_period_edit_handler},   
-    {"/tp_cancel.cgi",                  cgi_thermostat_period_cancel_handler},    
-    {"/t_schedule.cgi",                 cgi_thermostat_schedule_handler}, 
-    {"/powerwall.cgi",                  cgi_powerwall_handler},   
-    {"/t_copy.cgi",                     cgi_thermostat_copy_handler},
-    {"/t_gpio.cgi",                     cgi_thermostat_gpio_handler},   
-    {"/gpio_default.cgi",               cgi_gpio_default_handler},  
-    {"/t_sensors.cgi",                  cgi_temperature_sensors},
-    {"/t_advanced.cgi",                 cgi_advanced_settings},       
-     
+    {"/swload.cgi",                     cgi_software_load_handler},
+    {"/personality.cgi",                cgi_personality_handler},                 
+    // *** system handlers end ***
+
+    // *** application handlers start ***   
+    // {"/rs_default.cgi",                 cgi_remote_switch_relay_handler},     
+    // {"/rs_gpio_max.cgi",                cgi_rs_gpio_max_handler},   
+    // {"/rs_gpio.cgi",                    cgi_rs_gpio_handler},      
+    // {"/rs_names.cgi",                   cgi_rs_names_handler}, 
+    // {"/rs_change.cgi",                  cgi_relay_schedule_change_handler}, 
+    // {"/rs_edit.cgi",                    cgi_relay_period_edit_handler}, 
+    // {"/rs_delete.cgi",                  cgi_relay_period_delete_handler}, 
+    // {"/rs_add.cgi",                     cgi_relay_period_add_handler},   
+    // {"/rs_schedule.cgi",                cgi_relay_schedule_handler}, 
+    // {"/rs_copy.cgi",                    cgi_relay_copy_handler},  
+       
+    // *** application handlers end ***  
+
+    // TODO:  For removal -- useful context for partitioning other applications
+
+    // {"/schedule.cgi",                   cgi_schedule_handler},
+    // {"/sunday.cgi",                     cgi_weekday_handler},   //-START- days of week must be consecutive AND start at index 1
+    // {"/monday.cgi",                     cgi_weekday_handler},
+    // {"/tuesday.cgi",                    cgi_weekday_handler},
+    // {"/wednesday.cgi",                  cgi_weekday_handler},
+    // {"/thursday.cgi",                   cgi_weekday_handler},
+    // {"/friday.cgi",                     cgi_weekday_handler},
+    // {"/saturday.cgi",                   cgi_weekday_handler},   //-END- days of week must be consecutive 
+    // {"/durinc.cgi",                     cgi_inc_duration_handler}, 
+    // {"/durdec.cgi",                     cgi_dec_duration_handler},    
+    // {"/hrinc.cgi",                      cgi_inc_hour_handler}, 
+    // {"/mininc.cgi",                     cgi_inc_minute_handler},  
+    // {"/hrdec.cgi",                      cgi_dec_hour_handler}, 
+    // {"/mindec.cgi",                     cgi_dec_minute_handler},  
+    // {"/ecowitt.cgi",                    cgi_ecowitt_handler},   
+    // {"/aled.cgi",                       cgi_led_handler},   
+    // {"/psched.cgi",                     cgi_portrait_schedule_handler},     
+    // {"/dsched.cgi",                     cgi_day_schedule_handler},   
+    // {"/mood.cgi",                       cgi_mood_handler},       
+    // {"/remote_led_strips.cgi",          cgi_remote_led_strips},  
+    // {"/relay.cgi",                      cgi_relay_handler}, 
+    // {"/relay_test_stop.cgi",            cgi_relay_test_stop_handler}, 
+    // {"/relay_test_start.cgi",           cgi_relay_test_start_handler},     
+    // {"/led_pattern.cgi",                cgi_led_pattern_handler},   
+    // {"/led_strip.cgi",                  cgi_led_strip_handler},  
+    // {"/setpoints.cgi",                  cgi_setpoints_handler},      
+    // {"/periods.cgi",                    cgi_periods_handler},      
+    // {"/ts_change.cgi",                  cgi_thermostat_schedule_change_handler},   
+    // {"/tp_delete.cgi",                  cgi_thermostat_period_delete_handler},    
+    // {"/tp_add.cgi",                     cgi_thermostat_period_add_handler}, 
+    // {"/tp_edit.cgi",                    cgi_thermostat_period_edit_handler},   
+    // {"/tp_cancel.cgi",                  cgi_thermostat_period_cancel_handler},    
+    // {"/t_schedule.cgi",                 cgi_thermostat_schedule_handler}, 
+    // {"/powerwall.cgi",                  cgi_powerwall_handler},   
+    // {"/t_copy.cgi",                     cgi_thermostat_copy_handler},
+    // {"/t_gpio.cgi",                     cgi_thermostat_gpio_handler},    
+    // {"/t_sensors.cgi",                  cgi_temperature_sensors},
+    // {"/t_advanced.cgi",                 cgi_advanced_settings},                            
 };
 
 /*!

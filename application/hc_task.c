@@ -10,7 +10,7 @@
 
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
-#include "generated/ws2812.pio.h"
+// #include "generated/ws2812.pio.h"
 
 // TODO - prune this list of includes
 #include "pico/cyw43_arch.h"
@@ -42,7 +42,7 @@
 
 #include "stdarg.h"
 
-#include "weather.h"
+// #include "weather.h"
 #include "cgi.h"
 #include "ssi.h"
 #include "flash.h"
@@ -50,11 +50,11 @@
 #include "config.h"
 #include "watchdog.h"
 #include "pluto.h"
-#include "led_strip.h"
+// #include "led_strip.h"
 #include "udp.h"
-#include "message.h"
-#include "message_defs.h"
-#include "powerwall.h"
+// #include "message.h"
+// #include "message_defs.h"
+// #include "powerwall.h"
 #include "shelly.h"
 #include "hc_task.h"
 

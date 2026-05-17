@@ -1,7 +1,12 @@
 #ifndef SHELLY_H
 #define SHELLY_H
 
-#include "powerwall.h"
+// #include "powerwall.h"
+typedef enum
+{
+    HTTP_GET,
+    HTTP_POST
+} HTTP_REQUEST_TYPE_T;
 
 int shelly_discover_devices(void);
 int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *content);
