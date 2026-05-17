@@ -2,15 +2,15 @@
 
 ## Description
 - Simple home controller that supports monitoring sensors and performing automated actions
- -  for example, turning on lights according to schedule or when a sensor is activated
+  -  for example, turning on lights according to schedule or when a sensor is activated
 - Suports selected devices from these brands
- - Shelly
- - Govee
- - Ecowitt
- - Tesla
+  - Shelly
+  - Govee
+  - Ecowitt
+  - Tesla
 - Provides a BASIC interpreter
- - Automation scripts
- - Live control and debugging
+  - Automation scripts
+  - Live control and debugging
 
 ## Installation of tools on Ubuntu Linux
 ```
