@@ -1,7 +1,8 @@
 # Home Controller
 
 ## Description
-- Simple home controller that supports monitoring sensors and performing automated actions e.g. turning on lights according to scheudle or when a sensor is activated.
+- Simple home controller that supports monitoring sensors and performing automated actions
+ -  for example, turning on lights according to schedule or when a sensor is activated
 - Suports selected devices from these brands
  - Shelly
  - Govee
@@ -34,7 +35,6 @@ Upon completion of a successful build the file thermostat.uf2 should be created.
 
 ## Hardware
 - Raspberry Pi Pico2 W
-- 
 
 ## Licenses
 - SPDX-License-Identifier: BSD-3-Clause
