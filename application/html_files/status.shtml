@@ -118,7 +118,11 @@ body {
     <tr>
       <td>Last reboot</td>
       <td><!--#dogtme--></td>
-    </tr>    
+    </tr>
+    <tr>
+      <td>Up time:</td>
+      <td><!--#uptme--></td>
+    </tr>         
     <tr>
       <td>Version</td>
       <td><!--#ghsh--></td>

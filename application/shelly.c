@@ -81,53 +81,68 @@ int shelly_discover_devices(void)
 {
     u32_t ip;
     u32_t mask;
-    u32_t search_start;
-    u32_t search_end;
-    u32_t ip_to_query;
+    static u32_t search_start;
+    static u32_t search_end;
+    static u32_t ip_to_query;
+    static bool search_in_progress = false;
     int values[4] = {0,0,0,0};
     u8_t byte = 0;
     int i;
     char ipstring[32];
-    int number_of_shelly_devices = 0;
+    static int number_of_shelly_devices = 0;
     char device_type[32];
     char device_id[32];
     ip_addr_t ping_addr;
     int ping_err = -1;
 
-    printf("address = %s\n", web.ip_address_string);  
-    printf("netmask = %s\n", web.network_mask_string);
-
-    sscanf(web.ip_address_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
-    printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
-    ip   = 0x00000000;
-    for(i=0; i<4; i++)
+    if (!search_in_progress)
     {
-        byte = (u8_t)values[i];
-        ip = ip<<8 | byte;
+        printf("Beginning new network scan for shelly devices\n");
+
+        printf("address = %s\n", web.ip_address_string);  
+        printf("netmask = %s\n", web.network_mask_string);
+
+        sscanf(web.ip_address_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
+        printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
+        ip   = 0x00000000;
+        for(i=0; i<4; i++)
+        {
+            byte = (u8_t)values[i];
+            ip = ip<<8 | byte;
+        }
+        printf("ip = %08x\n", ip);
+
+        sscanf(web.network_mask_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);    
+        printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
+
+        mask   = 0x00000000;
+        for(i=0; i<4; i++)
+        {
+            byte = (u8_t)values[i];
+            mask = mask<<8 | byte;
+        }
+        printf("mask = %08x\n", mask); 
+
+        search_start = ip & mask;
+        search_end = search_start | (0xffffffff ^ mask);
+    
+        //TEST TEST TEST
+        search_start = 0xc0a8219f;
+        search_end =   0xc0a821b5;
+        //END END END
+        printf("search range: %08x to %08x\n", search_start, search_end);
+        ip_to_query=search_start;
+        number_of_shelly_devices = 0;
+        search_in_progress = true;
+
+
     }
-    printf("ip = %08x\n", ip);
 
-    sscanf(web.network_mask_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);    
-    printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
+    // for(ip_to_query=search_start+1; ip_to_query<search_end; ip_to_query++)
 
-    mask   = 0x00000000;
-    for(i=0; i<4; i++)
-    {
-        byte = (u8_t)values[i];
-        mask = mask<<8 | byte;
-    }
-    printf("mask = %08x\n", mask); 
+    ip_to_query++;
 
-    search_start = ip & mask;
-    search_end = search_start | (0xffffffff ^ mask);
-
-
-    //TEST TEST TEST
-    //search_start = 0xc0a821a1;
-
-    printf("search range: %08x to %08x\n", search_start, search_end);
-
-    for(ip_to_query=search_start+1; ip_to_query<search_end; ip_to_query++)
+    if (ip_to_query<search_end)
     {
         //byte = *((u8_t *)&ip_to_query);
         //printf("byte = %0x\n", byte);
@@ -190,11 +205,16 @@ int shelly_discover_devices(void)
                 printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);
             }
         }
-        sleep_ms(1000);
+        printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>SHELLY DEVICES FOUND  = %d\n", number_of_shelly_devices);
     }
+    else
+    {
+        printf("Network scan for shelly devices complete\n");
+        search_in_progress = false;
 
-    printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);
-    shelly_dump_discovered_devices();
+        printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);
+        shelly_dump_discovered_devices();
+    }
 
     return(0);
 }
