@@ -6,6 +6,9 @@ Description:BASIC defintions.
 #ifndef BASIC_H
 #define BASIC_H
 
+#include <setjmp.h>
+#include "pluto.h"
+
 // extracted from snmp_def.h
 enum keys
 {
@@ -16,25 +19,45 @@ enum keys
 	CTRL_C = 3, CTRL_V = 22, CTRL_TAB = 404
 };
 
-/*Public Definitons*/
-#define NUM_LAB               (100)             //Maximum Number of labels
-#define LAB_LEN               (30)              //Maximum length of a label
-#define NUM_FUNC              (100)             //Maximum Number of user functions
-#define FUNC_LEN              (30)              //Maximum length of a function
-#define FOR_NEST              (25)              //Maximum FOR nesting depth
-#define WHILE_NEST            (25)              //Maximum WHILE nesting depth
-#define SUB_NEST              (25)              //Maximum GOSUB nesting depth
-#define PROG_SIZE             (131072)          //Maximum Program Size
-#define BASIC_RECURSION_DEPTH (20)              //Maximum Program nesting depth
-#define NUM_INTEGER_VARIABLES (200)             //Maximum number of integer variables
-#define NUM_FLOAT_VARIABLES   (200)             //Maximum number of float variables
-#define NUM_STRING_VARIABLES  (120)             //Maximum number of string variables
-#define NUM_ARRAY_VARIABLES   (100)             //Maximum number of array variables
-#define STRING_VAR_LEN        (1500)            //Maximum length of a string variable
-#define VAR_NAME_LEN          (30)              //Maximum length of a variable name
-#define NUM_SHARED_VARIABLES  (20)
-#define NUM_COMMON_VARIABLES  (20)
-#define MAX_ARRAY_DIM         (4)
+// /*Public Definitons*/
+// #define NUM_LAB               (100)             //Maximum Number of labels
+// #define LAB_LEN               (30)              //Maximum length of a label
+// #define NUM_FUNC              (100)             //Maximum Number of user functions
+// #define FUNC_LEN              (30)              //Maximum length of a function
+// #define FOR_NEST              (25)              //Maximum FOR nesting depth
+// #define WHILE_NEST            (25)              //Maximum WHILE nesting depth
+// #define SUB_NEST              (25)              //Maximum GOSUB nesting depth
+// #define PROG_SIZE             (131072)          //Maximum Program Size  ORIGINAL from PC version
+// #define BASIC_RECURSION_DEPTH (20)              //Maximum Program nesting depth
+// #define NUM_INTEGER_VARIABLES (200)             //Maximum number of integer variables
+// #define NUM_FLOAT_VARIABLES   (200)             //Maximum number of float variables
+// #define NUM_STRING_VARIABLES  (120)             //Maximum number of string variables
+// #define NUM_ARRAY_VARIABLES   (100)             //Maximum number of array variables
+// #define STRING_VAR_LEN        (1500)            //Maximum length of a string variable
+// #define VAR_NAME_LEN          (30)              //Maximum length of a variable name
+// #define NUM_SHARED_VARIABLES  (20)
+// #define NUM_COMMON_VARIABLES  (20)
+// #define MAX_ARRAY_DIM         (4)
+
+// minimized scope for Pi Pico2 W
+#define NUM_LAB               (10)             //Maximum Number of labels
+#define LAB_LEN               (10)              //Maximum length of a label
+#define NUM_FUNC              (10)             //Maximum Number of user functions
+#define FUNC_LEN              (10)              //Maximum length of a function
+#define FOR_NEST              (5)              //Maximum FOR nesting depth
+#define WHILE_NEST            (5)              //Maximum WHILE nesting depth
+#define SUB_NEST              (5)              //Maximum GOSUB nesting depth
+#define PROG_SIZE             (2048)          //Maximum Program Size
+#define BASIC_RECURSION_DEPTH (1)              //Maximum Program nesting depth
+#define NUM_INTEGER_VARIABLES (20)             //Maximum number of integer variables
+#define NUM_FLOAT_VARIABLES   (20)             //Maximum number of float variables
+#define NUM_STRING_VARIABLES  (20)             //Maximum number of string variables
+#define NUM_ARRAY_VARIABLES   (10)             //Maximum number of array variables
+#define STRING_VAR_LEN        (20)            //Maximum length of a string variable
+#define VAR_NAME_LEN          (30)            //Maximum length of a variable name
+#define NUM_SHARED_VARIABLES  (1)
+#define NUM_COMMON_VARIABLES  (1)
+#define MAX_ARRAY_DIM         (2)
 
 typedef enum 
 {
@@ -232,6 +255,7 @@ void get_Bracket(char cBracket),basic_NotImplemented(void);
 int basic_CreateContext(char *pcFileName, char *pcArguments);
 int basic_DestroyContext(void);
 int load_program(char *p, char *fname);
+int load_program_from_ram(char *p, char *s, int len);
 void find_eol(void);
 void label_init(void);
 void scan_labels(void);
@@ -249,7 +273,7 @@ tsForStack fpop(void);
 void wpush(tsWhileStack i);
 tsWhileStack wpop(void);
 void update_DateAndTime(void);
-int basic_Interpreter(char *pcFileName, char *pcArguments);
+int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory);
 
 int get_token(void);
 int next_token(void);

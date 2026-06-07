@@ -16,6 +16,7 @@ Description:This file contains the standard BASIC commands.
 #include "basic.h"
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
+#include "hc_task.h"
 
 
 /*External Variables*/
@@ -2867,8 +2868,17 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_Sleep(void)
 {
-    //ungetch(getch());
-    printf("Sleep not implemented\n");
+    double fValue = 0;
+    int sleep_seconds = 0;
+
+    /*Get sleep value*/
+    eval_FloatExpression(&fValue);
+
+    // avoid the watchdog firing on long running scripts
+    hc_pat_watchdog();
+
+    sleep_seconds = (int)fValue;
+    SLEEP_MS(sleep_seconds*1000);
       
 }
 

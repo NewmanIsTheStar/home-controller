@@ -1198,8 +1198,9 @@ void syntax_error(int error)
     /*Terminate Script File*/
     bScriptFileActive = 0;
 
-    /*Restore C program to state before script was run*/
-	longjmp(psContext->sEnviroment, 1);
+    // /*Restore C program to state before script was run*/
+	// longjmp(psContext->sEnviroment, 1);  NOT SUITABLE IN FREERTOS environment
+    psContext->pcProgramCounter = psContext->pcProgram + strlen(psContext->pcProgram) - 1;
 }
 
 /***************************************************************************

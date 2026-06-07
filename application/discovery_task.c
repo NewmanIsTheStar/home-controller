@@ -94,7 +94,7 @@ void discovery_task(__unused void *params)
     {        
         if ((config.personality == HOME_CONTROLLER))
         {
-            shelly_discover_devices();
+            //shelly_discover_devices();
         }
         else
         {

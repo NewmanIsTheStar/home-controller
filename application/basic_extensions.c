@@ -29,22 +29,22 @@ Description:This file contains all of the non-standard commands added to the
 
 /*External Variables*/
 extern tsBasicContext *psContext;
-extern char acLastValue[];                  //last SNMP value received
-extern int iErrStat;                        //error status of last SNMP command
-extern char acLastOid[];					//last OID received (includes instance)
-extern char acLastOctetString[];			//last OCTET STRING received
-extern int LastOctetStringLength;			//length of the last OCTET STRING received
-extern int bQuiet;                          //Quiet Mode
-extern char acSnmpIp[];                     //SNMP's own IP address
-extern char acContextId[20];                //Target Agent's context ID
-extern char acIpAddress[];                  //Target Agent's IP address
-extern char acReturnedInstance[200];        //last instance received
-extern char *pacLastName;                   //Pointer to last OID name received
-extern int bTimeStamp;                      //time stamp flag
-extern int iMaxRetries;						//user defined maximum number of retries
-extern int bTerminal;						//terminal emulation flag
-extern FILE *logfile;
-extern int iInterCharDelay;                 //intercharacter delay used for slow devices
+// extern char acLastValue[];                  //last SNMP value received
+// extern int iErrStat;                        //error status of last SNMP command
+// extern char acLastOid[];					//last OID received (includes instance)
+// extern char acLastOctetString[];			//last OCTET STRING received
+// extern int LastOctetStringLength;			//length of the last OCTET STRING received
+// extern int bQuiet;                          //Quiet Mode
+// extern char acSnmpIp[];                     //SNMP's own IP address
+// extern char acContextId[20];                //Target Agent's context ID
+// extern char acIpAddress[];                  //Target Agent's IP address
+// extern char acReturnedInstance[200];        //last instance received
+// extern char *pacLastName;                   //Pointer to last OID name received
+// extern int bTimeStamp;                      //time stamp flag
+// extern int iMaxRetries;						//user defined maximum number of retries
+// extern int bTerminal;						//terminal emulation flag
+// extern FILE *logfile;
+// extern int iInterCharDelay;                 //intercharacter delay used for slow devices
 
 
 /*Public Variable*/
@@ -286,31 +286,31 @@ Returns     :  Nothing
 void basic_Quiet(void)
 {
 
-    get_token();
+    // get_token();
 
-    if (strcmp(psContext->acToken, "on") == 0)
-    {
-        bQuiet = 1;
-    }
-    else if (strcmp(psContext->acToken, "off") == 0)
-    {
-        bQuiet = 0;
-    }
-    else
-    {
-        /*Token was not a valid state so put it back*/
-        putback();
+    // if (strcmp(psContext->acToken, "on") == 0)
+    // {
+    //     bQuiet = 1;
+    // }
+    // else if (strcmp(psContext->acToken, "off") == 0)
+    // {
+    //     bQuiet = 0;
+    // }
+    // else
+    // {
+    //     /*Token was not a valid state so put it back*/
+    //     putback();
 
-        /*User has not supplied state, so toggle the current state*/
-        if (bQuiet == 0)
-		{
-		    bQuiet = 1;
-		}
-		else
-		{   
-			bQuiet = 0;
-		}
-    }
+    //     /*User has not supplied state, so toggle the current state*/
+    //     if (bQuiet == 0)
+	// 	{
+	// 	    bQuiet = 1;
+	// 	}
+	// 	else
+	// 	{   
+	// 		bQuiet = 0;
+	// 	}
+    // }
 }
 
 
@@ -322,16 +322,16 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_TimeStamp(void)
 {
-	/*Toggle Timestamps on/off*/
+	// /*Toggle Timestamps on/off*/
 
-	if (bTimeStamp == 0)
-	{
-		bTimeStamp = 1;
-	}
-	else
-	{
-		bTimeStamp = 0;
-	}
+	// if (bTimeStamp == 0)
+	// {
+	// 	bTimeStamp = 1;
+	// }
+	// else
+	// {
+	// 	bTimeStamp = 0;
+	// }
 
 }
 
@@ -398,26 +398,26 @@ void basic_Target(void)
 
 	processCommand(acTemp);
 */
-	char acTemp[COMMAND_LINE_LENGTH];
-    int iIndex;
+	// char acTemp[COMMAND_LINE_LENGTH];
+    // int iIndex;
 
-	strcpy(acTemp, "Target ");
+	// strcpy(acTemp, "Target ");
 
-    get_Bracket('(');
+    // get_Bracket('(');
 
-    get_Parameter(acTemp);
+    // get_Parameter(acTemp);
 
-    get_Bracket(')');
+    // get_Bracket(')');
 
-	processCommand(acTemp);
+	// processCommand(acTemp);
 
-	/*Store IP address assigned to SNMP tool in the variable A$*/
-	iIndex = find_Variable("address$", STRINGVARIABLE);
-    strcpy(psContext->asStringVariables[iIndex].acValue, acSnmpIp);
+	// /*Store IP address assigned to SNMP tool in the variable A$*/
+	// iIndex = find_Variable("address$", STRINGVARIABLE);
+    // strcpy(psContext->asStringVariables[iIndex].acValue, acSnmpIp);
 
-    /*Store basic_Target IP address in the variable T$*/
-    iIndex = find_Variable("target$", STRINGVARIABLE);
-    strcpy(psContext->asStringVariables[iIndex].acValue, acIpAddress);
+    // /*Store basic_Target IP address in the variable T$*/
+    // iIndex = find_Variable("target$", STRINGVARIABLE);
+    // strcpy(psContext->asStringVariables[iIndex].acValue, acIpAddress);
 
 } /*end Target*/
 
@@ -620,21 +620,21 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_RasAddr(void)
 {
-	char acTemp[COMMAND_LINE_LENGTH];
-    int iIndex;
+	// char acTemp[COMMAND_LINE_LENGTH];
+    // int iIndex;
 
 
-	strcpy(acTemp, "RasAddr");
+	// strcpy(acTemp, "RasAddr");
 
-	processCommand(acTemp);
+	// processCommand(acTemp);
 
-	/*Store IP address assigned to SNMP tool in the variable A$*/
-	iIndex = find_Variable("address$", STRINGVARIABLE);
-    strcpy(psContext->asStringVariables[iIndex].acValue, acSnmpIp);
+	// /*Store IP address assigned to SNMP tool in the variable A$*/
+	// iIndex = find_Variable("address$", STRINGVARIABLE);
+    // strcpy(psContext->asStringVariables[iIndex].acValue, acSnmpIp);
 
-    /*Store basic_Target IP address in the variable T$*/
-    iIndex = find_Variable("target$", STRINGVARIABLE);
-    strcpy(psContext->asStringVariables[iIndex].acValue, acIpAddress);
+    // /*Store basic_Target IP address in the variable T$*/
+    // iIndex = find_Variable("target$", STRINGVARIABLE);
+    // strcpy(psContext->asStringVariables[iIndex].acValue, acIpAddress);
 
 } /*end basic_RasAddr*/
 
@@ -773,36 +773,36 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_Retry(void)
 {
-    int iTemp = 0;
+    // int iTemp = 0;
   
 
-    get_Bracket('(');
+    // get_Bracket('(');
 
-    /*Get Colour*/
-    get_token();
+    // /*Get Colour*/
+    // get_token();
 
-    switch(psContext->eTokenType)
-    {
+    // switch(psContext->eTokenType)
+    // {
 
-    case STRINGVARIABLE:
-        sscanf(get_StringVariable(psContext->acToken), "%d", &iTemp);
-        break;
+    // case STRINGVARIABLE:
+    //     sscanf(get_StringVariable(psContext->acToken), "%d", &iTemp);
+    //     break;
 
-    case NUMBER:
-        sscanf(psContext->acToken, "%d", &iTemp);
-        break;
+    // case NUMBER:
+    //     sscanf(psContext->acToken, "%d", &iTemp);
+    //     break;
 
-    default:
-        putback();
-        eval_IntegerExpression(&iTemp);
-        break;
+    // default:
+    //     putback();
+    //     eval_IntegerExpression(&iTemp);
+    //     break;
 
-    }
+    // }
 
-    get_Bracket(')');
+    // get_Bracket(')');
 
-	/*Set the Retry limit*/
-    iMaxRetries = iTemp;
+	// /*Set the Retry limit*/
+    // iMaxRetries = iTemp;
    
 
 } /*end basic_Retry*/
@@ -819,36 +819,36 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_InterCharDelay(void)
 {
-    int iTemp = 0;
+    // int iTemp = 0;
   
 
-    get_Bracket('(');
+    // get_Bracket('(');
 
-    /*Get Colour*/
-    get_token();
+    // /*Get Colour*/
+    // get_token();
 
-    switch(psContext->eTokenType)
-    {
+    // switch(psContext->eTokenType)
+    // {
 
-    case STRINGVARIABLE:
-        sscanf(get_StringVariable(psContext->acToken), "%d", &iTemp);
-        break;
+    // case STRINGVARIABLE:
+    //     sscanf(get_StringVariable(psContext->acToken), "%d", &iTemp);
+    //     break;
 
-    case NUMBER:
-        sscanf(psContext->acToken, "%d", &iTemp);
-        break;
+    // case NUMBER:
+    //     sscanf(psContext->acToken, "%d", &iTemp);
+    //     break;
 
-    default:
-        putback();
-        eval_IntegerExpression(&iTemp);
-        break;
+    // default:
+    //     putback();
+    //     eval_IntegerExpression(&iTemp);
+    //     break;
 
-    }
+    // }
 
-    get_Bracket(')');
+    // get_Bracket(')');
 
-	/*Set the Intercharacter delay for use in terminal mode*/
-    iInterCharDelay = iTemp;
+	// /*Set the Intercharacter delay for use in terminal mode*/
+    // iInterCharDelay = iTemp;
    
 
 } /*end basic_InterCharDelay*/
@@ -1214,54 +1214,54 @@ void update_SnmpVariables(void)
     int iValue = 0;
 
 
-    /*Update the error status first*/
-	iIndex = find_Variable("errorstatus", FLOATVARIABLE);
-    if (iIndex == -1) iIndex = create_Variable("errorstatus", FLOATVARIABLE);
-    psContext->asFloatVariables[iIndex].fValue = iErrStat;
+    // /*Update the error status first*/
+	// iIndex = find_Variable("errorstatus", FLOATVARIABLE);
+    // if (iIndex == -1) iIndex = create_Variable("errorstatus", FLOATVARIABLE);
+    // psContext->asFloatVariables[iIndex].fValue = iErrStat;
 	
-    /*Convert SNMP Exceptions to errors - this simplifies error checking in scripts*/
-    if (strcmp(acLastValue, "noSuchObject") == 0)
-    {
-        psContext->asFloatVariables[iIndex].fValue = noSuchObject;
-    }
-    else if (strcmp(acLastValue, "noSuchInstance") == 0)
-    {
-        psContext->asFloatVariables[iIndex].fValue = noSuchInstance;
-    }
+    // /*Convert SNMP Exceptions to errors - this simplifies error checking in scripts*/
+    // if (strcmp(acLastValue, "noSuchObject") == 0)
+    // {
+    //     psContext->asFloatVariables[iIndex].fValue = noSuchObject;
+    // }
+    // else if (strcmp(acLastValue, "noSuchInstance") == 0)
+    // {
+    //     psContext->asFloatVariables[iIndex].fValue = noSuchInstance;
+    // }
 
 
-	/*If an error occurs then set SNMP value to zero.
-	  This is to assist lazy script writers who may fail to check error status.*/
-	if (iErrStat != 0)
-	{
-		strcpy(acLastValue, "0");
-	}
+	// /*If an error occurs then set SNMP value to zero.
+	//   This is to assist lazy script writers who may fail to check error status.*/
+	// if (iErrStat != 0)
+	// {
+	// 	strcpy(acLastValue, "0");
+	// }
 
-	/*Update SNMP reserved Variables with SNMP response results*/
-	iIndex = find_Variable("value$", STRINGVARIABLE);
-	if (iIndex == -1) iIndex = create_Variable("value$", STRINGVARIABLE);
-	strcpy(psContext->asStringVariables[iIndex].acValue, acLastValue);
+	// /*Update SNMP reserved Variables with SNMP response results*/
+	// iIndex = find_Variable("value$", STRINGVARIABLE);
+	// if (iIndex == -1) iIndex = create_Variable("value$", STRINGVARIABLE);
+	// strcpy(psContext->asStringVariables[iIndex].acValue, acLastValue);
 
-	iIndex = find_Variable("oid$", STRINGVARIABLE);
-	if (iIndex == -1) iIndex = create_Variable("oid$", STRINGVARIABLE);
-	strcpy(psContext->asStringVariables[iIndex].acValue, pacLastName);
+	// iIndex = find_Variable("oid$", STRINGVARIABLE);
+	// if (iIndex == -1) iIndex = create_Variable("oid$", STRINGVARIABLE);
+	// strcpy(psContext->asStringVariables[iIndex].acValue, pacLastName);
 
-	iIndex = find_Variable("instance$", STRINGVARIABLE);
-	if (iIndex == -1) iIndex = create_Variable("instance$", STRINGVARIABLE);
-	strcpy(psContext->asStringVariables[iIndex].acValue, acReturnedInstance);
+	// iIndex = find_Variable("instance$", STRINGVARIABLE);
+	// if (iIndex == -1) iIndex = create_Variable("instance$", STRINGVARIABLE);
+	// strcpy(psContext->asStringVariables[iIndex].acValue, acReturnedInstance);
 
-	iIndex = find_Variable("octetstring$", STRINGVARIABLE);
-	if (iIndex == -1) iIndex = create_Variable("octetstring$", STRINGVARIABLE);
-	strcpy(psContext->asStringVariables[iIndex].acValue, acLastOctetString);
+	// iIndex = find_Variable("octetstring$", STRINGVARIABLE);
+	// if (iIndex == -1) iIndex = create_Variable("octetstring$", STRINGVARIABLE);
+	// strcpy(psContext->asStringVariables[iIndex].acValue, acLastOctetString);
 
-	iIndex = find_Variable("value", FLOATVARIABLE);
-	if (iIndex == -1) iIndex = create_Variable("value", FLOATVARIABLE);
-	sscanf(acLastValue, "%d", &iValue);
-    psContext->asFloatVariables[iIndex].fValue = (double)iValue;
+	// iIndex = find_Variable("value", FLOATVARIABLE);
+	// if (iIndex == -1) iIndex = create_Variable("value", FLOATVARIABLE);
+	// sscanf(acLastValue, "%d", &iValue);
+    // psContext->asFloatVariables[iIndex].fValue = (double)iValue;
 
-	iIndex = find_Variable("octetstringsize", FLOATVARIABLE);
-	if (iIndex == -1) iIndex = create_Variable("octetstringsize", FLOATVARIABLE);
-	psContext->asFloatVariables[iIndex].fValue = (double)LastOctetStringLength;
+	// iIndex = find_Variable("octetstringsize", FLOATVARIABLE);
+	// if (iIndex == -1) iIndex = create_Variable("octetstringsize", FLOATVARIABLE);
+	// psContext->asFloatVariables[iIndex].fValue = (double)LastOctetStringLength;
 
 }
 

@@ -57,6 +57,7 @@
 // #include "powerwall.h"
 #include "shelly.h"
 #include "hc_task.h"
+#include "basic.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -75,7 +76,11 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 
 //static variables
-
+void *watchdog_params = NULL;
+//char my_program[] = "FOR x = 1 TO 100\nPRINT \"HELLO WORLD! \";X\nNEXT";
+//char my_program[] = "5 X = 1\n10 PRINT \"HELLO WORLD!\" + X\n15 X = X +1\n20 GOTO 10";
+//char my_program[] = "5 X = 1\n15 X = X +1\n20 GOTO 15";
+char my_program[] = "5 X = 1\n10 PRINT \"HELLO WORLD!\" + X\n12 SLEEP 1\n15 X = X +1\n20 GOTO 10";
 
 /*!
  * \brief home controller task
@@ -89,6 +94,9 @@ void hc_task(__unused void *params)
     SOCKADDR_IN sClientAddress;  
     int received_bytes = 0;    
     
+    // store passed watchdog parameter 
+    watchdog_params = params;
+
     if (strcasecmp(APP_NAME, "home-controller") == 0)
     {
         // force personality to match single purpose application
@@ -97,7 +105,9 @@ void hc_task(__unused void *params)
     
     printf("home controller task started\n");
     while (true)
-    {        
+    {
+        basic_Interpreter(NULL, NULL, my_program, sizeof(my_program));
+
         if ((config.personality == HOME_CONTROLLER))
         {
             //TEST TEST TEST
@@ -115,4 +125,15 @@ void hc_task(__unused void *params)
         // tell watchdog task that we are still alive
         watchdog_pulse((int *)params);  
     } 
+}
+
+/*!
+ * \brief pat the watchdog
+ * 
+ * \return nothing
+ */
+void hc_pat_watchdog(void) 
+{
+    // this function exists so that during the execution of basic scripts the watchdog may be updated
+    watchdog_pulse((int *)watchdog_params); 
 }

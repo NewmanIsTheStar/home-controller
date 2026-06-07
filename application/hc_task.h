@@ -58,6 +58,7 @@ typedef struct TRIGGER_CONDITION_STRUCT
 void hc_task(__unused void *params);
 bool hc_trigger(int *condition, int length);
 bool hc_test_trigger(void);
+void hc_pat_watchdog(void);
 
 
 #endif

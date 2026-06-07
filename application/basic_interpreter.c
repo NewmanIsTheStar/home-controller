@@ -22,9 +22,9 @@ Description:A BASIC interpreter with langauge extensions for SNMP and automatic
 
 
 /*External Variables*/
-extern char acSnmpIp[];                     //SNMP's own IP address
-extern char acIpAddress[];                  //Target Agent's IP address
-extern char acContextId[20];                //Target Agent's context ID
+// extern char acSnmpIp[];                     //SNMP's own IP address
+// extern char acIpAddress[];                  //Target Agent's IP address
+// extern char acContextId[20];                //Target Agent's context ID
 
  
 /*Public Variable*/
@@ -37,8 +37,9 @@ int bTerminateWithExtremePrejudice = 0;     //script has been terminated by user
 int iContextIndex = -1;
 tsBasicContext *psContext;                  //current BASIC context
 int bClearInkey = 0;                        //flag used to indicate BASIC has read the keystroke
-tsBasicContext *apsContextStack[BASIC_RECURSION_DEPTH] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
-                                                          NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+// tsBasicContext *apsContextStack[BASIC_RECURSION_DEPTH] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+//                                                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+tsBasicContext *apsContextStack[BASIC_RECURSION_DEPTH] = {NULL};
 
 /*Local Prototypes*/
 void display_ScriptLine(void);
@@ -141,7 +142,7 @@ Description :  Launchs a new instance of the BASIC interpreter and executes
 Returns     :  0 - OK
                1 - error initialising BASIC interpreter
 ***************************************************************************/
-int basic_Interpreter(char *pcFileName, char *pcArguments)
+int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory)
 {
 	int x;
 	int iKey;
@@ -150,9 +151,13 @@ int basic_Interpreter(char *pcFileName, char *pcArguments)
     /*Create a new BASIC Context*/
     basic_CreateContext(pcFileName, pcArguments);
 
-
-	/*Load the program to execute*/
-	if(!load_program(psContext->pcProgramCounter, pcFileName))
+    if (program_in_memory)
+    {
+        /*Copy the program to execute from RAM*/
+        load_program_from_ram(psContext->pcProgramCounter, program_in_memory, len_program_in_memory);
+    }
+	/*Load the program to execute from file*/
+	else if(!load_program(psContext->pcProgramCounter, pcFileName))
 	{
 		printf("Could not open BASIC script file\n");
        
@@ -176,26 +181,26 @@ int basic_Interpreter(char *pcFileName, char *pcArguments)
     }
 
 	/*The code in the if block only executes if an error occurs*/
-    if(setjmp(psContext->sEnviroment))
-    {
+//     if(setjmp(psContext->sEnviroment))
+//     {
         
-        /*Erase the current context*/
-        basic_DestroyContext();
+//         /*Erase the current context*/
+//         basic_DestroyContext();
 
-#ifdef PARENTS_CONTINUE_AFTER_ERROR
-        //THIS CODE controls whether parent scripts are terminated
-        //when a child script encounters an error
+// #ifdef PARENTS_CONTINUE_AFTER_ERROR
+//         //THIS CODE controls whether parent scripts are terminated
+//         //when a child script encounters an error
         
-        /*Check for nested BASIC programs*/
-        if (iContextIndex >=0)
-        {
-            /*Acitvate the parent program*/
-            bScriptFileActive = 1;
-        }
-#endif
+//         /*Check for nested BASIC programs*/
+//         if (iContextIndex >=0)
+//         {
+//             /*Acitvate the parent program*/
+//             bScriptFileActive = 1;
+//         }
+// #endif
         
-        return(1); 
-    }
+//         return(1); 
+//     }
 
 	scan_labels();                           /*find the labels in the program*/
     scan_UserFunctions();                    /*find the functions in the program*/
@@ -376,6 +381,31 @@ int load_program(char *p, char *fname)
     return 1;
 }
 
+/***************************************************************************
+Function    :  load_program_from_ram
+Description :  Load a program.
+Returns     :  1 = Rock and Roll
+***************************************************************************/
+int load_program_from_ram(char *p, char *s, int len)
+{
+    int i=0;
+    const char acProgramTerminator[] = "\r\nEND"; 
+
+    i = 0;
+    do
+    {
+        *p = *s;
+        p++; s++; i++;
+    } while((i<len) && (i<PROG_SIZE));
+
+    /*Terminate the program with an END statement*/
+    if (i < (PROG_SIZE - sizeof(acProgramTerminator)))
+    {
+        strcpy(p-1, acProgramTerminator);
+    }
+  
+    return 1;
+}
 
 /***************************************************************************
 Function    :  find_eol
@@ -774,20 +804,20 @@ int basic_CreateContext(char *pcFileName, char *pcArguments)
         update_SnmpVariables();
         update_DateAndTime();
 
-        /*Store IP address assigned to SNMP tool in the variable Address$*/
-	    iIndex = find_Variable("address$", STRINGVARIABLE);
-        if (iIndex == -1) iIndex = create_Variable("address$", STRINGVARIABLE);
-        strcpy(psContext->asStringVariables[iIndex].acValue, acSnmpIp);
+        // /*Store IP address assigned to SNMP tool in the variable Address$*/
+	    // iIndex = find_Variable("address$", STRINGVARIABLE);
+        // if (iIndex == -1) iIndex = create_Variable("address$", STRINGVARIABLE);
+        // strcpy(psContext->asStringVariables[iIndex].acValue, acSnmpIp);
 
-        /*Store Target IP address in the variable Target$*/
-        iIndex = find_Variable("target$", STRINGVARIABLE);
-        if (iIndex == -1) iIndex = create_Variable("target$", STRINGVARIABLE);
-        strcpy(psContext->asStringVariables[iIndex].acValue, acIpAddress);
+        // /*Store Target IP address in the variable Target$*/
+        // iIndex = find_Variable("target$", STRINGVARIABLE);
+        // if (iIndex == -1) iIndex = create_Variable("target$", STRINGVARIABLE);
+        // strcpy(psContext->asStringVariables[iIndex].acValue, acIpAddress);
         
-        /*Store Target Context ID in the variable ContextId$*/
-        iIndex = find_Variable("contextid$", STRINGVARIABLE);
-        if (iIndex == -1) iIndex = create_Variable("contextid$", STRINGVARIABLE);
-        strcpy(psContext->asStringVariables[iIndex].acValue, acContextId);
+        // /*Store Target Context ID in the variable ContextId$*/
+        // iIndex = find_Variable("contextid$", STRINGVARIABLE);
+        // if (iIndex == -1) iIndex = create_Variable("contextid$", STRINGVARIABLE);
+        // strcpy(psContext->asStringVariables[iIndex].acValue, acContextId);
         
         /*Store SNMP DEBUGGER version label in Version$*/
         iIndex = find_Variable("version$", STRINGVARIABLE);
