@@ -30,7 +30,7 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-// #include "weather.h"
+//#include "weather.h"
 // #include "led_strip.h"
 #include "cgi.h"
 #include "flash.h"
@@ -117,7 +117,7 @@ int pluto(void)
     stdio_init_all();
 
     //print_reset_reason();
-    log_and_clear_reset_reason();
+    //log_and_clear_reset_reason();
 
     printf("\n%s version ", APP_NAME);
 
@@ -202,6 +202,7 @@ void boss_task(__unused void *params)
     ip_addr_t gw = {0};
     BaseType_t task_creation_status = 0;
     uint32_t clock_ahead_error = 0;
+
     
     // start watchdog
     xTaskCreate(watchdog_task, "Watchdog Task", configMINIMAL_STACK_SIZE, NULL, WATCHDOG_TASK_PRIORITY, NULL);
@@ -256,7 +257,7 @@ void boss_task(__unused void *params)
 #endif    
 
     // initialize the ip info used in the web interface
-    init_web_variables();    
+    init_web_variables();
     set_web_ip_network_info();
 
     printf("Address = %s\n", web.ip_address_string);  

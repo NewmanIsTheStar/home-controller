@@ -1,10 +1,10 @@
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(${PROJECT_NAME} PRIVATE
         worker_tasks.c        
-        hc_task.c
-        discovery_task.c
-        shelly.c 
-        json_parser.c
+        # hc_task.c
+        # discovery_task.c
+        # shelly.c 
+        # json_parser.c
         basic_commands.c
         basic_extensions.c
         basic_interpreter.c

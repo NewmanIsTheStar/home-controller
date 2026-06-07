@@ -26,7 +26,7 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-// #include "weather.h"
+//#include "weather.h"
 #include "calendar.h"
 #include "cgi.h"
 
@@ -547,78 +547,79 @@ int get_local_time_string(char *timestamp, int len)
     return(printed);
 }
 
-// /*!
-//  * \brief Get start and stop times for next irrigation period
-//  *
-//  * \param[out]  start_mow   0 - 10079 minute of week, beginning Sunday at midnight
-//  * \param[out]  end_mow     0 - 10079 minute of week, beginning Sunday at midnight
-//  * \param[out]  delay_mins  0 - 10079 minutes from now until next irrigation period
-//  * \param[out]  zone        0 - 15
-//  * 
-//  * \return -1 on error, 0 on success, 1 if currently in irrigation period
-//  */
-// SCHEDULE_QUERY_STATUS_LT get_next_irrigation_period(int *start_mow, int *end_mow, int *delay_mins, int *zone)
-// {
-//    int potential_zone;
-//    int day;      
-//    int now_mow = 0;
-//    int irrigate_now = SCHEDULE_NEVER;
-//    int candidate_start_mow;
-//    int candidate_end_mow;
-//    int lowest_delta = MINUTES_IN_WEEK;
-//    int delta = 0;
-//    int day_total_duration = 0;
+#ifdef USURPER
+/*!
+ * \brief Get start and stop times for next irrigation period
+ *
+ * \param[out]  start_mow   0 - 10079 minute of week, beginning Sunday at midnight
+ * \param[out]  end_mow     0 - 10079 minute of week, beginning Sunday at midnight
+ * \param[out]  delay_mins  0 - 10079 minutes from now until next irrigation period
+ * \param[out]  zone        0 - 15
+ * 
+ * \return -1 on error, 0 on success, 1 if currently in irrigation period
+ */
+SCHEDULE_QUERY_STATUS_LT get_next_irrigation_period(int *start_mow, int *end_mow, int *delay_mins, int *zone)
+{
+   int potential_zone;
+   int day;      
+   int now_mow = 0;
+   int irrigate_now = SCHEDULE_NEVER;
+   int candidate_start_mow;
+   int candidate_end_mow;
+   int lowest_delta = MINUTES_IN_WEEK;
+   int delta = 0;
+   int day_total_duration = 0;
 
-//    // get current minute of week 
-//    get_mow_local_tz(&now_mow);                      
+   // get current minute of week 
+   get_mow_local_tz(&now_mow);                      
 
-//     // search for next irrigation period
-//    for (day = 0; (day < DAYS_IN_WEEK) && (irrigate_now != SCHEDULE_NOW); day++)
-//    {
-//       if (config.day_schedule_enable[day])
-//       {
-//          day_total_duration = 0;
+    // search for next irrigation period
+   for (day = 0; (day < DAYS_IN_WEEK) && (irrigate_now != SCHEDULE_NOW); day++)
+   {
+      if (config.day_schedule_enable[day])
+      {
+         day_total_duration = 0;
 
-//          for(potential_zone=0; potential_zone < config.zone_max; potential_zone++)
-//          {
-//             if (config.zone_enable[potential_zone])
-//             {   
-//                candidate_start_mow = (day*HOURS_IN_DAY*MINUTES_IN_HOUR + config.day_start[day] + day_total_duration)%MINUTES_IN_WEEK;
-//                candidate_end_mow =   (candidate_start_mow + config.zone_duration[potential_zone][day])%MINUTES_IN_WEEK;
+         for(potential_zone=0; potential_zone < config.zone_max; potential_zone++)
+         {
+            if (config.zone_enable[potential_zone])
+            {   
+               candidate_start_mow = (day*HOURS_IN_DAY*MINUTES_IN_HOUR + config.day_start[day] + day_total_duration)%MINUTES_IN_WEEK;
+               candidate_end_mow =   (candidate_start_mow + config.zone_duration[potential_zone][day])%MINUTES_IN_WEEK;
 
-//                // maintain running total of duration for the day
-//                day_total_duration += config.zone_duration[potential_zone][day];
+               // maintain running total of duration for the day
+               day_total_duration += config.zone_duration[potential_zone][day];
 
-//                // check if current time is within the candidate irrigation period
-//                if (mow_between(now_mow, candidate_start_mow, candidate_end_mow))
-//                {
-//                   irrigate_now = SCHEDULE_NOW;
-//                   *start_mow = candidate_start_mow;
-//                   *end_mow = candidate_end_mow;
-//                   *delay_mins = 0;
-//                   *zone = potential_zone;
-//                   break;
-//                }
+               // check if current time is within the candidate irrigation period
+               if (mow_between(now_mow, candidate_start_mow, candidate_end_mow))
+               {
+                  irrigate_now = SCHEDULE_NOW;
+                  *start_mow = candidate_start_mow;
+                  *end_mow = candidate_end_mow;
+                  *delay_mins = 0;
+                  *zone = potential_zone;
+                  break;
+               }
 
-//                // find the lowest delta to a future irrigation
-//                delta = mow_future_delta(now_mow, candidate_start_mow);
-//                if (delta < lowest_delta)
-//                {
-//                   irrigate_now = SCHEDULE_FUTURE;                  
-//                   lowest_delta = delta;                  
-//                   *start_mow = candidate_start_mow;
-//                   *end_mow = candidate_end_mow;
-//                   *delay_mins = delta;
-//                   *zone = potential_zone;
-//                }            
-//             }
-//          }
-//       }   
-//    }
+               // find the lowest delta to a future irrigation
+               delta = mow_future_delta(now_mow, candidate_start_mow);
+               if (delta < lowest_delta)
+               {
+                  irrigate_now = SCHEDULE_FUTURE;                  
+                  lowest_delta = delta;                  
+                  *start_mow = candidate_start_mow;
+                  *end_mow = candidate_end_mow;
+                  *delay_mins = delta;
+                  *zone = potential_zone;
+               }            
+            }
+         }
+      }   
+   }
 
-//    return (irrigate_now);
-// }
-
+   return (irrigate_now);
+}
+#endif
 
 /*!
  * \brief Check if time is between start and end dealing with wrap around 
@@ -1026,7 +1027,7 @@ int time_string_to_mow(char *string, int length, int day)
    sscanf(string,"%d:%d", &hour, &minute);
    sscanf(string,"%d%%3A%d", &hour, &minute);   
 
-   printf(">>>>>AFTER SCANF %d %d\n", hour, minute);
+   //printf(">>>>>AFTER SCANF %d %d\n", hour, minute);
 
    CLIP(day, 0, 6);
    CLIP(hour, 0, 23);
@@ -1047,6 +1048,8 @@ bool sntp_alive(void)
    static long int poll_counter = 0;
    static long int last_sntp_update_counter= 0;
    
+   poll_counter++;
+
    if (sntp_update_counter != last_sntp_update_counter)
    {
       printf("sntp updates: %d @ poll number %d\n", sntp_update_counter, poll_counter);

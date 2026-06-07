@@ -37,14 +37,17 @@ int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
     default:
     case CONFIG_STANDARD:
         memcpy((char *)&config, (char *)(XIP_BASE +  FLASH_TARGET_OFFSET), sizeof(config));
+        flash_dump_config(config_type);
         break;        
     case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
         memcpy((char *)&config, (char *)(XIP_BASE +  FLASH_LEGACY_OFFSET), sizeof(config));
+        flash_dump_config(config_type);
         break;
     }
     
     return(0);
 }
+
 
 /*!
  * \brief Shim for writing configuration data into flash with interrupts disabled
@@ -59,6 +62,13 @@ void flash_write_shim(void *ptr)
         if (sizeof(config) < FLASH_SECTOR_SIZE)
         {
             // program the configuation in 256 Byte pages (range is rounded up to the nearest multiple of 256 Bytes)
+            // {
+            //     int x;
+            //     for(x=0; x < ((sizeof(config)+255)/256)*256; x++)
+            //     {
+            //         printf("Reading RAM address: %08x\n", &config + x); 
+            //     }
+            // }
             flash_range_program(FLASH_TARGET_OFFSET, (uint8_t *)&config, ((sizeof(config)+255)/256)*256);
         }
         else
@@ -74,9 +84,14 @@ void flash_write_shim(void *ptr)
  */
 int flash_write_non_volatile_variables(void)
 {
-    int err;
+    int err = 0;
 
-    err = flash_safe_execute(flash_write_shim, NULL, 500);
+    err = flash_safe_execute(flash_write_shim, NULL, 1000);
+
+    if (err)
+    {
+        printf("flash_safe_execute() returned error %d\n", err);
+    }
 
     return(err);
 }
@@ -153,4 +168,61 @@ void *flash_get_config_location(CONFIG_TYPE_T config_type)
     return(location);
 }
 
+/*!
+ * \brief Print the contents of flash in hex 
+ * 
+ * \return 0 on success, 1 on CRC error
+ */
+int flash_dump_config(CONFIG_TYPE_T config_type)
+{
+    int i,j;
+    char *flash;
+    char ascii_output[20];
 
+
+
+    printf("Dump Config from Flash %s (%d)\n", config_type==CONFIG_STANDARD?"Standard":"Legacy", config_type);
+
+    flash = (char *)flash_get_config_location(config_type);
+    ascii_output[0] = 0;
+
+    for(i=0; i<sizeof(config); i++)
+    {
+        if ((i & 0x0f) == 0)
+        {
+            ascii_output[16] = 0;
+            printf("%s\n%08x:  ", ascii_output, (flash+i));
+        } else if ((i & 0x07) == 0)
+        {
+            printf(" ");
+        }
+
+        printf("%02x ", *(flash+i));
+
+        if (isalnum(*(flash+i)))
+        {
+            ascii_output[i & 0x0f] = *(flash+i);
+        }
+        else
+        {
+            ascii_output[i & 0x0f] = '-';
+        }
+    }
+
+    if (i & 0x0f)
+    {
+        for(j=(i & 0x0f); j < 16; j++)
+        {
+            printf("   ");
+            if ((j & 0x07) == 0)
+            {
+                printf(" ");
+            }              
+        }        
+        ascii_output[(i & 0x0f)] = 0; 
+        printf("%s\n", ascii_output); 
+    }
+    printf("\n");
+
+    return(0);
+}

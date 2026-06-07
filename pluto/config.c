@@ -26,6 +26,7 @@
 //#define DISABLE_CONFIG_UPGRADE (1)
 //#define DISABLE_CONFIG_WRITE [1]
 
+bool config_compare_flash_ram(bool stop_at_first_difference);
 int config_validate(void);
 void config_system_variable_initialize(void);
 void config_blank_to_v1(void *previous_config);
@@ -146,8 +147,23 @@ int config_write(void)
         // compare ram and flash copies
         if (memcmp((char *)(XIP_BASE +  FLASH_TARGET_OFFSET), ((char *)&config), sizeof(config)))
         {
+            printf("memcmp found difference\n");
+
+            config_compare_flash_ram(true);
+
             printf("Writing configuration to flash\n");
-            flash_write_non_volatile_variables(); 
+
+            if (err = flash_write_non_volatile_variables())
+            {
+                printf("Failed to write configuraiton to flash (%d)\n", err);
+            } 
+
+            printf("After write to flash recheck\n");
+            if (config_compare_flash_ram(true))
+            {
+                flash_dump_config(CONFIG_STANDARD);
+            }
+            printf("recheck complete\n");            
         }           
         else
         {
@@ -175,7 +191,7 @@ int config_write(void)
  * 
  * \return 0 = no difference, 1 = difference
  */
-bool config_compare_flash_ram(void)
+bool config_compare_flash_ram(bool stop_at_first_difference)
 {
     NON_VOL_VARIABLES_T *non_vol;
     int i;
@@ -188,9 +204,21 @@ bool config_compare_flash_ram(void)
     {
         if (((char *)(XIP_BASE +  FLASH_TARGET_OFFSET))[i] != ((char *)&config)[i])
         {
-            printf("Found byte difference at offset %d so will write flash\n", i);
+            if (!difference_found)
+            {
+                // printf headings
+                printf("     offset\tflash\tram\n");
+            }
+
+            // print difference
+            printf("%08x:\t%02x \t%02x\n", i, ((char *)(XIP_BASE +  FLASH_TARGET_OFFSET))[i], ((char *)&config)[i]);
+            
             difference_found = true;
-            break;
+
+            if (stop_at_first_difference)
+            {
+                break;
+            }
         }
     }
     
@@ -319,7 +347,7 @@ void config_system_variable_initialize(void)
 {
     int i;
 
-    printf("Initializing configuration system variables\n");
+    printf("Initializing configuration system variables in RAM\n");
 
     // personality
     config.personality = NO_PERSONALITY;
