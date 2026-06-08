@@ -18,7 +18,8 @@ Description:A BASIC interpreter with langauge extensions for SNMP and automatic
 //#include "snmp_def.h"
 #include "basic.h"
 //#include "Gpib_cmd.h"
-//#include "Relay.h"                       
+//#include "Relay.h"  
+#include "hc_task.h"                     
 
 
 /*External Variables*/
@@ -308,7 +309,7 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
 		/*Check for terminate request. END, INPUT or ESCAPE*/
 		if (!bScriptFileActive) break;
 
-       
+       hc_pat_watchdog();
 
 	} while (psContext->eToken != FINISHED);
 

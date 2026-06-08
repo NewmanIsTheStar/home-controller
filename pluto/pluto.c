@@ -117,7 +117,7 @@ int pluto(void)
     stdio_init_all();
 
     //print_reset_reason();
-    //log_and_clear_reset_reason();
+    log_and_clear_reset_reason();
 
     printf("\n%s version ", APP_NAME);
 

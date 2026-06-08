@@ -95,6 +95,7 @@ void discovery_task(__unused void *params)
         if ((config.personality == HOME_CONTROLLER))
         {
             //shelly_discover_devices();
+            SLEEP_MS(1000);
         }
         else
         {

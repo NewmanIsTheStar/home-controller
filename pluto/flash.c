@@ -54,7 +54,7 @@ int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
  * 
  * \param[in]   ptr not used -- for compatibility with flash_safe_execute()
  */
-void flash_write_shim(void *ptr)
+void __no_inline_not_in_flash_func(flash_write_shim)(void *ptr)
 {
         // erase the last sector of the flash (4 KBytes)
         flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
@@ -73,7 +73,7 @@ void flash_write_shim(void *ptr)
         }
         else
         {
-            printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(config));
+            //printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(config));            
         }
 }
 
@@ -86,7 +86,7 @@ int flash_write_non_volatile_variables(void)
 {
     int err = 0;
 
-    err = flash_safe_execute(flash_write_shim, NULL, 1000);
+    err = flash_safe_execute(flash_write_shim, NULL, 5000);
 
     if (err)
     {

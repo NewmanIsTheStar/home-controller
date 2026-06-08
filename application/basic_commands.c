@@ -2873,13 +2873,25 @@ void basic_Sleep(void)
 
     /*Get sleep value*/
     eval_FloatExpression(&fValue);
-
-    // avoid the watchdog firing on long running scripts
-    hc_pat_watchdog();
-
     sleep_seconds = (int)fValue;
-    SLEEP_MS(sleep_seconds*1000);
-      
+
+    // sleep but pat the watchdog occasionally
+    do
+    {
+        if (sleep_seconds > 30)
+        {
+            SLEEP_MS(30*1000);
+            sleep_seconds -=30;
+            
+            hc_pat_watchdog();
+        }
+        else
+        {
+            SLEEP_MS(sleep_seconds*1000);
+            sleep_seconds = 0;
+        }
+    } while (sleep_seconds > 0);
+    
 }
 
 
