@@ -21,6 +21,7 @@
 #include "config.h"
 #include "flash.h"
 
+#define BREAKPOINT_FLASH_WRTIE_FAIL (1)   // stop in gdb before cpu reset
 
 extern NON_VOL_VARIABLES_T config;
 
@@ -37,11 +38,11 @@ int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
     default:
     case CONFIG_STANDARD:
         memcpy((char *)&config, (char *)(XIP_BASE +  FLASH_TARGET_OFFSET), sizeof(config));
-        flash_dump_config(config_type);
+        //flash_dump_config(config_type);
         break;        
     case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
         memcpy((char *)&config, (char *)(XIP_BASE +  FLASH_LEGACY_OFFSET), sizeof(config));
-        flash_dump_config(config_type);
+        //flash_dump_config(config_type);
         break;
     }
     
@@ -61,36 +62,47 @@ void __no_inline_not_in_flash_func(flash_write_shim)(void *ptr)
 
         if (sizeof(config) < FLASH_SECTOR_SIZE)
         {
-            // program the configuation in 256 Byte pages (range is rounded up to the nearest multiple of 256 Bytes)
-            // {
-            //     int x;
-            //     for(x=0; x < ((sizeof(config)+255)/256)*256; x++)
-            //     {
-            //         printf("Reading RAM address: %08x\n", &config + x); 
-            //     }
-            // }
             flash_range_program(FLASH_TARGET_OFFSET, (uint8_t *)&config, ((sizeof(config)+255)/256)*256);
         }
         else
         {
-            //printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(config));            
+            printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(config));            
         }
 }
 
 /*!
  * \brief Copy configuration from RAM into flash
  * 
- * \return 0 on success, -1 on error
+ * \return 0 on success
  */
 int flash_write_non_volatile_variables(void)
 {
     int err = 0;
 
-    err = flash_safe_execute(flash_write_shim, NULL, 5000);
 
-    if (err)
+    if (sizeof(config) < FLASH_SECTOR_SIZE)
+    {    
+        //vTaskSuspendAll();
+
+        err = flash_safe_execute(flash_write_shim, NULL, 5000);
+
+        if (err)
+        {
+            printf("flash_safe_execute() returned error %d\n", err);
+
+             #ifdef BREAKPOINT_FLASH_WRTIE_FAIL        
+            // Hardcoded breakpoint instruction tells the SWD debugger to freeze right here
+            __asm volatile("bkpt #0"); 
+            while(1); // Infinite loop prevents the chip from executing further code/resetting
+             #endif
+        }
+
+        //xTaskResumeAll();
+    }
+    else
     {
-        printf("flash_safe_execute() returned error %d\n", err);
+        printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(config));        
+        err = -2;
     }
 
     return(err);
@@ -178,8 +190,6 @@ int flash_dump_config(CONFIG_TYPE_T config_type)
     int i,j;
     char *flash;
     char ascii_output[20];
-
-
 
     printf("Dump Config from Flash %s (%d)\n", config_type==CONFIG_STANDARD?"Standard":"Legacy", config_type);
 

@@ -10,8 +10,6 @@
 //#include "hardware/rtc.h"
 #include "pico/util/datetime.h"
 #include "hardware/watchdog.h"
-// #include "hardware/regs/vreg_and_chip_reset.h"
-// #include "hardware/regs/watchdog.h"
 #include "hardware/structs/powman.h"
 #include "hardware/regs/powman.h"
 
@@ -30,8 +28,6 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-//#include "weather.h"
-// #include "led_strip.h"
 #include "cgi.h"
 #include "flash.h"
 #include "utility.h"
@@ -40,9 +36,6 @@
 #include "worker_tasks.h"
 #include "wifi.h"
 #include "calendar.h"
-// #include "powerwall.h"
-// #include "shelly.h"
-// #include  "usurper_ping.h"
 #include "pluto.h"
 
 #include "ssi.h"
@@ -58,7 +51,7 @@
 #define RUN_FREERTOS_ON_CORE 0
 #endif
 
-#define BOSS_TASK_PRIORITY              ( 0 + 2UL )
+#define BOSS_TASK_PRIORITY              ( 0 + 1UL )
 #define WATCHDOG_TASK_PRIORITY          ( 0 + 1UL )
 #define PAUSE_FOR_INITIAL_SNTP_RESPONSE (1)
 //#define LOG_CLOCK_SLEW                  (1) 
@@ -89,7 +82,7 @@ void atomic_write_task(__unused void *params);
 void atomic_read_task(__unused void *params);
 int set_gpio_defaults(void);
 void print_reset_reason(void);
-void log_and_clear_reset_reason(void);
+void print_tasks_list(void);
 
 
 /*********************************************************
@@ -117,7 +110,7 @@ int pluto(void)
     stdio_init_all();
 
     //print_reset_reason();
-    log_and_clear_reset_reason();
+    print_reset_reason();
 
     printf("\n%s version ", APP_NAME);
 
@@ -285,6 +278,8 @@ void boss_task(__unused void *params)
 
         SLEEP_MS(1000);
     }    
+
+    print_tasks_list();
 
     // flash the led for attention while doing no actual work (like a boss!)
     while(true) 
@@ -920,6 +915,15 @@ int get_int_with_tenths_from_string(char *value_string)
     return(new_value);
 }
 
+/*!
+ * \brief convert string to integer times ten plus tenths e.g. "78.32" => 783
+ *
+ * \param[in]   unix_timestamp   seconds since 1970
+ * \param[out]  iso_string       output buffer
+ * \param[in]   buffer_size      length of output buffer
+ * 
+ * \return nothing
+ */
 void unix_to_iso8601(time_t unix_timestamp, char *iso_string, size_t buffer_size)
 {
     struct tm *timeinfo;
@@ -932,64 +936,43 @@ void unix_to_iso8601(time_t unix_timestamp, char *iso_string, size_t buffer_size
     strftime(iso_string, buffer_size, "%Y-%m-%dT%H:%M:%SZ", timeinfo);
 }
 
+/*!
+ * \brief get reboot reason stored in RAM by the application prior to reboot
+ * 
+ * \return integer = value x 10
+ */
 uint32_t get_reboot_reason(void)
 {
     return(reboot_reason);
 }
 
-void print_reset_reason(void) 
+/*!
+ * \brief print reason for reset based on hardware register(s)
+ * 
+ * \return nothing
+ */
+void print_reset_reason(void)   // TODO: solve for pico_w
 {
-    // // 1. Check Watchdog SDK function first
-    // if (watchdog_caused_reboot()) {
-    //     // Read the low-level watchdog reason register to differentiate
-    //     io_rw_32 *wd_reason_reg = (io_rw_32 *)(WATCHDOG_BASE + WATCHDOG_REASON_OFFSET);
-        
-    //     if (*wd_reason_reg & WATCHDOG_REASON_FORCE_BITS) {
-    //         printf("Reset Reason: Software Watchdog Reset (Forced)\n");
-    //     } else if (*wd_reason_reg & WATCHDOG_REASON_TIMER_BITS) {
-    //         printf("Reset Reason: Hardware Watchdog Timeout\n");
-    //     } else {
-    //         printf("Reset Reason: Watchdog (Unknown source)\n");
-    //     }
-    // } 
-    // else {
-    //     // 2. Fall back to the chip reset register for non-watchdog events
-    //     io_rw_32 *chip_reset_reg = (io_rw_32 *)(VREG_AND_CHIP_RESET_BASE + VREG_AND_CHIP_RESET_CHIP_RESET_OFFSET);
-        
-    //     if (*chip_reset_reg & VREG_AND_CHIP_RESET_CHIP_RESET_HAD_POR_BITS) {
-    //         printf("Reset Reason: Power-On Reset (Cold Boot / Brown-out)\n");
-    //     } else if (*chip_reset_reg & VREG_AND_CHIP_RESET_CHIP_RESET_HAD_RUN_BITS) {
-    //         printf("Reset Reason: Hardware RUN Pin Reset\n");
-    //     } else {
-    //         printf("Reset Reason: Unknown Reset Type\n");
-    //     }
-    // }
-}
-
-
-
-
-void log_and_clear_reset_reason(void) 
-{
+#if defined(PICO_BOARD_PICO2) || defined(PICO_BOARD_PICO2W)
     // Read the current live status flags from the RP2350 power manager
     uint32_t reset_reason = powman_hw->chip_reset;
 
-    // 1. Check for Power-On Reset / Brown-out (Bit 16)
+    // Check for Power-On Reset / Brown-out (Bit 16)
     if (reset_reason & POWMAN_CHIP_RESET_HAD_POR_BITS) {
         printf("Reset Source: Power-On Reset / Voltage Brown-out\n");
     }
 
-    // 2. Check for physical RUN/RSTn pin (Bit 18)
+    // Check for physical RUN/RSTn pin (Bit 18)
     if (reset_reason & POWMAN_CHIP_RESET_HAD_RUN_LOW_BITS) {
         printf("Reset Source: Physical RUN/RSTn pin pressed\n");
     }
 
-    // 3. Check for external debugger reset request (Bit 21)
+    // Check for external debugger reset request (Bit 21)
     if (reset_reason & POWMAN_CHIP_RESET_HAD_DP_RESET_REQ_BITS) {
         printf("Reset Source: Debugger Request (SWD/SYSRESETREQ)\n");
     }
 
-    // 4. Check for Switched Core Powerdown (Bit 25)
+    // Check for Switched Core Powerdown (Bit 25)
     if (reset_reason & POWMAN_CHIP_RESET_HAD_SWCORE_PD_BITS) {
         printf("Reset Source: Core Powerdown / Deep Sleep Wakeup\n");
     }
@@ -997,4 +980,26 @@ void log_and_clear_reset_reason(void)
     // CRITICAL: Clear the sticky bits so future warm resets don't inherit them.
     // In POWMAN, writing the bits back clears them.
     powman_hw->chip_reset = reset_reason; 
+#endif
+}
+
+/*!
+ * \brief Dump list of running tasks including priorities
+ *
+ * \return nothing
+ */
+void print_tasks_list(void) 
+{
+    // Allocate a buffer large enough to hold the text table 
+    // (Roughly 40 bytes per task is safe)
+    char buffer[512]; 
+    
+    printf("Task Name\tState\tPrio\tStack\tNum\n");
+    printf("-------------------------------------------\n");
+    
+    // Generate the list
+    vTaskList(buffer);
+    
+    // Print the formatted string
+    printf("%s\n", buffer);
 }

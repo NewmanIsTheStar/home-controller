@@ -147,23 +147,16 @@ int config_write(void)
         // compare ram and flash copies
         if (memcmp((char *)(XIP_BASE +  FLASH_TARGET_OFFSET), ((char *)&config), sizeof(config)))
         {
-            printf("memcmp found difference\n");
-
-            config_compare_flash_ram(true);
-
             printf("Writing configuration to flash\n");
 
             if (err = flash_write_non_volatile_variables())
             {
-                printf("Failed to write configuraiton to flash (%d)\n", err);
+                printf("Failed to write configuraiton to flash (%d)\n", err);                
             } 
-
-            printf("After write to flash recheck\n");
-            if (config_compare_flash_ram(true))
+            else if (config_compare_flash_ram(false))
             {
                 flash_dump_config(CONFIG_STANDARD);
-            }
-            printf("recheck complete\n");            
+            }          
         }           
         else
         {

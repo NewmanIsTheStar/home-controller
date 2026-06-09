@@ -81,7 +81,7 @@
 /* Run time and task stats gathering related definitions. */
 #define configGENERATE_RUN_TIME_STATS           0
 #define configUSE_TRACE_FACILITY                1
-#define configUSE_STATS_FORMATTING_FUNCTIONS    0
+#define configUSE_STATS_FORMATTING_FUNCTIONS    1  // Newman enabled to print list of tasks
 
 #define configUSE_CO_ROUTINES                   0  // Newman copied from older file
 #define configMAX_CO_ROUTINE_PRIORITIES         1  // Newman copied from older file
