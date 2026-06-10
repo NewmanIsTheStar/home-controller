@@ -4076,3 +4076,4 @@ void cgi_init(void)
 {
     http_set_cgi_handlers(cgi_handlers, NUM_ROWS(cgi_handlers));
 }
+

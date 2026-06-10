@@ -58,6 +58,7 @@
 #include "shelly.h"
 #include "hc_task.h"
 #include "basic.h"
+#include "http_post.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -107,6 +108,8 @@ void hc_task(__unused void *params)
     while (true)
     {
         basic_Interpreter(NULL, NULL, my_program, sizeof(my_program));
+
+        dump_text_buffer();
 
         if ((config.personality == HOME_CONTROLLER))
         {

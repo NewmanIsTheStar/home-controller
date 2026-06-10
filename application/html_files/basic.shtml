@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Editor</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h2 {
+            font-size: 1.2rem;
+            margin: 0 0 10px 0;
+            letter-spacing: 1px;
+        }
+        textarea {
+            width: 100%;
+            height: 350px;
+            background-color: #1a1a1a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 18px;
+            padding: 10px;
+            box-sizing: border-box;
+            resize: none;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #ffffff;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        #status { color: #00ff00; }
+        #status.error { color: #ff3333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ASCII TEXT EDITOR (80 COL MAX)</h2>
+    <textarea id="editor" autocomplete="off" spellcheck="false" placeholder="Type ASCII here... Press ENTER to save."></textarea>
+    <div class="footer">
+        <span id="counter">Line: 1 | Col: 0</span>
+        <span id="status">Status: Ready</span>
+    </div>
+</div>
+
+<script>
+    const editor = document.getElementById('editor');
+    const status = document.getElementById('status');
+    const counter = document.getElementById('counter');
+    
+    // LWIP HTTPD endpoint path
+    const SERVER_ENDPOINT = '/save_ascii.cgi'; 
+
+    // Track cursor and line limits
+    function updateMetricsAndEnforce() {
+        const text = editor.value;
+        const selStart = editor.selectionStart;
+        
+        const lines = text.split('\n');
+        let currentLineIdx = 0;
+        let accumChars = 0;
+
+        // Determine which line the cursor is currently on
+        for (let i = 0; i < lines.length; i++) {
+            if (selStart >= accumChars && selStart <= accumChars + lines[i].length + 1) {
+                currentLineIdx = i;
+                break;
+            }
+            accumChars += lines[i].length + 1; 
+        }
+
+        const currentColIdx = selStart - accumChars;
+        counter.textContent = `Line: ${currentLineIdx + 1} | Col: ${currentColIdx}`;
+    }
+
+    editor.addEventListener('keydown', function(e) {
+        const text = editor.value;
+        const start = editor.selectionStart;
+        
+        // Find current line text boundaries
+        const lastNewline = text.lastIndexOf('\n', start - 1);
+        const nextNewline = text.indexOf('\n', start);
+        const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
+        const lineEnd = nextNewline === -1 ? text.length : nextNewline;
+        const currentLineLen = lineEnd - lineStart;
+
+        // If ENTER is pressed, inject newline and immediately transmit payload
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            
+            // Insert the newline character exactly where the cursor is
+            editor.value = text.substring(0, start) + '\n' + text.substring(editor.selectionEnd);
+            editor.selectionStart = editor.selectionEnd = start + 1;
+            
+            updateMetricsAndEnforce();
+            sendDataToServer();
+            return;
+        }
+
+        // Enforce 80 character limit per line for standard typing characters
+        if (currentLineLen >= 80 && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault(); 
+        }
+    });
+
+    // Automatically format chunks if text is pasted inside the editor
+    editor.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        const lines = pasteData.split('\n');
+        
+        // Sanitize every line to fit exactly 80 characters max
+        const sanitizedLines = lines.map(line => line.substring(0, 80));
+        const finalPaste = sanitizedLines.join('\n');
+        
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        editor.value = editor.value.substring(0, start) + finalPaste + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + finalPaste.length;
+        
+        updateMetricsAndEnforce();
+    });
+
+    editor.addEventListener('keyup', updateMetricsAndEnforce);
+    editor.addEventListener('click', updateMetricsAndEnforce);
+
+    // Optimized light POST submission function for LWIP stack
+    function sendDataToServer() {
+        status.textContent = 'Saving...';
+        status.className = '';
+
+        // Form URL Encoding uses minimal RAM on embedded parsing components
+        const payload = 'text=' + encodeURIComponent(editor.value);
+
+        fetch(SERVER_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: payload
+        })
+        .then(response => {
+            if (!response.ok) throw new Error();
+            status.textContent = 'Saved (' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) + ')';
+        })
+        .catch(() => {
+            status.textContent = 'Save Failed';
+            status.className = 'error';
+        });
+    }
+</script>
+
+</body>
+</html>

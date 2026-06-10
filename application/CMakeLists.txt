@@ -10,7 +10,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         basic_interpreter.c
         basic_parser.c                  
         ssi.c
-        cgi.c        
+        cgi.c   
+        http_post.c     
 )
 
 set(WEB_FILES)

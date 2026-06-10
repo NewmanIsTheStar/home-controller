@@ -169,5 +169,7 @@ Increase MQTT_VAR_HEADER_BUFFER_LEN: This buffer must hold the topic string and 
 Increase MQTT_OUTPUT_RINGBUF_SIZE: If sending multiple subscription requests in rapid succession, increase this to prevent overflowing the output buffer. 
 */
 
+#define LWIP_HTTPD_SUPPORT_POST 1
+#define LWIP_HTTPD_CUSTOM_FILES 1
 
 #endif
