@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASCII Editor</title>
+    <title>BASIC Interpreter</title>
     <style>
         body {
             background-color: #121212;
@@ -54,8 +54,8 @@
 <body>
 
 <div class="container">
-    <h2>ASCII TEXT EDITOR (80 COL MAX)</h2>
-    <textarea id="editor" autocomplete="off" spellcheck="false" placeholder="Type ASCII here... Press ENTER to save."></textarea>
+    <h2>BASIC Interpreter</h2>
+    <textarea id="editor" autocomplete="off" spellcheck="false" placeholder="Type BASIC commands here... RUN to execute program."></textarea>
     <div class="footer">
         <span id="counter">Line: 1 | Col: 0</span>
         <span id="status">Status: Ready</span>

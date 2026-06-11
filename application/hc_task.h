@@ -59,6 +59,7 @@ void hc_task(__unused void *params);
 bool hc_trigger(int *condition, int length);
 bool hc_test_trigger(void);
 void hc_pat_watchdog(void);
+void hc_queue_send(uint8_t message);
 
 
 #endif

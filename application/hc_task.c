@@ -39,6 +39,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
+#include "queue.h"
 
 #include "stdarg.h"
 
@@ -62,19 +63,29 @@
 
 
 //#define DEBUG_UDP_MESSAGES
+#define HC_TASK_LOOP_DELAY (60*1000)
 
 //#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
-
+// typdedefs
+typedef struct
+{
+    int (*initialization)(void);
+    bool initialization_complete;
+} HC_INITIALIZATION_T;
 
 
 
 
 //prototypes
-
+int hc_wait(TickType_t timeout);
+int hc_initialize_queue(void);
+int hc_initialize(void);
 
 // external variables
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
+extern char ascii_ram_buffer[];
+extern size_t current_buffer_index;
 
 //static variables
 void *watchdog_params = NULL;
@@ -82,6 +93,14 @@ char my_program[] = "FOR x = 1 TO 100\nPRINT \"HELLO WORLD! \";X\nNEXT";
 //char my_program[] = "5 X = 1\n10 PRINT \"HELLO WORLD! \" + X\n15 X = X +1\n20 GOTO 10";
 //char my_program[] = "5 X = 1\n15 X = X +1\n20 GOTO 15";
 //char my_program[] = "5 X = 1\n10 PRINT \"HELLO WORLD!\" + X\n12 SLEEP 1\n15 X = X +1\n20 GOTO 10";
+static HC_INITIALIZATION_T hc_initialization_table[] =
+{
+
+    {hc_initialize_queue,                     false},                    
+};
+static QueueHandle_t hc_queue = NULL;                     
+static uint8_t hc_message = 0;                            
+static bool hc_queue_initialized = false;    
 
 /*!
  * \brief home controller task
@@ -93,7 +112,8 @@ char my_program[] = "FOR x = 1 TO 100\nPRINT \"HELLO WORLD! \";X\nNEXT";
 void hc_task(__unused void *params) 
 {
     SOCKADDR_IN sClientAddress;  
-    int received_bytes = 0;    
+    int received_bytes = 0; 
+    int hc_request = 0;   
     
     // store passed watchdog parameter 
     watchdog_params = params;
@@ -107,9 +127,12 @@ void hc_task(__unused void *params)
     printf("home controller task started\n");
     while (true)
     {
-        basic_Interpreter(NULL, NULL, my_program, sizeof(my_program));
+        // initialize all subsystems that are not already up
+        hc_initialize();
 
-        dump_text_buffer();
+        //basic_Interpreter(NULL, NULL, my_program, sizeof(my_program));
+
+        //dump_text_buffer();
 
         if ((config.personality == HOME_CONTROLLER))
         {
@@ -118,7 +141,15 @@ void hc_task(__unused void *params)
             // discover_shelly_devices();
             // printf("End shelly test\n");
             printf("Home Controller\n");
-            SLEEP_MS(60000);
+            // SLEEP_MS(60000);
+            // wait for timeout period but abort immediately if a command is received
+            hc_request = hc_wait(HC_TASK_LOOP_DELAY);
+
+            if (hc_request)
+            {
+                ascii_ram_buffer[current_buffer_index+1] = 0;
+                basic_Interpreter(NULL, NULL, ascii_ram_buffer, current_buffer_index);
+            }
         }
         else
         {
@@ -139,4 +170,102 @@ void hc_pat_watchdog(void)
 {
     // this function exists so that during the execution of basic scripts the watchdog may be updated
     watchdog_pulse((int *)watchdog_params); 
+}
+
+/*!
+ * \brief wait for timeout or queue
+ * 
+ * \return true if timeout preempted
+ */
+int hc_wait(TickType_t timeout)
+{
+    int err = 0;
+
+    if (xQueueReceive(hc_queue, &hc_message, timeout) == pdPASS)
+    {
+        // got a message
+        err = 1;
+    }
+
+    return(err);
+}
+
+/*!
+ * \brief send a message to the mqtt_task queue
+ *
+ * \param message one byte message
+ * 
+ * \return nothing
+ */
+void hc_queue_send(uint8_t message)
+{
+    static uint8_t message_store = 0;
+
+    if (hc_queue_initialized)
+    {
+        message_store = message;
+
+        // send the message to the queue
+        xQueueSend(hc_queue, &message_store, 0);
+    }
+}
+
+/*!
+ * \brief initialize a queue for sending messages to the mqtt_task
+ * 
+ * \return nothing
+ */
+int hc_initialize_queue(void)
+{
+    int err = 0;
+
+    // create queue for to pass interrupt messages to task
+    hc_queue = xQueueCreate(1, sizeof(uint8_t));
+
+    hc_queue_initialized = true;
+
+    return(err);
+}
+
+/*!
+ * \brief initialize subsystems
+ *
+ * \param params none
+ * 
+ * \return 0 on success
+ */
+int hc_initialize(void)
+{
+    static bool init_complete = false;
+    static int  attempt = 0;
+    int err = 0;
+    int i;
+
+    for (i=0; i < NUM_ROWS(hc_initialization_table); i++)
+    {
+        if (!hc_initialization_table[i].initialization_complete)
+        {
+            hc_initialization_table[i].initialization_complete = !hc_initialization_table[i].initialization();            
+
+            if (!hc_initialization_table[i].initialization_complete)
+            {
+                err++;
+                printf("HC incomplete initialization of subsystem %d at attempt %d\n", i, attempt);
+                init_complete = false;
+            }
+        }
+    }
+
+    if (err)
+    {
+        printf("HC %d subsystem%s failed to initialize during attempt %d\n", err, err>1?"s":"", attempt);
+        
+    } else if (!init_complete)
+    {
+        printf("HC all subsystems sucessfully initialized at attempt %d\n", attempt);
+        init_complete = true;
+        attempt = 0;
+    }
+
+    return(err);
 }

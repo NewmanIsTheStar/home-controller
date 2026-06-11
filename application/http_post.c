@@ -8,51 +8,33 @@
  //#define _GNU_SOURCE
  
 
- #include "lwip/apps/httpd.h"
-
-
-//#include "lwip/sockets.h"
+#include "lwip/apps/httpd.h"
 #include <lwip/apps/fs.h>
-
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
-
-//#include "weather.h"
 #include "calendar.h"
-//#include "utility.h"
 #include "config.h"
-// #include "rmtsw.h"
-
 #include "pluto.h"
-
 #include "pico/cyw43_arch.h"
 #include "pico/types.h"
 #include "pico/stdlib.h"
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-
- #include "hardware/watchdog.h"
-
+#include "hardware/watchdog.h"
 #include "lwip/apps/httpd.h"
-//#include "lwip/sockets.h"
-
 #include "time.h"
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
-
 #include "flash.h"
 #include "calendar.h"
-//#include "utility.h"
 #include "config.h"
 #include "worker_tasks.h"
-#include "pluto.h"
+#include "hc_task.h"
 
-// Break the lwIP preprocessor mapping for this file
-//#undef poll 
 
-#define MAX_ASCII_BUFFER_SIZE 8192 // Allocate size based on your RAM layout requirements
+#define MAX_ASCII_BUFFER_SIZE 8192 
 
 // Application RAM Storage variables
 char ascii_ram_buffer[MAX_ASCII_BUFFER_SIZE];
@@ -86,25 +68,6 @@ const char http_400_bad_json[] =
     "Connection: close\r\n"
     "\r\n"
     "{\"status\":\"invalid\"}";    
-
-
-// err_t httpd_post_begin(void *connection, const char *uri, const char *http_request,
-//                        u16_t http_request_len, int content_len, char *response_uri,
-//                        u16_t response_uri_len, u8_t *post_auto_wnd) {
-//     if (strcmp(uri, "/save_ascii.cgi") == 0) {
-//         *post_auto_wnd = 1; // Take direct data control
-//         return ERR_OK;
-//     }
-//     return ERR_VAL;
-// }
-
-// err_t httpd_post_receive_data(void *connection, struct pbuf *p) {
-//     // Look for the "text=" sequence parameter inside the incoming buffer
-//     // Remember to run standard url decode routines on the data array!
-//     pbuf_free(p);
-//     return ERR_OK;
-// }
-
 
 
 /**
@@ -183,54 +146,6 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p) {
     return ERR_OK;
 }
 
-// void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len) {
-//     // 1. Terminate incoming raw array safely
-//     ascii_ram_buffer[current_buffer_index] = '\0';
-
-//     // 2. Locate the form key identifier "text=" 
-//     char *data_start = strstr(ascii_ram_buffer, "text=");
-//     if (data_start != NULL) {
-//         data_start += 5; // Advance pointer past the "text=" prefix string
-
-//         // 3. Perform the clean in-place conversion matrix sweep
-//         size_t final_len = url_decode_inplace(data_start);
-
-//         // 4. Shift decoded content to the front of your buffer array
-//         memmove(ascii_ram_buffer, data_start, final_len + 1);
-        
-//         // At this point, ascii_ram_buffer holds a perfectly formatted string,
-//         // complete with raw \n characters, capped at 80 columns wide.
-//     }
-
-//     // Direct the user's web page client browser to a simple acknowledgment
-//     snprintf(response_uri, response_uri_len, "/200.json"); 
-// }
-
-// void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len) {
-//     // Process your text decoding sequence first...
-    
-//     // Direct lwIP to serve our virtual intercept URI path
-//     snprintf(response_uri, response_uri_len, "/post_ok.json"); 
-// }
-
-
-
-// int fs_open_custom(struct fs_file *file, const char *name) {
-//     if (strcmp(name, "/post_ok.json") == 0) {
-//         memset(file, 0, sizeof(struct fs_file));
-        
-//         // Point the file structure pointers directly to our raw flash string
-//         file->data = http_200_json_response;
-//         //file->pext = NULL;
-//         file->len  = sizeof(http_200_json_response) - 1; // Drop trailing null character
-//         file->index = sizeof(http_200_json_response) - 1;
-        
-//         return 1; // Return true to indicate successful file allocation
-//     }
-//     return 0; // Fall back to standard makefsdata filesystem routine for everything else
-// }
-
-
 
 /**
  * @brief Validates that a string is strictly 7-bit printable ASCII and adheres to line limits.
@@ -266,11 +181,6 @@ bool validate_ascii_buffer(const char *str) {
 }
 
 
-
-
-
-
-
 void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len) {
     ascii_ram_buffer[current_buffer_index] = '\0';
     post_validation_success = false; // Default to fail until validated
@@ -297,7 +207,6 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
         snprintf(response_uri, response_uri_len, "/post_fail.json");
     }
 }
-
 
 
 int fs_open_custom(struct fs_file *file, const char *name) {
@@ -329,15 +238,13 @@ int fs_open_custom(struct fs_file *file, const char *name) {
     return 0; // Hand back control to default storage for regular SSI/CGI scripts
 }
 
-
-
-
 /**
  * @brief Callback executed by lwIP HTTPD when a custom file is closed.
  * @param file Pointer to the lwIP fs_file structure being torn down.
  */
 void fs_close_custom(struct fs_file *file)
 {
+    hc_queue_send(69);
 }
 
 void dump_text_buffer(void)
