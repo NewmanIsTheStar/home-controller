@@ -8,6 +8,7 @@
   - Govee
   - Ecowitt
   - Tesla
+- Supports MQTT
 - Provides a BASIC interpreter
   - Automation scripts
   - Live control and debugging
@@ -18,14 +19,14 @@ sudo apt install git build-essential cmake gcc-arm-none-eabi libnewlib-arm-none-
 ```
 ## Clone and build the code
 ```
-git clone --recurse-submodules https://github.com/NewmanIsTheStar/thermostat.git
-cd thermostat
+git clone --recurse-submodules https://github.com/NewmanIsTheStar/home-controller.git
+cd home-controller
 mkdir build
 cd build
 cmake ..
 make
 ```
-Upon completion of a successful build the file thermostat.uf2 should be created.  This may be loaded onto the Pico2 W by dragging and dropping in the usual manner.
+Upon completion of a successful build the file home-controller.uf2 should be created.  This may be loaded onto the Pico2 W by dragging and dropping in the usual manner.
 
 ## Initial Configuration
 - The Pico will initially create a WiFi network called **pluto**.  Connect to this WiFi network and then point your web browser to http://192.168.4.1
