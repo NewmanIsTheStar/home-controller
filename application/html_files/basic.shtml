@@ -12,6 +12,32 @@
             padding: 15px;
             margin: 0;
         }
+        .heading-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #121212;
+        color: #00ff00;
+        font-family: 'Courier New', Courier, monospace;        
+        }
+        .flex-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;           
+        background-color: #ffffff;    
+        color: #333333;
+        padding: 10px;
+        }
+        .reverse-video-link {
+        text-decoration: none;          
+        background-color: #00ff00;;      
+        color: #121212;;               
+        padding: 6px 12px;             
+        border-radius: 4px;          
+        }
+        .reverse-video-link:hover {
+        background-color: #555555;
+        }                
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -54,8 +80,11 @@
 <body>
 
 <div class="container">
-    <h2>BASIC Interpreter</h2>
-    <textarea id="editor" autocomplete="off" spellcheck="false" placeholder="Type BASIC commands here... RUN to execute program."></textarea>
+    <h2 class="flex-heading">
+        <span>BASIC Program</span>
+        <a id="saveTrigger" href="/basic_run.cgi" class="reverse-video-link">RUN</a>        
+    </h2>     
+    <textarea id="editor" autocomplete="off" spellcheck="false" placeholder="Type BASIC commands here... Click RUN to execute program."></textarea>
     <div class="footer">
         <span id="counter">Line: 1 | Col: 0</span>
         <span id="status">Status: Ready</span>
@@ -66,9 +95,24 @@
     const editor = document.getElementById('editor');
     const status = document.getElementById('status');
     const counter = document.getElementById('counter');
+    const saveTrigger = document.getElementById('saveTrigger');
     
     // LWIP HTTPD endpoint path
     const SERVER_ENDPOINT = '/save_ascii.cgi'; 
+
+    // Fetch initial RAM buffer content on load
+    window.addEventListener('DOMContentLoaded', () => {
+        fetch('/get_text')
+            .then(res => res.text())
+            .then(data => { editor.value = data; })
+            .catch(() => { status.innerText = "Status: Failed to load initial text"; });
+    });
+
+    // Trigger save when the hyperlink is clicked
+    saveTrigger.addEventListener('click', (e) => {
+        e.preventDefault(); // Stop default browser anchor routing action
+        sendDataToServer();
+    });
 
     // Track cursor and line limits
     function updateMetricsAndEnforce() {
@@ -104,17 +148,17 @@
         const currentLineLen = lineEnd - lineStart;
 
         // If ENTER is pressed, inject newline and immediately transmit payload
-        if (e.key === 'Enter') {
-            e.preventDefault();
+        // if (e.key === 'Enter') {
+        //     e.preventDefault();
             
-            // Insert the newline character exactly where the cursor is
-            editor.value = text.substring(0, start) + '\n' + text.substring(editor.selectionEnd);
-            editor.selectionStart = editor.selectionEnd = start + 1;
+        //     // Insert the newline character exactly where the cursor is
+        //     editor.value = text.substring(0, start) + '\n' + text.substring(editor.selectionEnd);
+        //     editor.selectionStart = editor.selectionEnd = start + 1;
             
-            updateMetricsAndEnforce();
-            sendDataToServer();
-            return;
-        }
+        //     updateMetricsAndEnforce();
+        //     sendDataToServer();
+        //     return;
+        // }
 
         // Enforce 80 character limit per line for standard typing characters
         if (currentLineLen >= 80 && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {

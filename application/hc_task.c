@@ -84,7 +84,7 @@ int hc_initialize(void);
 // external variables
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
-extern char ascii_ram_buffer[];
+extern char *basic_program;
 extern size_t current_buffer_index;
 
 //static variables
@@ -147,8 +147,8 @@ void hc_task(__unused void *params)
 
             if (hc_request)
             {
-                ascii_ram_buffer[current_buffer_index+1] = 0;
-                basic_Interpreter(NULL, NULL, ascii_ram_buffer, current_buffer_index);
+                //basic_program[current_buffer_index+1] = 0;
+                basic_Interpreter(NULL, NULL, basic_program, current_buffer_index);
             }
         }
         else

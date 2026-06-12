@@ -31,7 +31,7 @@
 // #include "mqtt.h"
 #include "worker_tasks.h"
 #include "pluto.h"
-
+#include "hc_task.h"
 
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
@@ -3995,6 +3995,51 @@ const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char 
     return "/mqtt.shtml";
 }
 
+/*!
+ * \brief cgi handler
+ *
+ * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+ * \param[in]  iNumParams   number of parameters
+ * \param[in]  pcParam      parameter name
+ * \param[in]  pcValue      parameter value 
+ * 
+ * \return nothing
+ */
+const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+{
+    int i = 0;
+    //int whole_part = 0;
+    //int tenths_part = 0;
+    char *param = NULL;
+    char *value = NULL;
+    //int new_value = 0;
+       
+    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+    i = 0;
+    while (i < iNumParams)
+    {
+        param = pcParam[i];
+        value = pcValue[i];
+
+        if (param && value)
+        {
+            //printf("Parameter: %s has Value: %s\n", param, value);
+                       
+        }
+
+        i++;
+    }
+
+    // tell hc_task to run the script
+    hc_queue_send(69);
+
+
+    // Send the next page back to the user
+    //config_changed();
+    return "/basic.shtml";
+}
+
 // CGI requests and their respective handlers  --Add new entires at bottom--
 static const tCGI cgi_handlers[] = {
 
@@ -4012,6 +4057,8 @@ static const tCGI cgi_handlers[] = {
     // *** system handlers end ***
 
     // *** application handlers start ***   
+     {"/basic_run.cgi",                 cgi_basic_run_handler},  
+
     // {"/rs_default.cgi",                 cgi_remote_switch_relay_handler},     
     // {"/rs_gpio_max.cgi",                cgi_rs_gpio_max_handler},   
     // {"/rs_gpio.cgi",                    cgi_rs_gpio_handler},      

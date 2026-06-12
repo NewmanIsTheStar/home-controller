@@ -33,16 +33,6 @@
 #include "worker_tasks.h"
 #include "hc_task.h"
 
-
-#define MAX_ASCII_BUFFER_SIZE 8192 
-
-// Application RAM Storage variables
-char ascii_ram_buffer[MAX_ASCII_BUFFER_SIZE];
-size_t current_buffer_index = 0;
-
-// Global flag to change filesystem responses context-dependently
-bool post_validation_success = true;
-
 // Pre-formatted valid HTTP response payload including minimalist JSON body data
 const char http_200_json_response[] = 
     "HTTP/1.1 200 OK\r\n"
@@ -68,6 +58,26 @@ const char http_400_bad_json[] =
     "Connection: close\r\n"
     "\r\n"
     "{\"status\":\"invalid\"}";    
+
+// header used to send ascii buffer
+const char http_ascii_buffer_header_tmpl[] = 
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/plain; charset=UTF-8\r\n"
+    "Content-Length: %d\r\n"
+    "Connection: close\r\n"
+    "Access-Control-Allow-Origin: *\r\n" // Helps if testing locally via file://
+    "\r\n";
+
+#define MAX_ASCII_BUFFER_SIZE (4096) 
+#define ASCII_HEADER_SIZE (sizeof(http_ascii_buffer_header_tmpl) - 1) 
+
+// Application RAM Storage variables
+char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_ASCII_BUFFER_SIZE];
+size_t current_buffer_index = 0;
+
+// Global flag to change filesystem responses context-dependently
+bool post_validation_success = true;
+const char *basic_program = ascii_ram_buffer + ASCII_HEADER_SIZE;
 
 
 /**
@@ -115,7 +125,8 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
     
     if (strcmp(uri, "/save_ascii.cgi") == 0) {
         // Clear old working workspace before accepting new streaming content
-        memset(ascii_ram_buffer, 0, sizeof(ascii_ram_buffer));
+        memset(ASCII_HEADER_SIZE + ascii_ram_buffer, 0, sizeof(ascii_ram_buffer) - ASCII_HEADER_SIZE);
+        strcpy(ascii_ram_buffer, http_ascii_buffer_header_tmpl);  // prepend http header to ascii ram buffer
         current_buffer_index = 0;
         
         *post_auto_wnd = 1; // Direct lwIP to automatically manage TCP windows
@@ -133,7 +144,7 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p) {
     for (q = p; q != NULL; q = q->next) {
         // Enforce safety limits to stop memory corruption overwrites
         if (current_buffer_index + q->len < (MAX_ASCII_BUFFER_SIZE - 1)) {
-            memcpy(&ascii_ram_buffer[current_buffer_index], q->payload, q->len);
+            memcpy(&ascii_ram_buffer[ASCII_HEADER_SIZE + current_buffer_index], q->payload, q->len);
             current_buffer_index += q->len;
         } else {
             // Payload is too large for the allocated RAM buffer
@@ -182,19 +193,19 @@ bool validate_ascii_buffer(const char *str) {
 
 
 void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len) {
-    ascii_ram_buffer[current_buffer_index] = '\0';
+    ascii_ram_buffer[ASCII_HEADER_SIZE + current_buffer_index] = '\0';
     post_validation_success = false; // Default to fail until validated
 
-    char *data_start = strstr(ascii_ram_buffer, "text=");
+    char *data_start = strstr(ASCII_HEADER_SIZE + ascii_ram_buffer, "text=");
     if (data_start != NULL) {
         data_start += 5; // Move past "text=" Prefix key
         
         // 1. In-place URL-decode the string
         size_t final_len = url_decode_inplace(data_start);
-        memmove(ascii_ram_buffer, data_start, final_len + 1);
+        memmove(ASCII_HEADER_SIZE + ascii_ram_buffer, data_start, final_len + 1);
 
         // 2. Perform the character and layout integrity validation check
-        if (validate_ascii_buffer(ascii_ram_buffer)) {
+        if (validate_ascii_buffer(ASCII_HEADER_SIZE + ascii_ram_buffer)) {
             post_validation_success = true;
             // The sanitized string is now safe to process or use in RAM here
         }
@@ -235,6 +246,16 @@ int fs_open_custom(struct fs_file *file, const char *name) {
         return 1;
     }
 
+    if (strcmp(name, "/get_text") == 0) {
+        size_t len = strlen(ascii_ram_buffer);
+        file->data = ascii_ram_buffer;
+        file->len = len;
+        file->index = len;
+        //file->pextension = NULL;
+        file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+        return 1;
+    }    
+
     return 0; // Hand back control to default storage for regular SSI/CGI scripts
 }
 
@@ -244,7 +265,9 @@ int fs_open_custom(struct fs_file *file, const char *name) {
  */
 void fs_close_custom(struct fs_file *file)
 {
+    // trigger the hasic interpreter to run every time buffer is sent by the browser
     hc_queue_send(69);
+
 }
 
 void dump_text_buffer(void)
