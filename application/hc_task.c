@@ -60,6 +60,7 @@
 #include "hc_task.h"
 #include "basic.h"
 #include "http_post.h"
+#include "shell_longpoll.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -100,7 +101,8 @@ static HC_INITIALIZATION_T hc_initialization_table[] =
 };
 static QueueHandle_t hc_queue = NULL;                     
 static uint8_t hc_message = 0;                            
-static bool hc_queue_initialized = false;    
+static bool hc_queue_initialized = false;
+char basic_program_buffer[4096];    
 
 /*!
  * \brief home controller task
@@ -141,14 +143,20 @@ void hc_task(__unused void *params)
             // discover_shelly_devices();
             // printf("End shelly test\n");
             printf("Home Controller\n");
+            //pico_send_async_text("This is async text from hc_task");
+
             // SLEEP_MS(60000);
             // wait for timeout period but abort immediately if a command is received
             hc_request = hc_wait(HC_TASK_LOOP_DELAY);
 
             if (hc_request)
             {
+                // shell_server.c technique
                 //basic_program[current_buffer_index+1] = 0;
-                basic_Interpreter(NULL, NULL, basic_program, current_buffer_index);
+                //basic_Interpreter(NULL, NULL, basic_program, current_buffer_index);
+
+                //shell_longpoll.c technique
+                basic_Interpreter(NULL, NULL, basic_program_buffer, strlen(basic_program_buffer));
             }
         }
         else
@@ -268,4 +276,20 @@ int hc_initialize(void)
     }
 
     return(err);
+}
+
+
+/*!
+ * \brief send a message to the mqtt_task queue
+ *
+ * \param message one byte message
+ * 
+ * \return nothing
+ */
+void hc_load_basic_program(char *program, int len)
+{
+
+    //memcpy(basic_program_buffer, program, len);
+    strcpy(basic_program_buffer, program);
+    strcat(basic_program_buffer, "\r\nEND\n");
 }

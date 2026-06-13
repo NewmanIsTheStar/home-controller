@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Shell Interface</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            margin: 0;
+        }
+        #terminal {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #output {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+        }
+        #input-line {
+            display: flex;
+            align-items: center;
+        }
+        #prompt {
+            margin-right: 10px;
+            white-space: nowrap;
+        }
+        #cmd {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: inherit;
+            flex-grow: 1;
+            outline: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="terminal">
+    <div id="output">Web Shell Ready. Enter command...
+</div>
+    <div id="input-line">
+        <span id="prompt">lwip-shell></span>
+        <input type="text" id="cmd" autofocus autocomplete="off" spellcheck="false">
+    </div>
+</div>
+
+<script>
+    const output = document.getElementById('output');
+    const cmdInput = document.getElementById('cmd');
+    
+    let history = [];
+    let historyIndex = -1;
+
+    // Focus input on clicking anywhere in the terminal
+    document.addEventListener('click', () => cmdInput.focus());
+
+    cmdInput.addEventListener('keydown', async function(e) {
+        if (e.key === 'Enter') {
+            const command = this.value.trim();
+            if (!command) return;
+
+            // Echo command to terminal
+            output.textContent += `\nlwip-shell> ${command}\n`;
+            this.value = '';
+
+            // Update command history
+            history.push(command);
+            historyIndex = history.length;
+
+            // Disable input while processing
+            cmdInput.disabled = true;
+
+            try {
+                // lwIP expects lightweight, raw payloads
+                const response = await fetch('/exec', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: command
+                });
+
+                if (response.ok) {
+                    const text = await response.text();
+                    output.textContent += text;
+                } else {
+                    output.textContent += `Error: Server returned status ${response.status}\n`;
+                }
+            } catch (err) {
+                output.textContent += `Error: Failed to connect to server.\n`;
+            }
+
+            // Re-enable input and autoscroll to bottom
+            cmdInput.disabled = false;
+            cmdInput.focus();
+            window.scrollTo(0, document.body.scrollHeight);
+        } 
+        
+        // Command history navigation (Up Arrow)
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (historyIndex > 0) {
+                historyIndex--;
+                this.value = history[historyIndex];
+            }
+        } 
+        
+        // Command history navigation (Down Arrow)
+        else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                this.value = history[historyIndex];
+            } else {
+                historyIndex = history.length;
+                this.value = '';
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

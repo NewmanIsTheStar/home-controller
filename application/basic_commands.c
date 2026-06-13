@@ -17,6 +17,7 @@ Description:This file contains the standard BASIC commands.
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
 #include "hc_task.h"
+#include "shell_longpoll.h"
 
 
 /*External Variables*/
@@ -165,6 +166,8 @@ void basic_Print(void)
     eval_StringLine(acOutput, sizeof(acOutput), 1);
 
     printf("%s", acOutput);
+    pico_send_async_text(acOutput);
+
 }
 
 

@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ #include "lwip/opt.h"
+#if !LWIP_HTTPD_SUPPORT_WEBSOCKET
+#error "LWIP_HTTPD_SUPPORT_WEBSOCKET must be enabled in lwipopts.h to use this file!"
+#endif
+
 #include "pico/cyw43_arch.h"
 #include "pico/types.h"
 #include "pico/stdlib.h"
@@ -37,6 +42,7 @@
 #include "wifi.h"
 #include "calendar.h"
 #include "pluto.h"
+#include "shell_longpoll.h"
 
 #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
@@ -84,6 +90,11 @@ int set_gpio_defaults(void);
 void print_reset_reason(void);
 void print_tasks_list(void);
 
+// TODO -- put in header file
+//void init_websocket_subsystem(void);
+
+//TODO put in header file
+//void init_shell_backend(void);
 
 /*********************************************************
  * THIS MUST BE THE FIRST FUNCTION DEFINED IN THIS FILE!!!
@@ -262,8 +273,12 @@ void boss_task(__unused void *params)
 
     // start web server
     httpd_init();
-    ssi_init();
-    cgi_init();
+    // ssi_init();
+    // cgi_init();
+    // init_websocket_subsystem();
+
+    // for the long poll shell test
+    init_shell_backend(); // <-- Registers standard CGI endpoints safely
 
     // start worker tasks
     printf("Starting worker tasks\n");       

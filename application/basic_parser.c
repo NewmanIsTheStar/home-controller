@@ -1401,6 +1401,7 @@ int get_token(void)
         psContext->pcProgramCounter++;
     }
 
+    //printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
     return psContext->eTokenType;
 }
 

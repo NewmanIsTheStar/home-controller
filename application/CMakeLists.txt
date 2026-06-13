@@ -11,7 +11,10 @@ target_sources(${PROJECT_NAME} PRIVATE
         basic_parser.c                  
         ssi.c
         cgi.c   
-        http_post.c     
+        # http_post.c
+        # shell_server.c 
+        # shell_websocket.c
+        shell_longpoll.c    
 )
 
 set(WEB_FILES)

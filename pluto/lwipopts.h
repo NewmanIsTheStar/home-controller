@@ -172,4 +172,10 @@ Increase MQTT_OUTPUT_RINGBUF_SIZE: If sending multiple subscription requests in 
 #define LWIP_HTTPD_SUPPORT_POST 1
 #define LWIP_HTTPD_CUSTOM_FILES 1
 
+// Newman turned on for shell
+#define LWIP_HTTPD_DYNAMIC_HEADERS  1
+
+// Newman turned on for websocket shell
+#define LWIP_HTTPD_SUPPORT_WEBSOCKET 1
+
 #endif

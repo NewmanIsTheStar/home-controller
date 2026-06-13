@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Shell Interface</title>
+    <style>
+        body { background-color: #121212; color: #00ff00; font-family: 'Courier New', monospace; padding: 20px; margin: 0; }
+        #terminal { max-width: 800px; margin: 0 auto; }
+        #output { white-space: pre-wrap; word-wrap: break-word; margin-bottom: 10px; }
+        #input-line { display: flex; align-items: center; }
+        #prompt { margin-right: 10px; white-space: nowrap; }
+        #cmd { background: transparent; border: none; color: #00ff00; font-family: inherit; font-size: inherit; flex-grow: 1; outline: none; padding: 0; }
+    </style>
+</head>
+<body>
+
+<div id="terminal">
+    <div id="output">Connecting to Pico 2 W Shell...</div>
+    <div id="input-line" style="display: none;">
+        <span id="prompt">lwip-shell></span>
+        <input type="text" id="cmd" autofocus autocomplete="off" spellcheck="false">
+    </div>
+</div>
+
+<script>
+    const output = document.getElementById('output');
+    const cmdInput = document.getElementById('cmd');
+    const inputLine = document.getElementById('input-line');
+    
+    let history = [];
+    let historyIndex = -1;
+    let ws;
+
+    function connect() {
+        // Connect via WebSocket using the same host IP
+        ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+        ws.onopen = () => {
+            output.textContent = "Connected to Shell. Type 'help' or wait for updates...\n";
+            inputLine.style.display = "flex";
+            cmdInput.focus();
+        };
+
+        // This handles standard responses AND unexpected asynchronous text from the backend
+        ws.onmessage = (event) => {
+            output.textContent += event.data;
+            window.scrollTo(0, document.body.scrollHeight);
+        };
+
+        ws.onclose = () => {
+            output.textContent += "\nConnection lost. Reconnecting in 3 seconds...\n";
+            inputLine.style.display = "none";
+            setTimeout(connect, 3000);
+        };
+    }
+
+    document.addEventListener('click', () => { if(ws.readyState === WebSocket.OPEN) cmdInput.focus(); });
+
+    cmdInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const command = this.value.trim();
+            if (!command) return;
+
+            output.textContent += `\nlwip-shell> ${command}\n`;
+            this.value = '';
+
+            history.push(command);
+            historyIndex = history.length;
+
+            // Send raw text across the persistent WebSocket pipe
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(command);
+            }
+        } 
+        else if (e.key === 'ArrowUp' && historyIndex > 0) {
+            e.preventDefault();
+            historyIndex--;
+            this.value = history[historyIndex];
+        } 
+        else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                this.value = history[historyIndex];
+            } else {
+                historyIndex = history.length;
+                this.value = '';
+            }
+        }
+    });
+
+    connect();
+</script>
+</body>
+</html>
