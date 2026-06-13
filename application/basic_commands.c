@@ -166,7 +166,8 @@ void basic_Print(void)
     eval_StringLine(acOutput, sizeof(acOutput), 1);
 
     printf("%s", acOutput);
-    pico_send_async_text(acOutput);
+    //pico_send_async_text(acOutput);
+    shell_print(acOutput);  // this one blocks if the queue is full, stalling ther basic program but reducing data loss
 
 }
 

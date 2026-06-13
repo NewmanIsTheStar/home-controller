@@ -273,12 +273,12 @@ void boss_task(__unused void *params)
 
     // start web server
     httpd_init();
-    // ssi_init();
-    // cgi_init();
+    ssi_init();
+    cgi_init();
     // init_websocket_subsystem();
 
     // for the long poll shell test
-    init_shell_backend(); // <-- Registers standard CGI endpoints safely
+    //init_shell_backend(); // <-- Registers standard CGI endpoints safely
 
     // start worker tasks
     printf("Starting worker tasks\n");       
