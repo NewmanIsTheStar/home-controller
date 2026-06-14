@@ -209,6 +209,9 @@ static void execute_shell_command(const char* cmd) {
         pico_send_async_text("pong line 1!\n");
         pico_send_async_text("pong line 2!\n");
         pico_send_async_text("pong line 3!\n");
+    } else if (strcmp(cmd, "lights") == 0) {
+        // Example: Sending multiple packets sequentially without waiting
+        hc_queue_send(HC_CMD_LIGHTS);  
     } else {
         hc_load_basic_program((char *)cmd, strlen(cmd));
         hc_queue_send(HC_CMD_BASIC_INTERACTIVE);        

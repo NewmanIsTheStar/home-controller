@@ -71,6 +71,7 @@
 
 
 // external variables
+extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 
@@ -87,15 +88,21 @@ extern WEB_VARIABLES_T web;
 void discovery_task(__unused void *params) 
 {
     SOCKADDR_IN sClientAddress;  
-    int received_bytes = 0;         
+    int received_bytes = 0;  
+    u32_t last_shelly_scan = 0;       
     
     printf("discovery task started\n");
     while (true)
     {        
         if ((config.personality == HOME_CONTROLLER))
         {
-            //shelly_discover_devices();
-            SLEEP_MS(1000);
+            if ((unix_time - last_shelly_scan) > (60*60))
+            {
+                if (!shelly_discover_devices())
+                {
+                    last_shelly_scan = unix_time;
+                }
+            }
         }
         else
         {

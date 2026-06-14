@@ -7,6 +7,7 @@
 #define HC_CMD_UNKNOWN  (0)
 #define HC_CMD_BASIC_INTERACTIVE (1)
 #define HC_CMD_BASIC_SCRIPT (2)
+#define HC_CMD_LIGHTS (3)
 
 
 typedef enum

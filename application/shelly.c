@@ -216,7 +216,7 @@ int shelly_discover_devices(void)
         shelly_dump_discovered_devices();
     }
 
-    return(0);
+    return(search_in_progress);
 }
 
 

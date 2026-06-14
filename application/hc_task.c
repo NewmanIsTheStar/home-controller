@@ -162,6 +162,9 @@ void hc_task(__unused void *params)
                     basic_program[current_buffer_index+1] = 0;
                     basic_Interpreter(NULL, NULL, basic_program, current_buffer_index);                
                     break;
+                case HC_CMD_LIGHTS:
+                    shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
+                    break;                    
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);
                     break;
