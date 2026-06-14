@@ -4,6 +4,11 @@
 
 //#define SOCKADDR_LEN sizeof(struct sockaddr)
 
+#define HC_CMD_UNKNOWN  (0)
+#define HC_CMD_BASIC_INTERACTIVE (1)
+#define HC_CMD_BASIC_SCRIPT (2)
+
+
 typedef enum
 {
     INPUT_BOOLEAN  = 0,

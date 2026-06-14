@@ -4032,7 +4032,7 @@ const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], 
     }
 
     // tell hc_task to run the script
-    hc_queue_send(69);
+    hc_queue_send(HC_CMD_BASIC_SCRIPT);
 
 
     // Send the next page back to the user

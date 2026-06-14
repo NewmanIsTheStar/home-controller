@@ -147,16 +147,25 @@ void hc_task(__unused void *params)
 
             // SLEEP_MS(60000);
             // wait for timeout period but abort immediately if a command is received
+
+
             hc_request = hc_wait(HC_TASK_LOOP_DELAY);
 
             if (hc_request)
             {
-                // shell_server.c technique
-                //basic_program[current_buffer_index+1] = 0;
-                //basic_Interpreter(NULL, NULL, basic_program, current_buffer_index);
-
-                //shell_longpoll.c technique
-                basic_Interpreter(NULL, NULL, basic_program_buffer, strlen(basic_program_buffer));
+                switch(hc_message)
+                {
+                case HC_CMD_BASIC_INTERACTIVE:
+                    basic_Interpreter(NULL, NULL, basic_program_buffer, strlen(basic_program_buffer));
+                    break;
+                case HC_CMD_BASIC_SCRIPT:
+                    basic_program[current_buffer_index+1] = 0;
+                    basic_Interpreter(NULL, NULL, basic_program, current_buffer_index);                
+                    break;
+                default:
+                    printf("HC task received unrecognized message (%d)\n", hc_message);
+                    break;
+                }                
             }
         }
         else
@@ -188,6 +197,8 @@ void hc_pat_watchdog(void)
 int hc_wait(TickType_t timeout)
 {
     int err = 0;
+
+    hc_message = HC_CMD_UNKNOWN;
 
     if (xQueueReceive(hc_queue, &hc_message, timeout) == pdPASS)
     {
