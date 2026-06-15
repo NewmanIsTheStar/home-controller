@@ -19,6 +19,8 @@ extern char bScriptFileActive;                 //indicates a script is running
 extern tsCommand asCommandTable[];             //table that defines all BASIC commands
 extern int bClearInkey;                        //flag used to indicate script has read keystroke
 
+const char program_terminated[] = "END\r\n";
+
 /*Private Prototypes*/
 extern tsBasicContext *psContext;
 void eval_AdditionAndSubtraction(int *piAnswer, double *pfAnswer);
@@ -1154,53 +1156,58 @@ void syntax_error(int error)
     "Unimplemented command",                                /* UNIMPLEMENTED */
     };
     
-	/*Print the error message. A * is used to mark the last cursor position*/
-	printf("*\n\n%s", e[error]);
+    // only process the syntax error if the program has not already been terminated
+    if (psContext->pcProgramCounter != program_terminated)
+    {
+        /*Print the error message. A * is used to mark the last cursor position*/
+        printf("*\n\n%s", e[error]);
 
-    /*Find line number of error*/
-	p = psContext->pcProgram;
-    while(p != psContext->pcProgramCounter)
-    {        
-        p++;
-        //if(*p == '\r')  // original for DOS EOL
-        if(*p == '\n')    // should work for both DOS and UNIX EOL        
-        {
-            linecount++;
+        /*Find line number of error*/
+        p = psContext->pcProgram;
+        while(p != psContext->pcProgramCounter)
+        {        
+            p++;
+            //if(*p == '\r')  // original for DOS EOL
+            if(*p == '\n')    // should work for both DOS and UNIX EOL        
+            {
+                linecount++;
+            }
         }
-    }
-    
-	/*Print file name and line number where error occured*/
-	printf(" in %s at line %d\n", psContext->acFileName, linecount);
+        
+        /*Print file name and line number where error occured*/
+        printf(" in %s at line %d\n", psContext->acFileName, linecount);
 
-    /*Display lines with error*/
-    temp = p;
+        /*Display lines with error*/
+        temp = p;
 
-    /*Go back one line*/
-    for(i=0; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
-    {
-    }
-
-    /*Go back two lines if possible*/
-    if (p>psContext->pcProgram)
-    {
-        p--;
-
-        for(; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
+        /*Go back one line*/
+        for(i=0; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
         {
         }
-        if (*p!='\n') p++;
+
+        /*Go back two lines if possible*/
+        if (p>psContext->pcProgram)
+        {
+            p--;
+
+            for(; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
+            {
+            }
+            if (*p!='\n') p++;
+        }
+
+        /*Print out the lines*/
+        for(; p<=temp; p++) printf("%c", *p);
+        printf("\n\n");
+
+        /*Terminate Script File*/
+        bScriptFileActive = 0;
+
+        // /*Restore C program to state before script was run*/
+        // longjmp(psContext->sEnviroment, 1);  NOT SUITABLE IN FREERTOS environment
+        //psContext->pcProgramCounter = psContext->pcProgram + strlen(psContext->pcProgram) - strlen("END\n" - 1;
+        psContext->pcProgramCounter = (char *)program_terminated;
     }
-
-    /*Print out the lines*/
-    for(; p<=temp; p++) printf("%c", *p);
-    printf("\n\n");
-
-    /*Terminate Script File*/
-    bScriptFileActive = 0;
-
-    // /*Restore C program to state before script was run*/
-	// longjmp(psContext->sEnviroment, 1);  NOT SUITABLE IN FREERTOS environment
-    psContext->pcProgramCounter = psContext->pcProgram + strlen(psContext->pcProgram) - 1;
 }
 
 /***************************************************************************
@@ -1217,9 +1224,10 @@ int get_token(void)
     psContext->eToken = 0;
     temp = psContext->acToken;
 
-    /*Check for End of File*/
+    /*Check for End of File or program termination*/
     if((*psContext->pcProgramCounter==0) ||
-       (*psContext->pcProgramCounter==-1))
+       (*psContext->pcProgramCounter==-1) ||
+       (psContext->pcProgramCounter == program_terminated))
     {
         *psContext->acToken = 0;
         psContext->eToken = FINISHED;
@@ -1392,7 +1400,7 @@ int get_token(void)
         }
     }
 
-    if (psContext->eTokenType == 0)
+    if ((psContext->eTokenType == 0) && (*psContext->pcProgramCounter!=0))  // Newman added check for end of string
     {
         /*Kludge to prevent lockup when illegal characters are encountered.
         If an unrecognised token is found then move the PC forward one character.

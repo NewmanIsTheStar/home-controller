@@ -1383,20 +1383,29 @@ void basic_ShellyGet(void)
     /*Get the opening bracket*/
     get_Bracket('(');
 
-
-    // find the parameters
-    get_Bracket('(');
-
     // ip address
     get_token();
     
     switch(psContext->eTokenType)
     {
     case STRINGVARIABLE:
-        strncpy(device_ip_string, psContext->acToken, sizeof(device_ip_string));  //TODO: replace all strncpy and strcpy alls with safe macro!
+        strncpy(device_ip_string, get_StringVariable(psContext->acToken), sizeof(device_ip_string));
         break;
+        case DELIMITER:
+        case INTEGERVARIABLE:
+        case COMMAND:
+        case LABEL:
+        case FLOATVARIABLE:
+        case FUNCTION:
+        case LOGIC:
+        case USERFUNCTION:
+            syntax_error(SYNTAX);
+            break;
     default:
-        syntax_error(SYNTAX);
+    case QUOTE:    
+    case NUMBER:
+    case STRING:
+        strncpy(device_ip_string, psContext->acToken, sizeof(device_ip_string));
         break;
     }
 
@@ -1409,10 +1418,23 @@ void basic_ShellyGet(void)
     switch(psContext->eTokenType)
     {
     case STRINGVARIABLE:
-        strncpy(parameter_name, psContext->acToken, sizeof(parameter_name)); 
+        strncpy(parameter_name, get_StringVariable(psContext->acToken), sizeof(parameter_name));
         break;
+        case DELIMITER:
+        case INTEGERVARIABLE:
+        case NUMBER:
+        case COMMAND:
+        case LABEL:
+        case FLOATVARIABLE:
+        case FUNCTION:
+        case LOGIC:
+        case USERFUNCTION:
+            syntax_error(SYNTAX);
+            break;
     default:
-        syntax_error(SYNTAX);
+    case QUOTE:    
+    case STRING:
+        strncpy(parameter_name, psContext->acToken, sizeof(parameter_name));
         break;
     }
 

@@ -69,7 +69,7 @@ int shelly_parse_header(char *buffer);
 char *find_next_space_on_line(char *buffer);
 int shelly_add_discovered_device(u32_t ip, SHELLY_DEVICE_TYPE_T type);
 int shelly_dump_discovered_devices(void);
-void ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array);
+//void ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array);
 
 
 /*!
@@ -490,10 +490,12 @@ int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value
 
     for(device_index=0; device_index<64; device_index++)
     {
+        printf("%d.%d.%d.%d vs %d.%d.%d.%d\n", device_ip[0], device_ip[1], device_ip[2], device_ip[3], config.shelly_device_ip[device_index][0], config.shelly_device_ip[device_index][1], config.shelly_device_ip[device_index][2], config.shelly_device_ip[device_index][3]);
         if ((device_ip[0] == config.shelly_device_ip[device_index][0]) &&
             (device_ip[1] == config.shelly_device_ip[device_index][1]) &&
             (device_ip[2] == config.shelly_device_ip[device_index][2]) &&
             (device_ip[3] == config.shelly_device_ip[device_index][3]))
+        //if (*(uint32_t *)device_ip == config.shelly_device_ip[device_index])
         {
             // ip match
             err = 0;
@@ -507,6 +509,7 @@ int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value
         {
             err = -2;
 
+            printf("%s vs %s\n", parameter_name, config.shelly_parameter_name[name_index]);
             if (strcmp(parameter_name, config.shelly_parameter_name[name_index]) == 0)
             {
                 // name match
@@ -602,6 +605,7 @@ int shelly_cache_insert_device(uint8_t *device_ip, uint8_t *device_index)
             (config.shelly_device_ip[i][1] == device_ip[1]) &&
             (config.shelly_device_ip[i][2] == device_ip[2]) &&
             (config.shelly_device_ip[i][3] == device_ip[3]))
+        //if (config.shelly_device_ip[i] == *(uint32_t *)device_ip)
         {
             err = 0;
             *device_index = i;
@@ -617,6 +621,7 @@ int shelly_cache_insert_device(uint8_t *device_ip, uint8_t *device_index)
                 (config.shelly_device_ip[i][1] == 0) &&
                 (config.shelly_device_ip[i][2] == 0) &&
                 (config.shelly_device_ip[i][3] == 0))
+            //if (config.shelly_device_ip[i] == 0)
             {
                 err = 0;
                 *device_index = i;
@@ -624,7 +629,8 @@ int shelly_cache_insert_device(uint8_t *device_ip, uint8_t *device_index)
                 config.shelly_device_ip[i][0] = device_ip[0];
                 config.shelly_device_ip[i][1] = device_ip[1];
                 config.shelly_device_ip[i][2] = device_ip[2];
-                config.shelly_device_ip[i][3] = device_ip[3];  
+                config.shelly_device_ip[i][3] = device_ip[3]; 
+                //config.shelly_device_ip[i] = *(uint32_t *)device_ip;
                 break;
             }
         }               
@@ -643,6 +649,7 @@ int shelly_cache_clear(void)
         config.shelly_device_ip[i][1] = 0;
         config.shelly_device_ip[i][2] = 0;
         config.shelly_device_ip[i][3] = 0;
+        //config.shelly_device_ip[i] = 0;
 
         config.shelly_device_type[i] = 255;
     }
