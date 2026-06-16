@@ -58,6 +58,28 @@ void config_blank_to_v1(void *previous_config)
     config.personality = HOME_CONTROLLER;
     
     // home controller
+    config.hc_enable = 1;
+
+    for(i=0; i<NUM_ROWS(config.shelly_device_ip); i++)
+    {
+        config.shelly_device_ip[i][0] = 0;
+        config.shelly_device_ip[i][1] = 0;
+        config.shelly_device_ip[i][2] = 0;
+        config.shelly_device_ip[i][3] = 0;                        
+        config.shelly_device_type[i] = 0;        
+    }
+
+    for(i=0; i<NUM_ROWS(config.shelly_parameter_device_index); i++)
+    {    
+        config.shelly_parameter_device_index[i] = 255;
+        config.shelly_parameter_name_index[i] = 255;
+    }
+
+    for(i=0; i<NUM_ROWS(config.shelly_parameter_value); i++)
+    {     
+        config.shelly_parameter_value[i][0] = 0;   
+        config.shelly_parameter_name[i][0] = 0;        
+    }
     
 }
 

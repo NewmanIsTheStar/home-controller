@@ -143,14 +143,18 @@ Description :  Launchs a new instance of the BASIC interpreter and executes
 Returns     :  0 - OK
                1 - error initialising BASIC interpreter
 ***************************************************************************/
-int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory)
+int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context)
 {
+    static bool context_initialized = false;
 	int x;
 	int iKey;
     int iInkeyIndex;
 
-    /*Create a new BASIC Context*/
-    basic_CreateContext(pcFileName, pcArguments);
+    if (reset_context || !context_initialized)
+    {
+        /*Create a new BASIC Context*/
+        basic_CreateContext(pcFileName, pcArguments);
+    }
 
     if (program_in_memory)
     {
@@ -313,8 +317,11 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
 
 	} while (psContext->eToken != FINISHED);
 
-    /*Erase the current context*/
-    basic_DestroyContext();
+    if (reset_context)
+    {
+        /*Erase the current context*/
+        basic_DestroyContext();
+    }
 
     /*Check for nested BASIC programs*/
     if (iContextIndex >=0)

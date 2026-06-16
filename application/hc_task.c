@@ -156,11 +156,11 @@ void hc_task(__unused void *params)
                 switch(hc_message)
                 {
                 case HC_CMD_BASIC_INTERACTIVE:
-                    basic_Interpreter(NULL, NULL, basic_program_buffer, strlen(basic_program_buffer));
+                    basic_Interpreter(NULL, NULL, basic_program_buffer, strlen(basic_program_buffer), false);
                     break;
                 case HC_CMD_BASIC_SCRIPT:
                     basic_program[current_buffer_index+1] = 0;
-                    basic_Interpreter(NULL, NULL, basic_program, current_buffer_index);                
+                    basic_Interpreter(NULL, NULL, basic_program, current_buffer_index, true);                
                     break;
                 case HC_CMD_LIGHTS:
                     shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);

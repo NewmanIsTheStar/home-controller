@@ -1463,9 +1463,9 @@ void basic_ShellyGet(void)
 
     if(iIndex >=0 )
     {
-        if (shelly_cache_get_value(device_ip, parameter_name, psContext->asStringVariables[iIndex].acValue, sizeof(value)))
+        if (shelly_cache_get_value(device_ip, parameter_name, psContext->asStringVariables[iIndex].acValue, sizeof(psContext->asStringVariables[iIndex].acValue)))
         {
-            printf("RUNTIME ERROR: shelly_get failed\n");
+            printf("RUNTIME ERROR: shelly_get failed (%s)\n", psContext->asStringVariables[iIndex].acValue);
             psContext->asStringVariables[iIndex].acValue[0] = 0;    
         }
     }

@@ -273,7 +273,7 @@ tsForStack fpop(void);
 void wpush(tsWhileStack i);
 tsWhileStack wpop(void);
 void update_DateAndTime(void);
-int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory);
+int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context);
 
 int get_token(void);
 int next_token(void);
