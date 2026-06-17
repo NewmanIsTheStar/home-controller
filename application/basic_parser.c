@@ -1301,6 +1301,13 @@ int get_token(void)
               *psContext->pcProgramCounter!='\n')        // UNIX EOL
         {
             *temp++ = *psContext->pcProgramCounter++;
+
+            if ((temp - psContext->acToken) >= sizeof(psContext->acToken))
+            {
+                // too many characters without finding end quote
+                syntax_error(MISS_QUOTE);
+                break;
+            }
         }
 
         if((*psContext->pcProgramCounter=='\r') ||       // DOS EOL
@@ -1322,6 +1329,13 @@ int get_token(void)
         while(!isdelim(*psContext->pcProgramCounter))
         {
             *temp++ = *psContext->pcProgramCounter++;
+
+            if ((temp - psContext->acToken) >= sizeof(psContext->acToken))
+            {
+                // too many characters
+                syntax_error(SYNTAX);
+                break;
+            }            
         }
 
         *temp = '\0';
@@ -1336,11 +1350,18 @@ int get_token(void)
         while(!isdelim(*psContext->pcProgramCounter))
         {
             *temp++ = *psContext->pcProgramCounter++;
+
+            if ((temp - psContext->acToken) >= sizeof(psContext->acToken))
+            {
+                // too many characters
+                syntax_error(SYNTAX);
+                break;
+            }              
         }
         psContext->eTokenType = STRING;
     }
 
-    *temp = '\0';
+    *temp = '\0';  // TODO: Should this be inside the closing brace for the last if statement?
 
     /*Determine what type of string we have found (command, function, variable or label)*/
     if(psContext->eTokenType==STRING)

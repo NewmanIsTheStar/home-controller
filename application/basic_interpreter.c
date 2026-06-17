@@ -112,6 +112,7 @@ tsCommand asCommandTable[] =
     "set",              SET,                basic_Set,
     "shared",           SHARED,             basic_Shared,
     "shelly_get",       SHELLY_GET,         basic_ShellyGet,
+    "shelly_switch",    SHELLY_SWITCH,      basic_ShellySwitch,    
     "sleep",            SLEEP,              basic_Sleep,
     "step",             STEP,               basic_Error,
     "stop",             STOP,               basic_Stop,

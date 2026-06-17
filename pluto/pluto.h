@@ -43,7 +43,7 @@
 #include "calendar.h"
 // #include "powerwall.h"
 // #include "shelly.h"
-// #include  "usurper_ping.h"
+// #include  "ping_core.h"
 #include "web.h"
 
 //#define PLUTO_VER "01.00.00"          // release version set in CMakeLists.txt
@@ -57,6 +57,7 @@
 #define CLIP(x, low, high)  (x=(((x)>(high))?(high):(((x)<(low))?(low):(x))))
 #define SLEEP_MS(x) (vTaskDelay(x));
 #define FORCE_STRING_TERMINATION(x) {x[sizeof(x)-1]=0;}
+#define SAFEAROUND(x) ((x) >= 0 ? (int)((x) + 0.5f) : (int)((x) - 0.5f))
 
 typedef enum
 {

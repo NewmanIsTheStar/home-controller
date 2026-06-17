@@ -34,7 +34,7 @@
 #include "shelly.h"
 #include "json_parser.h"
 #include "pluto.h"
-#include "usurper_ping.h"
+#include "ping_core.h"
 
 #define GET_REQUEST "GET / HTTP/1.0\r\n\r\n"
 

@@ -12,7 +12,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     watchdog.c
     udp.c
     wifi.c
-    usurper_ping.c
     ping_core.c
 )
 
