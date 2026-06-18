@@ -324,6 +324,9 @@ void boss_task(__unused void *params)
         #endif
         #endif
 
+        // update daylight savings start and end dates  TODO: make this less frequent only needed once per year
+        set_daylight_saving_dates(); 
+
         // report watchdog reboot to syslog server
         check_watchdog_reboot();         
 
@@ -551,6 +554,9 @@ int set_realtime_clock(void)
     }
     printf("\n");
 #endif    
+
+    // determine daylight savings dates for the current year
+    set_daylight_saving_dates(); 
 
     return(0);
 }

@@ -1544,23 +1544,23 @@ Returns     :  Index of variable OR -1 if not found
 ***************************************************************************/
 void update_DateAndTime(void)
 {
-    // SYSTEMTIME sLocalTime;
-    // int iIndex;
+    int iIndex;
 
-    // /*Retrieve the date and time*/
-    // GetLocalTime(&sLocalTime);
-     
-    // /*Store Time in variable Time$*/
-    // iIndex = find_Variable("time$", STRINGVARIABLE);
-    // if (iIndex == -1) iIndex = create_Variable("time$", STRINGVARIABLE);
-    // sprintf(psContext->asStringVariables[iIndex].acValue, "%02d:%02d:%02d",
-    //         sLocalTime.wHour, sLocalTime.wMinute, sLocalTime.wSecond);    
+    /*Store Time in variable Time$*/
+    iIndex = find_Variable("time$", STRINGVARIABLE);
+    if (iIndex == -1) iIndex = create_Variable("time$", STRINGVARIABLE);
+    get_local_time_string(psContext->asStringVariables[iIndex].acValue, sizeof(psContext->asStringVariables[iIndex].acValue));                
 
-    // /*Store Date in variable Date$*/
-    // iIndex = find_Variable("date$", STRINGVARIABLE);
-    // if (iIndex == -1) iIndex = create_Variable("date$", STRINGVARIABLE);
-    // sprintf(psContext->asStringVariables[iIndex].acValue, "%02d-%02d-%04d",
-    //         sLocalTime.wDay, sLocalTime.wMonth, sLocalTime.wYear);    
+    /*Store Date in variable Date$*/
+    iIndex = find_Variable("date$", STRINGVARIABLE);
+    if (iIndex == -1) iIndex = create_Variable("date$", STRINGVARIABLE);
+    get_local_date_string(psContext->asStringVariables[iIndex].acValue, sizeof(psContext->asStringVariables[iIndex].acValue));       
+
+    // Store Day in variable Day$
+    iIndex = find_Variable("day$", STRINGVARIABLE);
+    if (iIndex == -1) iIndex = create_Variable("day$", STRINGVARIABLE);
+    get_local_day_string(psContext->asStringVariables[iIndex].acValue, sizeof(psContext->asStringVariables[iIndex].acValue));      
+
 }
  
 

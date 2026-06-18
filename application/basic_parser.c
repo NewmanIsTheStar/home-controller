@@ -1630,6 +1630,8 @@ char *get_StringVariable(char *pcName)
     {
         /*Must update the date and time prior to a read*/
         if (strcmp(pcName, "time$") == 0) update_DateAndTime();
+        if (strcmp(pcName, "date$") == 0) update_DateAndTime();
+        if (strcmp(pcName, "day$") == 0) update_DateAndTime();
 
         /*Must clear the inkey after it has been used*/
         if (strcmp(pcName, "inkey$") == 0) bClearInkey = 1;
