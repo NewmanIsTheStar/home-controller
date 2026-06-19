@@ -107,7 +107,7 @@ void basic_Let(void)
             break;
 
         default:
-            printf("Left hand side of assignment must be a variable\n");
+            basic_printf("Left hand side of assignment must be a variable\n");
             syntax_error(SYNTAX);
             break;
         }
@@ -144,7 +144,7 @@ void basic_Let(void)
             break;
     
         default:
-            printf("Left hand side of assignment must be a variable\n");
+            basic_printf("Left hand side of assignment must be a variable\n");
             syntax_error(SYNTAX);
             break;
         }
@@ -161,124 +161,17 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_Print(void)
 {
-    char acOutput[5000];
+    //char acOutput[5000];  original PC version
+    char acOutput[128];  // max size supported by ring buffer used for http shell
 
     eval_StringLine(acOutput, sizeof(acOutput), 1);
 
-    printf("%s", acOutput);
+    basic_printf("%s", acOutput);
     //pico_send_async_text(acOutput);
-    shell_print(acOutput);  // this one blocks if the queue is full, stalling ther basic program but reducing data loss
+    //shell_print_string(acOutput);  // this one blocks if the queue is full, stalling ther basic program but reducing data loss
 
 }
 
-
-#ifdef OLD_PRINT
-/***************************************************************************
-Function    :  basic_Print
-Description :  Execute a simple version of the BASIC Print statement.
-Returns     :  Nothing
-***************************************************************************/
-void basic_Print(void)
-{
-	int iAnswer;
-    double fAnswer;
-	int len=0, spaces;
-	char last_delim;
-    char *pcTemp;
-    int iTemp;
-
-	do
-	{
-		last_delim = *psContext->acToken;
-		get_token(); /* Get next list item */
-
-		if(psContext->eToken==EOL || psContext->eToken==FINISHED || psContext->eToken==ELSE || psContext->eToken==REM) break;
-
-		if(psContext->eTokenType==QUOTE)
-		{
-			/*is string*/
-			printf(psContext->acToken);
-			len += strlen(psContext->acToken);
-			last_delim = *psContext->acToken;
-			get_token();
-		}
-		else if(psContext->eTokenType==STRINGVARIABLE)
-		{
-			/*is string*/
-            pcTemp = get_StringVariable(psContext->acToken);
-            printf("%s", pcTemp);
-			len += strlen(pcTemp);
-			last_delim = *psContext->acToken;
-			get_token();
-		}
-        else if(psContext->eTokenType==FUNCTION)
-        {              
-            switch (psContext->eToken)
-            {
-                case CHR$:
-                    get_Bracket('(');
-                    eval_IntegerExpression(&iTemp);
-                    len += printf("%c", (char)iTemp);
-                    last_delim = *psContext->acToken;
-                    get_Bracket(')');
-                    get_token();
-                    break;
-                    
-                default:
-                    printf("Unexpected function call in string expression\n");
-                    basic_error(SYNTAX);
-                    break;
-            }            
-        }
-		else
-		{
-			/*is expression*/
-			putback();
-			eval_NumericExpression(&iAnswer, &fAnswer);
-			last_delim = *psContext->acToken;
-			get_token();
-
-            /*avoid printing decimal point if whole number*/
-            if ((fAnswer - (double)iAnswer) == 0)
-            {
-                len += printf("%d", iAnswer);
-            }
-            else
-            {
-                len += printf("%g", fAnswer);
-            }
-		}
-
-		/*if comma, move to next tab stop*/
-		if(*psContext->acToken==',')
-		{
-			/*compute number of spaces to move to next tab*/
-			spaces = 8 - (len % 8);
-			len += spaces;           /*add in the tabbing position*/
-			while(spaces)
-			{
-				printf(" ");
-				spaces--;
-			}
-		}
-		else if(*psContext->acToken==';') printf("");
-		else if(*psContext->acToken=='+') printf("");
-		else if(psContext->eToken!=EOL && psContext->eToken!=FINISHED && psContext->eToken!=ELSE && psContext->eToken!=REM)
-            basic_error(SYNTAX);
-
-	} while (*psContext->acToken==';' || *psContext->acToken==',' || *psContext->acToken=='+');
-
-	if(psContext->eToken==EOL || psContext->eToken==FINISHED || psContext->eToken==ELSE || psContext->eToken==REM)
-	{
-		if((last_delim != ';') && (last_delim!=',')) printf("\n");
-        putback();
-	}
-	else
-	{
-		basic_error(SYNTAX); /* error is not , or ; */
-	}
-}
-#endif
 
 /***************************************************************************
 Function    :  basic_Goto
@@ -343,13 +236,13 @@ void basic_On(void)
     cBranchType = psContext->eToken;
     if ((cBranchType != GOTO) && (cBranchType != GOSUB))
     {
-        printf("Expected GOTO or GOSUB\n");
+        basic_printf("Expected GOTO or GOSUB\n");
         syntax_error(SYNTAX);
     }
 
     if ((iBranchNumber < 0) || (iBranchNumber > 100))
     {
-        printf("Error: ridiculous value in ON statement\n");
+        basic_printf("Error: ridiculous value in ON statement\n");
         syntax_error(SYNTAX);
     }
 
@@ -475,7 +368,7 @@ void basic_If(void)
     else
     {
         /*Big! Mistake*/
-        printf("Thanks Bill! We have discovered a bug in the Microsoft C++ compiler\n");
+        basic_printf("Thanks Bill! We have discovered a bug in the Microsoft C++ compiler\n");
         syntax_error(NOT_VAR);       
     }
     
@@ -738,7 +631,7 @@ void find_endif()
 
             if (psContext->eToken != THEN)
 			{
-				printf("ERROR: ELSEIF without THEN\n");
+				basic_printf("ERROR: ELSEIF without THEN\n");
                 syntax_error( THEN_EXP );            
 			}
         }
@@ -973,7 +866,7 @@ void basic_While(void)
     // move back to start of WHILE command
     putback();
     get_token();
-    if (psContext->eToken == WHILE) putback(); else printf("Expected while but got %s\n", psContext->acToken);
+    if (psContext->eToken == WHILE) putback(); else basic_printf("Expected while but got %s\n", psContext->acToken);
 
     i.loc = psContext->pcProgramCounter;
 
@@ -1026,7 +919,7 @@ void basic_While(void)
             }
             else if (psContext->eToken == FINISHED)
             {
-                printf("Couldn't find closing WEND\n");
+                basic_printf("Couldn't find closing WEND\n");
                 psContext->pcProgramCounter = i.loc;
                 syntax_error(SYNTAX);
             }
@@ -1121,17 +1014,17 @@ void basic_Input(void)
 	// }
 	// else
 	// {
-	// 	printf("? "); /* otherwise, prompt with ? */
+	// 	basic_printf("? "); /* otherwise, prompt with ? */
 	// }
 
 	// /*Get the user basic_Input*/
 	// pcInputText = getCommand(acPromptText, 1);
 
     // /*Erase WAIT message and Display Input text*/
-    // printf("\r                                                                               ");
-    // printf("\r%s    ", acPromptText);
+    // basic_printf("\r                                                                               ");
+    // basic_printf("\r%s    ", acPromptText);
 	// putch(BACKSPACE); putch(BACKSPACE); putch(BACKSPACE); putch(BACKSPACE);
-    // printf("%s\n", pcInputText);
+    // basic_printf("%s\n", pcInputText);
 
 	// /*Get the basic_Input variable name*/
     // iIndex = find_Variable(psContext->acToken, psContext->eTokenType);
@@ -1245,7 +1138,7 @@ void basic_Function(void)
                 break;
 
             default:
-                printf("Too many parameters in function call\n");
+                basic_printf("Too many parameters in function call\n");
                 syntax_error(SYNTAX);
                 break;
             }
@@ -1411,7 +1304,7 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_Home(void)
 {
-	printf("\r");
+	basic_printf("\r");
 }
 
 
@@ -1444,7 +1337,7 @@ void basic_Chain(void)
     // }
     // else
     // {
-	// 	printf("Could not open BASIC script file %s\n", psContext->acToken);
+	// 	basic_printf("Could not open BASIC script file %s\n", psContext->acToken);
     // }    
 }
 
@@ -1520,7 +1413,7 @@ void basic_Mid(void)
         break;
     } 
 
-    //printf("MID called on %s with %d and %d\n", source, x, y);
+    //basic_printf("MID called on %s with %d and %d\n", source, x, y);
     
     if ((x > y) || (y > (int)strlen(source)))
     {
@@ -1532,7 +1425,7 @@ void basic_Mid(void)
         *(dest+y-x+1) = 0;
     }
 
-    //printf("Result:\n source = %s\n dest = %s\n", source, dest);
+    //basic_printf("Result:\n source = %s\n dest = %s\n", source, dest);
 }
 
 
@@ -1590,7 +1483,7 @@ void basic_Left(void)
     }    
     
 
-    //printf("LEFT$ called on %s with %d and %d\n", source, x, y);
+    //basic_printf("LEFT$ called on %s with %d and %d\n", source, x, y);
     
     if (x > strlen(source))
     {
@@ -1601,7 +1494,7 @@ void basic_Left(void)
     *(dest+x) = 0;
     
 
-    //printf("Result:\n source = %s\n dest = %s\n", source, dest);
+    //basic_printf("Result:\n source = %s\n dest = %s\n", source, dest);
 }
 
 
@@ -1659,7 +1552,7 @@ void basic_Right(void)
     }    
     
 
-    //printf("RIGHT$ called on %s with %d and %d\n", source, x, y);
+    //basic_printf("RIGHT$ called on %s with %d and %d\n", source, x, y);
     
     if (x > strlen(source))
     {
@@ -1670,7 +1563,7 @@ void basic_Right(void)
     *(dest+x) = 0;
     
 
-    //printf("Result:\n source = %s\n dest = %s\n", source, dest);
+    //basic_printf("Result:\n source = %s\n dest = %s\n", source, dest);
 }
 
 
@@ -1709,7 +1602,7 @@ void basic_Ucase(void)
 
     dest = psContext->asStringVariables[iIndex].acValue;
 
-    //printf("UCASE$ called on %s with %d and %d\n", source, x, y);
+    //basic_printf("UCASE$ called on %s with %d and %d\n", source, x, y);
     
     for(x=0; x < strlen(source); x++)
     {
@@ -1719,7 +1612,7 @@ void basic_Ucase(void)
     dest[x] = 0;
     
 
-    //printf("Result:\n source = %s\n dest = %s\n", source, dest);
+    //basic_printf("Result:\n source = %s\n dest = %s\n", source, dest);
 }
 
 
@@ -1921,7 +1814,7 @@ void basic_Open(void)
 
     if ((iFileNumber < 0) || (iFileNumber > 10))
     {
-        printf("Error in OPEN: File Number out of range\n");
+        basic_printf("Error in OPEN: File Number out of range\n");
         syntax_error(SYNTAX);
     }
 
@@ -1933,13 +1826,13 @@ void basic_Open(void)
 
         if (psContext->apFileHandles[iFileNumber] == NULL)
         {
-            printf("Error in OPEN: Could not open file\n");
+            basic_printf("Error in OPEN: Could not open file\n");
             syntax_error(SYNTAX);
         }
     }
     else
     {
-        printf("Error in OPEN: File Number already in use\n");
+        basic_printf("Error in OPEN: File Number already in use\n");
         syntax_error(SYNTAX);
     }
 
@@ -1973,7 +1866,7 @@ void basic_Close(void)
 
     if ((iFileNumber < 0) || (iFileNumber > 10))
     {
-        printf("Error in CLOSE: File Number out of range (%d)\n", iFileNumber);
+        basic_printf("Error in CLOSE: File Number out of range (%d)\n", iFileNumber);
         syntax_error(SYNTAX);
     }
 
@@ -1985,7 +1878,7 @@ void basic_Close(void)
     }
     else
     {
-        printf("Error in CLOSE: File was not open\n");
+        basic_printf("Error in CLOSE: File was not open\n");
         syntax_error(SYNTAX);
     }
 
@@ -2011,14 +1904,14 @@ void basic_PrintToFile(void)
 
     if ((iFileNumber < 0) || (iFileNumber > 10))
     {
-        printf("Error in basic_Print#: File Number out of range\n");
+        basic_printf("Error in basic_Print#: File Number out of range\n");
         syntax_error(SYNTAX);
     }
 
     // check if that file number has been opened
     if (psContext->apFileHandles[iFileNumber] == NULL)
     {
-        printf("Error in basic_Print#: File not open\n");
+        basic_printf("Error in basic_Print#: File not open\n");
         syntax_error(SYNTAX);
     }
 
@@ -2074,14 +1967,14 @@ void basic_PrintToFile(void)
 
     if ((iFileNumber < 0) || (iFileNumber > 10))
     {
-        printf("Error in basic_Print#: File Number out of range\n");
+        basic_printf("Error in basic_Print#: File Number out of range\n");
         basic_error(SYNTAX);
     }
 
     /*Check if that file number is already in use*/
     if (psContext->apFileHandles[iFileNumber] == NULL)
     {
-        printf("Error in basic_Print#: File not open\n");
+        basic_printf("Error in basic_Print#: File not open\n");
         basic_error(SYNTAX);
     }
 
@@ -2196,14 +2089,14 @@ void basic_InputFromFile(void)
 
     if ((iFileNumber < 0) || (iFileNumber > 10))
     {
-        printf("Error in INPUT#: File Number out of range\n");
+        basic_printf("Error in INPUT#: File Number out of range\n");
         syntax_error(SYNTAX);
     }
 
     /*Check if that file number is already in use*/
     if (psContext->apFileHandles[iFileNumber] == NULL)
     {
-        printf("Error in INPUT#: File not open\n");
+        basic_printf("Error in INPUT#: File not open\n");
         syntax_error(SYNTAX);
     }
 
@@ -2235,13 +2128,13 @@ void basic_InputFromFile(void)
                 if (psContext->asStringVariables[var].acValue[0] == 0x27)
                 {
                     /*Remove opening quote*/
-                    //printf("GOT OPENING QUOTE: %s\n", psContext->asStringVariables[var].acValue);
+                    //basic_printf("GOT OPENING QUOTE: %s\n", psContext->asStringVariables[var].acValue);
 
                     /*Do a memmove without using microsofts buggy function*/
                     strcpy(acTemp, psContext->asStringVariables[var].acValue+1);
                     strcpy(psContext->asStringVariables[var].acValue,acTemp);
 
-                    //printf("REMOVED OPENING QUOTE: %s\n", psContext->asStringVariables[var].acValue);
+                    //basic_printf("REMOVED OPENING QUOTE: %s\n", psContext->asStringVariables[var].acValue);
 
                     /*Check if closing quote was present*/
                     if ((pcClosingQuote = strrchr(psContext->asStringVariables[var].acValue, 0x27)) == NULL)
@@ -2316,7 +2209,7 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_Error(void)
 {
-    printf("Unexpected keyword: %s\n", psContext->acToken);
+    basic_printf("Unexpected keyword: %s\n", psContext->acToken);
     syntax_error(SYNTAX);
 }
 
@@ -2328,7 +2221,7 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_Ignore(void)
 {
-    printf("Keyword ignored (%s)\n", psContext->acToken);
+    basic_printf("Keyword ignored (%s)\n", psContext->acToken);
 }
 
 
@@ -2386,7 +2279,7 @@ void basic_Run(void)
     /*Assume all text up to the end of the line is to be passed to RUN*/
     acArguments[0] = 0;
 	get_token();
-	//printf("tok = %s\n", psContext->acToken);	
+	//basic_printf("tok = %s\n", psContext->acToken);	
 	while(psContext->eToken != EOL)
 	{
 
@@ -2424,22 +2317,22 @@ void basic_Run(void)
 		}
 
 		get_token();
-		//printf("tok = %s\n", psContext->acToken);
+		//basic_printf("tok = %s\n", psContext->acToken);
 	}
 
 
     /*Append arguments to filename*/
     if (strlen(acArguments) > 0)
     {
-        //printf("appending %d chars. string = %s\n", strlen(acArguments), acArguments);
+        //basic_printf("appending %d chars. string = %s\n", strlen(acArguments), acArguments);
         strcat(acProgramName, acArguments);
     }
     
-    //printf("Run String: %s\n", acProgramName);
+    //basic_printf("Run String: %s\n", acProgramName);
     
     /*Recursive call of the BASIC interpreter*/
     // TODO -- readScriptFile(acProgramName);
-    printf("TODO: readScriptFile\n");
+    basic_printf("TODO: readScriptFile\n");
 }
 
 
@@ -2510,7 +2403,7 @@ void basic_Beep(void)
 
     /*"Come on, Feel the noise"*/
     //Beep(iFrequency, iDuration);
-    printf("BEEP!\n\a");
+    basic_printf("BEEP!\n\a");
 
 }
 
@@ -2560,7 +2453,7 @@ void basic_Shared(void)
         }
         if (iIndex == NUM_SHARED_VARIABLES)
         {
-            printf("Error: out of memory for shared/common variable\n");
+            basic_printf("Error: out of memory for shared/common variable\n");
             syntax_error(SYNTAX);
         }
 
@@ -2608,7 +2501,7 @@ void basic_Common(void)
         }
         if (iIndex == NUM_COMMON_VARIABLES)
         {
-            printf("Error: out of memory for common variable\n");
+            basic_printf("Error: out of memory for common variable\n");
             syntax_error(SYNTAX);
         }
 
@@ -2665,7 +2558,7 @@ void basic_Len(void)
         psContext->asFloatVariables[iIndex].fValue = strlen(source);
         break;
     default:
-        printf("BASIC Internal error in LEN\n");
+        basic_printf("BASIC Internal error in LEN\n");
         break;
     }
 }
@@ -2767,7 +2660,7 @@ void basic_SaveScreen(void)
 //                    coord,                   // upper-left cell to write to
 //                    &ReadRegion              // address of rectangle to read from
 //                    ); 
-//         //printf("ReadConsoleOutput returned %d Err %d\n", fSuccess, GetLastError());        
+//         //basic_printf("ReadConsoleOutput returned %d Err %d\n", fSuccess, GetLastError());        
 //     }  
  
 } 
@@ -2815,7 +2708,7 @@ void basic_RestoreScreen(void)
 //                    coord,                   // upper-left cell to write to
 //                    &ReadRegion              // address of rectangle to read from
 //                    );         
-//         //printf("WriteConsoleOutput returned %d Err %d\n", fSuccess, GetLastError());
+//         //basic_printf("WriteConsoleOutput returned %d Err %d\n", fSuccess, GetLastError());
 //     }  
  
 }
@@ -2939,7 +2832,7 @@ void basic_Dim(void)
             break;
 
         default:
-            printf("Error: Expected a variable name!\n");
+            basic_printf("Error: Expected a variable name!\n");
             syntax_error(SYNTAX);
             break;
         }
@@ -2949,7 +2842,7 @@ void basic_Dim(void)
         {
             if (strcmp(psContext->acToken, psContext->asArrayVariables[iIndex].acName) == 0)
             {
-                printf("Runtime Error: Attempted to redimension array %s\n", psContext->acToken);
+                basic_printf("Runtime Error: Attempted to redimension array %s\n", psContext->acToken);
                 syntax_error(SYNTAX);
             }
         }
@@ -2966,7 +2859,7 @@ void basic_Dim(void)
         
         if (iIndex >= NUM_ARRAY_VARIABLES)
         {
-            printf("Runtime Error: Too many array variables\n");
+            basic_printf("Runtime Error: Too many array variables\n");
             syntax_error(SYNTAX);
         }
 
@@ -2983,20 +2876,20 @@ void basic_Dim(void)
         for (iDim=0; iDim < MAX_ARRAY_DIM; iDim++)
         {
             eval_IntegerExpression(&psContext->asArrayVariables[iIndex].iDimensions[iDim]);
-            //printf("%s Array dimension %d size is %d\n", psContext->asArrayVariables[iIndex].acName, iDim, psContext->asArrayVariables[iIndex].iDimensions[iDim]);
+            //basic_printf("%s Array dimension %d size is %d\n", psContext->asArrayVariables[iIndex].acName, iDim, psContext->asArrayVariables[iIndex].iDimensions[iDim]);
 
             if (psContext->asArrayVariables[iIndex].iDimensions[iDim] < 1)
             {
-                printf("Error: invalid dimension size %d\n", psContext->asArrayVariables[iIndex].iDimensions[iDim]);
+                basic_printf("Error: invalid dimension size %d\n", psContext->asArrayVariables[iIndex].iDimensions[iDim]);
                 syntax_error(SYNTAX);
             }
 
             iArraySize *= psContext->asArrayVariables[iIndex].iDimensions[iDim];
-            //printf("Array size is %d\n", iArraySize);
+            //basic_printf("Array size is %d\n", iArraySize);
 
             if (get_token() != DELIMITER)
             {
-                printf("Error: expected comma or closing bracket\n");
+                basic_printf("Error: expected comma or closing bracket\n");
                 syntax_error(SYNTAX);
             }
 
@@ -3014,7 +2907,7 @@ void basic_Dim(void)
         
         if (iNumDim++ < 0)
         {
-            printf("No dimensions defined\n");
+            basic_printf("No dimensions defined\n");
             syntax_error(SYNTAX); 
         }
 
@@ -3032,7 +2925,7 @@ void basic_Dim(void)
         psContext->asArrayVariables[iIndex].pcValue = malloc(iArraySize);
         if (psContext->asArrayVariables[iIndex].pcValue == NULL)
         {
-            printf("Error: out of memory during array creation (size %d bytes)\n", iArraySize);
+            basic_printf("Error: out of memory during array creation (size %d bytes)\n", iArraySize);
             syntax_error(SYNTAX);
         }
 

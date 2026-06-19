@@ -8,6 +8,11 @@ Description:BASIC defintions.
 
 #include <setjmp.h>
 #include "pluto.h"
+#include "shell_longpoll.h"
+
+// output to either terminal or http shell
+//#define basic_printf(format, ...) printf("[MACRO] " format, ##__VA_ARGS__)
+#define basic_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
 
 // extracted from snmp_def.h
 enum keys
@@ -19,7 +24,7 @@ enum keys
 	CTRL_C = 3, CTRL_V = 22, CTRL_TAB = 404
 };
 
-// /*Public Definitons*/
+// /*Public Definitons*/  // limits used on original PC version
 // #define NUM_LAB               (100)             //Maximum Number of labels
 // #define LAB_LEN               (30)              //Maximum length of a label
 // #define NUM_FUNC              (100)             //Maximum Number of user functions
@@ -27,7 +32,7 @@ enum keys
 // #define FOR_NEST              (25)              //Maximum FOR nesting depth
 // #define WHILE_NEST            (25)              //Maximum WHILE nesting depth
 // #define SUB_NEST              (25)              //Maximum GOSUB nesting depth
-// #define PROG_SIZE             (131072)          //Maximum Program Size  ORIGINAL from PC version
+// #define PROG_SIZE             (131072)          //Maximum Program Size
 // #define BASIC_RECURSION_DEPTH (20)              //Maximum Program nesting depth
 // #define NUM_INTEGER_VARIABLES (200)             //Maximum number of integer variables
 // #define NUM_FLOAT_VARIABLES   (200)             //Maximum number of float variables
@@ -39,7 +44,7 @@ enum keys
 // #define NUM_COMMON_VARIABLES  (20)
 // #define MAX_ARRAY_DIM         (4)
 
-// minimized scope for Pi Pico2 W
+// minimized limits for Pi Pico2 W
 #define NUM_LAB               (10)             //Maximum Number of labels
 #define LAB_LEN               (10)              //Maximum length of a label
 #define NUM_FUNC              (10)             //Maximum Number of user functions

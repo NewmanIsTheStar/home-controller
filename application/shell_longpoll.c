@@ -461,7 +461,7 @@ void init_shell_backend(void) {
 /**
  * Blocking method to print to browser 
  */
-void shell_print(const char* text) 
+void shell_print_string(const char* text) 
 {
     int retry = 0;
     bool complete = false;
@@ -501,6 +501,53 @@ void shell_print(const char* text)
     
 }
 
+/**
+ * Blocking method to printf to browser 
+ */
+void shell_printf(const char *format, ...)
+{
+    va_list args;
+    int retry = 0;
+    bool complete = false;
+
+    do
+    {
+        // Guard against potential thread concurrency collisions
+        cyw43_arch_lwip_begin();
+
+        if (!queue_is_full()) 
+        {
+            // Copy string payload safely into current head index
+            memset(queue_storage[queue_head], 0, ITEM_BUF_LEN);
+            //vsnprintf(queue_storage[queue_head], ITEM_BUF_LEN, "%s", text);
+
+            va_start(args, format);
+            vsnprintf(queue_storage[queue_head], ITEM_BUF_LEN, format, args);
+            va_end(args);  
+
+            queue_lengths[queue_head] = strlen(queue_storage[queue_head]);
+
+            // Shift head circular tracking index ahead
+            queue_head = (queue_head + 1) % QUEUE_DEPTH;
+
+            // Instantly verify if a browser connection is waiting to take this item
+            check_and_flush_queue();
+            complete = true;
+            cyw43_arch_lwip_end();            
+        } else
+        {
+            // Optional: Log an internal overflow drop event error here if buffer size isn't deep enough
+            cyw43_arch_lwip_end();
+            SLEEP_MS(10);
+        }
+
+        //cyw43_arch_lwip_end(); DANGER! Make sure we always release the lock!!!
+
+        retry++;
+    } while (!complete && retry < 200);
+
+
+}
 
 void dump_text_buffer(void)
 {

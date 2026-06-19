@@ -60,7 +60,7 @@ void basic_SetFocus(void);
 
 int processCommand(char *pcString)
 {
-    printf("Basic Extension not implemented\n");
+    basic_printf("Basic Extension not implemented\n");
 
     return(0);
 }
@@ -530,7 +530,7 @@ void basic_LogToFile(void)
 	syntax_error(UNBAL_PARENS);
   }
 
-  //printf("Command String: %s\n", acTemp);
+  //basic_printf("Command String: %s\n", acTemp);
   processCommand(acTemp);
 
 } /*end basic_LogToFile*/
@@ -606,7 +606,7 @@ void basic_Com(void)
 
     get_Bracket(')');
 
-    //printf("Executing command: %s\n", acTemp);
+    //basic_printf("Executing command: %s\n", acTemp);
 	processCommand(acTemp);
 
 } /*end basic_Com*/
@@ -757,7 +757,7 @@ void basic_Relay()
     get_Bracket(')');
 
     //SetRelay(acRelayArguments[0], acRelayArguments[1]);
-    printf("Relay control not implemented\n");
+    basic_printf("Relay control not implemented\n");
 }
 
 
@@ -878,7 +878,7 @@ void basic_Terminal(void)
 	// if (iIndex == -1) iIndex = create_Variable("terminal$", STRINGVARIABLE);
     // if(iIndex == -1)
     // {
-    //     printf("FOOBAR!\n");
+    //     basic_printf("FOOBAR!\n");
     //     return;
     //     //basic_error(OUT_OF_MEM);
     // }
@@ -921,7 +921,7 @@ void basic_Terminal(void)
 
     // if (bSend)
     // {
-	//     //printf("AsciiOut (%d) = %s\n", strlen(acAsciiOut), acAsciiOut);
+	//     //basic_printf("AsciiOut (%d) = %s\n", strlen(acAsciiOut), acAsciiOut);
 
     //     if(!bTerminal)
     //     {
@@ -950,7 +950,7 @@ void basic_Terminal(void)
 	//     // erase prompt and command line
     //     if(!bQuiet)
     //     {
-	//         printf("\r                             \r");
+	//         basic_printf("\r                             \r");
     //     }
 
  	//     // clear reserved BASIC Variable ready for response
@@ -1028,7 +1028,7 @@ void basic_Graph(void)
 //     get_Bracket(')');
 
 //     /*Pass the command string to the interpreter for processing*/
-//     //printf("Command line: %s\n", acTemp);
+//     //basic_printf("Command line: %s\n", acTemp);
 
 //     flushall();
 //     system(acTemp);
@@ -1283,7 +1283,7 @@ void get_Parameter(char *pcCommandLine)
 
     if (pcCommandLine == NULL)
     {
-        printf("Internal Error: NULL command line pointer in get_Parameter\n");
+        basic_printf("Internal Error: NULL command line pointer in get_Parameter\n");
         return;
     }
 
@@ -1345,7 +1345,7 @@ void basic_SetFocus(void)
     //     }
     // }
 
-    // if (!hWnd) printf("SNMP failed to find window handle\n");
+    // if (!hWnd) basic_printf("SNMP failed to find window handle\n");
 
     // /*Gain focus for us but restore graph to front of screen*/
     // if (hWnd != NULL)
@@ -1465,7 +1465,7 @@ void basic_ShellyGet(void)
     {
         if (shelly_cache_get_value(device_ip, parameter_name, psContext->asStringVariables[iIndex].acValue, sizeof(psContext->asStringVariables[iIndex].acValue)))
         {
-            printf("RUNTIME ERROR: shelly_get failed (%s)\n", psContext->asStringVariables[iIndex].acValue);
+            basic_printf("RUNTIME ERROR: shelly_get failed (%s)\n", psContext->asStringVariables[iIndex].acValue);
             psContext->asStringVariables[iIndex].acValue[0] = 0;    
         }
     }

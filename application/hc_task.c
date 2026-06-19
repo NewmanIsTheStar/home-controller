@@ -305,5 +305,5 @@ void hc_load_basic_program(char *program, int len)
 
     //memcpy(basic_program_buffer, program, len);
     strcpy(basic_program_buffer, program);
-    strcat(basic_program_buffer, "\r\nEND\n");
+    //strcat(basic_program_buffer, "\r\nEND\r\n");  // not needed because interpreter does this when loading from ram
 }

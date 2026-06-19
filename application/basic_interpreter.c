@@ -33,6 +33,7 @@ char bScriptFileActive = 0;                 //indicates a script is running
 char bSteppingActive = 0;                   //script file is executed one line at a time
 char bTraceActive = 0;                      //script file is executed one line at a time
 int bTerminateWithExtremePrejudice = 0;     //script has been terminated by user pressing ESCAPE
+bool syntax_error_occured = false;
 
 /*Private Variables*/
 int iContextIndex = -1;
@@ -41,6 +42,7 @@ int bClearInkey = 0;                        //flag used to indicate BASIC has re
 // tsBasicContext *apsContextStack[BASIC_RECURSION_DEPTH] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 //                                                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 tsBasicContext *apsContextStack[BASIC_RECURSION_DEPTH] = {NULL};
+static bool context_initialized = false;       // used to persist context in interactive shell
 
 /*Local Prototypes*/
 void display_ScriptLine(void);
@@ -146,7 +148,6 @@ Returns     :  0 - OK
 ***************************************************************************/
 int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context)
 {
-    static bool context_initialized = false;
 	int x;
 	int iKey;
     int iInkeyIndex;
@@ -160,18 +161,20 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
     if (program_in_memory)
     {
         /*Copy the program to execute from RAM*/
-        load_program_from_ram(psContext->pcProgramCounter, program_in_memory, len_program_in_memory);
+        load_program_from_ram(psContext->pcProgram, program_in_memory, len_program_in_memory);  //TODO: this will change if we allow entering programs line by line
+        printf("PROGRAM BEGIN\n%s\nPROGRAM END\n", psContext->pcProgram);
     }
 	/*Load the program to execute from file*/
 	else if(!load_program(psContext->pcProgramCounter, pcFileName))
 	{
-		printf("Could not open BASIC script file\n");
+		basic_printf("Could not open BASIC script file\n");
        
         /*Erase the current context*/
         basic_DestroyContext();
 
         /*Check for nested BASIC programs*/
-        if (iContextIndex >=0)
+        // if (iContextIndex >=0) ORIGINAL
+        if (iContextIndex >0)  // Newman altered 2026-06-19        
         {
             /*Reactivate the parent program*/
             bScriptFileActive = 1;
@@ -229,7 +232,7 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
         /*Get the next token*/
         psContext->eTokenType = get_token();
 
-        //printf("Token String = %s Token = %d Type = %d\n", psContext->acToken, psContext->eToken, psContext->eTokenType); 
+        //basic_printf("Token String = %s Token = %d Type = %d\n", psContext->acToken, psContext->eToken, psContext->eTokenType); 
 
 
 		/*Check for assignment statement*/
@@ -318,14 +321,15 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
 
 	} while (psContext->eToken != FINISHED);
 
-    if (reset_context)
+    if (reset_context || syntax_error_occured)   // temporary hack to clean up interactive shell after syntax error
     {
         /*Erase the current context*/
         basic_DestroyContext();
+        syntax_error_occured = false;
     }
 
     /*Check for nested BASIC programs*/
-    if (iContextIndex >=0)
+    if (iContextIndex >=0)        // TODO why = 0???
     {
         /*If user pressed ESCAPE do not reactivate parent program*/
         if (!bTerminateWithExtremePrejudice)
@@ -382,7 +386,7 @@ int load_program(char *p, char *fname)
     /*Terminate the program with an END statement*/
     if (i < (PROG_SIZE - sizeof(acProgramTerminator)))
     {
-        strcpy(p-1, acProgramTerminator);
+        strcpy(p-1, acProgramTerminator);  //TODO: this -1 might be incorrect and truncating the last character
     }
   
     fclose(fp);
@@ -398,7 +402,7 @@ Returns     :  1 = Rock and Roll
 int load_program_from_ram(char *p, char *s, int len)
 {
     int i=0;
-    const char acProgramTerminator[] = "\r\nEND"; 
+    const char acProgramTerminator[] = "\r\nEND\r\n";
 
     i = 0;
     do
@@ -410,9 +414,12 @@ int load_program_from_ram(char *p, char *s, int len)
     /*Terminate the program with an END statement*/
     if (i < (PROG_SIZE - sizeof(acProgramTerminator)))
     {
-        strcpy(p-1, acProgramTerminator);
+        strcpy(p, acProgramTerminator);
     }
   
+    STRNCPY(psContext->acFileName, "command line", sizeof(psContext->acFileName));
+    psContext->pcProgramCounter = psContext->pcProgram;
+
     return 1;
 }
 
@@ -565,12 +572,12 @@ void scan_UserFunctions(void)
     do
     {
         get_token();
-        //printf("Token String = %s Token = %d Type = %d\n", psContext->acToken, psContext->eToken, psContext->eTokenType); 
+        //basic_printf("Token String = %s Token = %d Type = %d\n", psContext->acToken, psContext->eToken, psContext->eTokenType); 
 
 	    if(psContext->eToken==DEF_FUNC)
 	    {
             get_token();
-            //printf("FOUND FUNCTION: %s\n", psContext->acToken);
+            //basic_printf("FOUND FUNCTION: %s\n", psContext->acToken);
 	        addr = get_next_UserFunction(psContext->acToken);
             if(addr==-1 || addr==-2)
 	        {
@@ -743,7 +750,7 @@ int basic_CreateContext(char *pcFileName, char *pcArguments)
             }
             else
 	        {
-		        printf("BASIC: memory allocation failure while loading program\n");
+		        basic_printf("BASIC: memory allocation failure while loading program\n");
                 
                 /*No memory for program so delete the context*/
                 free(psNewContext);
@@ -752,7 +759,7 @@ int basic_CreateContext(char *pcFileName, char *pcArguments)
         }
         else
         {
-            printf("BASIC: memory allocation failure while creating context\n");
+            basic_printf("BASIC: memory allocation failure while creating context\n");
             iStatus = -1;
         }
     }
@@ -1013,6 +1020,9 @@ int basic_DestroyContext(void)
     int iCurrentContextIndex;
     double fTemp;
 
+    // clear interactive shell context
+    context_initialized = false;
+
     if (iContextIndex != -1)
     {
         
@@ -1076,7 +1086,7 @@ int basic_DestroyContext(void)
                                 }
                                 else
                                 {
-                                    printf("\nWarning: Shared variable did not exist on exit %s\n", psChildContext->acSharedVariables[x]);
+                                    basic_printf("\nWarning: Shared variable did not exist on exit %s\n", psChildContext->acSharedVariables[x]);
         
                                 }
                                               
@@ -1104,7 +1114,7 @@ int basic_DestroyContext(void)
                                 }
                                 else
                                 {
-                                    printf("\nWarning: Shared variable did not exist on exit %s\n", psChildContext->acSharedVariables[x]);
+                                    basic_printf("\nWarning: Shared variable did not exist on exit %s\n", psChildContext->acSharedVariables[x]);
                                 }
                             }
                             else 
@@ -1130,7 +1140,7 @@ int basic_DestroyContext(void)
                                 }
                                 else
                                 {
-                                    printf("\nWarning: Shared variable did not exist on exit %s\n", psChildContext->acSharedVariables[x]);
+                                    basic_printf("\nWarning: Shared variable did not exist on exit %s\n", psChildContext->acSharedVariables[x]);
         
                                 }
                             }
@@ -1169,7 +1179,7 @@ int basic_DestroyContext(void)
                     }
                     else
                     {
-                        printf("\nInternal Error: returnvalue$ not exist on exit\n");
+                        basic_printf("\nInternal Error: returnvalue$ not exist on exit\n");
                         
                     }
                     
@@ -1195,7 +1205,7 @@ int basic_DestroyContext(void)
                     }
                     else
                     {
-                       printf("\nInternal Error: returnvalue% not exist on exit\n");
+                       basic_printf("\nInternal Error: returnvalue% not exist on exit\n");
                     }
                                                                                         
                     /*Find the float return variable*/
@@ -1219,7 +1229,7 @@ int basic_DestroyContext(void)
                     }
                     else
                     {
-                        printf("\nInternal Error: returnvalue not exist on exit\n");
+                        basic_printf("\nInternal Error: returnvalue not exist on exit\n");
                         
                     }                
                 }
@@ -1229,7 +1239,7 @@ int basic_DestroyContext(void)
                 {
                     if (psContext->asArrayVariables[x].pcValue)
                     {
-                        //printf("Free array %s\n", psContext->asArrayVariables[x].acName); 
+                        //basic_printf("Free array %s\n", psContext->asArrayVariables[x].acName); 
                         free(psContext->asArrayVariables[x].pcValue);
                     }
                 }
@@ -1289,7 +1299,7 @@ int create_Variable(char *pcName, teTokenType eTokenType)
         }
         else
         {
-            printf("Out of variable memory allocating string %s\n", pcName);
+            basic_printf("Out of variable memory allocating string %s\n", pcName);
             syntax_error(SYNTAX);
         }
         break;
@@ -1303,7 +1313,7 @@ int create_Variable(char *pcName, teTokenType eTokenType)
         }
         else
         {
-            printf("Out of variable memory allocating float %s\n", pcName);
+            basic_printf("Out of variable memory allocating float %s\n", pcName);
             syntax_error(SYNTAX);
         }
         break;
@@ -1317,13 +1327,13 @@ int create_Variable(char *pcName, teTokenType eTokenType)
         }
         else
         {
-            printf("Out of variable memory allocating integer %s\n", pcName);
+            basic_printf("Out of variable memory allocating integer %s\n", pcName);
             syntax_error(SYNTAX);
         }
         break;
 
     default:
-        printf("Major screw up.  Attempted to create a variable with a non-variable token\n");
+        basic_printf("Major screw up.  Attempted to create a variable with a non-variable token\n");
         syntax_error(SYNTAX);
         break;
 
@@ -1403,7 +1413,7 @@ int find_Variable(char *pcName, teTokenType eTokenType)
         break;
 
     default:
-        printf("Screw up.  Attempted to find a variable with a non-variable token\n");
+        basic_printf("Screw up.  Attempted to find a variable with a non-variable token\n");
         syntax_error(SYNTAX);
         break;
 
@@ -1474,64 +1484,64 @@ void dump_Variables(void)
 {
     int iIndex;
 
-    printf("\n");
-    printf("**********************************************************\n");
-    printf("String Variables:\n");
+    basic_printf("\n");
+    basic_printf("**********************************************************\n");
+    basic_printf("String Variables:\n");
     for (iIndex=0; iIndex < NUM_STRING_VARIABLES; iIndex++)
     {
         if (strcmp(psContext->asStringVariables[iIndex].acName, "UNUSED STRING VARIABLE"))
         {
-            printf("                                            %s\r%40s\n",
+            basic_printf("                                            %s\r%40s\n",
                    psContext->asStringVariables[iIndex].acValue,
                    psContext->asStringVariables[iIndex].acName);             
         }
     }
 
-    printf("Float Variables:\n");
+    basic_printf("Float Variables:\n");
     for (iIndex=0; iIndex < NUM_FLOAT_VARIABLES; iIndex++)
     {
         if (strcmp(psContext->asFloatVariables[iIndex].acName, "UNUSED FLOAT VARIABLE"))
         {
-            printf("                                            %G\r%40s\n",
+            basic_printf("                                            %G\r%40s\n",
                    psContext->asFloatVariables[iIndex].fValue,
                    psContext->asFloatVariables[iIndex].acName);             
         }
 
     }
 
-    printf("Integer Variables:\n");
+    basic_printf("Integer Variables:\n");
     for (iIndex=0; iIndex < NUM_INTEGER_VARIABLES; iIndex++)
     {
         if (strcmp(psContext->asIntegerVariables[iIndex].acName, "UNUSED INTEGER VARIABLE"))
         {
-            printf("                                            %d\r%40s\n",
+            basic_printf("                                            %d\r%40s\n",
                    psContext->asIntegerVariables[iIndex].iValue,
                    psContext->asIntegerVariables[iIndex].acName);             
         }
 
     }
   
-    if (strcmp(psContext->acCommonVariables[0], "UNUSED COMMON VARIABLE")) printf("Common Variables:\n");
+    if (strcmp(psContext->acCommonVariables[0], "UNUSED COMMON VARIABLE")) basic_printf("Common Variables:\n");
     for (iIndex=0; iIndex < NUM_COMMON_VARIABLES; iIndex++)
     {
         if (strcmp(psContext->acCommonVariables[iIndex], "UNUSED COMMON VARIABLE"))
         {
-            printf("%40s\n", psContext->acCommonVariables[iIndex]);             
+            basic_printf("%40s\n", psContext->acCommonVariables[iIndex]);             
         }
 
     }
   
-    if (strcmp(psContext->acSharedVariables[0], "UNUSED SHARED VARIABLE")) printf("Shared Variables:\n");
+    if (strcmp(psContext->acSharedVariables[0], "UNUSED SHARED VARIABLE")) basic_printf("Shared Variables:\n");
     for (iIndex=0; iIndex < NUM_SHARED_VARIABLES; iIndex++)
     {
         if (strcmp(psContext->acSharedVariables[iIndex], "UNUSED SHARED VARIABLE"))
         {
-            printf("%40s\n", psContext->acSharedVariables[iIndex]);             
+            basic_printf("%40s\n", psContext->acSharedVariables[iIndex]);             
         }
 
     }
 
-    printf("**********************************************************\n");
+    basic_printf("**********************************************************\n");
 
 
 }
@@ -1587,7 +1597,7 @@ void display_ScriptLine(void)
             linecount++;
         }
     }
-    printf("line %d\n", linecount);
+    basic_printf("line %d\n", linecount);
 
     /*Display lines with error*/
     temp = p;  
@@ -1610,7 +1620,7 @@ void display_ScriptLine(void)
 
 
     /*print out the lines*/
-    for(; p<=temp; p++) printf("%c", *p);
+    for(; p<=temp; p++) basic_printf("%c", *p);
 }
 
 
@@ -1660,13 +1670,13 @@ void basic_Stop(void)
     //     {
     //         case '?':
     //         case F1:
-    //             printf("\n");
-    //             printf("BASIC DEBUG HELP     \n");
-    //             printf("================     \n");
-    //             printf("F5   Run             \n");
-    //             printf("F10  Step            \n");
-    //             printf("D    Dump Variables  \n");
-    //             printf("ESC  Terminate Script\n");
+    //             basic_printf("\n");
+    //             basic_printf("BASIC DEBUG HELP     \n");
+    //             basic_printf("================     \n");
+    //             basic_printf("F5   Run             \n");
+    //             basic_printf("F10  Step            \n");
+    //             basic_printf("D    Dump Variables  \n");
+    //             basic_printf("ESC  Terminate Script\n");
     //             break;
                 
     //         case 'd':
@@ -1820,7 +1830,7 @@ int basic_InterpretFunction(char *pcFunctionBody, int iFuncNum)
         /*Get the next token*/
         psContext->eTokenType = get_token();
 
-        //printf("Token String = %s Token = %d Type = %d\n", psContext->acToken, psContext->eToken, psContext->eTokenType); 
+        //basic_printf("Token String = %s Token = %d Type = %d\n", psContext->acToken, psContext->eToken, psContext->eTokenType); 
 
 
 		/*Check for assignment statement*/

@@ -18,8 +18,7 @@ Description:Parsing functions for SNMP BASIC.
 extern char bScriptFileActive;                 //indicates a script is running
 extern tsCommand asCommandTable[];             //table that defines all BASIC commands
 extern int bClearInkey;                        //flag used to indicate script has read keystroke
-
-const char program_terminated[] = "END\r\n";
+extern bool syntax_error_occured;
 
 /*Private Prototypes*/
 extern tsBasicContext *psContext;
@@ -272,7 +271,7 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
                         break;
 						
                     default:
-                        printf("Unexpected function call in string expression\n");
+                        basic_printf("Unexpected function call in string expression\n");
                         syntax_error(SYNTAX);
                         break;
               }
@@ -357,6 +356,12 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
     putback();
 
     *pcActivePos = '\0';
+
+    if (syntax_error_occured)
+    {
+        // discard result and return empty string
+        *pcResult = '\0';
+    }
 
 } // end eval_StringExpression
 
@@ -1090,13 +1095,15 @@ void atom(int *piAnswer, double *pfAnswer)
         {
             case INTEGERVARIABLE:
                 *piAnswer = get_IntegerVariable(psContext->acToken);
-                *pfAnswer = (double)get_IntegerVariable(psContext->acToken);
+                //*pfAnswer = (double)get_IntegerVariable(psContext->acToken);  // Newman removed double lookup
+                *pfAnswer = (double)*piAnswer;
                 get_token();
                 break;
 
             case FLOATVARIABLE:
                 *pfAnswer = get_FloatVariable(psContext->acToken);
-                *piAnswer = (int)get_FloatVariable(psContext->acToken);
+                //*piAnswer = (int)get_FloatVariable(psContext->acToken);       // Newman removed double lookup
+                *piAnswer = (int)*pfAnswer;
                 get_token();
                 break;
 
@@ -1157,10 +1164,10 @@ void syntax_error(int error)
     };
     
     // only process the syntax error if the program has not already been terminated
-    if (psContext->pcProgramCounter != program_terminated)
+    if (!syntax_error_occured)
     {
         /*Print the error message. A * is used to mark the last cursor position*/
-        printf("*\n\n%s", e[error]);
+        basic_printf("*\n\n%s", e[error]);
 
         /*Find line number of error*/
         p = psContext->pcProgram;
@@ -1173,9 +1180,11 @@ void syntax_error(int error)
                 linecount++;
             }
         }
+
+        printf("0: program start = %p print error line = %p\n", psContext->pcProgram, p);
         
         /*Print file name and line number where error occured*/
-        printf(" in %s at line %d\n", psContext->acFileName, linecount);
+        basic_printf(" in %s at line %d\n", psContext->acFileName, linecount);
 
         /*Display lines with error*/
         temp = p;
@@ -1185,6 +1194,8 @@ void syntax_error(int error)
         {
         }
 
+        printf("1: program start = %p print error line = %p\n", psContext->pcProgram, p);
+
         /*Go back two lines if possible*/
         if (p>psContext->pcProgram)
         {
@@ -1193,12 +1204,20 @@ void syntax_error(int error)
             for(; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
             {
             }
-            if (*p!='\n') p++;
+            //if (*p!='\n') p++;  // Newman removed as it truncated the first character of the line -- I guess it had something to do with DOS EOL \r\n
         }
 
+        printf("2: program start = %p print error line = %p\n", psContext->pcProgram, p);
+
         /*Print out the lines*/
-        for(; p<=temp; p++) printf("%c", *p);
-        printf("\n\n");
+        for(; p<=temp; p++)
+        {
+            if (*p != '\r')  // avoid carriage returns that mess up output
+            {
+                basic_printf("%c", *p);
+            }
+        } 
+        basic_printf("\n\n");
 
         /*Terminate Script File*/
         bScriptFileActive = 0;
@@ -1206,7 +1225,7 @@ void syntax_error(int error)
         // /*Restore C program to state before script was run*/
         // longjmp(psContext->sEnviroment, 1);  NOT SUITABLE IN FREERTOS environment
         //psContext->pcProgramCounter = psContext->pcProgram + strlen(psContext->pcProgram) - strlen("END\n" - 1;
-        psContext->pcProgramCounter = (char *)program_terminated;
+        syntax_error_occured = true;
     }
 }
 
@@ -1227,7 +1246,7 @@ int get_token(void)
     /*Check for End of File or program termination*/
     if((*psContext->pcProgramCounter==0) ||
        (*psContext->pcProgramCounter==-1) ||
-       (psContext->pcProgramCounter == program_terminated))
+       syntax_error_occured)
     {
         *psContext->acToken = 0;
         psContext->eToken = FINISHED;
@@ -1253,7 +1272,7 @@ int get_token(void)
         }
         else
         {
-            printf("Carriage return without Newline discovered.  Treating as EOL.\n");
+            basic_printf("Carriage return without Newline discovered.  Treating as EOL.\n");
         }
 
         psContext->acToken[++i]=0;                                 // terminate acToken
@@ -1376,7 +1395,7 @@ int get_token(void)
             p++;
         }
         
-        //printf("STRING TOKEN: %s\n", psContext->acToken);
+        //basic_printf("STRING TOKEN: %s\n", psContext->acToken);
 
         /*Find token type*/
         if((psContext->eToken = find_command(psContext->acToken)) != 0)
@@ -1430,7 +1449,7 @@ int get_token(void)
         psContext->pcProgramCounter++;
     }
 
-    //printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
+    //basic_printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
     return psContext->eTokenType;
 }
 
@@ -1540,21 +1559,21 @@ int find_function(char *acString)
     int i;
     int iToken = 0;   /*unknown token*/
 
-    //printf("find function called %s...", acString);
+    //basic_printf("find function called %s...", acString);
 
     /*Check if token is a function*/
     for(i=0; *asFunctionTable[i].acName; i++)
     {
-        //printf("%s vs %s\n", asFunctionTable[i].acName, acString);
+        //basic_printf("%s vs %s\n", asFunctionTable[i].acName, acString);
         if(!strcasecmp(asFunctionTable[i].acName, acString))
         {
             iToken = asFunctionTable[i].eToken;
-            //printf("Found function with token %d\n", iToken);
+            //basic_printf("Found function with token %d\n", iToken);
             break;            
         }
     }
 
-    //if (iToken) printf("FOUND\n"); else printf("NOT FOUND\n");
+    //if (iToken) basic_printf("FOUND\n"); else basic_printf("NOT FOUND\n");
     return(iToken);
 
 }
@@ -1574,7 +1593,7 @@ int find_logic(char *acString)
     /*Check if token is a function*/
     for(i=0; *asLogicTable[i].acName; i++)
     {
-        //printf("%s vs %s\n", asFunctionTable[i].acName, acString);
+        //basic_printf("%s vs %s\n", asFunctionTable[i].acName, acString);
         if(!strcasecmp(asLogicTable[i].acName, acString))
         {
             iToken = asLogicTable[i].eToken;
@@ -1640,7 +1659,7 @@ char *get_StringVariable(char *pcName)
     }
     else
     {
-        printf("\nError: Attempt to use uninitialised variable %s\n", pcName);
+        basic_printf("\nError: Attempt to use uninitialised variable %s\n", pcName);
         syntax_error(SYNTAX);
     }
 
@@ -1661,7 +1680,7 @@ char *get_StringArrayVariable(char *pcName, int aiIndex[MAX_ARRAY_DIM])
 
     if (!pcValue)
     {
-        printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
+        basic_printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
         syntax_error(NOT_VAR);
     }
 
@@ -1687,7 +1706,7 @@ double get_FloatVariable(char *pcName)
     }
     else
     {
-        printf("\nError: Attempt to use uninitialised variable %s\n", pcName);
+        basic_printf("\nError: Attempt to use uninitialised float variable %s\n", pcName);
         syntax_error(NOT_VAR);
     }
 
@@ -1712,7 +1731,7 @@ double get_FloatArrayVariable(char *pcName, int aiIndex[MAX_ARRAY_DIM])
     }
     else
     {
-        printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
+        basic_printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
         syntax_error(NOT_VAR);
     }
 
@@ -1738,7 +1757,7 @@ int get_IntegerVariable(char *pcName)
     }
     else
     {
-        printf("\nError: Attempt to use uninitialised variable %s\n", pcName);
+        basic_printf("\nError: Attempt to use uninitialised integer variable %s\n", pcName);
         syntax_error(NOT_VAR);
     }
 
@@ -1764,7 +1783,7 @@ int get_IntegerArrayVariable(char *pcName, int aiIndex[MAX_ARRAY_DIM])
     }
     else
     {
-        printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
+        basic_printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
         syntax_error(NOT_VAR);
     }
 
@@ -1813,7 +1832,7 @@ int set_StringArrayVariable(char *pcName, int aiIndex[MAX_ARRAY_DIM], char *pcVa
     }
     else
     {
-        printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
+        basic_printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
         syntax_error(NOT_VAR);
     }
 
@@ -1860,7 +1879,7 @@ int set_FloatArrayVariable(char *pcName, int aiIndex[MAX_ARRAY_DIM], double fVal
     }
     else
     {
-        printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
+        basic_printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
         syntax_error(NOT_VAR);
     }
 
@@ -1907,7 +1926,7 @@ int set_IntegerArrayVariable(char *pcName, int aiIndex[MAX_ARRAY_DIM], int iValu
     }
     else
     {
-        printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
+        basic_printf("\nError: Invalid array access %s(%d, %d, %d, %d)\n", pcName, aiIndex[0], aiIndex[1], aiIndex[2], aiIndex[3]);
         syntax_error(NOT_VAR);
     }
 
