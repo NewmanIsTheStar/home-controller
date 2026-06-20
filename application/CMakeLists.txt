@@ -15,7 +15,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         # shell_server.c 
         # shell_websocket.c
         shell_longpoll.c
-        picofs.c    
+        picofs.c  
+        picofs_read.c  
 )
 
 set(WEB_FILES)

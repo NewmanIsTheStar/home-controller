@@ -43,6 +43,7 @@
 #include "calendar.h"
 #include "pluto.h"
 #include "shell_longpoll.h"
+#include "picofs.h"
 
 #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
@@ -279,6 +280,16 @@ void boss_task(__unused void *params)
 
     // for the long poll shell test
     //init_shell_backend(); // <-- Registers standard CGI endpoints safely
+
+    // TEST TEST TEST 
+    // {
+    //     int found_file = -1;
+    //     char *file_ptr = NULL;
+    //     found_file = picofs_find_by_name("elephant", &file_ptr);
+
+    //     printf("found_file = %d file_ptr = %p\n", found_file, file_ptr);
+    //     SLEEP_MS(60000);
+    // }
 
     // start worker tasks
     printf("Starting worker tasks\n");       
