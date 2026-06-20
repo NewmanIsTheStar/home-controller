@@ -2066,7 +2066,8 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_InputFromFile(void)
 {
-	char var;
+	//char var;  // original and default signed on PC
+    int var;     // Newman changed to int to avoid signed vs unsigned char problems
 	int i;
     char acTextRead[256] = {0};
     int iItemsRead = 0;
@@ -2185,6 +2186,7 @@ void basic_InputFromFile(void)
             }
             else
             {
+                printf("var = %d\n", var);
                 psContext->asIntegerVariables[var].iValue = 0;   //indicates end of file
             }
 	    }

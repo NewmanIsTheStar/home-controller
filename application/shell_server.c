@@ -40,8 +40,8 @@
 // #include "pico/cyw43_arch.h"
 // #include <string.h>
 
-#define MAX_CMD_LEN  128
-#define RESP_BUF_LEN 512
+#define MAX_CMD_LEN  (128)
+#define RESP_BUF_LEN (512)
 
 static char cmd_buffer[MAX_CMD_LEN];
 static uint16_t cmd_len = 0;

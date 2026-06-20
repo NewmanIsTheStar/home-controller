@@ -68,11 +68,11 @@ const char http_ascii_buffer_header_tmpl[] =
     "Access-Control-Allow-Origin: *\r\n" // Helps if testing locally via file://
     "\r\n";
 
-#define MAX_ASCII_BUFFER_SIZE (4096) 
+#define MAX_PROGRAM_SIZE (4096) 
 #define ASCII_HEADER_SIZE (sizeof(http_ascii_buffer_header_tmpl) - 1) 
 
 // Application RAM Storage variables
-char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_ASCII_BUFFER_SIZE];
+char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_PROGRAM_SIZE];
 size_t current_buffer_index = 0;
 
 // Global flag to change filesystem responses context-dependently
@@ -143,7 +143,7 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p) {
     // Loop through the current pbuf packet chains
     for (q = p; q != NULL; q = q->next) {
         // Enforce safety limits to stop memory corruption overwrites
-        if (current_buffer_index + q->len < (MAX_ASCII_BUFFER_SIZE - 1)) {
+        if (current_buffer_index + q->len < (MAX_PROGRAM_SIZE - 1)) {
             memcpy(&ascii_ram_buffer[ASCII_HEADER_SIZE + current_buffer_index], q->payload, q->len);
             current_buffer_index += q->len;
         } else {
@@ -274,7 +274,7 @@ void dump_text_buffer(void)
 {
     int i;
 
-    for(i=0; i < MAX_ASCII_BUFFER_SIZE; i++)
+    for(i=0; i < MAX_PROGRAM_SIZE; i++)
     {
         if(!(i%80)) printf("\n");
 

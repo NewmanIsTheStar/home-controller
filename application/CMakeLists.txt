@@ -14,10 +14,20 @@ target_sources(${PROJECT_NAME} PRIVATE
         # http_post.c
         # shell_server.c 
         # shell_websocket.c
-        shell_longpoll.c    
+        shell_longpoll.c
+        picofs.c    
 )
 
 set(WEB_FILES)
 file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.shtml")
 pico_add_library(pico_httpd_content NOFLAG)
 pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${WEB_FILES})
+
+
+target_link_options(${PROJECT_NAME} PRIVATE
+    "-Wl,--wrap=_open"
+    "-Wl,--wrap=_read"
+    "-Wl,--wrap=_write"
+    "-Wl,--wrap=_lseek"
+    "-Wl,--wrap=_close"
+)

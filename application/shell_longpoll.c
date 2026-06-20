@@ -48,7 +48,7 @@ const char http_ascii_buffer_header_tmpl[] =
     "Access-Control-Allow-Origin: *\r\n" // Helps if testing locally via file://
     "\r\n";
 
-#define MAX_ASCII_BUFFER_SIZE (4096) 
+#define MAX_PROGRAM_SIZE (4096) 
 #define ASCII_HEADER_SIZE (sizeof(http_ascii_buffer_header_tmpl) - 1) 
 
 #define ITEM_BUF_LEN 128
@@ -67,7 +67,7 @@ static struct fs_file *pending_listen_file = NULL;
 static struct fs_file *pending_get_text = NULL;
 
 // Application RAM Storage variables
-char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_ASCII_BUFFER_SIZE];
+char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_PROGRAM_SIZE];
 size_t current_buffer_index = 0;
 bool post_validation_success = true;
 const char *basic_program = ascii_ram_buffer + ASCII_HEADER_SIZE;
@@ -210,8 +210,11 @@ static void execute_shell_command(const char* cmd) {
         pico_send_async_text("pong line 2!\n");
         pico_send_async_text("pong line 3!\n");
     } else if (strcmp(cmd, "lights") == 0) {
-        // Example: Sending multiple packets sequentially without waiting
         hc_queue_send(HC_CMD_LIGHTS);  
+    } else if (strcmp(cmd, "dump program") == 0) {
+        hc_queue_send(HC_CMD_DUMP_PROGRAM);  
+    } else if (strcmp(cmd, "run") == 0) {
+        hc_queue_send(HC_CMD_BASIC_SCRIPT);  
     } else {
         hc_load_basic_program((char *)cmd, strlen(cmd));
         hc_queue_send(HC_CMD_BASIC_INTERACTIVE);        
@@ -300,10 +303,11 @@ void fs_close_custom(struct fs_file *file) {
         pending_listen_file = NULL;
     }
 
-    // if (pending_get_text == file) {
-    //     pending_get_text = NULL;
-    //     hc_queue_send(HC_CMD_BASIC_SCRIPT);        
-    // }
+    // TEST TEST TEST
+    if (pending_get_text == file) {
+        pending_get_text = NULL;
+        hc_queue_send(HC_CMD_BASIC_SCRIPT);        
+    }
 
 }
 
@@ -365,7 +369,7 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
         // Loop through the current pbuf packet chains
         for (q = p; q != NULL; q = q->next) {
             // Enforce safety limits to stop memory corruption overwrites
-            if (current_buffer_index + q->len < (MAX_ASCII_BUFFER_SIZE - 1)) {
+            if (current_buffer_index + q->len < (MAX_PROGRAM_SIZE - 1)) {
                 memcpy(&ascii_ram_buffer[ASCII_HEADER_SIZE + current_buffer_index], q->payload, q->len);
                 current_buffer_index += q->len;
             } else {
@@ -553,11 +557,21 @@ void dump_text_buffer(void)
 {
     int i;
 
-    for(i=0; i < MAX_ASCII_BUFFER_SIZE; i++)
+    printf("PROGRAM TEXT\n");
+    for(i=0; i < MAX_PROGRAM_SIZE && basic_program[i] != 0; i++)
+    {
+        //if(!(i%80)) printf("\n");
+
+        printf("%c", basic_program[i]);        
+    }
+    printf("\n");
+    
+    printf("PROGRAM HEX DUMP\n");
+    for(i=0; i < MAX_PROGRAM_SIZE && basic_program[i] != 0; i++)
     {
         if(!(i%80)) printf("\n");
 
-        printf("%c", ascii_ram_buffer[i]);        
-    }
-    
+        printf("%02x ", basic_program[i]);        
+    }    
+    printf("\n");    
 }
