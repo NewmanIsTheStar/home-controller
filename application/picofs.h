@@ -15,5 +15,6 @@ typedef struct file_header
 
  int picofs_load_test_data(void);
 int picofs_find_by_name(char *filename, char **header);
+int picofs_find_page_status(void);
 
 #endif

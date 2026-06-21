@@ -18,6 +18,8 @@
 #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
 #include "hardware/watchdog.h"
+#include "pico/flash.h"
+#include <hardware/flash.h>
 
 #include "lwip/opt.h"
 #include "lwip/sockets.h"
@@ -175,3 +177,63 @@ int picofs_load_test_data(void)
 //     u32_t crc;
 //     char name[16];
 // } FILE_HEADER_T;
+
+
+#define FLASH_SCAN_START (0x10000000UL)
+#define FLASH_SCAN_END (0x10000000UL + PICO_FLASH_SIZE_BYTES)
+
+/*!
+ * \brief Identify the status of each flash page
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_find_page_status(void)
+{
+    u8_t *cell = NULL;
+    u32_t erase_block_absolute = 0;
+    u32_t erase_block_relative = 0;    
+    u32_t page_relative = 0;
+    u32_t free_pages = 0;
+    u32_t total_pages = 0;
+    TickType_t start_tick;
+    TickType_t elapsed_ticks = 0;
+
+    start_tick = xTaskGetTickCount();
+
+    for(cell = (u8_t *)(FLASH_SCAN_START); cell < (u8_t *)(FLASH_SCAN_END);)
+    {
+        if (*cell != 0xFF)
+        {
+            erase_block_absolute = ((u32_t)cell)/4096;
+            erase_block_relative = ((u32_t)cell - FLASH_SCAN_START)/4096;            
+            page_relative = (((u32_t)cell)%4096)/256;
+            //printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+            cell = (u8_t *)(erase_block_absolute*4096+((page_relative+1)*256));
+        }
+        else if (((u32_t)cell%256) == 255)
+        {
+            erase_block_absolute = ((u32_t)cell)/4096;
+            erase_block_relative = ((u32_t)cell - FLASH_SCAN_START)/4096;  
+            page_relative = (((u32_t)cell)%4096)/256;
+            //printf("[Block%04d, Page%02d]\tfree\n", erase_block_relative, page_relative);
+            free_pages++;
+            cell++;            
+        }
+        else
+        {
+            cell++;
+        }
+    }
+
+    elapsed_ticks = xTaskGetTickCount() - start_tick;
+
+    total_pages = (FLASH_SCAN_END - FLASH_SCAN_START)/256;
+    printf("Free Pages = %d out of %d total pages (%d%%)\n", free_pages, total_pages, (free_pages*100)/total_pages);
+    printf("flash scan completed in %d ms\n", elapsed_ticks);
+    
+    return(0);
+}

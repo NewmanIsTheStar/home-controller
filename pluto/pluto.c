@@ -282,6 +282,8 @@ void boss_task(__unused void *params)
     //init_shell_backend(); // <-- Registers standard CGI endpoints safely
 
     // TEST TEST TEST 
+    picofs_find_page_status();
+    // SLEEP_MS(60000);
     // {
     //     int found_file = -1;
     //     char *file_ptr = NULL;
