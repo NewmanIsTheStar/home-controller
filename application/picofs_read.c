@@ -191,7 +191,7 @@ int picofs_load_test_data(void)
  *  *     
  * \return 0 on success
  */
-int picofs_find_page_status(void)
+int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
 {
     u8_t *cell = NULL;
     u32_t erase_block_absolute = 0;
@@ -206,20 +206,49 @@ int picofs_find_page_status(void)
 
     for(cell = (u8_t *)(FLASH_SCAN_START); cell < (u8_t *)(FLASH_SCAN_END);)
     {
+
+        erase_block_absolute = ((u32_t)cell)/4096;
+        erase_block_relative = ((u32_t)cell - FLASH_SCAN_START)/4096;            
+        page_relative = (((u32_t)cell)%4096)/256;
+        
+        if ((display == PFS_DISPLAY_PAGE_MAP) && ((((u32_t)cell)%4096) == 0))
+        {
+            printf("\n[Block%04d]", erase_block_relative);
+        }
+
         if (*cell != 0xFF)
         {
-            erase_block_absolute = ((u32_t)cell)/4096;
-            erase_block_relative = ((u32_t)cell - FLASH_SCAN_START)/4096;            
-            page_relative = (((u32_t)cell)%4096)/256;
-            //printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+            switch(display)
+            {
+            default:
+            case PFS_DISPLAY_QUIET:
+                break;
+            case PFS_DISPLAY_PAGE_NUMBERS:
+                printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+                break;
+            case PFS_DISPLAY_PAGE_MAP:
+                printf("\u25A0");
+                break;
+            }
+            
+            // skip next page
             cell = (u8_t *)(erase_block_absolute*4096+((page_relative+1)*256));
         }
         else if (((u32_t)cell%256) == 255)
         {
-            erase_block_absolute = ((u32_t)cell)/4096;
-            erase_block_relative = ((u32_t)cell - FLASH_SCAN_START)/4096;  
-            page_relative = (((u32_t)cell)%4096)/256;
-            //printf("[Block%04d, Page%02d]\tfree\n", erase_block_relative, page_relative);
+            switch(display)
+            {
+            default:
+            case PFS_DISPLAY_QUIET:
+                break;
+            case PFS_DISPLAY_PAGE_NUMBERS:
+                printf("[Block%04d, Page%02d]\tfree\n", erase_block_relative, page_relative);
+                break;
+            case PFS_DISPLAY_PAGE_MAP:
+                printf("\u25A1");
+                break;
+            }            
+                        
             free_pages++;
             cell++;            
         }
@@ -228,6 +257,12 @@ int picofs_find_page_status(void)
             cell++;
         }
     }
+
+    if (display == PFS_DISPLAY_PAGE_MAP)
+    {
+        printf("\n");
+    }
+
 
     elapsed_ticks = xTaskGetTickCount() - start_tick;
 

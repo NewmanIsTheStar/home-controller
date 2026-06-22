@@ -13,8 +13,15 @@ typedef struct file_header
     char name[16];
 } FILE_HEADER_T;
 
- int picofs_load_test_data(void);
+typedef enum
+{
+    PFS_DISPLAY_QUIET = 0,
+    PFS_DISPLAY_PAGE_NUMBERS = 1,
+    PFS_DISPLAY_PAGE_MAP = 2
+} PFS_DISPLAY_TYPE_T;
+
+int picofs_load_test_data(void);
 int picofs_find_by_name(char *filename, char **header);
-int picofs_find_page_status(void);
+int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 
 #endif
