@@ -61,6 +61,7 @@
 #include "basic.h"
 #include "http_post.h"
 #include "shell_longpoll.h"
+#include "picofs.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -167,7 +168,10 @@ void hc_task(__unused void *params)
                     break;  
                 case HC_CMD_DUMP_PROGRAM:
                     dump_text_buffer();
-                    break;                                       
+                    break;   
+                case HC_CMD_LIST:
+                    picofs_list_all_files();
+                    break;
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);
                     break;

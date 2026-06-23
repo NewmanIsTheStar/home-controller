@@ -211,6 +211,8 @@ static void execute_shell_command(const char* cmd) {
         pico_send_async_text("pong line 3!\n");
     } else if (strcmp(cmd, "lights") == 0) {
         hc_queue_send(HC_CMD_LIGHTS);  
+    } else if (strcmp(cmd, "ls") == 0) {
+        hc_queue_send(HC_CMD_LIST);          
     } else if (strcmp(cmd, "dump program") == 0) {
         hc_queue_send(HC_CMD_DUMP_PROGRAM);  
     } else if (strcmp(cmd, "run") == 0) {

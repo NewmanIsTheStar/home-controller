@@ -207,6 +207,7 @@ void boss_task(__unused void *params)
     ip_addr_t gw = {0};
     BaseType_t task_creation_status = 0;
     uint32_t clock_ahead_error = 0;
+    u8_t *free_flash = NULL;
 
     
     // start watchdog
@@ -282,9 +283,11 @@ void boss_task(__unused void *params)
     //init_shell_backend(); // <-- Registers standard CGI endpoints safely
 
     // TEST TEST TEST 
-    picofs_find_page_status(PFS_DISPLAY_PAGE_NUMBERS);
-    picofs_find_page_status(PFS_DISPLAY_PAGE_MAP);
-    picofs_find_page_status(PFS_DISPLAY_QUIET);
+    // picofs_find_page_status(PFS_DISPLAY_PAGE_NUMBERS);
+    // picofs_find_page_status(PFS_DISPLAY_PAGE_MAP);
+    // picofs_find_page_status(PFS_DISPLAY_QUIET);
+    picofs_find_contiguous_free_area(8000, &free_flash);
+    picofs_list_all_files();
         
     SLEEP_MS(60000);
     // {

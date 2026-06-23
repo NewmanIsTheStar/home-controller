@@ -1,6 +1,12 @@
 #ifndef PICOFS_H
 #define PICOFS_H
 
+#include "shell_longpoll.h"
+
+// output to either terminal or http shell
+//#define picofs_printf(format, ...) printf("[MACRO] " format, ##__VA_ARGS__)
+#define picofs_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
+
 typedef struct file_header
 {
     u8_t magic_number[4];
@@ -22,6 +28,8 @@ typedef enum
 
 int picofs_load_test_data(void);
 int picofs_find_by_name(char *filename, char **header);
+int picofs_list_all_files(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
+int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area);
 
 #endif
