@@ -6,6 +6,10 @@
 #include "hc_task.h"
 #include "pluto.h"
 
+// prototypes
+int shell_cat(char *filename);
+
+
 typedef enum
 {
     HTTP_RX_UNKNOWN,
@@ -217,6 +221,8 @@ static void execute_shell_command(const char* cmd) {
         hc_queue_send(HC_CMD_DUMP_PROGRAM);  
     } else if (strcmp(cmd, "run") == 0) {
         hc_queue_send(HC_CMD_BASIC_SCRIPT);  
+    } else if (strncmp(cmd, "cat ", 4) == 0) {
+        if (strlen(cmd) > 5) shell_cat((char *)(cmd+4));        
     } else {
         hc_load_basic_program((char *)cmd, strlen(cmd));
         hc_queue_send(HC_CMD_BASIC_INTERACTIVE);        
@@ -576,4 +582,30 @@ void dump_text_buffer(void)
         printf("%02x ", basic_program[i]);        
     }    
     printf("\n");    
+}
+
+int shell_cat(char *filename)
+{
+    FILE *filePointer;
+    char buffer[256];
+
+    // 1. Open the file in read mode ("r")
+    filePointer = fopen(filename, "r");
+
+    // 2. Check if the file exists and opened successfully
+    if (filePointer == NULL) {
+        printf("Error: Could not open file.\n");
+        return 1; 
+    }
+
+    // 3. Read and print the file line-by-line
+    while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
+    {
+        shell_printf("%s", buffer);
+    }
+
+    // 4. Close the file to free up system resources
+    fclose(filePointer);
+
+    return 0;
 }

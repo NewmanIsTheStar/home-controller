@@ -9,7 +9,7 @@
 
 typedef struct file_header
 {
-    u8_t magic_number[4];
+    u8_t magic_number[4];   // "pfs"
     u8_t picofs_version;
     u8_t file_id;     
     u8_t file_sequence;
@@ -18,6 +18,19 @@ typedef struct file_header
     u32_t crc;
     char name[16];
 } FILE_HEADER_T;
+
+typedef struct file_trailer
+{
+    u8_t magic_number[4];   // "sfp"   
+    u32_t crc;
+} FILE_TRAILER_T;
+
+typedef struct file_test
+{
+    FILE_HEADER_T test_header;
+    u8_t test_data[32];
+    FILE_TRAILER_T test_trailer;
+} FILE_TEST_T;
 
 typedef enum
 {

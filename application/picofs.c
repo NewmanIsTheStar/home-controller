@@ -2,11 +2,15 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "pluto.h"
+#include "picofs.h"
 
 // Example placeholder for your custom file system handle
-typedef struct {
+typedef struct 
+{
     bool in_use;
-    // YourCustomFileHandle my_fs_handle;
+    char *file;    // starting from header, file data starts after the header
+    size_t len;    // length of file data excluding header and trailer
+    size_t offset; // file data offset used by standard C library functions e.g. fread
 } pico_fd_t;
 
 #define MAX_CUSTOM_FDS 8
@@ -33,6 +37,17 @@ int __wrap__open(const char *name, int flags, int mode) {
     //     errno = ENOENT; // File not found
     //     return -1;
     // }
+    if (picofs_find_by_name((char *)name, &custom_fds[fd].file))
+    {
+        errno = ENOENT; // File not found
+        return -1;        
+    }
+    else
+    {
+        custom_fds[fd].len =  ((FILE_HEADER_T *)custom_fds[fd].file)->file_size;
+        custom_fds[fd].offset = 0;
+    }
+
 
     custom_fds[fd].in_use = true;
     
@@ -41,6 +56,15 @@ int __wrap__open(const char *name, int flags, int mode) {
 }
 
 // Hook for fread()
+/*!
+ * \brief direct, unbuffered read from a low-level file descriptor
+ *
+ * \param fd   The file descriptor (e.g., 0 for standard input, or a value returned by open())
+ * \param ptr  A pointer to the buffer memory where data will be stored
+ * \param len  The maximum number of bytes to read
+ * 
+ * \return The number of bytes actually read (can be less than count), 0 on End-Of-File (EOF), or -1 on error
+ */
 int __wrap__read(int fd, char *ptr, int len) 
 {
     int i;
@@ -61,21 +85,21 @@ int __wrap__read(int fd, char *ptr, int len)
     // Call your custom file system read logic here
     // int bytes_read = my_fs_read(&custom_fds[target_fd].my_fs_handle, ptr, len);
     // return bytes_read;
-    CLIP(len, 0, 20);
 
     for(i=0; i<len; i++)
-    {
-        if (i % 2)
+    {       
+        if ((custom_fds[target_fd].offset + i) < custom_fds[target_fd].len)
         {
-             ptr[i]=' ';
+            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].offset + i)];
         }
         else
         {
-            ptr[i]=i%256 + 'A';
+            break;
         }
     }
 
     printf("read returning %d\n", i);
+    custom_fds[target_fd].offset += i;
 
     return(i); 
 }
@@ -102,8 +126,18 @@ int __wrap__write(int fd, char *ptr, int len) {
     return len;
 }
 
-// Hook for fseek()
-int __wrap__lseek(int fd, int ptr, int dir) {
+// Hook for fseek()  -- untested
+/*!
+ * \brief repositions the file offset of the open file fd to offset (ptr?) according to the directive whence (dir?)
+ *
+ * \param fd   The file descriptor (e.g., 0 for standard input, or a value returned by open())
+ * \param ptr  !!!Assumed to mean offset
+ * \param dir  !!!Assumed to mean whence
+ * 
+ * \return The number of bytes actually read (can be less than count), 0 on End-Of-File (EOF), or -1 on error
+ */
+int __wrap__lseek(int fd, int ptr, int dir) 
+{
     int target_fd = fd - 3;
     if (fd < 3 || target_fd >= MAX_CUSTOM_FDS || !custom_fds[target_fd].in_use) {
         errno = EBADF;
@@ -112,7 +146,23 @@ int __wrap__lseek(int fd, int ptr, int dir) {
     
     // Call your custom file system seek logic here
     // return my_fs_seek(&custom_fds[target_fd].my_fs_handle, ptr, dir);
-    return 0;
+
+    // TODO: a *lot* of bounds checking and memory allocation! (i.e. seeking outside range of existing file)
+    switch(dir)
+    {
+    default:
+    case SEEK_SET:
+        custom_fds[fd].offset = ptr;
+        break;
+    case SEEK_CUR:
+        custom_fds[fd].offset += ptr;
+        break;
+    case SEEK_END: 
+        custom_fds[fd].offset = custom_fds[fd].len + ptr;
+        break;
+    }
+
+    return custom_fds[fd].offset;  // TODO: return -1 on error
 }
 
 // Hook for fclose()

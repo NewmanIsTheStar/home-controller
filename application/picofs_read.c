@@ -78,9 +78,10 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 
 //static variables
-FILE_HEADER_T test[10];
-#define FS_FLASH_START ((char *)(&test))
-#define FS_FLASH_END ((char *)(&test) + sizeof(test))
+FILE_TEST_T test_filesystem[10];
+ 
+#define FS_FLASH_START ((char *)(&test_filesystem))
+#define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
 #define FS_VERION (0)
 
 /*!
@@ -118,7 +119,7 @@ int picofs_find_by_name(char *filename, char **header)
                 best_sequence = h->file_sequence;
                 *header = (char *)h;
                 err = 0;
-                p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding;
+                p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);
             }
             else
             {
@@ -127,7 +128,7 @@ int picofs_find_by_name(char *filename, char **header)
                     best_sequence = h->file_sequence;
                     *header = (char *)h;
                     err = 0;
-                    p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding;                    
+                    p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);                  
                 }
             }
         }
@@ -172,7 +173,7 @@ int picofs_list_all_files(void)
         {
             picofs_printf("%08d\t%s\n", h->file_size, h->name);
 
-            p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding;
+            p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);
         }
         else
         {
@@ -188,23 +189,31 @@ int picofs_list_all_files(void)
 
 int picofs_load_test_data(void)
 {
-    STRNCPY(test[0].magic_number, "pfs", sizeof(test[0].magic_number));
-    test[0].picofs_version = 0;
-    test[0].file_id = 0;    
-    test[0].file_sequence = 0;  
-    test[0].file_padding = 0; 
-    test[0].file_size = 0; 
-    test[0].crc = 0;
-    STRNCPY(test[0].name, "elephant", sizeof("elephant"));  
+    STRNCPY(test_filesystem[0].test_header.magic_number, "pfs", sizeof(test_filesystem[0].test_header.magic_number));
+    test_filesystem[0].test_header.picofs_version = 0;
+    test_filesystem[0].test_header.file_id = 0;    
+    test_filesystem[0].test_header.file_sequence = 0;  
+    test_filesystem[0].test_header.file_padding = 0; 
+    test_filesystem[0].test_header.file_size = 0; 
+    test_filesystem[0].test_header.crc = 0;
+    STRNCPY(test_filesystem[0].test_header.name, "elephant", sizeof("elephant"));  
+    STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
+    test_filesystem[0].test_header.file_size = sizeof(test_filesystem[0].test_data);     
+    STRNCPY(test_filesystem[0].test_trailer.magic_number, "spf", sizeof(test_filesystem[0].test_trailer.magic_number));
+    test_filesystem[0].test_trailer.crc = 0;
 
-    STRNCPY(test[1].magic_number, "pfs", sizeof(test[1].magic_number));
-    test[1].picofs_version = 0;
-    test[1].file_id = 0;    
-    test[1].file_sequence = 1;  
-    test[1].file_padding = 0; 
-    test[1].file_size = 0; 
-    test[10].crc = 0;
-    STRNCPY(test[1].name, "monkey", sizeof("monkey")); 
+    STRNCPY(test_filesystem[1].test_header.magic_number, "pfs", sizeof(test_filesystem[1].test_header.magic_number));
+    test_filesystem[1].test_header.picofs_version = 0;
+    test_filesystem[1].test_header.file_id = 0;    
+    test_filesystem[1].test_header.file_sequence = 1;  
+    test_filesystem[1].test_header.file_padding = 0; 
+    test_filesystem[1].test_header.file_size = 0; 
+    test_filesystem[1].test_header.crc = 0;
+    STRNCPY(test_filesystem[1].test_header.name, "monkey", sizeof("monkey"));
+    STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
+    test_filesystem[1].test_header.file_size = sizeof(test_filesystem[1].test_data); 
+    STRNCPY(test_filesystem[1].test_trailer.magic_number, "spf", sizeof(test_filesystem[1].test_trailer.magic_number));    
+    test_filesystem[1].test_trailer.crc = 0; 
 
     return (0);
 }
@@ -342,6 +351,7 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
     start_tick = xTaskGetTickCount();
 
     size += sizeof(FILE_HEADER_T);
+    size += sizeof(FILE_TRAILER_T);    
     
     contiguous_pages_required = size/256 + size%256?1:0;
 

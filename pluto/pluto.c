@@ -90,6 +90,7 @@ void atomic_read_task(__unused void *params);
 int set_gpio_defaults(void);
 void print_reset_reason(void);
 void print_tasks_list(void);
+int test_myfilesystem(void);
 
 // TODO -- put in header file
 //void init_websocket_subsystem(void);
@@ -286,10 +287,12 @@ void boss_task(__unused void *params)
     // picofs_find_page_status(PFS_DISPLAY_PAGE_NUMBERS);
     // picofs_find_page_status(PFS_DISPLAY_PAGE_MAP);
     // picofs_find_page_status(PFS_DISPLAY_QUIET);
-    picofs_find_contiguous_free_area(8000, &free_flash);
-    picofs_list_all_files();
+    // picofs_find_contiguous_free_area(8000, &free_flash);
+    // picofs_list_all_files();
+    picofs_load_test_data();
+    //test_myfilesystem();
         
-    SLEEP_MS(60000);
+    //SLEEP_MS(60000);
     // {
     //     int found_file = -1;
     //     char *file_ptr = NULL;
@@ -1042,4 +1045,31 @@ void print_tasks_list(void)
     
     // Print the formatted string
     printf("%s\n", buffer);
+}
+
+
+int test_myfilesystem(void)
+{
+    FILE *filePointer;
+    char buffer[256];
+
+    // 1. Open the file in read mode ("r")
+    filePointer = fopen("monkey", "r");
+
+    // 2. Check if the file exists and opened successfully
+    if (filePointer == NULL) {
+        printf("Error: Could not open file.\n");
+        return 1; 
+    }
+
+    // 3. Read and print the file line-by-line
+    while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
+    {
+        printf("%s", buffer);
+    }
+
+    // 4. Close the file to free up system resources
+    fclose(filePointer);
+
+    return 0;
 }
