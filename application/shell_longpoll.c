@@ -5,6 +5,10 @@
 #include <string.h>
 #include "hc_task.h"
 #include "pluto.h"
+#include "shell_longpoll.h"
+
+extern u32_t unix_time;
+extern WEB_VARIABLES_T web;
 
 // prototypes
 int shell_cat(char *filename);
@@ -206,7 +210,7 @@ void pico_send_async_text(const char* text) {
 static void execute_shell_command(const char* cmd) {
     char reply[ITEM_BUF_LEN];
     if (strcmp(cmd, "help") == 0) {
-        snprintf(reply, sizeof(reply), "Pico 2 W Options:\n  help  - Show options\n  ping  - Check response\n");
+        snprintf(reply, sizeof(reply), "help   - Show options\nip      - network info\nping   - Check response\nls     - list files\ncat    - print text file\nuptime - time since boot\nip     - network info\ndate   - calendar time\n");
         pico_send_async_text(reply);
     } else if (strcmp(cmd, "ping") == 0) {
         // Example: Sending multiple packets sequentially without waiting
@@ -222,7 +226,21 @@ static void execute_shell_command(const char* cmd) {
     } else if (strcmp(cmd, "run") == 0) {
         hc_queue_send(HC_CMD_BASIC_SCRIPT);  
     } else if (strncmp(cmd, "cat ", 4) == 0) {
-        if (strlen(cmd) > 5) shell_cat((char *)(cmd+4));        
+        if (strlen(cmd) > 5) shell_cat((char *)(cmd+4));  
+    } else if (strncmp(cmd, "hd ", 3) == 0) {        
+        if (strlen(cmd) > 5) shell_hex_dump((char *)cmd+3);   
+    } else if (strncmp(cmd, "uptime", 4) == 0) {                
+        get_delta_string_from_delta_seconds(reply, ITEM_BUF_LEN, unix_time - web.boot_time);
+        pico_send_async_text(reply);
+    } else if (strncmp(cmd, "ip", 4) == 0) {                
+        snprintf(reply, ITEM_BUF_LEN, "ip address: %s\nnet mask:  %s\ngateway:   %s\n", web.ip_address_string, web.network_mask_string, web.gateway_string);
+        pico_send_async_text(reply);   
+    } else if (strncmp(cmd, "date", 4) == 0) {                
+        get_local_time_string(reply, ITEM_BUF_LEN);
+        STRNCAT(reply, " ", ITEM_BUF_LEN);
+        get_local_date_string(reply + strlen(reply), ITEM_BUF_LEN - strlen(reply)); 
+        STRNCAT(reply, "\n", ITEM_BUF_LEN);    
+        pico_send_async_text(reply);              
     } else {
         hc_load_basic_program((char *)cmd, strlen(cmd));
         hc_queue_send(HC_CMD_BASIC_INTERACTIVE);        
@@ -608,4 +626,74 @@ int shell_cat(char *filename)
     fclose(filePointer);
 
     return 0;
+}
+
+/*!
+ * \brief print hex dump of buffer
+ *
+ * \return nothing
+ */
+int shell_hex_dump(char *filename)
+{
+    FILE *filePointer;
+    unsigned char buffer[16];
+    size_t bytes_read = 0;
+    char output_line[160];
+    char output_byte[8];
+    int i;
+
+    // 1. Open the file in read binary mode ("r")
+    filePointer = fopen(filename, "rb");
+
+    // 2. Check if the file exists and opened successfully
+    if (filePointer == NULL) 
+    {
+        printf("Error: Could not open file.\n");
+        return 1; 
+    }
+
+    // 3. Read and print the file 16 bytes at a time
+    while (bytes_read = fread(buffer, 1, sizeof(buffer), filePointer))
+    {
+        shell_printf("%s", buffer);
+
+        if(bytes_read)
+        {
+            output_line[0] = 0;
+
+            for (i = 0; i < bytes_read;i++) 
+            {
+                snprintf(output_byte, sizeof(output_byte), "%02x ", buffer[i]);
+                STRAPPEND(output_line, output_byte);
+                printf("OUTPUT BYTE = %s\n", output_byte);
+            }            
+        
+            STRAPPEND(output_line, "\n");
+            printf("OUTPUT LINE = %s\n", output_line);
+
+            //STRAPPEND(output_line, " ");   // TODO: add extra padding if less than 16 bytes (last line)
+            // for (i = 0; i < bytes_read; i++) 
+            // {
+            //     if (isprint(buffer[i]))
+            //     {
+            //        snprintf(output_byte, sizeof(output_byte), "%c", buffer[i]);
+            //        STRAPPEND(output_line, output_byte);
+            //     }
+            //     else
+            //     {
+            //         snprintf(output_byte, sizeof(output_byte), "-");
+            //         STRAPPEND(output_line, output_byte);
+            //     }
+            // }
+
+            // STRAPPEND(output_line, "\r\n");
+            shell_print_string(output_line);
+            SLEEP_MS(1000);
+        }        
+    }
+
+    // 4. Close the file to free up system resources
+    fclose(filePointer);
+
+    return(0);
 }

@@ -67,6 +67,7 @@
 REBOOT_REASON_T __uninitialized_ram(reboot_reason);
 
 // external variables
+extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern WORKER_TASK_T worker_tasks[];
@@ -579,6 +580,8 @@ int set_realtime_clock(void)
 
     // determine daylight savings dates for the current year
     set_daylight_saving_dates(); 
+
+    web.boot_time = unix_time;
 
     return(0);
 }
