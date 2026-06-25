@@ -42,7 +42,7 @@
 #include "wifi.h"
 #include "calendar.h"
 #include "pluto.h"
-#include "shell_longpoll.h"
+#include "shell.h"
 #include "picofs.h"
 
 #include "ssi.h"

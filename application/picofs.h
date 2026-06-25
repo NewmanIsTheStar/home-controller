@@ -1,7 +1,7 @@
 #ifndef PICOFS_H
 #define PICOFS_H
 
-#include "shell_longpoll.h"
+#include "shell.h"
 
 // output to either terminal or http shell
 //#define picofs_printf(format, ...) printf("[MACRO] " format, ##__VA_ARGS__)
@@ -28,7 +28,7 @@ typedef struct file_trailer
 typedef struct file_test
 {
     FILE_HEADER_T test_header;
-    u8_t test_data[32];
+    u8_t test_data[21];
     FILE_TRAILER_T test_trailer;
 } FILE_TEST_T;
 

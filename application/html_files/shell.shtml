@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Shell Interface</title>
+    <title>Pico 2 W Async Shell</title>
     <style>
         body {
             background-color: #121212;
@@ -13,7 +13,7 @@
             margin: 0;
         }
         #terminal {
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
         }
         #output {
@@ -44,10 +44,9 @@
 <body>
 
 <div id="terminal">
-    <div id="output">Web Shell Ready. Enter command...
-</div>
+    <div id="output">Pico 2 W Shell Initialized. Waiting for connection...</div>
     <div id="input-line">
-        <span id="prompt">lwip-shell></span>
+        <span id="prompt">pico-shell></span>
         <input type="text" id="cmd" autofocus autocomplete="off" spellcheck="false">
     </div>
 </div>
@@ -59,46 +58,54 @@
     let history = [];
     let historyIndex = -1;
 
-    // Focus input on clicking anywhere in the terminal
+    // Keep focus on the text input area when clicking inside the window
     document.addEventListener('click', () => cmdInput.focus());
 
+    // Continuous listening engine (Long Polling)
+    async function listenForBackendUpdates() {
+        try {
+            // This fetch hangs until the Pico sends data or a timeout occurs
+            const response = await fetch('/listen.shtml');
+            if (response.ok) {
+                const text = await response.text();
+                if (text.length > 0) {
+                    output.textContent += text;
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
+            }
+        } catch (err) {
+            // Fail silently on network drops; the timeout restarts the pipe
+        }
+        
+        // Instantly re-open the listening channel to wait for the next update
+        setTimeout(listenForBackendUpdates, 50);
+    }
+
+    // Command submission handler
     cmdInput.addEventListener('keydown', async function(e) {
         if (e.key === 'Enter') {
             const command = this.value.trim();
             if (!command) return;
 
-            // Echo command to terminal
-            output.textContent += `\nlwip-shell> ${command}\n`;
+            // Echo local typing input out to display window
+            output.textContent += `\npico-shell> ${command}\n`;
             this.value = '';
 
-            // Update command history
+            // Update local command up/down history arrays
             history.push(command);
             historyIndex = history.length;
 
-            // Disable input while processing
-            cmdInput.disabled = true;
-
             try {
-                // lwIP expects lightweight, raw payloads
-                const response = await fetch('/exec', {
+                // Send command payload over a fast POST route
+                await fetch('/exec', {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: command
                 });
-
-                if (response.ok) {
-                    const text = await response.text();
-                    output.textContent += text;
-                } else {
-                    output.textContent += `Error: Server returned status ${response.status}\n`;
-                }
             } catch (err) {
-                output.textContent += `Error: Failed to connect to server.\n`;
+                output.textContent += "System Error: Unable to route command payload.\n";
             }
-
-            // Re-enable input and autoscroll to bottom
-            cmdInput.disabled = false;
-            cmdInput.focus();
+            
             window.scrollTo(0, document.body.scrollHeight);
         } 
         
@@ -123,6 +130,10 @@
             }
         }
     });
+
+    // Fire up the listener loop as soon as page structures boot
+    output.textContent = "Shell Ready. Waiting for data...\n";
+    listenForBackendUpdates();
 </script>
 
 </body>

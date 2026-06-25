@@ -8,7 +8,7 @@ Description:BASIC defintions.
 
 #include <setjmp.h>
 #include "pluto.h"
-#include "shell_longpoll.h"
+#include "shell.h"
 
 // output to either terminal or http shell
 //#define basic_printf(format, ...) printf("[MACRO] " format, ##__VA_ARGS__)

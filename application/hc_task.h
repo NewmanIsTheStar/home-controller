@@ -10,6 +10,7 @@
 #define HC_CMD_LIGHTS (3)
 #define HC_CMD_DUMP_PROGRAM (4)
 #define HC_CMD_LIST (5)
+#define HC_CMD_PING (6)
 
 
 typedef enum

@@ -59,9 +59,10 @@
 #include "shelly.h"
 #include "hc_task.h"
 #include "basic.h"
-#include "http_post.h"
-#include "shell_longpoll.h"
+//#include "http_post.h"
+#include "shell.h"
 #include "picofs.h"
+#include "ping_core.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -116,7 +117,8 @@ void hc_task(__unused void *params)
 {
     SOCKADDR_IN sClientAddress;  
     int received_bytes = 0; 
-    int hc_request = 0;   
+    int hc_request = 0;  
+    int i; 
     
     // store passed watchdog parameter 
     watchdog_params = params;
@@ -146,10 +148,18 @@ void hc_task(__unused void *params)
             printf("Home Controller\n");
             //pico_send_async_text("This is async text from hc_task");
 
-            // SLEEP_MS(60000);
+            // TEST TEST TEST
+            // SLEEP_MS(30000);
+            // printf("Begin Test of shell buffer satuartion\n");
+            // for(i=0; i<100; i++)
+            // {
+            //     // snprintf(reply, sizeof(reply), "pong line a quick brown fox jumps over the lazy dog %012d!\n", i);
+            //     // pico_send_async_text(reply);         
+            //     shell_printf("pong line a quick brown fox jumps over the lazy dog %012d!\n", i); 
+            // }
+            // printf("End Test of shell buffer satuartion\n");
+
             // wait for timeout period but abort immediately if a command is received
-
-
             hc_request = hc_wait(HC_TASK_LOOP_DELAY);
 
             if (hc_request)
@@ -172,6 +182,9 @@ void hc_task(__unused void *params)
                 case HC_CMD_LIST:
                     picofs_list_all_files();
                     break;
+                case HC_CMD_PING:
+                    shell_ping(web.ping_target);
+                    break;                                        
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);
                     break;

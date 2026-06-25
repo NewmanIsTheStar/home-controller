@@ -5,7 +5,8 @@
 #include <string.h>
 #include "hc_task.h"
 #include "pluto.h"
-#include "shell_longpoll.h"
+#include "shell.h"
+#include "ping_core.h"
 
 extern u32_t unix_time;
 extern WEB_VARIABLES_T web;
@@ -207,16 +208,30 @@ void pico_send_async_text(const char* text) {
 }
 
 // Shell command processor
-static void execute_shell_command(const char* cmd) {
+static void execute_shell_command(const char* cmd) 
+{
+    int i;
     char reply[ITEM_BUF_LEN];
     if (strcmp(cmd, "help") == 0) {
         snprintf(reply, sizeof(reply), "help   - Show options\nip      - network info\nping   - Check response\nls     - list files\ncat    - print text file\nuptime - time since boot\nip     - network info\ndate   - calendar time\n");
         pico_send_async_text(reply);
-    } else if (strcmp(cmd, "ping") == 0) {
+    } else if (strncmp(cmd, "ping ", 5) == 0) {        
+        STRNCPY(web.ping_target, (char *)cmd+5, sizeof(web.ping_target));  // TODO: this is a kludge, should be passing this data in the queue 
+        hc_queue_send(HC_CMD_PING);
+
+        //if (strlen(cmd) > 6) ping_device_by_ip_string((char *)cmd+5);
+        
         // Example: Sending multiple packets sequentially without waiting
-        pico_send_async_text("pong line 1!\n");
-        pico_send_async_text("pong line 2!\n");
-        pico_send_async_text("pong line 3!\n");
+        // pico_send_async_text("pong line 1!\n");
+        // pico_send_async_text("pong line 2!\n");
+        // pico_send_async_text("pong line 3!\n");
+
+        // for(i=0; i<100; i++)
+        // {
+        //     snprintf(reply, sizeof(reply), "pong line a quick brown fox jumps over the lazy dog %012d!\n", i);
+        //     pico_send_async_text(reply);         
+        //     //shell_printf("pong line a quick brown fox jumps over the lazy dog %012d!\n", i); 
+        // }
     } else if (strcmp(cmd, "lights") == 0) {
         hc_queue_send(HC_CMD_LIGHTS);  
     } else if (strcmp(cmd, "ls") == 0) {
@@ -489,7 +504,7 @@ void init_shell_backend(void) {
 }
 
 /**
- * Blocking method to print to browser 
+ * Blocking method to print to browser  --DO NOT USE WITHIN THIS FILE--
  */
 void shell_print_string(const char* text) 
 {
@@ -532,7 +547,7 @@ void shell_print_string(const char* text)
 }
 
 /**
- * Blocking method to printf to browser 
+ * Blocking method to printf to browser  --DO NOT USE WITHIN THIS FILE--
  */
 void shell_printf(const char *format, ...)
 {
@@ -619,7 +634,7 @@ int shell_cat(char *filename)
     // 3. Read and print the file line-by-line
     while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
     {
-        shell_printf("%s", buffer);
+        shell_printf("%s", buffer);              //TODO: change to non-blocking or call shell_cat() from another task
     }
 
     // 4. Close the file to free up system resources
@@ -642,6 +657,8 @@ int shell_hex_dump(char *filename)
     char output_byte[8];
     int i;
 
+    printf("hexdump %d\n", filename);
+
     // 1. Open the file in read binary mode ("r")
     filePointer = fopen(filename, "rb");
 
@@ -655,8 +672,6 @@ int shell_hex_dump(char *filename)
     // 3. Read and print the file 16 bytes at a time
     while (bytes_read = fread(buffer, 1, sizeof(buffer), filePointer))
     {
-        shell_printf("%s", buffer);
-
         if(bytes_read)
         {
             output_line[0] = 0;
@@ -665,35 +680,89 @@ int shell_hex_dump(char *filename)
             {
                 snprintf(output_byte, sizeof(output_byte), "%02x ", buffer[i]);
                 STRAPPEND(output_line, output_byte);
-                printf("OUTPUT BYTE = %s\n", output_byte);
             }            
-        
+
+             // add extra padding if less than 16 bytes (i.e. last line)
+            for (; i<16; i++)
+            {
+                STRAPPEND(output_line, "   ");
+            }
+
+            STRAPPEND(output_line, " ");  
+            for (i = 0; i < bytes_read; i++) 
+            {
+                if (isprint(buffer[i]))
+                {
+                   snprintf(output_byte, sizeof(output_byte), "%c", buffer[i]);
+                   STRAPPEND(output_line, output_byte);
+                }
+                else
+                {
+                    snprintf(output_byte, sizeof(output_byte), "-");
+                    STRAPPEND(output_line, output_byte);
+                }
+            }
+
             STRAPPEND(output_line, "\n");
-            printf("OUTPUT LINE = %s\n", output_line);
-
-            //STRAPPEND(output_line, " ");   // TODO: add extra padding if less than 16 bytes (last line)
-            // for (i = 0; i < bytes_read; i++) 
-            // {
-            //     if (isprint(buffer[i]))
-            //     {
-            //        snprintf(output_byte, sizeof(output_byte), "%c", buffer[i]);
-            //        STRAPPEND(output_line, output_byte);
-            //     }
-            //     else
-            //     {
-            //         snprintf(output_byte, sizeof(output_byte), "-");
-            //         STRAPPEND(output_line, output_byte);
-            //     }
-            // }
-
-            // STRAPPEND(output_line, "\r\n");
-            shell_print_string(output_line);
-            SLEEP_MS(1000);
+            shell_print_string(output_line);                    //TODO: change to non-blocking function or only call shell_hex_dump from an another task
         }        
     }
 
     // 4. Close the file to free up system resources
     fclose(filePointer);
+
+    return(0);
+}
+
+/*!
+ * \brief ping 
+ * 
+ * \return 0 on success, -1 on error
+ */
+int shell_ping(char *ipv4_string)
+{
+    u32_t ip;
+    u32_t mask;
+    static u32_t search_start;
+    static u32_t search_end;
+    static u32_t ip_to_query;
+    static bool search_in_progress = false;
+    int values[4] = {0,0,0,0};
+    u8_t byte = 0;
+    int i;
+    char ipstring[32];
+    static int number_of_shelly_devices = 0;
+    char device_type[32];
+    char device_id[32];
+    ip_addr_t ping_addr;
+    int ping_err = -1;
+
+    sscanf(ipv4_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
+    printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
+    ip   = 0x00000000;
+    for(i=0; i<4; i++)
+    {
+        byte = (u8_t)values[i];
+        ip = ip<<8 | byte;
+    }
+    //printf("ip = %08x\n", ip);
+
+    sprintf(ipstring, "%d.%d.%d.%d", ((u8_t *)&ip)[3], ((u8_t *)&ip)[2], ((u8_t *)&ip)[1], ((u8_t *)&ip)[0]);
+
+    shell_printf("ping %s\n", ipstring);
+
+    //ipaddr_aton(PING_ADDR, &ping_addr);
+    ping_addr.addr = htonl(ip);
+
+    ping_err = ping_device(&ping_addr, 3);
+    if (!ping_err)
+    {
+        shell_printf("ping successful\n");
+    } 
+    else
+    {
+        shell_printf("ping failed with error %d\n", ping_err);
+    }
 
     return(0);
 }

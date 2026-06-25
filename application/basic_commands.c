@@ -17,7 +17,7 @@ Description:This file contains the standard BASIC commands.
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
 #include "hc_task.h"
-#include "shell_longpoll.h"
+#include "shell.h"
 
 
 /*External Variables*/
