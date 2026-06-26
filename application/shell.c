@@ -8,13 +8,13 @@
 #include "shell.h"
 #include "ping_core.h"
 
-extern u32_t unix_time;
-extern WEB_VARIABLES_T web;
+// defines
+#define ITEM_BUF_LEN (128)
+#define QUEUE_DEPTH  (50)   
+#define BULK_SEND_BUF_LEN (QUEUE_DEPTH * ITEM_BUF_LEN)           
+#define MAX_PROGRAM_SIZE (4096) 
 
-// prototypes
-int shell_cat(char *filename);
-
-
+// typedefs
 typedef enum
 {
     HTTP_RX_UNKNOWN,
@@ -22,7 +22,15 @@ typedef enum
     HTTP_RX_SAVE_ASCII
 } HTTP_RX_TYPE_T;
 
-// Pre-formatted valid HTTP response payload including minimalist JSON body data
+// external variables
+extern u32_t unix_time;
+extern WEB_VARIABLES_T web;
+
+// prototypes
+int shell_cat(char *filename);
+void shell_printf_nb(const char *format, ...);
+
+
 const char http_200_json_response[] = 
     "HTTP/1.1 200 OK\r\n"
     "Content-Type: application/json\r\n"
@@ -31,7 +39,6 @@ const char http_200_json_response[] =
     "\r\n"
     "{\"status\":\"ok\"}";
 
-// Pre-allocated static raw response payloads stored in system flash memory
 const char http_200_ok_json[] = 
     "HTTP/1.1 200 OK\r\n"
     "Content-Type: application/json\r\n"
@@ -57,14 +64,11 @@ const char http_ascii_buffer_header_tmpl[] =
     "Access-Control-Allow-Origin: *\r\n" // Helps if testing locally via file://
     "\r\n";
 
-#define MAX_PROGRAM_SIZE (4096) 
+// reference to constant requires this define to appear here
 #define ASCII_HEADER_SIZE (sizeof(http_ascii_buffer_header_tmpl) - 1) 
 
-#define ITEM_BUF_LEN 128
-#define QUEUE_DEPTH  50   // Can store up to 8 messages simultaneously
 
 // A larger temporary compilation buffer to merge multiple messages together safely
-#define BULK_SEND_BUF_LEN (QUEUE_DEPTH * ITEM_BUF_LEN)
 static char bulk_http_payload[BULK_SEND_BUF_LEN + 128];
 
 // Thread-safe circular ring buffer storage structures
@@ -82,33 +86,48 @@ bool post_validation_success = true;
 const char *basic_program = ascii_ram_buffer + ASCII_HEADER_SIZE;
 HTTP_RX_TYPE_T current_post = HTTP_RX_UNKNOWN;
 
-/**
- * @brief Decodes a URL-encoded string in-place.
- * @param src Pointer to the null-terminated string to decode.
- * @return Size of the decoded payload string in bytes.
+static char post_buffer[ITEM_BUF_LEN];
+static uint16_t post_len = 0;
+
+/*!
+ * \brief Decodes a URL-encoded string in-place.
+ *
+ * \param[in]  src  pointer to the null-terminated string to decode.
+ * 
+ * \return size of the decoded payload string in bytes.
  */
-size_t url_decode_inplace(char *src) {
+size_t url_decode_inplace(char *src) 
+{
     char *dst = src;
     size_t length = 0;
 
-    while (*src) {
-        if (*src == '%') {
+    while (*src) 
+    {
+        if (*src == '%') 
+        {
             // Check if there are at least 2 characters left to decode
-            if (src[1] && src[2]) {
+            if (src[1] && src[2]) 
+            {
                 char hex[3] = { src[1], src[2], '\0' };
                 // Convert hex string snippet directly to a single byte character
                 *dst = (char)strtol(hex, NULL, 16);
                 src += 3;
-            } else {
+            } 
+            else 
+            {
                 // Malformed percent sign at the end of the string, copy as-is
                 *dst = *src;
                 src++;
             }
-        } else if (*src == '+') {
+        } 
+        else if (*src == '+') 
+        {
             // HTML forms encode space characters as '+'
             *dst = ' ';
             src++;
-        } else {
+        } 
+        else 
+        {
             *dst = *src;
             src++;
         }
@@ -119,23 +138,39 @@ size_t url_decode_inplace(char *src) {
     return length;
 }
 
-// Helper function to check if queue is empty
-static inline int queue_is_empty(void) {
+
+/*!
+ * \brief Helper function to check if queue is empty
+ * 
+ * \return 1 if queue is empty.
+ */
+static inline int queue_is_empty(void) 
+{
     return queue_head == queue_tail;
 }
 
-// Helper function to check if queue is full
-static inline int queue_is_full(void) {
+
+/*!
+ * \brief Helper function to check if queue is full
+ * 
+ * \return 1 if queue is full.
+ */
+static inline int queue_is_full(void) 
+{
     return ((queue_head + 1) % QUEUE_DEPTH) == queue_tail;
 }
 
-/**
- * Optimized Flush Function.
- * Drains ALL queued items simultaneously into a single chunk response frame.
+
+/*!
+ * \brief Drains ALL queued items simultaneously into a single chunk response frame.
+ * 
+ * \return nothing
  */
-static void check_and_flush_queue(void) {
+static void check_and_flush_queue(void) 
+{
     // Only proceed if we have a browser actively waiting AND data queued up
-    if (pending_listen_file != NULL && !queue_is_empty()) {
+    if (pending_listen_file != NULL && !queue_is_empty()) 
+    {
         
         // 1. Initialize a pointer to build our text payload body
         char text_body_buf[BULK_SEND_BUF_LEN];
@@ -143,15 +178,19 @@ static void check_and_flush_queue(void) {
         size_t current_body_len = 0;
 
         // 2. Loop and completely drain the queue ring into our single string buffer
-        while (!queue_is_empty()) {
+        while (!queue_is_empty()) 
+        {
             char* active_text = queue_storage[queue_tail];
             size_t active_len = queue_lengths[queue_tail];
 
             // Safety check to ensure we don't overflow the transient assembly block
-            if (current_body_len + active_len < BULK_SEND_BUF_LEN - 1) {
+            if (current_body_len + active_len < BULK_SEND_BUF_LEN - 1) 
+            {
                 memcpy(text_body_buf + current_body_len, active_text, active_len);
                 current_body_len += active_len;
-            } else {
+            } 
+            else 
+            {
                 // Buffer full; stop pulling items from queue for this cycle
                 break;
             }
@@ -179,17 +218,22 @@ static void check_and_flush_queue(void) {
     }
 }
 
-/**
- * Public method to push text arrays asynchronously.
- * Fully decoupled from immediate network delivery to prevent data loss.
+/*!
+ * \brief Push text arrays asynchronously. Fully decoupled from immediate network delivery to prevent data loss.
+ *
+ * \param[in]  text  pointer to the null-terminated string to send.
+ * 
+ * \return nothing
  */
-void pico_send_async_text(const char* text) {
+void pico_send_async_text(const char* text) 
+{
     if (text == NULL) return;
 
     // Guard against potential thread concurrency collisions
     cyw43_arch_lwip_begin();
 
-    if (!queue_is_full()) {
+    if (!queue_is_full()) 
+    {
         // Copy string payload safely into current head index
         memset(queue_storage[queue_head], 0, ITEM_BUF_LEN);
         snprintf(queue_storage[queue_head], ITEM_BUF_LEN, "%s", text);
@@ -200,75 +244,105 @@ void pico_send_async_text(const char* text) {
 
         // Instantly verify if a browser connection is waiting to take this item
         check_and_flush_queue();
-    } else {
+    } 
+    else 
+    {
         // Optional: Log an internal overflow drop event error here if buffer size isn't deep enough
     }
 
     cyw43_arch_lwip_end();
 }
 
-// Shell command processor
+/*!
+ * \brief process shell commands
+ *
+ * \param[in]  cmd  command line entered by user
+ * 
+ * \return nothing
+ */
 static void execute_shell_command(const char* cmd) 
 {
     int i;
     char reply[ITEM_BUF_LEN];
-    if (strcmp(cmd, "help") == 0) {
-        snprintf(reply, sizeof(reply), "help   - Show options\nip      - network info\nping   - Check response\nls     - list files\ncat    - print text file\nuptime - time since boot\nip     - network info\ndate   - calendar time\n");
-        pico_send_async_text(reply);
-    } else if (strncmp(cmd, "ping ", 5) == 0) {        
+
+    if (strcmp(cmd, "help") == 0) 
+    {
+        shell_printf_nb("help   - show options\n");
+        shell_printf_nb("ip     - network info\n");
+        shell_printf_nb("ping   - check ip connectivity\n");
+        shell_printf_nb("ls     - list files\n");
+        shell_printf_nb("cat    - print text file\n");
+        shell_printf_nb("uptime - time since boot\n");
+        shell_printf_nb("ip     - network info\n");
+        shell_printf_nb("date   - calendar time\n");     
+        shell_printf_nb("hd     - hex dump\n");  
+    }
+    else if (strncmp(cmd, "ping ", 5) == 0)
+    {        
         STRNCPY(web.ping_target, (char *)cmd+5, sizeof(web.ping_target));  // TODO: this is a kludge, should be passing this data in the queue 
         hc_queue_send(HC_CMD_PING);
-
-        //if (strlen(cmd) > 6) ping_device_by_ip_string((char *)cmd+5);
-        
-        // Example: Sending multiple packets sequentially without waiting
-        // pico_send_async_text("pong line 1!\n");
-        // pico_send_async_text("pong line 2!\n");
-        // pico_send_async_text("pong line 3!\n");
-
-        // for(i=0; i<100; i++)
-        // {
-        //     snprintf(reply, sizeof(reply), "pong line a quick brown fox jumps over the lazy dog %012d!\n", i);
-        //     pico_send_async_text(reply);         
-        //     //shell_printf("pong line a quick brown fox jumps over the lazy dog %012d!\n", i); 
-        // }
-    } else if (strcmp(cmd, "lights") == 0) {
+    } 
+    else if (strcmp(cmd, "lights") == 0)
+    {
         hc_queue_send(HC_CMD_LIGHTS);  
-    } else if (strcmp(cmd, "ls") == 0) {
+    } 
+    else if (strcmp(cmd, "ls") == 0) 
+    {
         hc_queue_send(HC_CMD_LIST);          
-    } else if (strcmp(cmd, "dump program") == 0) {
+    } 
+    else if (strcmp(cmd, "dump program") == 0) 
+    {
         hc_queue_send(HC_CMD_DUMP_PROGRAM);  
-    } else if (strcmp(cmd, "run") == 0) {
+    } 
+    else if (strcmp(cmd, "run") == 0) 
+    {
         hc_queue_send(HC_CMD_BASIC_SCRIPT);  
-    } else if (strncmp(cmd, "cat ", 4) == 0) {
+    } 
+    else if (strncmp(cmd, "cat ", 4) == 0) 
+    {
         if (strlen(cmd) > 5) shell_cat((char *)(cmd+4));  
-    } else if (strncmp(cmd, "hd ", 3) == 0) {        
+    } 
+    else if (strncmp(cmd, "hd ", 3) == 0) 
+    {        
         if (strlen(cmd) > 5) shell_hex_dump((char *)cmd+3);   
-    } else if (strncmp(cmd, "uptime", 4) == 0) {                
+    } 
+    else if (strncmp(cmd, "uptime", 4) == 0) 
+    {                
         get_delta_string_from_delta_seconds(reply, ITEM_BUF_LEN, unix_time - web.boot_time);
         pico_send_async_text(reply);
-    } else if (strncmp(cmd, "ip", 4) == 0) {                
+    } 
+    else if (strncmp(cmd, "ip", 4) == 0) 
+    {                
         snprintf(reply, ITEM_BUF_LEN, "ip address: %s\nnet mask:  %s\ngateway:   %s\n", web.ip_address_string, web.network_mask_string, web.gateway_string);
         pico_send_async_text(reply);   
-    } else if (strncmp(cmd, "date", 4) == 0) {                
-        get_local_time_string(reply, ITEM_BUF_LEN);
+    } 
+    else if (strncmp(cmd, "date", 4) == 0) 
+    {                
+        get_local_date_string(reply, ITEM_BUF_LEN);
         STRNCAT(reply, " ", ITEM_BUF_LEN);
-        get_local_date_string(reply + strlen(reply), ITEM_BUF_LEN - strlen(reply)); 
+        get_local_time_string(reply + strlen(reply), ITEM_BUF_LEN - strlen(reply)); 
         STRNCAT(reply, "\n", ITEM_BUF_LEN);    
         pico_send_async_text(reply);              
-    } else {
+    } 
+    else 
+    {
+        // pass to BASIC interpreter
         hc_load_basic_program((char *)cmd, strlen(cmd));
         hc_queue_send(HC_CMD_BASIC_INTERACTIVE);        
-        // snprintf(reply, sizeof(reply), "Unknown command: '%s'\n", cmd);
-        // pico_send_async_text(reply);
     }
 }
 
-/**
- * Custom File System Override Hooks
+/*!
+ * \brief Custom File System Override Hooks
+ *
+ * \param[in]  file  file handle
+ * \param[in]  name  file name
+ * \return 1 if processed, 0 if not
  */
-int fs_open_custom(struct fs_file *file, const char *name) {
-    if (strcmp(name, "/listen.shtml") == 0) {
+int fs_open_custom(struct fs_file *file, const char *name) 
+{
+    if (strcmp(name, "/listen.shtml") == 0) 
+    {
         file->flags = FS_FILE_FLAGS_HEADER_INCLUDED;
         //file->pextension = NULL;
 
@@ -276,7 +350,8 @@ int fs_open_custom(struct fs_file *file, const char *name) {
         pending_listen_file = file;
 
         // If data is already sitting in the queue ring, compile and flush instantly
-        if (!queue_is_empty()) {
+        if (!queue_is_empty()) 
+        {
             check_and_flush_queue();
             return 1;
         }
@@ -289,7 +364,8 @@ int fs_open_custom(struct fs_file *file, const char *name) {
         return 1; 
     }
 
-    if (strcmp(name, "/post_ok.txt") == 0) {
+    if (strcmp(name, "/post_ok.txt") == 0) 
+    {
         static const char *ok_resp = "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n";
         file->data = (char *)ok_resp;
         file->len = strlen(ok_resp);
@@ -299,7 +375,8 @@ int fs_open_custom(struct fs_file *file, const char *name) {
         return 1;
     }
 
-    if (strcmp(name, "/post_ok.json") == 0) {
+    if (strcmp(name, "/post_ok.json") == 0) 
+    {
         memset(file, 0, sizeof(struct fs_file));
         file->data = http_200_ok_json;
         file->len  = sizeof(http_200_ok_json) - 1;
@@ -311,7 +388,8 @@ int fs_open_custom(struct fs_file *file, const char *name) {
         return 1;
     }
     
-    if (strcmp(name, "/post_fail.json") == 0) {
+    if (strcmp(name, "/post_fail.json") == 0) 
+    {
         memset(file, 0, sizeof(struct fs_file));
         file->data = http_400_bad_json;
         file->len  = sizeof(http_400_bad_json) - 1;
@@ -323,7 +401,8 @@ int fs_open_custom(struct fs_file *file, const char *name) {
         return 1;
     }
 
-    if (strcmp(name, "/get_text") == 0) {
+    if (strcmp(name, "/get_text") == 0) 
+    {
         size_t len = strlen(ascii_ram_buffer);
         file->data = ascii_ram_buffer;
         file->len = len;
@@ -339,16 +418,25 @@ int fs_open_custom(struct fs_file *file, const char *name) {
     return 0;
 }
 
-void fs_close_custom(struct fs_file *file) {
-    if (pending_listen_file == file) {
+/*!
+ * \brief close custom file
+ *
+ * \param[in]  file  file handle
+ * \return 1 if processed, 0 if not
+ */
+void fs_close_custom(struct fs_file *file) 
+{
+    if (pending_listen_file == file) 
+    {
         pending_listen_file = NULL;
     }
 
-    // TEST TEST TEST
-    if (pending_get_text == file) {
-        pending_get_text = NULL;
-        hc_queue_send(HC_CMD_BASIC_SCRIPT);        
-    }
+    // TEST TEST TEST         AUTORUN BASIC SCRIPT AFTER FILE UPLOAD
+    // if (pending_get_text == file) 
+    // {
+    //     pending_get_text = NULL;
+    //     hc_queue_send(HC_CMD_BASIC_SCRIPT);        
+    // }
 
 }
 
@@ -357,8 +445,7 @@ void fs_close_custom(struct fs_file *file) {
 /**
  * Standard HTTP POST Handlers for /exec commands
  */
-static char post_buffer[ITEM_BUF_LEN];
-static uint16_t post_len = 0;
+
 
 err_t httpd_post_begin(void *connection, const char *uri, const char *http_request,
                        uint16_t http_request_len, int content_len, char *response_uri,
@@ -503,8 +590,12 @@ void init_shell_backend(void) {
     // Hooks initialized implicitly via file architecture layer structures
 }
 
-/**
- * Blocking method to print to browser  --DO NOT USE WITHIN THIS FILE--
+
+/*!
+ * \brief Blocking method to print a string to browser FOR USE FROM APPLICATION TASKS!  DO NOT USE WITHIN THIS FILE
+ *
+ * \param[in]  text  text to print
+ * \return nothing
  */
 void shell_print_string(const char* text) 
 {
@@ -546,8 +637,12 @@ void shell_print_string(const char* text)
     
 }
 
-/**
- * Blocking method to printf to browser  --DO NOT USE WITHIN THIS FILE--
+/*!
+ * \brief Blocking method to printf to browser FOR USE FROM APPLICATION TASKS!  DO NOT USE WITHIN THIS FILE
+ *
+ * \param[in]  format  printf format specifier
+ * \param[in]  vargs   list of arguments
+ * \return nothing
  */
 void shell_printf(const char *format, ...)
 {
@@ -594,6 +689,11 @@ void shell_printf(const char *format, ...)
 
 }
 
+/*!
+ * \brief print the contents of the ascii buffer / BASIC program
+ *
+ * \return nothing
+ */
 void dump_text_buffer(void)
 {
     int i;
@@ -617,27 +717,34 @@ void dump_text_buffer(void)
     printf("\n");    
 }
 
+/*!
+ * \brief print the contents of a text file to the shell
+ *
+ * \param[in]  filename  file to print to shell
+ * \return nothing
+ */
 int shell_cat(char *filename)
 {
     FILE *filePointer;
     char buffer[256];
 
-    // 1. Open the file in read mode ("r")
+    // open the file in read mode ("r")
     filePointer = fopen(filename, "r");
 
-    // 2. Check if the file exists and opened successfully
-    if (filePointer == NULL) {
+    // check if the file exists and opened successfully
+    if (filePointer == NULL) 
+    {
         printf("Error: Could not open file.\n");
         return 1; 
     }
 
-    // 3. Read and print the file line-by-line
+    // read and print the file line-by-line
     while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
     {
-        shell_printf("%s", buffer);              //TODO: change to non-blocking or call shell_cat() from another task
+        shell_printf_nb("%s", buffer);              //TODO: call shell_cat() from another task and use blocking shell_printf to avoid data loss
     }
 
-    // 4. Close the file to free up system resources
+    // close the file to free up system resources
     fclose(filePointer);
 
     return 0;
@@ -645,7 +752,8 @@ int shell_cat(char *filename)
 
 /*!
  * \brief print hex dump of buffer
- *
+ * 
+ * \param[in]  filename  file to dump to shell
  * \return nothing
  */
 int shell_hex_dump(char *filename)
@@ -704,7 +812,7 @@ int shell_hex_dump(char *filename)
             }
 
             STRAPPEND(output_line, "\n");
-            shell_print_string(output_line);                    //TODO: change to non-blocking function or only call shell_hex_dump from an another task
+            shell_printf_nb("%s", output_line);                //TODO: call shell_hex_dump() from another task and use blocking shell_printf to avoid data loss
         }        
     }
 
@@ -715,54 +823,90 @@ int shell_hex_dump(char *filename)
 }
 
 /*!
- * \brief ping 
- * 
+ * \brief ping - icmp echo request
+ * \param[in]  ipv4_string  ip address to send icmp echo 
  * \return 0 on success, -1 on error
  */
 int shell_ping(char *ipv4_string)
 {
     u32_t ip;
-    u32_t mask;
-    static u32_t search_start;
-    static u32_t search_end;
-    static u32_t ip_to_query;
-    static bool search_in_progress = false;
     int values[4] = {0,0,0,0};
     u8_t byte = 0;
     int i;
-    char ipstring[32];
-    static int number_of_shelly_devices = 0;
-    char device_type[32];
-    char device_id[32];
+
+    // static int number_of_shelly_devices = 0;
+    // char device_type[32];
+    // char device_id[32];
     ip_addr_t ping_addr;
     int ping_err = -1;
 
     sscanf(ipv4_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
-    printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
+    
     ip   = 0x00000000;
     for(i=0; i<4; i++)
     {
         byte = (u8_t)values[i];
         ip = ip<<8 | byte;
     }
-    //printf("ip = %08x\n", ip);
-
-    sprintf(ipstring, "%d.%d.%d.%d", ((u8_t *)&ip)[3], ((u8_t *)&ip)[2], ((u8_t *)&ip)[1], ((u8_t *)&ip)[0]);
-
-    shell_printf("ping %s\n", ipstring);
-
-    //ipaddr_aton(PING_ADDR, &ping_addr);
     ping_addr.addr = htonl(ip);
 
+    shell_printf_nb("ping %d.%d.%d.%d\n", ((u8_t *)&ip)[3], ((u8_t *)&ip)[2], ((u8_t *)&ip)[1], ((u8_t *)&ip)[0]);
+
     ping_err = ping_device(&ping_addr, 3);
+
     if (!ping_err)
     {
-        shell_printf("ping successful\n");
+        shell_printf_nb("ping successful\n");
     } 
     else
     {
-        shell_printf("ping failed with error %d\n", ping_err);
+        shell_printf_nb("ping failed with error %d\n", ping_err);
     }
 
     return(0);
+}
+
+/*!
+ * \brief Non-Blocking method to printf to browser --USE WITHIN THIS FILE / overflow will be discarded--
+ *
+ * \param[in]  format  printf format specifier
+ * \param[in]  vargs   list of arguments
+ * \return nothing
+ */
+void shell_printf_nb(const char *format, ...)
+{
+    va_list args;
+    int retry = 0;
+    bool complete = false;
+
+
+    // Guard against potential thread concurrency collisions
+    cyw43_arch_lwip_begin();
+
+    if (!queue_is_full()) 
+    {
+        // Copy string payload safely into current head index
+        memset(queue_storage[queue_head], 0, ITEM_BUF_LEN);
+        //vsnprintf(queue_storage[queue_head], ITEM_BUF_LEN, "%s", text);
+
+        va_start(args, format);
+        vsnprintf(queue_storage[queue_head], ITEM_BUF_LEN, format, args);
+        va_end(args);  
+
+        queue_lengths[queue_head] = strlen(queue_storage[queue_head]);
+
+        // Shift head circular tracking index ahead
+        queue_head = (queue_head + 1) % QUEUE_DEPTH;
+
+        // Instantly verify if a browser connection is waiting to take this item
+        check_and_flush_queue();
+        complete = true;
+        
+    } else
+    {
+        // Optional: Log an internal overflow drop event error here if buffer size isn't deep enough
+    }
+
+    cyw43_arch_lwip_end();
+
 }
