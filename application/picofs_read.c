@@ -189,31 +189,40 @@ int picofs_list_all_files(void)
 
 int picofs_load_test_data(void)
 {
-    STRNCPY(test_filesystem[0].test_header.magic_number, "pfs", sizeof(test_filesystem[0].test_header.magic_number));
-    test_filesystem[0].test_header.picofs_version = 0;
-    test_filesystem[0].test_header.file_id = 0;    
-    test_filesystem[0].test_header.file_sequence = 0;  
-    test_filesystem[0].test_header.file_padding = 0; 
-    test_filesystem[0].test_header.file_size = 0; 
-    test_filesystem[0].test_header.crc = 0;
-    STRNCPY(test_filesystem[0].test_header.name, "elephant", sizeof("elephant"));  
-    STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
-    test_filesystem[0].test_header.file_size = sizeof(test_filesystem[0].test_data);     
-    STRNCPY(test_filesystem[0].test_trailer.magic_number, "spf", sizeof(test_filesystem[0].test_trailer.magic_number));
-    test_filesystem[0].test_trailer.crc = 0;
+    static bool test_init = false;
 
-    STRNCPY(test_filesystem[1].test_header.magic_number, "pfs", sizeof(test_filesystem[1].test_header.magic_number));
-    test_filesystem[1].test_header.picofs_version = 0;
-    test_filesystem[1].test_header.file_id = 0;    
-    test_filesystem[1].test_header.file_sequence = 1;  
-    test_filesystem[1].test_header.file_padding = 0; 
-    test_filesystem[1].test_header.file_size = 0; 
-    test_filesystem[1].test_header.crc = 0;
-    STRNCPY(test_filesystem[1].test_header.name, "monkey", sizeof("monkey"));
-    STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
-    test_filesystem[1].test_header.file_size = sizeof(test_filesystem[1].test_data); 
-    STRNCPY(test_filesystem[1].test_trailer.magic_number, "spf", sizeof(test_filesystem[1].test_trailer.magic_number));    
-    test_filesystem[1].test_trailer.crc = 0; 
+    if (!test_init)
+    {
+        memset((void *)test_filesystem, 255, sizeof(test_filesystem));
+
+        STRNCPY(test_filesystem[0].test_header.magic_number, "pfs", sizeof(test_filesystem[0].test_header.magic_number));
+        test_filesystem[0].test_header.picofs_version = 0;
+        test_filesystem[0].test_header.file_id = 0;    
+        test_filesystem[0].test_header.file_sequence = 0;  
+        test_filesystem[0].test_header.file_padding = 0; 
+        test_filesystem[0].test_header.file_size = 0; 
+        test_filesystem[0].test_header.crc = 0;
+        STRNCPY(test_filesystem[0].test_header.name, "elephant", sizeof("elephant"));  
+        STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
+        test_filesystem[0].test_header.file_size = sizeof(test_filesystem[0].test_data);     
+        STRNCPY(test_filesystem[0].test_trailer.magic_number, "spf", sizeof(test_filesystem[0].test_trailer.magic_number));
+        test_filesystem[0].test_trailer.crc = 0;
+
+        STRNCPY(test_filesystem[1].test_header.magic_number, "pfs", sizeof(test_filesystem[1].test_header.magic_number));
+        test_filesystem[1].test_header.picofs_version = 0;
+        test_filesystem[1].test_header.file_id = 0;    
+        test_filesystem[1].test_header.file_sequence = 1;  
+        test_filesystem[1].test_header.file_padding = 0; 
+        test_filesystem[1].test_header.file_size = 0; 
+        test_filesystem[1].test_header.crc = 0;
+        STRNCPY(test_filesystem[1].test_header.name, "monkey", sizeof("monkey"));
+        STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
+        test_filesystem[1].test_header.file_size = sizeof(test_filesystem[1].test_data); 
+        STRNCPY(test_filesystem[1].test_trailer.magic_number, "spf", sizeof(test_filesystem[1].test_trailer.magic_number));    
+        test_filesystem[1].test_trailer.crc = 0; 
+    
+        test_init = true;
+    }
 
     return (0);
 }
@@ -230,10 +239,13 @@ int picofs_load_test_data(void)
 //     char name[16];
 // } FILE_HEADER_T;
 
+// REAL FLASH
+// #define FLASH_SCAN_START (0x10000000UL)
+// #define FLASH_SCAN_END (0x10000000UL + PICO_FLASH_SIZE_BYTES)
 
-#define FLASH_SCAN_START (0x10000000UL)
-#define FLASH_SCAN_END (0x10000000UL + PICO_FLASH_SIZE_BYTES)
-
+// FAKE FLASH
+#define FLASH_SCAN_START FS_FLASH_START
+#define FLASH_SCAN_END FS_FLASH_END
 /*!
  * \brief Identify the status of each flash page
  * 
@@ -260,12 +272,26 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
     {
 
         erase_block_absolute = ((u32_t)cell)/4096;
-        erase_block_relative = ((u32_t)cell - FLASH_SCAN_START)/4096;            
+        erase_block_relative = ((u32_t)cell - (u32_t)FLASH_SCAN_START)/4096;            
         page_relative = (((u32_t)cell)%4096)/256;
         
-        if ((display == PFS_DISPLAY_PAGE_MAP) && ((((u32_t)cell)%4096) == 0))
+
+        switch(display)
         {
-            printf("\n[Block%04d]", erase_block_relative);
+        case PFS_DISPLAY_PAGE_MAP:
+            if (((((u32_t)cell)%4096) == 0))
+            {
+                printf("\n[Block%04d]", erase_block_relative);
+            }        
+            break;
+        case PFS_DISPLAY_SHELL_PAGE_MAP:
+            if (((((u32_t)cell)%4096) == 0))
+            {
+                shell_printf("\n[Block%04d]", erase_block_relative);
+            }  
+            break;
+        default:
+            break;
         }
 
         if (*cell != 0xFF)
@@ -280,6 +306,12 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
                 break;
             case PFS_DISPLAY_PAGE_MAP:
                 printf("\u25A0");
+                break;
+            case PFS_DISPLAY_SHELL_PAGE_NUMBERS:
+                shell_printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+                break;            
+            case PFS_DISPLAY_SHELL_PAGE_MAP:
+                shell_printf("\u25A0");
                 break;
             }
             
@@ -299,6 +331,12 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
             case PFS_DISPLAY_PAGE_MAP:
                 printf("\u25A1");
                 break;
+            case PFS_DISPLAY_SHELL_PAGE_NUMBERS:
+                shell_printf("[Block%04d, Page%02d]\tfree\n", erase_block_relative, page_relative);
+                break;            
+            case PFS_DISPLAY_SHELL_PAGE_MAP:
+                shell_printf("\u25A1");
+                break;                            
             }            
                         
             free_pages++;
@@ -310,17 +348,37 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
         }
     }
 
-    if (display == PFS_DISPLAY_PAGE_MAP)
+    switch(display)
     {
-        printf("\n");
-    }
-
+    case PFS_DISPLAY_PAGE_MAP:
+        printf("\n");      
+        break;
+    case PFS_DISPLAY_SHELL_PAGE_MAP:
+        shell_printf("\n");
+        break;
+    default:
+        break;
+    }    
 
     elapsed_ticks = xTaskGetTickCount() - start_tick;
-
     total_pages = (FLASH_SCAN_END - FLASH_SCAN_START)/256;
-    printf("Free Pages = %d out of %d total pages (%d%%)\n", free_pages, total_pages, (free_pages*100)/total_pages);
-    printf("flash scan completed in %d ms\n", elapsed_ticks);
+
+    switch(display)
+    {
+    default:
+    case PFS_DISPLAY_QUIET:
+        break;
+    case PFS_DISPLAY_PAGE_NUMBERS:
+    case PFS_DISPLAY_PAGE_MAP:
+        printf("Free Pages = %d out of %d total pages (%d%%)\n", free_pages, total_pages, (free_pages*100)/total_pages);
+        printf("flash scan completed in %d ms\n", elapsed_ticks);
+        break;
+    case PFS_DISPLAY_SHELL_PAGE_NUMBERS:          
+    case PFS_DISPLAY_SHELL_PAGE_MAP:
+        shell_printf("Free Pages = %d out of %d total pages (%d%%)\n", free_pages, total_pages, (free_pages*100)/total_pages);
+        shell_printf("flash scan completed in %d ms\n", elapsed_ticks);
+        break;                          
+    }   
     
     return(0);
 }
@@ -359,7 +417,7 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
     {
 
         erase_block_absolute = ((u32_t)cell)/4096;
-        erase_block_relative = ((u32_t)cell - FLASH_SCAN_START)/4096;            
+        erase_block_relative = ((u32_t)cell - (u32_t)FLASH_SCAN_START)/4096;            
         page_relative = (((u32_t)cell)%4096)/256;
         
         if (*cell != 0xFF)

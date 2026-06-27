@@ -16,6 +16,25 @@ typedef struct
 #define MAX_CUSTOM_FDS 8
 pico_fd_t custom_fds[MAX_CUSTOM_FDS];
 
+
+/*
+name: A pointer to a null-terminated string specifying the path to the file you want to open.
+flags: A bitwise OR mask (|) determining the file access mode and operational behaviors.
+mode: An optional argument (typically an octal number or permission macros) used only when a new file is being created (via O_CREAT or O_TMPFILE). 
+If neither flag is provided, this parameter is ignored.
+
+Common Flags (flags)The access mode must include exactly one of the following core options:
+O_RDONLY: Open for reading only.
+O_WRONLY: Open for writing only.
+O_RDWR: Open for both reading and writing.
+
+You can bitwise OR (|) these with additional file creation or status flags:
+O_CREAT: Create the file if it does not exist.
+O_TRUNC: Truncate the file length to 0 if it already exists and is opened for writing.
+O_APPEND: Move the file offset pointer to the end of the file before every write.
+O_EXCL: Ensure that this call creates the file; if the file already exists, the call fails (used alongside O_CREAT).
+*/
+
 // Hook for fopen()
 int __wrap__open(const char *name, int flags, int mode) {
     // 1. Find a free slot in custom_fds
@@ -105,7 +124,10 @@ int __wrap__read(int fd, char *ptr, int len)
 }
 
 // Hook for fwrite()
-int __wrap__write(int fd, char *ptr, int len) {
+int __wrap__write(int fd, char *ptr, int len) 
+{
+    int i;
+
     // Retain SDK standard output routing for printf via stdout/stderr (1 and 2)
     if (fd == 1 || fd == 2) {
         // Let Pico SDK handles default stdio output (UART/USB)
@@ -122,6 +144,17 @@ int __wrap__write(int fd, char *ptr, int len) {
     // Call your custom file system write logic here
     // int bytes_written = my_fs_write(&custom_fds[target_fd].my_fs_handle, ptr, len);
     // return bytes_written;
+    for(i=0; i<len; i++)
+    {       
+        if ((custom_fds[target_fd].offset + i) < custom_fds[target_fd].len)
+        {
+            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].offset + i)];
+        }
+        else
+        {
+            break;
+        }
+    }
 
     return len;
 }

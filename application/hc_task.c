@@ -184,7 +184,13 @@ void hc_task(__unused void *params)
                     break;
                 case HC_CMD_PING:
                     shell_ping(web.ping_target);
-                    break;                                        
+                    break;
+                case HC_CMD_PAGE_MAP:    
+                    picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_MAP);
+                    break;
+                case HC_CMD_PAGE_NUMBERS:
+                    picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_NUMBERS);
+                    break;
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);
                     break;

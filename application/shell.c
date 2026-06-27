@@ -298,6 +298,14 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_BASIC_SCRIPT);  
     } 
+    else if (strcmp(cmd, "df") == 0) 
+    {
+        hc_queue_send(HC_CMD_PAGE_MAP);  
+    }  
+    else if (strcmp(cmd, "df n") == 0) 
+    {
+        hc_queue_send(HC_CMD_PAGE_NUMBERS);  
+    }           
     else if (strncmp(cmd, "cat ", 4) == 0) 
     {
         if (strlen(cmd) > 5) shell_cat((char *)(cmd+4));  

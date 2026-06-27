@@ -28,7 +28,7 @@ typedef struct file_trailer
 typedef struct file_test
 {
     FILE_HEADER_T test_header;
-    u8_t test_data[21];
+    u8_t test_data[216];
     FILE_TRAILER_T test_trailer;
 } FILE_TEST_T;
 
@@ -36,7 +36,9 @@ typedef enum
 {
     PFS_DISPLAY_QUIET = 0,
     PFS_DISPLAY_PAGE_NUMBERS = 1,
-    PFS_DISPLAY_PAGE_MAP = 2
+    PFS_DISPLAY_PAGE_MAP = 2,
+    PFS_DISPLAY_SHELL_PAGE_NUMBERS = 3,
+    PFS_DISPLAY_SHELL_PAGE_MAP = 4    
 } PFS_DISPLAY_TYPE_T;
 
 int picofs_load_test_data(void);

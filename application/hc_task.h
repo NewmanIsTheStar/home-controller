@@ -11,6 +11,8 @@
 #define HC_CMD_DUMP_PROGRAM (4)
 #define HC_CMD_LIST (5)
 #define HC_CMD_PING (6)
+#define HC_CMD_PAGE_MAP (7)
+#define HC_CMD_PAGE_NUMBERS (8)
 
 
 typedef enum
