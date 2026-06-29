@@ -204,7 +204,7 @@ int picofs_load_test_data(void)
         test_filesystem[0].test_header.crc = 0;
         STRNCPY(test_filesystem[0].test_header.name, "elephant", sizeof("elephant"));  
         STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
-        test_filesystem[0].test_header.file_size = sizeof(test_filesystem[0].test_data);     
+        test_filesystem[0].test_header.file_size = strlen(test_filesystem[0].test_data) + 1; //sizeof(test_filesystem[0].test_data);     
         STRNCPY(test_filesystem[0].test_trailer.magic_number, "spf", sizeof(test_filesystem[0].test_trailer.magic_number));
         test_filesystem[0].test_trailer.crc = 0;
 
@@ -217,7 +217,7 @@ int picofs_load_test_data(void)
         test_filesystem[1].test_header.crc = 0;
         STRNCPY(test_filesystem[1].test_header.name, "monkey", sizeof("monkey"));
         STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
-        test_filesystem[1].test_header.file_size = sizeof(test_filesystem[1].test_data); 
+        test_filesystem[1].test_header.file_size = strlen(test_filesystem[1].test_data) + 1;  //sizeof(test_filesystem[1].test_data); 
         STRNCPY(test_filesystem[1].test_trailer.magic_number, "spf", sizeof(test_filesystem[1].test_trailer.magic_number));    
         test_filesystem[1].test_trailer.crc = 0; 
     

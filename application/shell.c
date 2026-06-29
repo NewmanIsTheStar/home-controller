@@ -742,7 +742,7 @@ int shell_cat(char *filename)
     // check if the file exists and opened successfully
     if (filePointer == NULL) 
     {
-        printf("Error: Could not open file.\n");
+        shell_printf_nb("cat: %s: No such file\n", filename);
         return 1; 
     }
 
@@ -781,7 +781,7 @@ int shell_hex_dump(char *filename)
     // 2. Check if the file exists and opened successfully
     if (filePointer == NULL) 
     {
-        printf("Error: Could not open file.\n");
+        shell_printf_nb("hd: %s: No such file\n", filename);
         return 1; 
     }
 
@@ -858,7 +858,7 @@ int shell_ping(char *ipv4_string)
     }
     ping_addr.addr = htonl(ip);
 
-    shell_printf_nb("ping %d.%d.%d.%d\n", ((u8_t *)&ip)[3], ((u8_t *)&ip)[2], ((u8_t *)&ip)[1], ((u8_t *)&ip)[0]);
+    shell_printf_nb("PING %d.%d.%d.%d with 32 bytes of data\n", ((u8_t *)&ip)[3], ((u8_t *)&ip)[2], ((u8_t *)&ip)[1], ((u8_t *)&ip)[0]);
 
     ping_err = ping_device(&ping_addr, 3);
 

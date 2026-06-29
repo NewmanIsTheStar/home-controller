@@ -12,7 +12,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         ssi.c
         cgi.c   
         shell.c
-        picofs.c  
+        picofs_wrap.c  
         picofs_read.c  
 )
 

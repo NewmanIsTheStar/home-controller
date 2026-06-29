@@ -1,6 +1,7 @@
 #ifndef PICOFS_H
 #define PICOFS_H
 
+#include <stddef.h>
 #include "shell.h"
 
 // output to either terminal or http shell
