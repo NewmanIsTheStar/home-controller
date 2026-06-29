@@ -62,6 +62,7 @@ void __no_inline_not_in_flash_func(flash_write_shim)(void *ptr)
 
         if (sizeof(config) < FLASH_SECTOR_SIZE)
         {
+            // program the configuation in 256 Byte pages (range is rounded up to the nearest multiple of 256 Bytes)
             flash_range_program(FLASH_TARGET_OFFSET, (uint8_t *)&config, ((sizeof(config)+255)/256)*256);
         }
         else
