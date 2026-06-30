@@ -13,6 +13,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     udp.c
     wifi.c
     ping_core.c
+    memory_wrappers.c
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -31,6 +32,18 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/mbedtls/include/
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/apps/ping/
         )
+
+# redirect memory allocation to wrappers for FreeRTOS
+target_link_options(${PROJECT_NAME} PRIVATE
+    "-Wl,--wrap=malloc"
+    "-Wl,--wrap=free"
+    "-Wl,--wrap=calloc"
+    "-Wl,--wrap=realloc"
+)
+
+# output memory use 
+# to determine the maximum heap size temporarily set configTOTAL_HEAP_SIZE to 0 then Region Size - Used Size = free RAM
+target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--print-memory-usage")
 
 # pluto common libraries
 set(pluto_link_libraries

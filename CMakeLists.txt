@@ -37,6 +37,7 @@ endif()
 
 set(PICO_SDK_PATH ${CMAKE_CURRENT_LIST_DIR}/pico-sdk)
 set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-Kernel)
+set(SKIP_PICO_MALLOC 1)
 
 add_compile_definitions(PLUTO_VER="${APP_VERSION}")
 add_compile_definitions(PICO_CYW43_ARCH_FREERTOS)

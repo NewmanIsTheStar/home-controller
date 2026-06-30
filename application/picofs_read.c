@@ -80,68 +80,9 @@ extern WEB_VARIABLES_T web;
 //static variables
 FILE_TEST_T test_filesystem[10];
  
-#define FS_FLASH_START ((char *)(&test_filesystem))
-#define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
-#define FS_VERION (0)
-
-/*!
- * \brief Get pointer to file header matching passed filename
- * 
- * \param[in]   filename     name to find
- * 
- * \param[out]  header       pointer to file header
- *  *     
- * \return 0 on success
- */
-int picofs_find_by_name(char *filename, char **header)
-{
-    int err = -1;
-    u8_t *p = FS_FLASH_START;
-    //  u8_t *next = NULL; 
-    FILE_HEADER_T *h = NULL;
-    u8_t best_sequence = 0;
-    bool first_sequnce = false;
-
-    // TEST TEST TEST
-    picofs_load_test_data();
-
-    while (((char *)p) < FS_FLASH_END)
-    {
-        h = (FILE_HEADER_T *)p;
-
-        if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
-            (h->picofs_version == FS_VERION) &&
-            (strcmp(h->name, filename) == 0))
-        {
-            // match
-            if (!first_sequnce)
-            {
-                best_sequence = h->file_sequence;
-                *header = (char *)h;
-                err = 0;
-                p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);
-            }
-            else
-            {
-                if ((h->file_sequence - best_sequence) < 128)
-                {
-                    best_sequence = h->file_sequence;
-                    *header = (char *)h;
-                    err = 0;
-                    p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);                  
-                }
-            }
-        }
-
-        if (p == ((u8_t *)h))
-        {
-            p++;
-        }
-    }
 
 
-    return(err);
-}
+
 
 /*!
  * \brief Print a list of all files in the file system

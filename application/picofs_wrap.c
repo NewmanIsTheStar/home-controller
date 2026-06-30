@@ -1,20 +1,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <fcntl.h>
 #include "pluto.h"
 #include "picofs.h"
 
 // Example placeholder for your custom file system handle
-typedef struct 
-{
-    bool in_use;
-    char *file;    // starting from header, file data starts after the header
-    size_t len;    // length of file data excluding header and trailer
-    size_t offset; // file data offset used by standard C library functions e.g. fread
-} pico_fd_t;
 
-#define MAX_CUSTOM_FDS 8
-pico_fd_t custom_fds[MAX_CUSTOM_FDS];
+PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 
 /*
@@ -23,7 +16,8 @@ flags: A bitwise OR mask (|) determining the file access mode and operational be
 mode: An optional argument (typically an octal number or permission macros) used only when a new file is being created (via O_CREAT or O_TMPFILE). 
 If neither flag is provided, this parameter is ignored.
 
-Common Flags (flags)The access mode must include exactly one of the following core options:
+Common Flags (flags)
+The access mode must include exactly one of the following core options:
 O_RDONLY: Open for reading only.
 O_WRONLY: Open for writing only.
 O_RDWR: Open for both reading and writing.
@@ -36,17 +30,21 @@ O_EXCL: Ensure that this call creates the file; if the file already exists, the 
 */
 
 // Hook for fopen()
-int __wrap__open(const char *name, int flags, int mode) {
+int __wrap__open(const char *name, int flags, int mode) 
+{
     // 1. Find a free slot in custom_fds
     int fd = -1;
-    for (int i = 0; i < MAX_CUSTOM_FDS; i++) {
-        if (!custom_fds[i].in_use) {
+    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    {
+        if (!custom_fds[i].in_use) 
+        {
             fd = i;
             break;
         }
     }
     
-    if (fd == -1) {
+    if (fd == -1) 
+    {
         errno = ENFILE; // Too many open files
         return -1;
     }
@@ -63,8 +61,8 @@ int __wrap__open(const char *name, int flags, int mode) {
     }
     else
     {
-        custom_fds[fd].len =  ((FILE_HEADER_T *)custom_fds[fd].file)->file_size;
-        custom_fds[fd].offset = 0;
+        custom_fds[fd].file_len =  ((FILE_HEADER_T *)custom_fds[fd].file)->file_size;
+        custom_fds[fd].file_offset = 0;
     }
 
 
@@ -96,7 +94,7 @@ int __wrap__read(int fd, char *ptr, int len)
     }
     
     int target_fd = fd - 3;
-    if (target_fd >= MAX_CUSTOM_FDS || !custom_fds[target_fd].in_use) {
+    if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
         errno = EBADF;
         return -1;
     }
@@ -107,9 +105,9 @@ int __wrap__read(int fd, char *ptr, int len)
 
     for(i=0; i<len; i++)
     {       
-        if ((custom_fds[target_fd].offset + i) < custom_fds[target_fd].len)
+        if ((custom_fds[target_fd].file_offset + i) < custom_fds[target_fd].file_len)
         {
-            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].offset + i)];
+            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].file_offset + i)];
         }
         else
         {
@@ -118,7 +116,7 @@ int __wrap__read(int fd, char *ptr, int len)
     }
 
     printf("read returning %d\n", i);
-    custom_fds[target_fd].offset += i;
+    custom_fds[target_fd].file_offset += i;
 
     return(i); 
 }
@@ -136,7 +134,7 @@ int __wrap__write(int fd, char *ptr, int len)
     }
 
     int target_fd = fd - 3;
-    if (target_fd >= MAX_CUSTOM_FDS || !custom_fds[target_fd].in_use) {
+    if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
         errno = EBADF;
         return -1;
     }
@@ -146,9 +144,9 @@ int __wrap__write(int fd, char *ptr, int len)
     // return bytes_written;
     for(i=0; i<len; i++)
     {       
-        if ((custom_fds[target_fd].offset + i) < custom_fds[target_fd].len)
+        if ((custom_fds[target_fd].file_offset + i) < custom_fds[target_fd].file_len)
         {
-            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].offset + i)];
+            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].file_offset + i)];
         }
         else
         {
@@ -172,7 +170,7 @@ int __wrap__write(int fd, char *ptr, int len)
 int __wrap__lseek(int fd, int ptr, int dir) 
 {
     int target_fd = fd - 3;
-    if (fd < 3 || target_fd >= MAX_CUSTOM_FDS || !custom_fds[target_fd].in_use) {
+    if (fd < 3 || target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
         errno = EBADF;
         return -1;
     }
@@ -185,23 +183,23 @@ int __wrap__lseek(int fd, int ptr, int dir)
     {
     default:
     case SEEK_SET:
-        custom_fds[fd].offset = ptr;
+        custom_fds[fd].file_offset = ptr;
         break;
     case SEEK_CUR:
-        custom_fds[fd].offset += ptr;
+        custom_fds[fd].file_offset += ptr;
         break;
     case SEEK_END: 
-        custom_fds[fd].offset = custom_fds[fd].len + ptr;
+        custom_fds[fd].file_offset = custom_fds[fd].file_len + ptr;
         break;
     }
 
-    return custom_fds[fd].offset;  // TODO: return -1 on error
+    return custom_fds[fd].file_offset;  // TODO: return -1 on error
 }
 
 // Hook for fclose()
 int __wrap__close(int fd) {
     int target_fd = fd - 3;
-    if (fd < 3 || target_fd >= MAX_CUSTOM_FDS || !custom_fds[target_fd].in_use) {
+    if (fd < 3 || target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
         errno = EBADF;
         return -1;
     }
