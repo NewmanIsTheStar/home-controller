@@ -105,13 +105,14 @@ O_APPEND: Move the file offset pointer to the end of the file before every write
 O_EXCL: Ensure that this call creates the file; if the file already exists, the call fails (used alongside O_CREAT).
 */
 
+
 /*!
  * \brief open a file
  *
  * \param fd     file descriptor
  * \param name   file name string
  * \param flags  bitwise flags O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_TRUNC, O_APPEND, O_EXCL 
- * \return nothing
+ * \return 0 on success
  */
 int picofs_open(int fd, char *name, int flags)
 {
@@ -119,10 +120,22 @@ int picofs_open(int fd, char *name, int flags)
     char *file_header = NULL;
     char *file_data = NULL;
 
-    if (picofs_find_by_name(name, &file_header))
+    if (!picofs_find_by_name(name, &file_header))
     {
-        // file exists
-        if (flags & O_RDONLY)
+        printf("open called with flags = %08x\n", flags);
+        
+        /* strange stuff in the file  "_default_fcntl.h" 
+        /*
+        * Flag values for open(2) and fcntl(2)
+        * The kernel adds 1 to the open modes to turn it into some
+        * combination of FREAD and FWRITE.
+        */
+        // #define	O_RDONLY	0		/* +1 == FREAD */
+        // #define	O_WRONLY	1		/* +1 == FWRITE */
+        // #define	O_RDWR		2		/* +1 == FREAD|FWRITE */
+
+        // file exists  -- using exprimentally determined values to test the flags!
+        if (flags == 0/*r*/|| flags == 0x10000 /*rb*/)        /*original condition: flags & O_RDONLY*/ 
         {
             err = 0;
 
@@ -152,13 +165,14 @@ int picofs_open(int fd, char *name, int flags)
 
             if (!err && (flags & O_APPEND))
             {
-                custom_fds[fd].file_offset = custom_fds[fd].file_len;
+                custom_fds[fd].data_offset = custom_fds[fd].data_len;   //TODO: set data len
             }
 
             if (!err && (flags & O_TRUNC))
             {
-                custom_fds[fd].file_offset = 0;
-                custom_fds[fd].file_len = 0;
+                custom_fds[fd].data_offset = 0;
+                custom_fds[fd].file_len = sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);
+                custom_fds[fd].data_len = 0;
 
                 // need to update file header in RAM
             }            
@@ -179,7 +193,6 @@ int picofs_open(int fd, char *name, int flags)
     return(err);
 }
 
-
 /*!
  * \brief allocate RAM cache for file writes
  *
@@ -195,13 +208,27 @@ int picofs_fd_initialize(int fd, FILE_HEADER_T *header)
         {
             custom_fds[fd].file = (char *)header;
             custom_fds[fd].file_len = header->file_size;
-            custom_fds[fd].file_offset = 0;
+            custom_fds[fd].file_header = header;
+            custom_fds[fd].data = custom_fds[fd].file + sizeof(FILE_HEADER_T);
+            if (custom_fds[fd].file_len >= (sizeof(FILE_TRAILER_T) + header->file_padding + sizeof(FILE_HEADER_T)))
+            {
+                custom_fds[fd].data_len = custom_fds[fd].file_len - sizeof(FILE_TRAILER_T) - header->file_padding - sizeof(FILE_HEADER_T);
+            }
+            else
+            {
+                printf("picoFS: file data length less that zero -- data loss may have occured\n");
+                custom_fds[fd].data_len = 0;
+            }
+            custom_fds[fd].data_offset = 0;
         }
         else
         {
             custom_fds[fd].file = NULL;
             custom_fds[fd].file_len = 0;
-            custom_fds[fd].file_offset = 0;
+            custom_fds[fd].file_header = NULL;
+            custom_fds[fd].data = NULL;
+            custom_fds[fd].data_len = 0;
+            custom_fds[fd].data_offset = 0;
         }
     }
 
@@ -221,14 +248,15 @@ int picofs_allocate_cache(int fd)
 
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
-        if (custom_fds[fd].file)
-        {
-            custom_fds[fd].file_len = ((FILE_HEADER_T *)custom_fds[fd].file)->file_size;
-        }
-        else
-        {
-            custom_fds[fd].file_len = 0;
-        }
+        // TODO: confirm file_size is always set prior to calling this function
+        // if (custom_fds[fd].file)
+        // {
+        //     custom_fds[fd].file_len = ((FILE_HEADER_T *)custom_fds[fd].file)->file_size;
+        // }
+        // else
+        // {
+        //     custom_fds[fd].file_len = 0;
+        // }
 
         // allocate one 4k block greater than currently used
         cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
@@ -248,7 +276,7 @@ int picofs_allocate_cache(int fd)
 
 
 /*!
- * \brief check if a file is already open
+ * \brief check if a file is already open  
  *
  * \param file_header pointer to file header
  * \return nothing
@@ -260,6 +288,7 @@ bool picofs_file_in_use(char *file_header)
 
     for(i=0; i < FS_MAX_FILE_DESCRIPTORS; i++)
     {
+        //TODO: this allows a file that is not in flash to be simultaneously created twice in cache either prevent this or check when writing to flash and overright the duplicate
         if (file_header && (file_header == custom_fds[i].file) && custom_fds[i].in_use)
         {
             in_use= true;
@@ -303,7 +332,7 @@ int picofs_find_by_name(char *filename, char **header)
                 best_sequence = h->file_sequence;
                 *header = (char *)h;
                 err = 0;
-                p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);
+                p = p + sizeof(FILE_HEADER_T) + h->file_size /*+ h->file_padding*/ + sizeof(FILE_TRAILER_T);  //TODO: check and correct
             }
             else
             {
@@ -312,7 +341,7 @@ int picofs_find_by_name(char *filename, char **header)
                     best_sequence = h->file_sequence;
                     *header = (char *)h;
                     err = 0;
-                    p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);                  
+                    p = p + sizeof(FILE_HEADER_T) + h->file_size /*+ h->file_padding*/ + sizeof(FILE_TRAILER_T);                  
                 }
             }
         }

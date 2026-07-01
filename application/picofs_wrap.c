@@ -32,7 +32,7 @@ O_EXCL: Ensure that this call creates the file; if the file already exists, the 
 // Hook for fopen()
 int __wrap__open(const char *name, int flags, int mode) 
 {
-    // 1. Find a free slot in custom_fds
+    // find a free slot in custom_fds
     int fd = -1;
     for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
     {
@@ -49,22 +49,11 @@ int __wrap__open(const char *name, int flags, int mode)
         return -1;
     }
 
-    // 2. Call your custom file system open logic here
-    // if (my_fs_open(&custom_fds[fd].my_fs_handle, name, flags) != SUCCESS) {
-    //     errno = ENOENT; // File not found
-    //     return -1;
-    // }
-    if (picofs_find_by_name((char *)name, &custom_fds[fd].file))
+    if (picofs_open(fd, (char *)name, flags))
     {
         errno = ENOENT; // File not found
-        return -1;        
+        return -1;
     }
-    else
-    {
-        custom_fds[fd].file_len =  ((FILE_HEADER_T *)custom_fds[fd].file)->file_size;
-        custom_fds[fd].file_offset = 0;
-    }
-
 
     custom_fds[fd].in_use = true;
     
@@ -84,41 +73,28 @@ int __wrap__open(const char *name, int flags, int mode)
  */
 int __wrap__read(int fd, char *ptr, int len) 
 {
-    int i;
+    int bytes_read = 0;
+    int target_fd = fd - 3;
 
-    printf("read called with len = %d\n", len);
+    //printf("read called with len = %d\n", len);
 
-    if (fd < 3) {
+    if (fd < 3) 
+    {
         // Handle standard input if necessary
         return 0;
     }
     
-    int target_fd = fd - 3;
-    if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
+    if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) 
+    {
         errno = EBADF;
         return -1;
     }
 
-    // Call your custom file system read logic here
-    // int bytes_read = my_fs_read(&custom_fds[target_fd].my_fs_handle, ptr, len);
-    // return bytes_read;
+    bytes_read = picofs_read(target_fd, ptr, len);
 
-    for(i=0; i<len; i++)
-    {       
-        if ((custom_fds[target_fd].file_offset + i) < custom_fds[target_fd].file_len)
-        {
-            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].file_offset + i)];
-        }
-        else
-        {
-            break;
-        }
-    }
+    custom_fds[target_fd].data_offset += bytes_read;
 
-    printf("read returning %d\n", i);
-    custom_fds[target_fd].file_offset += i;
-
-    return(i); 
+    return(bytes_read); 
 }
 
 // Hook for fwrite()
@@ -144,14 +120,25 @@ int __wrap__write(int fd, char *ptr, int len)
     // return bytes_written;
     for(i=0; i<len; i++)
     {       
-        if ((custom_fds[target_fd].file_offset + i) < custom_fds[target_fd].file_len)
+        if ((custom_fds[target_fd].data_offset + i) < custom_fds[target_fd].data_len)
         {
-            ptr[i] = custom_fds[target_fd].file[(sizeof(FILE_HEADER_T) + custom_fds[target_fd].file_offset + i)];
+            custom_fds[target_fd].data[custom_fds[target_fd].data_offset + i] = ptr[i];
+            
         }
         else
         {
+            printf("picoFS: write truncated, out of cache\n");
             break;
         }
+    }
+
+    custom_fds[target_fd].data_offset += i; 
+
+    // check if write increase data length
+    if (custom_fds[target_fd].data_offset > custom_fds[target_fd].data_len)
+    {
+        // increase data length to match offset 
+        custom_fds[target_fd].data_len = custom_fds[target_fd].data_offset;
     }
 
     return len;
@@ -183,17 +170,17 @@ int __wrap__lseek(int fd, int ptr, int dir)
     {
     default:
     case SEEK_SET:
-        custom_fds[fd].file_offset = ptr;
+        custom_fds[fd].data_offset = ptr;
         break;
     case SEEK_CUR:
-        custom_fds[fd].file_offset += ptr;
+        custom_fds[fd].data_offset += ptr;
         break;
     case SEEK_END: 
-        custom_fds[fd].file_offset = custom_fds[fd].file_len + ptr;
+        custom_fds[fd].data_offset = custom_fds[fd].data_len + ptr;
         break;
     }
 
-    return custom_fds[fd].file_offset;  // TODO: return -1 on error
+    return custom_fds[fd].data_offset;  // TODO: return -1 on error
 }
 
 // Hook for fclose()

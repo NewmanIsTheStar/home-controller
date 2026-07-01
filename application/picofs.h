@@ -12,16 +12,6 @@
 #define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
 #define FS_VERION (0)
 
-typedef struct 
-{
-    bool in_use;
-    char *file;         // starting from header, file data starts after the header
-    size_t file_len;    // length of file data excluding header and trailer
-    size_t file_offset; // file data offset used by standard C library functions e.g. fread    
-    char *cache;        // starting from header, file data starts after the header
-    size_t cache_len;
-} PICOFS_FD_T;
-
 typedef struct file_header
 {
     u8_t magic_number[4];   // "pfs"
@@ -33,6 +23,19 @@ typedef struct file_header
     u32_t crc;
     char name[16];
 } FILE_HEADER_T;
+
+typedef struct 
+{
+    bool in_use;
+    char *file;                  // flash: file starting from header
+    size_t file_len;             // flash: length of file including all overhead   
+    char *cache;                 // RAM: file starting from header
+    size_t cache_len;            // RAM: cache size
+    FILE_HEADER_T *file_header;  // flash or RAM: file header
+    char *data;                  // flash or RAM: data contained in the file 
+    size_t data_len;             // flash or RAM: data length
+    size_t data_offset;          // flash or RAM: offset used by standard C library functions e.g. fread     
+} PICOFS_FD_T;
 
 typedef struct file_trailer
 {
@@ -64,5 +67,7 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area);
 bool picofs_file_in_use(char *file_header);
 int picofs_fd_initialize(int fd, FILE_HEADER_T *header);
 int picofs_allocate_cache(int fd);
+int picofs_open(int fd, char *name, int flags);
+int picofs_read(int fd, char *ptr, int len);
 
 #endif

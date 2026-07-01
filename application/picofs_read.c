@@ -76,13 +76,30 @@
 extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
+extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 //static variables
 FILE_TEST_T test_filesystem[10];
  
 
+int picofs_read(int fd, char *ptr, int len)
+{
+    int i;
 
+    for(i=0; i<len; i++)
+    {       
+        if ((custom_fds[fd].data_offset + i) < custom_fds[fd].data_len)
+        {
+            ptr[i] = custom_fds[fd].data[custom_fds[fd].data_offset + i];
+        }
+        else
+        {
+            break;
+        }
+    }
 
+    return(i);
+}
 
 /*!
  * \brief Print a list of all files in the file system
@@ -105,7 +122,7 @@ int picofs_list_all_files(void)
     // TEST TEST TEST
     picofs_load_test_data();
 
-    while (((char *)p) < FS_FLASH_END)
+    while (((char *)p) < (FS_FLASH_END -4))
     {
         h = (FILE_HEADER_T *)p;
 
@@ -114,7 +131,7 @@ int picofs_list_all_files(void)
         {
             picofs_printf("%08d\t%s\n", h->file_size, h->name);
 
-            p = p + sizeof(FILE_HEADER_T) + h->file_size + h->file_padding + sizeof(FILE_TRAILER_T);
+            p = p + sizeof(FILE_HEADER_T) + h->file_size /*+ h->file_padding*/ + sizeof(FILE_TRAILER_T);
         }
         else
         {
@@ -145,7 +162,7 @@ int picofs_load_test_data(void)
         test_filesystem[0].test_header.crc = 0;
         STRNCPY(test_filesystem[0].test_header.name, "elephant", sizeof("elephant"));  
         STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
-        test_filesystem[0].test_header.file_size = strlen(test_filesystem[0].test_data) + 1; //sizeof(test_filesystem[0].test_data);     
+        test_filesystem[0].test_header.file_size = sizeof(FILE_HEADER_T) + strlen(test_filesystem[0].test_data) + 1 + test_filesystem[0].test_header.file_padding + sizeof(FILE_TRAILER_T);
         STRNCPY(test_filesystem[0].test_trailer.magic_number, "spf", sizeof(test_filesystem[0].test_trailer.magic_number));
         test_filesystem[0].test_trailer.crc = 0;
 
@@ -158,7 +175,7 @@ int picofs_load_test_data(void)
         test_filesystem[1].test_header.crc = 0;
         STRNCPY(test_filesystem[1].test_header.name, "monkey", sizeof("monkey"));
         STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
-        test_filesystem[1].test_header.file_size = strlen(test_filesystem[1].test_data) + 1;  //sizeof(test_filesystem[1].test_data); 
+        test_filesystem[1].test_header.file_size = sizeof(FILE_HEADER_T) + strlen(test_filesystem[1].test_data) + 1 + test_filesystem[0].test_header.file_padding + sizeof(FILE_TRAILER_T);
         STRNCPY(test_filesystem[1].test_trailer.magic_number, "spf", sizeof(test_filesystem[1].test_trailer.magic_number));    
         test_filesystem[1].test_trailer.crc = 0; 
     
