@@ -119,29 +119,18 @@ int picofs_open(int fd, char *name, int flags)
     int err = -1;
     char *file_header = NULL;
     char *file_data = NULL;
+    int open_mode = 0;
 
     if (!picofs_find_by_name(name, &file_header))
     {
         printf("open called with flags = %08x\n", flags);
         
-        /* strange stuff in the file  "_default_fcntl.h" 
-        /*
-        * Flag values for open(2) and fcntl(2)
-        * The kernel adds 1 to the open modes to turn it into some
-        * combination of FREAD and FWRITE.
-        */
-        // #define	O_RDONLY	0		/* +1 == FREAD */
-        // #define	O_WRONLY	1		/* +1 == FWRITE */
-        // #define	O_RDWR		2		/* +1 == FREAD|FWRITE */
+        // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
+        // we transform them into more sensible bit flags in the two least significant bits for easier processing
+        open_mode = (flags + 1) & (O_ACCMODE);
+        MASKED_WRITE(flags, open_mode, O_ACCMODE);
 
-        // file exists  -- using exprimentally determined values to test the flags!
-        if (flags == 0/*r*/|| flags == 0x10000 /*rb*/)        /*original condition: flags & O_RDONLY*/ 
-        {
-            err = 0;
-
-            picofs_fd_initialize(fd, (FILE_HEADER_T *)file_header);
-        } 
-        else if ((flags & O_WRONLY) || (flags & O_RDWR))
+        if (flags & FWRITE)
         {
             // need exclusive access for write
             if (!picofs_file_in_use(file_header))
@@ -176,7 +165,13 @@ int picofs_open(int fd, char *name, int flags)
 
                 // need to update file header in RAM
             }            
-        }        
+        }  
+        else if (flags & FREAD)
+        {
+            err = 0;
+
+            picofs_fd_initialize(fd, (FILE_HEADER_T *)file_header);
+        }               
     }
     else
     {

@@ -122,8 +122,8 @@ int picofs_list_all_files(void)
     // TEST TEST TEST
     picofs_load_test_data();
 
-    while (((char *)p) < (FS_FLASH_END -4))
-    {
+    while (((char *)p) < (FS_FLASH_END - sizeof(FILE_HEADER_T) - sizeof(FILE_TRAILER_T)))
+    {        
         h = (FILE_HEADER_T *)p;
 
         if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
@@ -131,7 +131,7 @@ int picofs_list_all_files(void)
         {
             picofs_printf("%08d\t%s\n", h->file_size, h->name);
 
-            p = p + sizeof(FILE_HEADER_T) + h->file_size /*+ h->file_padding*/ + sizeof(FILE_TRAILER_T);
+            p += h->file_size;
         }
         else
         {
