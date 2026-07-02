@@ -15,6 +15,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         picofs_wrap.c  
         picofs_read.c  
         picofs_open.c
+        picofs_write.c
+        picofs_close.c
 )
 
 set(WEB_FILES)

@@ -155,22 +155,22 @@ void hex_dump(const uint8_t *bptr, uint32_t len) {
     }
     printf("\n");
 
-    // printf("dump_chars %d", len);
-    // for (i = 0; i < len;i++) {
-    //     if ((i & 0x0f) == 0) {
-    //         printf("\n");
-    //     } else if ((i & 0x07) == 0) {
-    //         printf(" ");
-    //     }
-    //     if (isascii(bptr[i]))
-    //     {
-    //         printf("%c", bptr[i]);
-    //     }
-    //     else
-    //     {
-    //         printf("-", bptr[i]);
-    //     }
-    // }
+    printf("dump_chars %d", len);
+    for (i = 0; i < len;i++) {
+        if ((i & 0x0f) == 0) {
+            printf("\n");
+        } else if ((i & 0x07) == 0) {
+            printf(" ");
+        }
+        if (isprint(bptr[i]))
+        {
+            printf("%c", bptr[i]);
+        }
+        else
+        {
+            printf("-", bptr[i]);
+        }
+    }
     printf("\n");
 }
 

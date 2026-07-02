@@ -65,7 +65,7 @@ int __wrap__open(const char *name, int flags, int mode)
 /*!
  * \brief direct, unbuffered read from a low-level file descriptor
  *
- * \param fd   The file descriptor (e.g., 0 for standard input, or a value returned by open())
+ * \param fd   The file descriptor (e.g. 0 for standard input, or a value returned by open())
  * \param ptr  A pointer to the buffer memory where data will be stored
  * \param len  The maximum number of bytes to read
  * 
@@ -75,8 +75,6 @@ int __wrap__read(int fd, char *ptr, int len)
 {
     int bytes_read = 0;
     int target_fd = fd - 3;
-
-    //printf("read called with len = %d\n", len);
 
     if (fd < 3) 
     {
@@ -98,50 +96,37 @@ int __wrap__read(int fd, char *ptr, int len)
 }
 
 // Hook for fwrite()
+/*!
+ * \brief write from a low-level file descriptor
+ *
+ * \param fd   The file descriptor (e.g. 1 for standard output, or a value returned by open())
+ * \param ptr  A pointer to the buffer memory where data will be stored
+ * \param len  The maximum number of bytes to read
+ * 
+ * \return The number of bytes actually written (can be less than count), 0 on End-Of-File (EOF), or -1 on error
+ */
 int __wrap__write(int fd, char *ptr, int len) 
 {
-    int i;
+    int bytes_written = 0;
+    int target_fd = fd - 3;    
 
-    // Retain SDK standard output routing for printf via stdout/stderr (1 and 2)
-    if (fd == 1 || fd == 2) {
+    // retain SDK standard output routing for printf via stdout/stderr (1 and 2)
+    if (fd == 1 || fd == 2) 
+    {
         // Let Pico SDK handles default stdio output (UART/USB)
         extern int __wrap__write(int fd, char *ptr, int len);
         return __wrap__write(fd, ptr, len);
     }
 
-    int target_fd = fd - 3;
-    if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
+    if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) 
+    {
         errno = EBADF;
         return -1;
     }
 
-    // Call your custom file system write logic here
-    // int bytes_written = my_fs_write(&custom_fds[target_fd].my_fs_handle, ptr, len);
-    // return bytes_written;
-    for(i=0; i<len; i++)
-    {       
-        if ((custom_fds[target_fd].data_offset + i) < custom_fds[target_fd].data_len)
-        {
-            custom_fds[target_fd].data[custom_fds[target_fd].data_offset + i] = ptr[i];
-            
-        }
-        else
-        {
-            printf("picoFS: write truncated, out of cache\n");
-            break;
-        }
-    }
+    bytes_written = picofs_write(target_fd, ptr, len);
 
-    custom_fds[target_fd].data_offset += i; 
-
-    // check if write increase data length
-    if (custom_fds[target_fd].data_offset > custom_fds[target_fd].data_len)
-    {
-        // increase data length to match offset 
-        custom_fds[target_fd].data_len = custom_fds[target_fd].data_offset;
-    }
-
-    return len;
+    return(bytes_written);
 }
 
 // Hook for fseek()  -- untested
@@ -191,8 +176,7 @@ int __wrap__close(int fd) {
         return -1;
     }
 
-    // Call your custom file system close logic here
-    // my_fs_close(&custom_fds[target_fd].my_fs_handle);
+    picofs_close(target_fd);
     
     custom_fds[target_fd].in_use = false;
     return 0;

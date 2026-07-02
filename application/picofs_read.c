@@ -113,15 +113,11 @@ int picofs_read(int fd, char *ptr, int len)
 int picofs_list_all_files(void)
 {
     int err = -1;
+    int i;
     u8_t *p = FS_FLASH_START;
-    //  u8_t *next = NULL; 
     FILE_HEADER_T *h = NULL;
-    u8_t best_sequence = 0;
-    bool first_sequnce = false;
 
-    // TEST TEST TEST
-    picofs_load_test_data();
-
+    // scan flash
     while (((char *)p) < (FS_FLASH_END - sizeof(FILE_HEADER_T) - sizeof(FILE_TRAILER_T)))
     {        
         h = (FILE_HEADER_T *)p;
@@ -129,7 +125,7 @@ int picofs_list_all_files(void)
         if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
             (h->picofs_version == FS_VERION))
         {
-            picofs_printf("%08d\t%s\n", h->file_size, h->name);
+            picofs_printf("%08d\t%d\t%s\n", h->file_size, h->file_sequence, h->name);
 
             p += h->file_size;
         }
@@ -139,6 +135,20 @@ int picofs_list_all_files(void)
         }
     }
 
+    // scan cache
+    for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    {
+        if (custom_fds[i].cache) 
+        {
+            h = (FILE_HEADER_T *)custom_fds[i].cache;
+
+            if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
+                (h->picofs_version == FS_VERION))
+            {
+                picofs_printf("%08d\t%d\t%s*\n", h->file_size, h->file_sequence, h->name);
+            }
+        }
+    }    
 
     return(err);
 }
@@ -366,8 +376,8 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
 
     start_tick = xTaskGetTickCount();
 
-    size += sizeof(FILE_HEADER_T);
-    size += sizeof(FILE_TRAILER_T);    
+    // size += sizeof(FILE_HEADER_T);
+    // size += sizeof(FILE_TRAILER_T);    
     
     contiguous_pages_required = size/256 + size%256?1:0;
 
@@ -412,7 +422,90 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
     if (!err)
     {
         printf("Found erased region starting @%p with size %d in %d ms\n", *start_of_area, size, elapsed_ticks);
+        hex_dump(*start_of_area, 16);
     }
     
+    return(err);
+}
+
+/*!
+ * \brief Print a list of all files in the file system
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_create_file_header(int fd, char *name)
+{
+    int err = -1;
+    u8_t *p = FS_FLASH_START;
+    //  u8_t *next = NULL; 
+    FILE_HEADER_T *h = NULL;
+    u8_t best_sequence = 0;
+    bool first_sequnce = false;
+    u8_t file_id_map[32];
+    u8_t file_id_bit;
+    u8_t file_id_byte;
+    u8_t file_id = 255;
+    FILE_HEADER_T *header;
+
+    // initialize file id map
+    memset(file_id_map, 0, sizeof(file_id_map));
+
+    // scan flash to find all file_ids and record them in a bitmap
+    while (((char *)p) < (FS_FLASH_END - sizeof(FILE_HEADER_T) - sizeof(FILE_TRAILER_T)))
+    {        
+        h = (FILE_HEADER_T *)p;
+
+        if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
+            (h->picofs_version == FS_VERION))
+        {
+            // update file_id bitmap
+            file_id_byte = h->file_id/8;
+            file_id_bit = h->file_id%8;
+            file_id_map[file_id_byte] |= (1<<file_id_bit);
+
+            p += h->file_size;
+        }
+        else
+        {
+            p++;
+        }
+    }
+
+    // TODO need to also scan all inuse file descriptor for file_ids existing only in cache <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    // scan file_id bitmap to find an unused file_id
+    for (file_id_byte=0; file_id_byte < 32; file_id_byte++)
+    {
+        if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
+        {
+            file_id = file_id_byte*8 + file_id_bit;
+            break;
+        }
+    }
+
+    // if file_id is valid and cache is allocated
+    if ((file_id != 255) && custom_fds[fd].cache)
+    {
+        header = (FILE_HEADER_T *)custom_fds[fd].cache;
+        
+        //TODO Consider MUTEX to prevent collision if two tasks try to create a file at once perhaps audit during erase when cpu locked
+        //NB this is mainly caused by having a unique file_id that is not actually used at present
+       
+        STRNCPY(header->magic_number, "pfs", sizeof(header->magic_number));                                                            
+        header->picofs_version = FS_VERION;
+        header->file_id = file_id;
+        header->file_sequence = 0;
+        header->file_padding= 0;
+        header->file_size = sizeof(FILE_HEADER_T) + header->file_padding + sizeof(FILE_TRAILER_T);
+        header->crc = 0;
+        STRNCPY(header->name, name, sizeof(header->name));
+
+        err = 0;
+    }
+
     return(err);
 }

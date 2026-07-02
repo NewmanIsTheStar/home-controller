@@ -69,5 +69,8 @@ int picofs_fd_initialize(int fd, FILE_HEADER_T *header);
 int picofs_allocate_cache(int fd);
 int picofs_open(int fd, char *name, int flags);
 int picofs_read(int fd, char *ptr, int len);
+int picofs_write(int fd, char *ptr, int len);
+int picofs_create_file_header(int fd, char *name);
+int picofs_close(int fd);
 
 #endif

@@ -144,26 +144,33 @@ int picofs_open(int fd, char *name, int flags)
                     {
                         // populate cache
                         memcpy(custom_fds[fd].cache, custom_fds[fd].file, custom_fds[fd].file_len);
+
+                        // increment sequence
+                        ((FILE_HEADER_T *)custom_fds[fd].cache)->file_sequence++;
                     }
                     else
                     {
                         err = -3;
                     }
                 }
-            }
+            
+                if (!err && (flags & O_APPEND))
+                {
+                    printf("APPEND flag\n");
+                    custom_fds[fd].data_offset = custom_fds[fd].data_len;
+                }
 
-            if (!err && (flags & O_APPEND))
-            {
-                custom_fds[fd].data_offset = custom_fds[fd].data_len;   //TODO: set data len
-            }
+                if (!err && (flags & O_TRUNC))
+                {
+                    printf("TRUNCATE flag\n");
+                    // truncate file
+                    custom_fds[fd].data_offset = 0;
+                    custom_fds[fd].file_len = sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);
+                    custom_fds[fd].data_len = 0;
 
-            if (!err && (flags & O_TRUNC))
-            {
-                custom_fds[fd].data_offset = 0;
-                custom_fds[fd].file_len = sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);
-                custom_fds[fd].data_len = 0;
-
-                // need to update file header in RAM
+                    // update file header in RAM
+                    custom_fds[fd].file_header->file_size = custom_fds[fd].file_len;
+                }
             }            
         }  
         else if (flags & FREAD)
@@ -178,10 +185,18 @@ int picofs_open(int fd, char *name, int flags)
         // file does not exit
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
+            // create empty file descriptor
             picofs_fd_initialize(fd, NULL);
+
+            // allocate cache for file descriptor
             err = picofs_allocate_cache(fd);
 
-            //need to generate file header in RAM
+            // create file header in cache
+            if(!picofs_create_file_header(fd, name))
+            {
+                // reininitialize the file descriptor using the file header
+                picofs_fd_initialize(fd, (FILE_HEADER_T *)custom_fds[fd].cache);
+            }
         }
     }
 
@@ -304,15 +319,16 @@ bool picofs_file_in_use(char *file_header)
 int picofs_find_by_name(char *filename, char **header)
 {
     int err = -1;
+    int i;
     u8_t *p = FS_FLASH_START;
-    //  u8_t *next = NULL; 
     FILE_HEADER_T *h = NULL;
     u8_t best_sequence = 0;
-    bool first_sequnce = false;
+    bool first_sequnce = true;
 
     // TEST TEST TEST
-    picofs_load_test_data();
+    //picofs_load_test_data();
 
+    // scan flash
     while (((char *)p) < FS_FLASH_END)
     {
         h = (FILE_HEADER_T *)p;
@@ -322,21 +338,24 @@ int picofs_find_by_name(char *filename, char **header)
             (strcmp(h->name, filename) == 0))
         {
             // match
-            if (!first_sequnce)
+            if (first_sequnce)
             {
                 best_sequence = h->file_sequence;
                 *header = (char *)h;
                 err = 0;
-                p = p + sizeof(FILE_HEADER_T) + h->file_size /*+ h->file_padding*/ + sizeof(FILE_TRAILER_T);  //TODO: check and correct
+                p = p + sizeof(FILE_HEADER_T) + h->file_size + sizeof(FILE_TRAILER_T);  
+
+                first_sequnce = false;
             }
             else
             {
-                if ((h->file_sequence - best_sequence) < 128)
+                // TEST TEST TEST if ((h->file_sequence - best_sequence) < 128)
+                if (h->file_sequence > best_sequence)
                 {
                     best_sequence = h->file_sequence;
                     *header = (char *)h;
                     err = 0;
-                    p = p + sizeof(FILE_HEADER_T) + h->file_size /*+ h->file_padding*/ + sizeof(FILE_TRAILER_T);                  
+                    p = p + sizeof(FILE_HEADER_T) + h->file_size + sizeof(FILE_TRAILER_T);                  
                 }
             }
         }
@@ -347,6 +366,29 @@ int picofs_find_by_name(char *filename, char **header)
         }
     }
 
+    printf("file: %s best_sequence %d\n", filename, best_sequence);
+
+    // scan cache
+    for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    {
+        if (custom_fds[i].cache) 
+        {
+            h = (FILE_HEADER_T *)custom_fds[i].cache;
+
+            if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
+                (h->picofs_version == FS_VERION) &&
+                (strcmp(h->name, filename) == 0))
+            {
+                printf("file: %s cache override with sequence %d\n", filename, h->file_sequence);
+                // we presume the cache version is the latest so don't check sequence
+                *header = (char *)h;
+                err = 0;                
+                break;
+            }
+        }
+    }
+
+    printf("file: %s best_sequence %d\n", filename, best_sequence);
 
     return(err);
 }
