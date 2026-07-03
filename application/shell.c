@@ -756,13 +756,17 @@ int shell_edit(char *filename)
     FILE *filePointer;
     char buffer[256];
 
+    // remember name of file under edit NB: if we fail to open an existing file then it will be created 
+    STRNCPY(web.edit_text_filename, filename, sizeof(web.edit_text_filename));
+
     // open the file in read mode ("r")
     filePointer = fopen(filename, "r");
 
     // check if the file exists and opened successfully
     if (filePointer == NULL) 
     {
-        shell_printf_nb("cat: %s: No such file\n", filename);
+        //shell_printf_nb("edit: %s: No such file\n", filename);
+        shell_printf_nb("edit: creating new file: %s\n", filename);
         return 1; 
     }
 
@@ -781,9 +785,6 @@ int shell_edit(char *filename)
 
     // close the file to free up system resources
     fclose(filePointer);
-
-    // remember name of file under edit
-    STRNCPY(web.edit_text_filename, filename, sizeof(web.edit_text_filename));
 
     return 0;
 }
