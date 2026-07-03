@@ -80,8 +80,6 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 //static variables
 
- 
-//int bytes_written = my_fs_write(&custom_fds[target_fd].my_fs_handle, ptr, len);
 
 int picofs_write(int fd, char *ptr, int len)
 {
@@ -113,7 +111,7 @@ int picofs_write(int fd, char *ptr, int len)
     }
 
     // update file header (as this will may be used by another file descriptor to open the cached file)
-    ((FILE_HEADER_T *) custom_fds[fd].cache)->file_size = sizeof(FILE_HEADER_T) + custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
+    //((FILE_HEADER_T *) custom_fds[fd].cache)->file_size = sizeof(FILE_HEADER_T) + custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
 
     if (err)
     {

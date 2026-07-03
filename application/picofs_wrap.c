@@ -1,9 +1,12 @@
+//#define _GNU_SOURCE 
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include "pluto.h"
 #include "picofs.h"
+//#include <unistd.h>
 
 // Example placeholder for your custom file system handle
 
@@ -190,5 +193,43 @@ int __wrap__fstat(int fd, struct stat *st) {
 
 int _isatty(int fd) {
     if (fd < 3) return 1; // Stdin, stdout, stderr are tty devices
+    return 0;
+}
+
+int __wrap__unlink(const char *name) 
+{
+
+    // find a free slot in custom_fds
+    int fd = -1;
+    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    {
+        if (!custom_fds[i].in_use) 
+        {
+            fd = i;
+            break;
+        }
+    }
+    
+    if (fd == -1) 
+    {
+        errno = ENFILE; // Too many open files
+        return -1;
+    }
+
+    if (picofs_open(fd, (char *)name, O_WRONLY))
+    {
+        errno = ENOENT; // File not found
+        return -1;
+    }
+
+    custom_fds[fd].in_use = true;
+
+    custom_fds[fd].file_status = 1;  // mark for deletion
+    custom_fds[fd].data_len = 0;     // empty file
+ 
+    picofs_close(fd);
+    
+    custom_fds[fd].in_use = false;
+
     return 0;
 }

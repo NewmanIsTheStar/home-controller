@@ -18,7 +18,7 @@ typedef struct file_header
     u8_t picofs_version;
     u8_t file_id;     
     u8_t file_sequence;
-    u8_t file_padding;
+    u8_t file_status;
     u32_t file_size;        
     u32_t crc;
     char name[16];
@@ -29,6 +29,7 @@ typedef struct
     bool in_use;
     char *file;                  // flash: file starting from header
     size_t file_len;             // flash: length of file including all overhead   
+    u8_t file_status;            // flash: file status  
     char *cache;                 // RAM: file starting from header
     size_t cache_len;            // RAM: cache size
     FILE_HEADER_T *file_header;  // flash or RAM: file header
@@ -72,5 +73,7 @@ int picofs_read(int fd, char *ptr, int len);
 int picofs_write(int fd, char *ptr, int len);
 int picofs_create_file_header(int fd, char *name);
 int picofs_close(int fd);
+int picofs_delete(char *filename);
+int picofs_is_latest_file_sequence(char *filename, u8_t sequence);
 
 #endif

@@ -1,3 +1,4 @@
+//#define _GNU_SOURCE 
 #include "lwip/opt.h"
 #include "lwip/apps/httpd.h"
 #include "lwip/apps/fs.h"
@@ -7,6 +8,8 @@
 #include "pluto.h"
 #include "shell.h"
 #include "ping_core.h"
+#include <stdio.h>
+//#include <unistd.h>
 
 // defines
 #define ITEM_BUF_LEN (128)
@@ -314,6 +317,10 @@ static void execute_shell_command(const char* cmd)
     {        
         if (strlen(cmd) > 5) shell_hex_dump((char *)cmd+3);   
     } 
+    else if (strncmp(cmd, "rm ", 3) == 0) 
+    {
+        if (strlen(cmd) > 4) remove((char *)(cmd+3));  
+    }     
     else if (strncmp(cmd, "uptime", 4) == 0) 
     {                
         get_delta_string_from_delta_seconds(reply, ITEM_BUF_LEN, unix_time - web.boot_time);

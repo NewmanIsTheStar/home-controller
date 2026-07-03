@@ -136,44 +136,110 @@ void hex_dump_to_string(const uint8_t *bptr, uint32_t len, char *out_string, int
 }
 
 
+// /*!
+//  * \brief print hex dump of buffer
+//  *
+//  * \return nothing
+//  */
+// void hex_dump(const uint8_t *bptr, uint32_t len) {
+//     unsigned int i = 0;
+
+//     printf("dump_bytes %lu", len);
+//     for (i = 0; i < len;i++) {
+//         if ((i & 0x0f) == 0) {
+//             printf("\n");
+//         } else if ((i & 0x07) == 0) {
+//             printf(" ");
+//         }
+//         printf("%02x ", bptr[i]);
+//     }
+//     printf("\n");
+
+//     printf("dump_chars %d", len);
+//     for (i = 0; i < len;i++) {
+//         if ((i & 0x0f) == 0) {
+//             printf("\n");
+//         } else if ((i & 0x07) == 0) {
+//             printf(" ");
+//         }
+//         if (isprint(bptr[i]))
+//         {
+//             printf("%c", bptr[i]);
+//         }
+//         else
+//         {
+//             printf("-", bptr[i]);
+//         }
+//     }
+//     printf("\n");
+// }
+
+#define HEX_DUMP_BYTE_PER_LINE (32)
 /*!
  * \brief print hex dump of buffer
  *
  * \return nothing
  */
-void hex_dump(const uint8_t *bptr, uint32_t len) {
-    unsigned int i = 0;
+void hex_dump(const uint8_t *bptr, uint32_t len)
+{
+    size_t bytes_remaining = 0;
+    size_t bytes_on_line = 0;
+    char output_line[160];
+    char output_byte[8];
+    int i = 0;
+    int line = 0;
 
-    printf("dump_bytes %lu", len);
-    for (i = 0; i < len;i++) {
-        if ((i & 0x0f) == 0) {
-            printf("\n");
-        } else if ((i & 0x07) == 0) {
-            printf(" ");
-        }
-        printf("%02x ", bptr[i]);
-    }
-    printf("\n");
+    printf("hexdump address = %08p length = %08x\n", bptr, len);
 
-    printf("dump_chars %d", len);
-    for (i = 0; i < len;i++) {
-        if ((i & 0x0f) == 0) {
-            printf("\n");
-        } else if ((i & 0x07) == 0) {
-            printf(" ");
-        }
-        if (isprint(bptr[i]))
+    for(line = 0; line < ((len+(HEX_DUMP_BYTE_PER_LINE-1))/HEX_DUMP_BYTE_PER_LINE); line++)
+    {
+        bytes_remaining = len - line*HEX_DUMP_BYTE_PER_LINE;
+
+        if(bytes_remaining > HEX_DUMP_BYTE_PER_LINE)
         {
-            printf("%c", bptr[i]);
+            bytes_on_line = HEX_DUMP_BYTE_PER_LINE;
         }
         else
         {
-            printf("-", bptr[i]);
-        }
-    }
-    printf("\n");
-}
+            bytes_on_line = bytes_remaining;
+        }        
 
+        if(bytes_remaining)
+        {
+            output_line[0] = 0;
+
+            for (i = 0; i < bytes_on_line;i++) 
+            {
+                snprintf(output_byte, sizeof(output_byte), "%02x ", bptr[line*HEX_DUMP_BYTE_PER_LINE+i]);
+                STRAPPEND(output_line, output_byte);
+            }            
+
+             // add extra padding if less than HEX_DUMP_BYTE_PER_LINE bytes left(i.e. last line)
+            for (; i<HEX_DUMP_BYTE_PER_LINE; i++)
+            {
+                STRAPPEND(output_line, "   ");
+            }
+
+            STRAPPEND(output_line, " ");  
+            for (i = 0; i < bytes_on_line; i++) 
+            {
+                if (isprint(bptr[line*HEX_DUMP_BYTE_PER_LINE+i]))
+                {
+                   snprintf(output_byte, sizeof(output_byte), "%c", bptr[line*HEX_DUMP_BYTE_PER_LINE+i]);
+                   STRAPPEND(output_line, output_byte);
+                }
+                else
+                {
+                    snprintf(output_byte, sizeof(output_byte), "-");
+                    STRAPPEND(output_line, output_byte);
+                }
+            }
+
+            STRAPPEND(output_line, "\n");
+            printf("%s", output_line);                
+        }        
+    }
+}
 
 
 

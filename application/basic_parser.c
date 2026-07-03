@@ -238,7 +238,8 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
               }
               else
               {
-                  strcpy( pcActivePos, psContext->acToken );
+                  //strcpy(pcActivePos, psContext->acToken);
+                  STRNCPY(pcActivePos, psContext->acToken, sizeof(psContext->acToken));  // this deals with acToken being truncated but still assumes enough space left in output buffer (which is huge)
                   pcActivePos += nLength;
               }
               iLineFeed = 1;
@@ -1180,9 +1181,7 @@ void syntax_error(int error)
                 linecount++;
             }
         }
-
-        printf("0: program start = %p print error line = %p\n", psContext->pcProgram, p);
-        
+      
         /*Print file name and line number where error occured*/
         basic_printf(" in %s at line %d\n", psContext->acFileName, linecount);
 
@@ -1194,8 +1193,6 @@ void syntax_error(int error)
         {
         }
 
-        printf("1: program start = %p print error line = %p\n", psContext->pcProgram, p);
-
         /*Go back two lines if possible*/
         if (p>psContext->pcProgram)
         {
@@ -1206,8 +1203,6 @@ void syntax_error(int error)
             }
             //if (*p!='\n') p++;  // Newman removed as it truncated the first character of the line -- I guess it had something to do with DOS EOL \r\n
         }
-
-        printf("2: program start = %p print error line = %p\n", psContext->pcProgram, p);
 
         /*Print out the lines*/
         for(; p<=temp; p++)

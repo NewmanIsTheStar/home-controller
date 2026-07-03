@@ -125,7 +125,14 @@ int picofs_list_all_files(void)
         if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
             (h->picofs_version == FS_VERION))
         {
-            picofs_printf("%08d\t%d\t%s\n", h->file_size, h->file_sequence, h->name);
+            //picofs_printf("CHECKING %08d\t%d\t%s\n", h->file_size, h->file_sequence, h->name);
+            if (picofs_is_latest_file_sequence(h->name, h->file_sequence))
+            {
+                if (!h->file_status)  // not deleted
+                {
+                    picofs_printf("%08d\t%d\t%s\n", h->file_size, h->file_sequence, h->name);
+                }
+            }
 
             p += h->file_size;
         }
@@ -135,24 +142,67 @@ int picofs_list_all_files(void)
         }
     }
 
-    // scan cache
-    for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
-    {
-        if (custom_fds[i].cache) 
-        {
-            h = (FILE_HEADER_T *)custom_fds[i].cache;
+    // // scan cache
+    // for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    // {
+    //     if (custom_fds[i].cache) 
+    //     {
+    //         h = (FILE_HEADER_T *)custom_fds[i].cache;
 
-            if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
-                (h->picofs_version == FS_VERION))
-            {
-                picofs_printf("%08d\t%d\t%s*\n", h->file_size, h->file_sequence, h->name);
-            }
-        }
-    }    
+    //         if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
+    //             (h->picofs_version == FS_VERION))
+    //         {
+    //             picofs_printf("%08d\t%d\t%s*\n", h->file_size, h->file_sequence, h->name);
+    //         }
+    //     }
+    // }    
 
     return(err);
 }
 
+/*!
+ * \brief Print a list of all files in the file system
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_is_latest_file_sequence(char *filename, u8_t sequence)
+{
+    int found = 1;
+    int i;
+    u8_t *p = FS_FLASH_START;
+    FILE_HEADER_T *h = NULL;
+
+    //picofs_printf("Checking %s seq %d\n", filename, sequence);
+
+    // scan flash
+    while (((char *)p) < (FS_FLASH_END - sizeof(FILE_HEADER_T) - sizeof(FILE_TRAILER_T)))
+    {        
+        h = (FILE_HEADER_T *)p;
+
+        if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
+            (h->picofs_version == FS_VERION) &&
+            (strcmp(h->name, filename) == 0))
+        {
+            if (h->file_sequence > sequence)  // TODO: handle wrap around
+            {
+               found = 0;  // we found a later sequence
+               break;
+            }
+
+            p += h->file_size;
+        }
+        else
+        {
+            p++;
+        }
+    }
+
+    return(found);
+}
 
 
 int picofs_load_test_data(void)
@@ -167,12 +217,12 @@ int picofs_load_test_data(void)
         test_filesystem[0].test_header.picofs_version = 0;
         test_filesystem[0].test_header.file_id = 0;    
         test_filesystem[0].test_header.file_sequence = 0;  
-        test_filesystem[0].test_header.file_padding = 0; 
+        test_filesystem[0].test_header.file_status = 0; 
         test_filesystem[0].test_header.file_size = 0; 
         test_filesystem[0].test_header.crc = 0;
         STRNCPY(test_filesystem[0].test_header.name, "elephant", sizeof("elephant"));  
         STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
-        test_filesystem[0].test_header.file_size = sizeof(FILE_HEADER_T) + strlen(test_filesystem[0].test_data) + 1 + test_filesystem[0].test_header.file_padding + sizeof(FILE_TRAILER_T);
+        test_filesystem[0].test_header.file_size = sizeof(FILE_HEADER_T) + strlen(test_filesystem[0].test_data) + 1 + sizeof(FILE_TRAILER_T);
         STRNCPY(test_filesystem[0].test_trailer.magic_number, "spf", sizeof(test_filesystem[0].test_trailer.magic_number));
         test_filesystem[0].test_trailer.crc = 0;
 
@@ -180,12 +230,12 @@ int picofs_load_test_data(void)
         test_filesystem[1].test_header.picofs_version = 0;
         test_filesystem[1].test_header.file_id = 0;    
         test_filesystem[1].test_header.file_sequence = 1;  
-        test_filesystem[1].test_header.file_padding = 0; 
+        test_filesystem[1].test_header.file_status = 0; 
         test_filesystem[1].test_header.file_size = 0; 
         test_filesystem[1].test_header.crc = 0;
         STRNCPY(test_filesystem[1].test_header.name, "monkey", sizeof("monkey"));
         STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
-        test_filesystem[1].test_header.file_size = sizeof(FILE_HEADER_T) + strlen(test_filesystem[1].test_data) + 1 + test_filesystem[0].test_header.file_padding + sizeof(FILE_TRAILER_T);
+        test_filesystem[1].test_header.file_size = sizeof(FILE_HEADER_T) + strlen(test_filesystem[1].test_data) + 1 + sizeof(FILE_TRAILER_T);
         STRNCPY(test_filesystem[1].test_trailer.magic_number, "spf", sizeof(test_filesystem[1].test_trailer.magic_number));    
         test_filesystem[1].test_trailer.crc = 0; 
     
@@ -195,17 +245,7 @@ int picofs_load_test_data(void)
     return (0);
 }
 
-// typedef struct file_header
-// {
-//     u8_t magic_number[4];
-//     u8_t picofs_version;
-//     u8_t file_id;     
-//     u8_t file_sequence;
-//     u8_t file_padding;
-//     u32_t file_size;        
-//     u32_t crc;
-//     char name[16];
-// } FILE_HEADER_T;
+
 
 // REAL FLASH
 // #define FLASH_SCAN_START (0x10000000UL)
@@ -421,8 +461,8 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
     
     if (!err)
     {
-        printf("Found erased region starting @%p with size %d in %d ms\n", *start_of_area, size, elapsed_ticks);
-        hex_dump(*start_of_area, 16);
+        // printf("Found erased region starting @%p with size %d in %d ms\n", *start_of_area, size, elapsed_ticks);
+        // hex_dump(*start_of_area, 16);
     }
     
     return(err);
@@ -467,12 +507,24 @@ int picofs_create_file_header(int fd, char *name)
             file_id_bit = h->file_id%8;
             file_id_map[file_id_byte] |= (1<<file_id_bit);
 
+            // check for deleted file with the same name!
+            if ((strcmp(name, h->name) == 0) && (h->file_sequence > best_sequence))
+            {
+                best_sequence = h->file_sequence;
+            }
+
             p += h->file_size;
         }
         else
         {
             p++;
         }
+    }
+
+    // we found a deleted file with the same name so start with the next sequence number when creating the new file
+    if (best_sequence)
+    {
+        best_sequence++;
     }
 
     // TODO need to also scan all inuse file descriptor for file_ids existing only in cache <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -498,9 +550,9 @@ int picofs_create_file_header(int fd, char *name)
         STRNCPY(header->magic_number, "pfs", sizeof(header->magic_number));                                                            
         header->picofs_version = FS_VERION;
         header->file_id = file_id;
-        header->file_sequence = 0;
-        header->file_padding= 0;
-        header->file_size = sizeof(FILE_HEADER_T) + header->file_padding + sizeof(FILE_TRAILER_T);
+        header->file_sequence = best_sequence;
+        header->file_status= 0;
+        header->file_size = sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);
         header->crc = 0;
         STRNCPY(header->name, name, sizeof(header->name));
 

@@ -88,6 +88,8 @@ int picofs_close(int fd)
     int err = -1;
     int i;
     u8_t *erased_area;
+    FILE_HEADER_T *h = NULL;
+    FILE_TRAILER_T *t = NULL;
 
     if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
     {
@@ -101,14 +103,28 @@ int picofs_close(int fd)
 
     if (custom_fds[fd].cache)
     {
-        if (!picofs_find_contiguous_free_area(custom_fds[fd].file_header->file_size, &erased_area))
+        // update header
+        h = (FILE_HEADER_T *)(custom_fds[fd].cache);
+
+        // calulate file size prior to padding
+        h->file_size = custom_fds[fd].data_len + sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);
+        h->file_status = custom_fds[fd].file_status;
+
+        // add trailer
+        t = (FILE_TRAILER_T *)(custom_fds[fd].cache + sizeof(FILE_HEADER_T) + custom_fds[fd].data_len);
+        t->crc = 0;
+        STRNCPY(t->magic_number, "sfp", sizeof(t->magic_number)); 
+
+        if (!picofs_find_contiguous_free_area(h->file_size, &erased_area))
         {
-            memcpy(erased_area, custom_fds[fd].cache, custom_fds[fd].file_header->file_size);
+            // printf("about to copy out of cache into flash\n");
+            // hex_dump(custom_fds[fd].cache, h->file_size);
+            memcpy(erased_area, custom_fds[fd].cache, h->file_size);
             err = 0;
         }
         else
         {
-            printf("picoFS: out of space writing %s to flash\n", custom_fds[fd].file_header->name);
+            printf("picoFS: out of space writing %s to flash\n", h->name);
             err = -2;
         }
 
@@ -125,7 +141,7 @@ int picofs_close(int fd)
         custom_fds[fd].data_offset = 0;
     }
     
-    hex_dump((const char *)test_filesystem, sizeof(test_filesystem));
+    //hex_dump((const char *)test_filesystem, sizeof(test_filesystem));
      
     return(err);
 }

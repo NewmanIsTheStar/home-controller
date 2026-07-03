@@ -53,7 +53,8 @@ void basic_Let(void)
 
 	// get the variable name
 	cDestinationType = get_token();
-    strcpy(acName, psContext->acToken);
+    //strcpy(acName, psContext->acToken);
+    STRNCPY(acName, psContext->acToken, sizeof(acName));
     
     // check if this is an array variable
     if (psContext->pcProgramCounter[0] == '(')
@@ -1754,12 +1755,14 @@ void basic_Open(void)
 	{
 		/*Get file name from string variable*/
         iIndex = find_Variable(psContext->acToken, psContext->eTokenType);
-        strcpy(acFileName, psContext->asStringVariables[iIndex].acValue);
+        //strcpy(acFileName, psContext->asStringVariables[iIndex].acValue);
+        STRNCPY(acFileName, psContext->asStringVariables[iIndex].acValue, sizeof(acFileName));
 	}
 	else
 	{
 		/*literal name*/
-		strcpy(acFileName, psContext->acToken);
+		//strcpy(acFileName, psContext->acToken);
+        STRNCPY(acFileName, psContext->acToken, sizeof(acFileName));
 	}
 
     /*Get Mode*/
@@ -1896,6 +1899,7 @@ void basic_PrintToFile(void)
 {
     char acOutput[5000];
     int iFileNumber;
+    int err = 0;
 
 
 
@@ -1922,8 +1926,9 @@ void basic_PrintToFile(void)
 
     eval_StringLine(acOutput, sizeof(acOutput), 1);
 
-    fprintf(psContext->apFileHandles[iFileNumber], "%s", acOutput);
-
+    printf("Basic printToFile calling printf with %s\n", acOutput);
+    err = fprintf(psContext->apFileHandles[iFileNumber], "%s", acOutput);
+    printf("Basic printToFile printf returned %d\n", err);
 }
 
 
@@ -2132,8 +2137,10 @@ void basic_InputFromFile(void)
                     //basic_printf("GOT OPENING QUOTE: %s\n", psContext->asStringVariables[var].acValue);
 
                     /*Do a memmove without using microsofts buggy function*/
-                    strcpy(acTemp, psContext->asStringVariables[var].acValue+1);
-                    strcpy(psContext->asStringVariables[var].acValue,acTemp);
+                    //strcpy(acTemp, psContext->asStringVariables[var].acValue+1);
+                    STRNCPY(acTemp, psContext->asStringVariables[var].acValue+1, sizeof(acTemp));
+                    //strcpy(psContext->asStringVariables[var].acValue,acTemp);
+                    STRNCPY(psContext->asStringVariables[var].acValue,acTemp, sizeof(psContext->asStringVariables[var].acValue));
 
                     //basic_printf("REMOVED OPENING QUOTE: %s\n", psContext->asStringVariables[var].acValue);
 
@@ -2173,7 +2180,8 @@ void basic_InputFromFile(void)
             }
             else
             {
-                strcpy(psContext->asStringVariables[var].acValue, "EOF");  //indicates end of file
+                //strcpy(psContext->asStringVariables[var].acValue, "EOF");  //indicates end of file
+                STRNCPY(psContext->asStringVariables[var].acValue, "EOF", sizeof(psContext->asStringVariables[var].acValue));  //indicates end of file
             }
 	    }
 	    else
@@ -2269,12 +2277,14 @@ void basic_Run(void)
     {
         /*String Variable*/
         iIndex = find_Variable(psContext->acToken, STRINGVARIABLE);
-        strcpy(acProgramName, psContext->asStringVariables[iIndex].acValue);
+        //strcpy(acProgramName, psContext->asStringVariables[iIndex].acValue);
+        STRNCPY(acProgramName, psContext->asStringVariables[iIndex].acValue, sizeof(acProgramName));
     }
     else
     {
        /*Assume Literal String or quoted string*/
-       strcpy(acProgramName, psContext->acToken);
+       //strcpy(acProgramName, psContext->acToken);
+       STRNCPY(acProgramName, psContext->acToken, sizeof(acProgramName));
     }
 
 
@@ -2449,7 +2459,8 @@ void basic_Shared(void)
         {
             if (strcmp(psContext->acSharedVariables[iIndex], "UNUSED SHARED VARIABLE") == 0)
             {
-                strcpy(psContext->acSharedVariables[iIndex], psContext->acToken);
+                //strcpy(psContext->acSharedVariables[iIndex], psContext->acToken);
+                STRNCPY(psContext->acSharedVariables[iIndex], psContext->acToken, sizeof(psContext->acSharedVariables[iIndex]));
                 break;
             }
         }
@@ -2497,7 +2508,8 @@ void basic_Common(void)
         {
             if (strcmp(psContext->acCommonVariables[iIndex], "UNUSED COMMON VARIABLE") == 0)
             {
-                strcpy(psContext->acCommonVariables[iIndex], psContext->acToken);
+                //strcpy(psContext->acCommonVariables[iIndex], psContext->acToken);
+                STRNCPY(psContext->acCommonVariables[iIndex], psContext->acToken, sizeof(psContext->acCommonVariables[iIndex]));
                 break;
             }
         }
@@ -2854,7 +2866,8 @@ void basic_Dim(void)
         {
             if (psContext->asArrayVariables[iIndex].pcValue == NULL)
             {
-                strcpy(psContext->asArrayVariables[iIndex].acName, psContext->acToken);
+                //strcpy(psContext->asArrayVariables[iIndex].acName, psContext->acToken);
+                STRNCPY(psContext->asArrayVariables[iIndex].acName, psContext->acToken, sizeof(psContext->asArrayVariables[iIndex].acName));
                 break;
             }
         }

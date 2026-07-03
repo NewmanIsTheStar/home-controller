@@ -122,9 +122,7 @@ int picofs_open(int fd, char *name, int flags)
     int open_mode = 0;
 
     if (!picofs_find_by_name(name, &file_header))
-    {
-        printf("open called with flags = %08x\n", flags);
-        
+    {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
         // we transform them into more sensible bit flags in the two least significant bits for easier processing
         open_mode = (flags + 1) & (O_ACCMODE);
@@ -147,6 +145,9 @@ int picofs_open(int fd, char *name, int flags)
 
                         // increment sequence
                         ((FILE_HEADER_T *)custom_fds[fd].cache)->file_sequence++;
+
+                        // reinitialize the file descriptor using the cache
+                        picofs_fd_initialize(fd, (FILE_HEADER_T *)(custom_fds[fd].cache));
                     }
                     else
                     {
@@ -218,11 +219,12 @@ int picofs_fd_initialize(int fd, FILE_HEADER_T *header)
         {
             custom_fds[fd].file = (char *)header;
             custom_fds[fd].file_len = header->file_size;
+            custom_fds[fd].file_status = header->file_status;
             custom_fds[fd].file_header = header;
             custom_fds[fd].data = custom_fds[fd].file + sizeof(FILE_HEADER_T);
-            if (custom_fds[fd].file_len >= (sizeof(FILE_TRAILER_T) + header->file_padding + sizeof(FILE_HEADER_T)))
+            if (custom_fds[fd].file_len >= (sizeof(FILE_TRAILER_T) + sizeof(FILE_HEADER_T)))
             {
-                custom_fds[fd].data_len = custom_fds[fd].file_len - sizeof(FILE_TRAILER_T) - header->file_padding - sizeof(FILE_HEADER_T);
+                custom_fds[fd].data_len = custom_fds[fd].file_len - sizeof(FILE_TRAILER_T) - sizeof(FILE_HEADER_T);
             }
             else
             {
@@ -235,6 +237,7 @@ int picofs_fd_initialize(int fd, FILE_HEADER_T *header)
         {
             custom_fds[fd].file = NULL;
             custom_fds[fd].file_len = 0;
+            custom_fds[fd].file_status = 0;
             custom_fds[fd].file_header = NULL;
             custom_fds[fd].data = NULL;
             custom_fds[fd].data_len = 0;
@@ -323,6 +326,7 @@ int picofs_find_by_name(char *filename, char **header)
     u8_t *p = FS_FLASH_START;
     FILE_HEADER_T *h = NULL;
     u8_t best_sequence = 0;
+    u8_t best_status = 0;
     bool first_sequnce = true;
 
     // TEST TEST TEST
@@ -341,6 +345,7 @@ int picofs_find_by_name(char *filename, char **header)
             if (first_sequnce)
             {
                 best_sequence = h->file_sequence;
+                best_status = h->file_status;
                 *header = (char *)h;
                 err = 0;
                 p = p + sizeof(FILE_HEADER_T) + h->file_size + sizeof(FILE_TRAILER_T);  
@@ -350,9 +355,10 @@ int picofs_find_by_name(char *filename, char **header)
             else
             {
                 // TEST TEST TEST if ((h->file_sequence - best_sequence) < 128)
-                if (h->file_sequence > best_sequence)
+                if (h->file_sequence > best_sequence)   //TODO handle sequence wrap around
                 {
                     best_sequence = h->file_sequence;
+                    best_status = h->file_status;
                     *header = (char *)h;
                     err = 0;
                     p = p + sizeof(FILE_HEADER_T) + h->file_size + sizeof(FILE_TRAILER_T);                  
@@ -366,29 +372,34 @@ int picofs_find_by_name(char *filename, char **header)
         }
     }
 
-    printf("file: %s best_sequence %d\n", filename, best_sequence);
 
-    // scan cache
-    for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    if (best_status) // file was deleted
     {
-        if (custom_fds[i].cache) 
-        {
-            h = (FILE_HEADER_T *)custom_fds[i].cache;
-
-            if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
-                (h->picofs_version == FS_VERION) &&
-                (strcmp(h->name, filename) == 0))
-            {
-                printf("file: %s cache override with sequence %d\n", filename, h->file_sequence);
-                // we presume the cache version is the latest so don't check sequence
-                *header = (char *)h;
-                err = 0;                
-                break;
-            }
-        }
+        err = -1;
     }
 
-    printf("file: %s best_sequence %d\n", filename, best_sequence);
+
+    // // scan cache
+    // for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    // {
+    //     if (custom_fds[i].cache) 
+    //     {
+    //         h = (FILE_HEADER_T *)custom_fds[i].cache;
+
+    //         if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
+    //             (h->picofs_version == FS_VERION) &&
+    //             (strcmp(h->name, filename) == 0))
+    //         {
+    //             printf("file: %s cache override with sequence %d\n", filename, h->file_sequence);
+    //             // we presume the cache version is the latest so don't check sequence
+    //             *header = (char *)h;
+    //             err = 0;                
+    //             break;
+    //         }
+    //     }
+    // }
+
+    // printf("file: %s best_sequence %d\n", filename, best_sequence);
 
     return(err);
 }

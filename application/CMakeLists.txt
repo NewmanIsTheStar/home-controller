@@ -31,4 +31,5 @@ target_link_options(${PROJECT_NAME} PRIVATE
     "-Wl,--wrap=_write"
     "-Wl,--wrap=_lseek"
     "-Wl,--wrap=_close"
+    "-Wl,--wrap=_unlink"
 )

@@ -176,7 +176,7 @@ typedef struct
 
 typedef struct
 {
-    char acToken[STRING_VAR_LEN];               //Current token string
+    char acToken[160/*STRING_VAR_LEN*/];               //Current token string
     teTokenType eTokenType;                     //Current token type
     teToken eToken;                             //Current token
     char *pcProgramCounter;                     //points into the program

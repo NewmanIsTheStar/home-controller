@@ -372,7 +372,10 @@ int load_program(char *p, char *fname)
 {
     FILE *fp;
     int i=0;
-    const char acProgramTerminator[] = "\r\nEND"; 
+    const char acProgramTerminator[] = "\r\nEND";
+    char *program = NULL;
+    
+    program = p;
 
     if(!(fp=fopen(fname, "rb"))) return 0;
 
@@ -386,7 +389,7 @@ int load_program(char *p, char *fname)
     /*Terminate the program with an END statement*/
     if (i < (PROG_SIZE - sizeof(acProgramTerminator)))
     {
-        strcpy(p-1, acProgramTerminator);  //TODO: this -1 might be incorrect and truncating the last character
+        strcat(program, acProgramTerminator); 
     }
   
     fclose(fp);
@@ -403,6 +406,9 @@ int load_program_from_ram(char *p, char *s, int len)
 {
     int i=0;
     const char acProgramTerminator[] = "\r\nEND\r\n";
+    char *program = NULL;
+
+    program = p;
 
     i = 0;
     do
@@ -414,7 +420,7 @@ int load_program_from_ram(char *p, char *s, int len)
     /*Terminate the program with an END statement*/
     if (i < (PROG_SIZE - sizeof(acProgramTerminator)))
     {
-        strcpy(p, acProgramTerminator);
+        strcat(program, acProgramTerminator);
     }
   
     STRNCPY(psContext->acFileName, "command line", sizeof(psContext->acFileName));
@@ -464,7 +470,8 @@ void scan_labels(void)
     get_token();
     if( (psContext->eTokenType==NUMBER) || (psContext->eTokenType==LABEL) )
     {
-        strcpy(psContext->sLabelTable[0].name, psContext->acToken);
+        //strcpy(psContext->sLabelTable[0].name, psContext->acToken);
+        STRNCPY(psContext->sLabelTable[0].name, psContext->acToken, sizeof(psContext->sLabelTable[0].name));
         psContext->sLabelTable[0].p = psContext->pcProgramCounter;        
     }
 
@@ -479,7 +486,8 @@ void scan_labels(void)
 	        {
                 (addr==-1) ? syntax_error(LAB_TAB_FULL):syntax_error(DUP_LAB);
             }
-            strcpy(psContext->sLabelTable[addr].name, psContext->acToken);
+            //strcpy(psContext->sLabelTable[addr].name, psContext->acToken);
+            STRNCPY(psContext->sLabelTable[addr].name, psContext->acToken, sizeof(psContext->sLabelTable[addr].name));
             
             /* save current location in program */
             psContext->sLabelTable[addr].p = psContext->pcProgramCounter;
@@ -583,7 +591,8 @@ void scan_UserFunctions(void)
 	        {
                 (addr==-1) ? syntax_error(FUNC_TAB_FULL):syntax_error(DUP_FUNC);
             }
-            strcpy(psContext->sUserFunctionTable[addr].name, psContext->acToken);
+            //strcpy(psContext->sUserFunctionTable[addr].name, psContext->acToken);
+            STRNCPY(psContext->sUserFunctionTable[addr].name, psContext->acToken, sizeof(psContext->sUserFunctionTable[addr].name));
             
 
         // find the parameters
@@ -599,17 +608,20 @@ void scan_UserFunctions(void)
             switch(psContext->eTokenType)
             {
             case INTEGERVARIABLE:
-                strcpy(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamInt.acName, psContext->acToken);
+                //strcpy(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamInt.acName, psContext->acToken);
+                STRNCPY(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamInt.acName, psContext->acToken, sizeof(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamInt.acName));
                 psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamInt.iValue = 0;
                 break;
 
             case FLOATVARIABLE:
-                strcpy(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamFlt.acName, psContext->acToken);
+                //strcpy(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamFlt.acName, psContext->acToken);
+                STRNCPY(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamFlt.acName, psContext->acToken, sizeof(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamFlt.acName));
                 psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamFlt.fValue = 0;
                 break;
 
             case STRINGVARIABLE:
-                strcpy(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamStr.acName, psContext->acToken);
+                //strcpy(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamStr.acName, psContext->acToken);
+                STRNCPY(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamStr.acName, psContext->acToken, sizeof(psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamStr.acName));
                 psContext->sUserFunctionTable[addr].asParameters[iParamNum].sParamStr.acValue[0] = 0;
                 break;
 
@@ -746,7 +758,8 @@ int basic_CreateContext(char *pcFileName, char *pcArguments)
                 /*Link context to program and set the Program Counter*/
                 psContext->pcProgram = pcNewProgram;
                 psContext->pcProgramCounter = pcNewProgram;
-                strcpy(psContext->acFileName, pcFileName);
+                //strcpy(psContext->acFileName, pcFileName);
+                STRNCPY(psContext->acFileName, pcFileName, sizeof(psContext->acFileName));
             }
             else
 	        {
