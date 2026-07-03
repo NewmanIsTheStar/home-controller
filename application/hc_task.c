@@ -83,12 +83,15 @@ typedef struct
 int hc_wait(TickType_t timeout);
 int hc_initialize_queue(void);
 int hc_initialize(void);
+int hc_save_text_file_from_ascii_buffer(void);
 
 // external variables
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern char *basic_program;
 extern size_t current_buffer_index;
+extern char ascii_ram_buffer[];
+extern const char *editor_text;
 
 //static variables
 void *watchdog_params = NULL;
@@ -191,6 +194,9 @@ void hc_task(__unused void *params)
                 case HC_CMD_PAGE_NUMBERS:
                     picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_NUMBERS);
                     break;
+                case HC_CMD_SAVE_TEXT_FILE:
+                    hc_save_text_file_from_ascii_buffer();
+                    break;                                        
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);
                     break;
@@ -332,4 +338,39 @@ void hc_load_basic_program(char *program, int len)
     //memcpy(basic_program_buffer, program, len);
     strcpy(basic_program_buffer, program);
     //strcat(basic_program_buffer, "\r\nEND\r\n");  // not needed because interpreter does this when loading from ram
+}
+
+/*!
+ * \brief send a message to the mqtt_task queue
+ *
+ * \param message one byte message
+ * 
+ * \return nothing
+ */
+int hc_save_text_file_from_ascii_buffer(void)
+{
+    FILE *file_ptr = NULL;
+   
+    //printf("Saving file: %s\n", web.edit_text_filename);
+
+    file_ptr = fopen(web.edit_text_filename, "w");
+
+    if (file_ptr == NULL) 
+    {
+        perror("Error opening file");
+        return EXIT_FAILURE;
+    }
+
+    if (fputs(editor_text, file_ptr) == EOF) 
+    {
+        perror("Error writing to file");
+        fclose(file_ptr);
+        return EXIT_FAILURE;
+    }
+
+        fclose(file_ptr);
+
+    //printf("Data successfully saved to output.txt\n");
+
+    return EXIT_SUCCESS;
 }

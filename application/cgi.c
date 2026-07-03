@@ -4015,6 +4015,7 @@ const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], 
     //int new_value = 0;
        
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+    printf("cgi_basic_run_handler\n");
 
     i = 0;
     while (i < iNumParams)
@@ -4040,6 +4041,53 @@ const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], 
     return "/basic.shtml";
 }
 
+/*!
+ * \brief cgi handler
+ *
+ * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+ * \param[in]  iNumParams   number of parameters
+ * \param[in]  pcParam      parameter name
+ * \param[in]  pcValue      parameter value 
+ * 
+ * \return nothing
+ */
+const char * cgi_save_text_file_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+{
+    int i = 0;
+    //int whole_part = 0;
+    //int tenths_part = 0;
+    char *param = NULL;
+    char *value = NULL;
+    //int new_value = 0;
+       
+    //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+    printf("cgi_save_text_file_handler\n");
+
+    i = 0;
+    while (i < iNumParams)
+    {
+        param = pcParam[i];
+        value = pcValue[i];
+
+        if (param && value)
+        {
+            //printf("Parameter: %s has Value: %s\n", param, value);
+                       
+        }
+
+        i++;
+    }
+
+    // tell hc_task to save the file
+    hc_queue_send(HC_CMD_SAVE_TEXT_FILE);
+
+
+    // Send the next page back to the user
+    //config_changed();
+    return "/edit.shtml";
+}
+
 // CGI requests and their respective handlers  --Add new entires at bottom--
 static const tCGI cgi_handlers[] = {
 
@@ -4058,6 +4106,7 @@ static const tCGI cgi_handlers[] = {
 
     // *** application handlers start ***   
      {"/basic_run.cgi",                 cgi_basic_run_handler},  
+     {"/save_text_file.cgi",            cgi_save_text_file_handler},  
 
     // {"/rs_default.cgi",                 cgi_remote_switch_relay_handler},     
     // {"/rs_gpio_max.cgi",                cgi_rs_gpio_max_handler},   

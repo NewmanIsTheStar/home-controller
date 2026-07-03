@@ -163,7 +163,6 @@ int picofs_open(int fd, char *name, int flags)
 
                 if (!err && (flags & O_TRUNC))
                 {
-                    printf("TRUNCATE flag\n");
                     // truncate file
                     custom_fds[fd].data_offset = 0;
                     custom_fds[fd].file_len = sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);

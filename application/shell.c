@@ -30,6 +30,7 @@ extern u32_t unix_time;
 extern WEB_VARIABLES_T web;
 
 // prototypes
+int shell_edit(char *filename);
 int shell_cat(char *filename);
 void shell_printf_nb(const char *format, ...);
 
@@ -87,6 +88,7 @@ char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_PROGRAM_SIZE];
 size_t current_buffer_index = 0;
 bool post_validation_success = true;
 const char *basic_program = ascii_ram_buffer + ASCII_HEADER_SIZE;
+const char *editor_text = ascii_ram_buffer + ASCII_HEADER_SIZE;
 HTTP_RX_TYPE_T current_post = HTTP_RX_UNKNOWN;
 
 static char post_buffer[ITEM_BUF_LEN];
@@ -308,7 +310,11 @@ static void execute_shell_command(const char* cmd)
     else if (strcmp(cmd, "df n") == 0) 
     {
         hc_queue_send(HC_CMD_PAGE_NUMBERS);  
-    }           
+    }   
+    else if (strncmp(cmd, "edit ", 5) == 0) 
+    {
+        if (strlen(cmd) > 6) shell_edit((char *)(cmd+5));  
+    }                 
     else if (strncmp(cmd, "cat ", 4) == 0) 
     {
         if (strlen(cmd) > 5) shell_cat((char *)(cmd+4));  
@@ -418,6 +424,12 @@ int fs_open_custom(struct fs_file *file, const char *name)
 
     if (strcmp(name, "/get_text") == 0) 
     {
+        // if (strlen(ascii_ram_buffer) == sizeof(http_ascii_buffer_header_tmpl))
+        // {
+        //     printf("Inserting Empty File placeholder into ASCII buffer\n");
+        //     strcat(ascii_ram_buffer, "Empty File");
+        // }
+
         size_t len = strlen(ascii_ram_buffer);
         file->data = ascii_ram_buffer;
         file->len = len;
@@ -593,7 +605,8 @@ void httpd_post_finished(void *connection, char *response_uri, uint16_t response
         // 3. Select virtual response path based on validation results
         if (post_validation_success) {
             snprintf(response_uri, response_uri_len, "/post_ok.json");
-            hc_queue_send(HC_CMD_BASIC_SCRIPT);  
+            //hc_queue_send(HC_CMD_BASIC_SCRIPT);    // run basic script after file downloaded  
+            hc_queue_send(HC_CMD_SAVE_TEXT_FILE);    // save text file adfter file downloaded
         } else {
             snprintf(response_uri, response_uri_len, "/post_fail.json");
         }    
@@ -730,6 +743,49 @@ void dump_text_buffer(void)
         printf("%02x ", basic_program[i]);        
     }    
     printf("\n");    
+}
+
+/*!
+ * \brief edit the content of a text file
+ *
+ * \param[in]  filename  file to print to shell
+ * \return nothing
+ */
+int shell_edit(char *filename)
+{
+    FILE *filePointer;
+    char buffer[256];
+
+    // open the file in read mode ("r")
+    filePointer = fopen(filename, "r");
+
+    // check if the file exists and opened successfully
+    if (filePointer == NULL) 
+    {
+        shell_printf_nb("cat: %s: No such file\n", filename);
+        return 1; 
+    }
+
+    // initialize ascii buffer
+    memset(ASCII_HEADER_SIZE + ascii_ram_buffer, 0, sizeof(ascii_ram_buffer) - ASCII_HEADER_SIZE);
+    strcpy(ascii_ram_buffer, http_ascii_buffer_header_tmpl);  // prepend http header to ascii ram buffer
+    
+    // empty the ascii buffer
+    ascii_ram_buffer[ASCII_HEADER_SIZE] = 0;
+
+    // read and print the file line-by-line
+    while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
+    {
+        strcat(&ascii_ram_buffer[ASCII_HEADER_SIZE], buffer);  //TODO: enforce limits
+    }
+
+    // close the file to free up system resources
+    fclose(filePointer);
+
+    // remember name of file under edit
+    STRNCPY(web.edit_text_filename, filename, sizeof(web.edit_text_filename));
+
+    return 0;
 }
 
 /*!

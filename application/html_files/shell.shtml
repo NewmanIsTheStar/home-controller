@@ -107,6 +107,11 @@
             }
             
             window.scrollTo(0, document.body.scrollHeight);
+
+            if (command.includes("edit")) {
+                window.location.href = "/edit.shtml";
+            }
+            
         } 
         
         // Command history navigation (Up Arrow)
