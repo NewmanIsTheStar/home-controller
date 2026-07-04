@@ -117,11 +117,13 @@ O_EXCL: Ensure that this call creates the file; if the file already exists, the 
 int picofs_open(int fd, char *name, int flags)
 {
     int err = -1;
-    char *file_header = NULL;
+    char *file_trailer = NULL;
     char *file_data = NULL;
     int open_mode = 0;
 
-    if (!picofs_find_by_name(name, &file_header))
+    // hex_dump((char *)test_filesystem, 512);
+
+    if (!picofs_find_by_name(name, &file_trailer))
     {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
         // we transform them into more sensible bit flags in the two least significant bits for easier processing
@@ -131,9 +133,9 @@ int picofs_open(int fd, char *name, int flags)
         if (flags & FWRITE)
         {
             // need exclusive access for write
-            if (!picofs_file_in_use(file_header))
+            if (!picofs_file_in_use(file_trailer))
             {
-                picofs_fd_initialize(fd, (FILE_HEADER_T *)file_header);
+                picofs_fd_initialize(fd, (FILE_TRAILER_T *)file_trailer);
                 err = picofs_allocate_cache(fd);
                 
                 if (!err)
@@ -144,10 +146,14 @@ int picofs_open(int fd, char *name, int flags)
                         memcpy(custom_fds[fd].cache, custom_fds[fd].file, custom_fds[fd].file_len);
 
                         // increment sequence
-                        ((FILE_HEADER_T *)custom_fds[fd].cache)->file_sequence++;
+                        ((FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)))->file_sequence++;
+                        //custom_fds[fd].cache_trailer.file_sequence++;  don't do this we are about to overwrite this 
 
                         // reinitialize the file descriptor using the cache
-                        picofs_fd_initialize(fd, (FILE_HEADER_T *)(custom_fds[fd].cache));
+                        picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
+
+                        // since we are writing to the file set the file descriptor to use the cached trailer
+                        custom_fds[fd].file_trailer = &(custom_fds[fd].cache_trailer);
                     }
                     else
                     {
@@ -165,11 +171,11 @@ int picofs_open(int fd, char *name, int flags)
                 {
                     // truncate file
                     custom_fds[fd].data_offset = 0;
-                    custom_fds[fd].file_len = sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);
+                    custom_fds[fd].file_len = sizeof(FILE_TRAILER_T);
                     custom_fds[fd].data_len = 0;
 
-                    // update file header in RAM
-                    custom_fds[fd].file_header->file_size = custom_fds[fd].file_len;
+                    // update file trailer in cache  TODO: why not directly access cached trailer in the fd
+                    custom_fds[fd].file_trailer->file_size = custom_fds[fd].file_len;
                 }
             }            
         }  
@@ -177,7 +183,7 @@ int picofs_open(int fd, char *name, int flags)
         {
             err = 0;
 
-            picofs_fd_initialize(fd, (FILE_HEADER_T *)file_header);
+            picofs_fd_initialize(fd, (FILE_TRAILER_T *)file_trailer);
         }               
     }
     else
@@ -192,10 +198,13 @@ int picofs_open(int fd, char *name, int flags)
             err = picofs_allocate_cache(fd);
 
             // create file header in cache
-            if(!picofs_create_file_header(fd, name))
+            if(!picofs_create_file_trailer(fd, name))
             {
-                // reininitialize the file descriptor using the file header
-                picofs_fd_initialize(fd, (FILE_HEADER_T *)custom_fds[fd].cache);
+                // reininitialize the file descriptor using the file trailer
+                //picofs_fd_initialize(fd, (FILE_TRAILER_T *)custom_fds[fd].cache);
+                //picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
+                picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache));  // empty file only contains trailer
+                
             }
         }
     }
@@ -210,24 +219,31 @@ int picofs_open(int fd, char *name, int flags)
  * \param header file header
  * \return nothing
  */
-int picofs_fd_initialize(int fd, FILE_HEADER_T *header)
+int picofs_fd_initialize(int fd, FILE_TRAILER_T *trailer)
 {
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
-        if (header)
+
+
+        if (trailer)
         {
-            custom_fds[fd].file = (char *)header;
-            custom_fds[fd].file_len = header->file_size;
-            custom_fds[fd].file_status = header->file_status;
-            custom_fds[fd].file_header = header;
-            custom_fds[fd].data = custom_fds[fd].file + sizeof(FILE_HEADER_T);
-            if (custom_fds[fd].file_len >= (sizeof(FILE_TRAILER_T) + sizeof(FILE_HEADER_T)))
+            // cache the trailer in case we write data to the file -- this will overwrite the original trailer
+            memcpy(&(custom_fds[fd].cache_trailer), (char *)trailer, sizeof(FILE_TRAILER_T));
+
+            // initialize the file descriptor from the trailer
+            custom_fds[fd].file = (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size;
+            
+            custom_fds[fd].file_len = trailer->file_size;
+            custom_fds[fd].file_status = trailer->file_status;
+            custom_fds[fd].file_trailer = trailer;
+            custom_fds[fd].data = custom_fds[fd].file;
+            if (custom_fds[fd].file_len >= (sizeof(FILE_TRAILER_T)))
             {
-                custom_fds[fd].data_len = custom_fds[fd].file_len - sizeof(FILE_TRAILER_T) - sizeof(FILE_HEADER_T);
+                custom_fds[fd].data_len = custom_fds[fd].file_len - sizeof(FILE_TRAILER_T);
             }
             else
             {
-                printf("picoFS: file data length less that zero -- data loss may have occured\n");
+                printf("picoFS: file data length less that zero -- data loss may have occured len = %d vs expected = %d\n", custom_fds[fd].file_len, sizeof(FILE_TRAILER_T));
                 custom_fds[fd].data_len = 0;
             }
             custom_fds[fd].data_offset = 0;
@@ -237,10 +253,12 @@ int picofs_fd_initialize(int fd, FILE_HEADER_T *header)
             custom_fds[fd].file = NULL;
             custom_fds[fd].file_len = 0;
             custom_fds[fd].file_status = 0;
-            custom_fds[fd].file_header = NULL;
+            custom_fds[fd].file_trailer = NULL;
             custom_fds[fd].data = NULL;
             custom_fds[fd].data_len = 0;
             custom_fds[fd].data_offset = 0;
+
+            // NB we rely on the cache not being touched here during double initialization sequences
         }
     }
 
@@ -260,16 +278,6 @@ int picofs_allocate_cache(int fd)
 
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
-        // TODO: confirm file_size is always set prior to calling this function
-        // if (custom_fds[fd].file)
-        // {
-        //     custom_fds[fd].file_len = ((FILE_HEADER_T *)custom_fds[fd].file)->file_size;
-        // }
-        // else
-        // {
-        //     custom_fds[fd].file_len = 0;
-        // }
-
         // allocate one 4k block greater than currently used
         cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
 
@@ -290,18 +298,18 @@ int picofs_allocate_cache(int fd)
 /*!
  * \brief check if a file is already open  
  *
- * \param file_header pointer to file header
+ * \param file_trailer pointer to file trailer
  * \return nothing
  */
-bool picofs_file_in_use(char *file_header)
+bool picofs_file_in_use(char *file_trailer)
 {
     int i;
     bool in_use = false;
 
     for(i=0; i < FS_MAX_FILE_DESCRIPTORS; i++)
     {
-        //TODO: this allows a file that is not in flash to be simultaneously created twice in cache either prevent this or check when writing to flash and overright the duplicate
-        if (file_header && (file_header == custom_fds[i].file) && custom_fds[i].in_use)
+        // TODO: this would be faster if it used file id
+        if (file_trailer && (strcmp(((FILE_TRAILER_T *)file_trailer)->name ,custom_fds[i].file_trailer->name) == 0) && custom_fds[i].in_use)
         {
             in_use= true;
             break;
@@ -318,56 +326,58 @@ bool picofs_file_in_use(char *file_header)
  * \param[out]  header       pointer to file header
  * \return 0 on success
  */
-int picofs_find_by_name(char *filename, char **header)
+int picofs_find_by_name(char *filename, char **trailer)
 {
     int err = -1;
     int i;
-    u8_t *p = FS_FLASH_START;
-    FILE_HEADER_T *h = NULL;
+    u8_t *p = NULL;
+    FILE_TRAILER_T *t = NULL;
     u8_t best_sequence = 0;
     u8_t best_status = 0;
     bool first_sequnce = true;
 
-    // TEST TEST TEST
-    //picofs_load_test_data();
+    // scan backwards through flash
+    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
 
     // scan flash
-    while (((char *)p) < FS_FLASH_END)
+    while (((char *)p) >= FS_FLASH_START)
     {
-        h = (FILE_HEADER_T *)p;
+        t = (FILE_TRAILER_T *)p;
 
-        if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
-            (h->picofs_version == FS_VERION) &&
-            (strcmp(h->name, filename) == 0))
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION) &&
+            (strcmp(t->name, filename) == 0))
         {
             // match
             if (first_sequnce)
             {
-                best_sequence = h->file_sequence;
-                best_status = h->file_status;
-                *header = (char *)h;
+                best_sequence = t->file_sequence;
+                best_status = t->file_status;
+                *trailer = (char *)t;
                 err = 0;
-                p = p + sizeof(FILE_HEADER_T) + h->file_size + sizeof(FILE_TRAILER_T);  
+                //p = p + sizeof(FILE_TRAILER_T) + h->file_size;  
+                p = p - t->file_size; 
 
                 first_sequnce = false;
             }
             else
             {
                 // TEST TEST TEST if ((h->file_sequence - best_sequence) < 128)
-                if (h->file_sequence > best_sequence)   //TODO handle sequence wrap around
+                if (t->file_sequence > best_sequence)   //TODO handle sequence wrap around
                 {
-                    best_sequence = h->file_sequence;
-                    best_status = h->file_status;
-                    *header = (char *)h;
+                    best_sequence = t->file_sequence;
+                    best_status = t->file_status;
+                    *trailer = (char *)t;
                     err = 0;
-                    p = p + sizeof(FILE_HEADER_T) + h->file_size + sizeof(FILE_TRAILER_T);                  
+                    //p = p + sizeof(FILE_TRAILER_T) + h->file_size;
+                    p = p - t->file_size;                  
                 }
             }
         }
 
-        if (p == ((u8_t *)h))
+        if (p == ((u8_t *)t))
         {
-            p++;
+            p--;
         }
     }
 

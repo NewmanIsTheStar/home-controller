@@ -88,8 +88,6 @@ int picofs_close(int fd)
     int err = -1;
     int i;
     u8_t *erased_area;
-    FILE_HEADER_T *h = NULL;
-    FILE_TRAILER_T *t = NULL;
 
     if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
     {
@@ -103,39 +101,48 @@ int picofs_close(int fd)
 
     if (custom_fds[fd].cache)
     {
-        // update header
-        h = (FILE_HEADER_T *)(custom_fds[fd].cache);
+        // update trailer
 
-        // calulate file size prior to padding
-        h->file_size = custom_fds[fd].data_len + sizeof(FILE_HEADER_T) + sizeof(FILE_TRAILER_T);
-        h->file_status = custom_fds[fd].file_status;
+        // set size and status
+        custom_fds[fd].cache_trailer.file_size = custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
+        custom_fds[fd].cache_trailer.file_status = custom_fds[fd].file_status;
 
-        // add trailer
-        t = (FILE_TRAILER_T *)(custom_fds[fd].cache + sizeof(FILE_HEADER_T) + custom_fds[fd].data_len);
-        t->crc = 0;
-        STRNCPY(t->magic_number, "sfp", sizeof(t->magic_number)); 
-
-        if (!picofs_find_contiguous_free_area(h->file_size, &erased_area))
+        // append trailer to end of cached file 
+        if ((custom_fds[fd].data_len + sizeof(FILE_TRAILER_T)) < custom_fds[fd].cache_len)
         {
-            // printf("about to copy out of cache into flash\n");
-            // hex_dump(custom_fds[fd].cache, h->file_size);
-            memcpy(erased_area, custom_fds[fd].cache, h->file_size);
+            memcpy(custom_fds[fd].cache + custom_fds[fd].data_len, &(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
             err = 0;
         }
         else
         {
-            printf("picoFS: out of space writing %s to flash\n", h->name);
+            printf("picoFS: out of space appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
+            err = -2;            
+        }
+
+        if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area) && (err == 0))
+        {
+            // printf("about to copy out of cache into flash\n");
+            // hex_dump(custom_fds[fd].cache, h->file_size);
+            memcpy(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size);
+            err = 0;
+        }
+        else
+        {
+            printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
             err = -2;
         }
 
         vPortFree(custom_fds[fd].cache);
+
+        // clear the cache
         custom_fds[fd].cache = NULL;
         custom_fds[fd].cache_len = 0;
+        memset(&custom_fds[fd].cache_trailer, 0, sizeof(FILE_TRAILER_T));
 
-        // clear out file descriptor
+        // clear out the remainder of the file descriptor
         custom_fds[fd].file = NULL;
         custom_fds[fd].file_len = 0;
-        custom_fds[fd].file_header = NULL;
+        custom_fds[fd].file_trailer = NULL;
         custom_fds[fd].data = NULL;
         custom_fds[fd].data_len = 0;
         custom_fds[fd].data_offset = 0;

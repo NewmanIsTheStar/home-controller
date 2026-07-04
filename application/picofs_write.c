@@ -88,7 +88,7 @@ int picofs_write(int fd, char *ptr, int len)
 
     for(i=0; i<len; i++)
     {       
-        if ((custom_fds[fd].data_offset + i) < (custom_fds[fd].cache_len - sizeof(FILE_HEADER_T) - sizeof(FILE_TRAILER_T)))
+        if ((custom_fds[fd].data_offset + i) < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T)))
         {
             custom_fds[fd].data[custom_fds[fd].data_offset + i] = ptr[i];
             
@@ -109,9 +109,6 @@ int picofs_write(int fd, char *ptr, int len)
         // increase data length to match offset 
         custom_fds[fd].data_len = custom_fds[fd].data_offset;
     }
-
-    // update file header (as this will may be used by another file descriptor to open the cached file)
-    //((FILE_HEADER_T *) custom_fds[fd].cache)->file_size = sizeof(FILE_HEADER_T) + custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
 
     if (err)
     {
