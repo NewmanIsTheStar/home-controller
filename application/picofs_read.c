@@ -70,7 +70,8 @@
 
 
 //prototypes
-
+u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
+u8_t picofs_find_file_at_location(char *search);
 
 // external variables
 extern u32_t unix_time;
@@ -158,7 +159,14 @@ int picofs_list_all_files(void)
     //             picofs_printf("%08d\t%d\t%s*\n", h->file_size, h->file_sequence, h->name);
     //         }
     //     }
-    // }    
+    // }   
+    
+    {   // TEST TEST TEST 
+        u8_t file_id_list[10];
+        int file_size_list[10];
+
+        picofs_list_files_within_size_range(32, 256,  file_id_list, file_size_list, NUM_ROWS(file_id_list));
+    }
 
     return(err);
 }
@@ -170,11 +178,11 @@ int picofs_list_all_files(void)
  * 
  * \param[out]  header       pointer to file header
  *  *     
- * \return 0 on success
+ * \return 0 if latest, 1 if not latest sequence
  */
 int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence)
 {
-    int found = 1;
+    int islatest = 1;
     int i;
     u8_t *p = NULL;
     FILE_TRAILER_T *t = NULL;
@@ -196,7 +204,7 @@ int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence)
         {
             if (t->file_sequence > sequence)  // TODO: handle wrap around
             {
-               found = 0;  // we found a later sequence
+               islatest = 0;  // we found a later sequence
                break;
             }
 
@@ -208,7 +216,7 @@ int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence)
         }
     }
 
-    return(found);
+    return(islatest);
 }
 
 
@@ -329,13 +337,16 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
             case PFS_DISPLAY_QUIET:
                 break;
             case PFS_DISPLAY_PAGE_NUMBERS:
-                printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+                // printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+                printf("[Block%04d, Page%02d]\tused by %d\n", erase_block_relative, page_relative, picofs_find_file_at_location(cell));
                 break;
             case PFS_DISPLAY_PAGE_MAP:
                 printf("\u25A0");
                 break;
             case PFS_DISPLAY_SHELL_PAGE_NUMBERS:
-                shell_printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+                //shell_printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
+                shell_printf("[Block%04d, Page%02d]\tused by %d\n", erase_block_relative, page_relative, picofs_find_file_at_location(cell));
+                hex_dump((char *)test_filesystem, 512);
                 break;            
             case PFS_DISPLAY_SHELL_PAGE_MAP:
                 shell_printf("\u25A0");
@@ -487,77 +498,16 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
 /*!
  * \brief Create initial trailer for new empty file
  * 
- * \param[in]   filename     name to find
+ * \param[in]   fd     file descriptor
  * 
- * \param[out]  header       pointer to file header
- *  *     
+ * \param[out]  name   file name
+ *  
  * \return 0 on success
  */
 int picofs_create_file_trailer(int fd, char *name)
 {
     int err = -1;
-    u8_t *p = NULL;
-    //  u8_t *next = NULL; 
-    FILE_TRAILER_T *t = NULL;
-    u8_t best_sequence = 0;
-    bool first_sequnce = false;
-    u8_t file_id_map[32];
-    u8_t file_id_bit;
-    u8_t file_id_byte;
     u8_t file_id = 255;
-    FILE_TRAILER_T *trailer;
-
-    // // initialize file id map
-    // memset(file_id_map, 0, sizeof(file_id_map));
-
-    // // scan backwards through flash
-    // p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
-
-    // // scan flash
-    // while (((char *)p) >= FS_FLASH_START)
-    // {
-    //     t = (FILE_TRAILER_T *)p;
-
-    //     if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-    //         (t->picofs_version == FS_VERION))
-    //     {
-    //         // update file_id bitmap
-    //         file_id_byte = t->file_id/8;
-    //         file_id_bit = t->file_id%8;
-    //         file_id_map[file_id_byte] |= (1<<file_id_bit);
-
-    //         // check for deleted file with the same name!
-    //         if ((strcmp(name, t->name) == 0) && (t->file_sequence > best_sequence))   // TODO this may no longer be needed if we rely on file_id rather than name
-    //         {
-    //             best_sequence = t->file_sequence;
-    //             // file_id = t->file_id;  // reuse the file_id  --decided not to do his in case file_id already reused for a different file
-    //         }
-
-    //         p = p - t->file_size;  
-    //     }
-    //     else
-    //     {
-    //         p--;
-    //     }
-    // }
-
-    // // we found a deleted file with the same name so start with the next sequence number when creating the new file
-    // if (best_sequence)
-    // {
-    //     best_sequence++;
-    // }
-
-    // // scan file_id bitmap to find an unused file_id
-    // for (file_id=0; file_id < 255; file_id++)
-    // {
-    //     file_id_byte = file_id/8;
-    //     file_id_bit = file_id%8;
-        
-    //     if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
-    //     {
-    //         break;
-    //     }        
-    // }
 
     file_id = picofs_get_new_file_id();
 
@@ -568,7 +518,7 @@ int picofs_create_file_trailer(int fd, char *name)
         STRNCPY(custom_fds[fd].cache_trailer.magic_number, "pfs", sizeof(custom_fds[fd].cache_trailer.magic_number));                                                            
         custom_fds[fd].cache_trailer.picofs_version = FS_VERION;
         custom_fds[fd].cache_trailer.file_id = file_id;
-        custom_fds[fd].cache_trailer.file_sequence = best_sequence;
+        custom_fds[fd].cache_trailer.file_sequence = 0;
         custom_fds[fd].cache_trailer.file_status= 0;
         custom_fds[fd].cache_trailer.file_size = sizeof(FILE_TRAILER_T);
         custom_fds[fd].cache_trailer.crc = 0;
@@ -576,9 +526,6 @@ int picofs_create_file_trailer(int fd, char *name)
 
         // store trailer in the cached file too (this is used to bootstrap the second initialization of the fd from cache)
         memcpy(custom_fds[fd].cache, (char *)&(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
-
-        // printf("CREATE FILE TRAILER =\n");
-        // hex_dump(custom_fds[fd].cache, sizeof(FILE_TRAILER_T));
 
         err = 0;
     }
@@ -590,7 +537,6 @@ int picofs_create_file_trailer(int fd, char *name)
 /*!
  * \brief get a new file id
  * 
- *    
  * \return file_id or 255 on failure
  */
 u8_t picofs_get_new_file_id(void)
@@ -642,6 +588,135 @@ u8_t picofs_get_new_file_id(void)
         {
             break;
         }        
+    }
+
+    return(file_id);
+}
+
+/*!
+ * \brief get a list of file ids within a specified size range
+ * \param[in]   size_lo          minimum file size
+ * \param[in]   size_hi          maximum file size
+ * \param[out]   file_id_list    file id list
+ * \param[out]   file_size_list  file size list
+ * \param[out]   list_len        list length
+ * \return number of files found list of file_id and sizes
+ */
+u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len)
+{
+    int err = -1;
+    int i = 0;
+    int num_matching_files = 0;
+    u8_t *p = NULL;
+    FILE_TRAILER_T *t = NULL;
+    bool found = false;
+    bool already_in_list = false;
+    
+
+    // initialize lists
+    memset(file_id_list, 255, sizeof(u8_t)*list_len);
+    memset(file_size_list, 0, sizeof(int)*list_len);
+
+    // scan backwards through flash
+    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+
+    // scan flash
+    while (((char *)p) >= FS_FLASH_START)
+    {
+        t = (FILE_TRAILER_T *)p;
+
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION))
+        {
+            // check range
+            if ((t->file_size >= size_lo) && (t->file_size < size_hi) && picofs_is_latest_file_sequence(t->name, t->file_id, t->file_sequence))
+            {
+                already_in_list = false;
+                for(i=0; i<num_matching_files; i++)
+                {
+                    if (t->file_id == file_id_list[i])
+                    {
+                        already_in_list = true;
+                        break;
+                    }
+                }
+
+                if (!already_in_list)
+                {
+                    if (num_matching_files<list_len)
+                    {
+                        // add file to list 
+                        file_id_list[num_matching_files] = t->file_id;
+                        file_size_list[num_matching_files] = t->file_size;
+
+                        printf("file_id = %d file_size = %d file_name = %s\n", file_id_list[num_matching_files], file_size_list[num_matching_files], t->name);
+                        num_matching_files++;
+                    }
+                }
+            }
+
+            p = p - t->file_size;  
+        }
+        else
+        {
+            p--;
+        }
+
+        if (num_matching_files >= list_len)
+        {
+            // list full so abort search
+            break;
+        }
+    }
+
+    return(num_matching_files);
+}
+
+/*!
+ * \brief find file id and sequence for file at given address
+ * 
+ * \return file_id or 255 on failure
+ */
+u8_t picofs_find_file_at_location(char *search)
+{
+    int err = -1;
+    u8_t *p = NULL;
+    FILE_TRAILER_T *t = NULL;
+    u8_t file_id = 255;
+    u8_t file_sequence = 0;    
+    FILE_TRAILER_T *trailer;
+    bool found = false;
+
+    if ((search < FS_FLASH_START) || (search > FS_FLASH_END))
+    {
+        // search location is invalid
+        return (255);
+    }
+
+    // scan forwards through flash
+    p = search;
+
+    // scan flash
+    while ((char *)p < FS_FLASH_END)
+    {
+        t = (FILE_TRAILER_T *)p;
+
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION))
+        {
+            // check that file trailer is for a file that overlaps our search location 
+            if ((char *)(p + sizeof(FILE_TRAILER_T) - t->file_size) <= search)
+            {
+                file_id = t->file_id;
+                file_sequence = t->file_sequence;                
+            }
+
+            break;
+        }
+        else
+        {
+            p++;
+        }
     }
 
     return(file_id);

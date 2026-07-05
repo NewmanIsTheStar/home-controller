@@ -33,7 +33,7 @@ typedef struct
     u8_t file_status;             // flash: file status  
     char *cache;                  // RAM: file start
     size_t cache_len;             // RAM: cache size
-    FILE_TRAILER_T cache_trailer; // holds trailer with file is being written to cache
+    FILE_TRAILER_T cache_trailer; // holds trailer while file is being written to cache
     FILE_TRAILER_T *file_trailer; // flash or RAM: file trailer
     char *data;                   // flash or RAM: data contained in the file 
     size_t data_len;              // flash or RAM: data length
