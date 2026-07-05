@@ -17,6 +17,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         picofs_open.c
         picofs_write.c
         picofs_close.c
+        picofs_copy.c        
 )
 
 set(WEB_FILES)
@@ -32,4 +33,5 @@ target_link_options(${PROJECT_NAME} PRIVATE
     "-Wl,--wrap=_lseek"
     "-Wl,--wrap=_close"
     "-Wl,--wrap=_unlink"
+    "-Wl,--wrap=rename"    
 )

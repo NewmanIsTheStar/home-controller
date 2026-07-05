@@ -129,11 +129,11 @@ int picofs_list_all_files(void)
             (t->picofs_version == FS_VERION))
         {
             //picofs_printf("CHECKING %08d\t%d\t%s\n", h->file_size, h->file_sequence, h->name);
-            if (picofs_is_latest_file_sequence(t->name, t->file_sequence))
+            if (picofs_is_latest_file_sequence(t->name, t->file_id, t->file_sequence))
             {
                 if (!t->file_status)  // not deleted
                 {
-                    picofs_printf("%08d\t%d\t%s\n", t->file_size, t->file_sequence, t->name);
+                    picofs_printf("%08d\t%d\t%d\t%s\n", t->file_size, t->file_id, t->file_sequence, t->name);
                 }
             }
 
@@ -172,7 +172,7 @@ int picofs_list_all_files(void)
  *  *     
  * \return 0 on success
  */
-int picofs_is_latest_file_sequence(char *filename, u8_t sequence)
+int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence)
 {
     int found = 1;
     int i;
@@ -192,7 +192,7 @@ int picofs_is_latest_file_sequence(char *filename, u8_t sequence)
 
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
-            (strcmp(t->name, filename) == 0))
+            /*(strcmp(t->name, filename) == 0)*/ t->file_id == file_id)
         {
             if (t->file_sequence > sequence)  // TODO: handle wrap around
             {
@@ -242,7 +242,7 @@ int picofs_load_test_data(void)
 
         STRNCPY(test_filesystem[1].test_trailer.magic_number, "pfs", sizeof(test_filesystem[1].test_trailer.magic_number));
         test_filesystem[1].test_trailer.picofs_version = 0;
-        test_filesystem[1].test_trailer.file_id = 0;    
+        test_filesystem[1].test_trailer.file_id = 1;    
         test_filesystem[1].test_trailer.file_sequence = 1;  
         test_filesystem[1].test_trailer.file_status = 0; 
         test_filesystem[1].test_trailer.file_size = 0; 
@@ -507,56 +507,59 @@ int picofs_create_file_trailer(int fd, char *name)
     u8_t file_id = 255;
     FILE_TRAILER_T *trailer;
 
-    // initialize file id map
-    memset(file_id_map, 0, sizeof(file_id_map));
+    // // initialize file id map
+    // memset(file_id_map, 0, sizeof(file_id_map));
 
-    // scan backwards through flash
-    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+    // // scan backwards through flash
+    // p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
 
-    // scan flash
-    while (((char *)p) >= FS_FLASH_START)
-    {
-        t = (FILE_TRAILER_T *)p;
+    // // scan flash
+    // while (((char *)p) >= FS_FLASH_START)
+    // {
+    //     t = (FILE_TRAILER_T *)p;
 
-        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION))
-        {
-            // update file_id bitmap
-            file_id_byte = t->file_id/8;
-            file_id_bit = t->file_id%8;
-            file_id_map[file_id_byte] |= (1<<file_id_bit);
+    //     if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+    //         (t->picofs_version == FS_VERION))
+    //     {
+    //         // update file_id bitmap
+    //         file_id_byte = t->file_id/8;
+    //         file_id_bit = t->file_id%8;
+    //         file_id_map[file_id_byte] |= (1<<file_id_bit);
 
-            // check for deleted file with the same name!
-            if ((strcmp(name, t->name) == 0) && (t->file_sequence > best_sequence))
-            {
-                best_sequence = t->file_sequence;
-            }
+    //         // check for deleted file with the same name!
+    //         if ((strcmp(name, t->name) == 0) && (t->file_sequence > best_sequence))   // TODO this may no longer be needed if we rely on file_id rather than name
+    //         {
+    //             best_sequence = t->file_sequence;
+    //             // file_id = t->file_id;  // reuse the file_id  --decided not to do his in case file_id already reused for a different file
+    //         }
 
-            p = p - t->file_size;  
-        }
-        else
-        {
-            p--;
-        }
-    }
+    //         p = p - t->file_size;  
+    //     }
+    //     else
+    //     {
+    //         p--;
+    //     }
+    // }
 
-    // we found a deleted file with the same name so start with the next sequence number when creating the new file
-    if (best_sequence)
-    {
-        best_sequence++;
-    }
+    // // we found a deleted file with the same name so start with the next sequence number when creating the new file
+    // if (best_sequence)
+    // {
+    //     best_sequence++;
+    // }
 
-    // TODO need to also scan all inuse file descriptor for file_ids existing only in cache <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // // scan file_id bitmap to find an unused file_id
+    // for (file_id=0; file_id < 255; file_id++)
+    // {
+    //     file_id_byte = file_id/8;
+    //     file_id_bit = file_id%8;
+        
+    //     if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
+    //     {
+    //         break;
+    //     }        
+    // }
 
-    // scan file_id bitmap to find an unused file_id
-    for (file_id_byte=0; file_id_byte < 32; file_id_byte++)
-    {
-        if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
-        {
-            file_id = file_id_byte*8 + file_id_bit;
-            break;
-        }
-    }
+    file_id = picofs_get_new_file_id();
 
     // if file_id is valid and cache is allocated
     if ((file_id != 255) && custom_fds[fd].cache)
@@ -581,4 +584,65 @@ int picofs_create_file_trailer(int fd, char *name)
     }
 
     return(err);
+}
+
+
+/*!
+ * \brief get a new file id
+ * 
+ *    
+ * \return file_id or 255 on failure
+ */
+u8_t picofs_get_new_file_id(void)
+{
+    int err = -1;
+    u8_t *p = NULL;
+    FILE_TRAILER_T *t = NULL;
+    u8_t file_id_map[32];
+    u8_t file_id_bit;
+    u8_t file_id_byte;
+    u8_t file_id = 255;
+    FILE_TRAILER_T *trailer;
+    bool found = false;
+
+    // initialize file id map
+    memset(file_id_map, 0, sizeof(file_id_map));
+
+    // scan backwards through flash
+    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+
+    // scan flash
+    while (((char *)p) >= FS_FLASH_START)
+    {
+        t = (FILE_TRAILER_T *)p;
+
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION))
+        {
+            // update file_id bitmap
+            file_id_byte = t->file_id/8;
+            file_id_bit = t->file_id%8;
+            file_id_map[file_id_byte] |= (1<<file_id_bit);
+
+            p = p - t->file_size;  
+        }
+        else
+        {
+            p--;
+        }
+    }
+
+    // scan file_id bitmap to find an unused file_id
+    for (file_id=0; file_id < 255; file_id++)
+    {
+        file_id_byte = file_id/8;
+        file_id_bit = file_id%8;
+        
+        if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
+        {
+            break;
+        }        
+    }
+
+    return(file_id);
 }

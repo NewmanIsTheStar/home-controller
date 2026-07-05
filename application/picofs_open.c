@@ -80,37 +80,30 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[10];
 
 //static variables
-// FILE_TEST_T test_filesystem[10];
- 
-// #define FS_FLASH_START ((char *)(&test_filesystem))
-// #define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
-// #define FS_VERION (0)
+
 
 
 /*
-name: A pointer to a null-terminated string specifying the path to the file you want to open.
-flags: A bitwise OR mask (|) determining the file access mode and operational behaviors.
-mode: An optional argument (typically an octal number or permission macros) used only when a new file is being created (via O_CREAT or O_TMPFILE). 
-If neither flag is provided, this parameter is ignored.
 
-Common Flags (flags)The access mode must include exactly one of the following core options:
-O_RDONLY: Open for reading only.
-O_WRONLY: Open for writing only.
-O_RDWR: Open for both reading and writing.
-
-You can bitwise OR (|) these with additional file creation or status flags:
-O_CREAT: Create the file if it does not exist.
-O_TRUNC: Truncate the file length to 0 if it already exists and is opened for writing.
-O_APPEND: Move the file offset pointer to the end of the file before every write.
-O_EXCL: Ensure that this call creates the file; if the file already exists, the call fails (used alongside O_CREAT).
 */
 
 
 /*!
  * \brief open a file
- *
+ * 
+ * The access mode must include exactly one of the following core options:
+ * O_RDONLY: Open for reading only.
+ * O_WRONLY: Open for writing only.
+ * O_RDWR: Open for both reading and writing.
+ * 
+ * You can bitwise OR (|) these with additional file creation or status flags:
+ * O_CREAT: Create the file if it does not exist.
+ * O_TRUNC: Truncate the file length to 0 if it already exists and is opened for writing.
+ * O_APPEND: Move the file offset pointer to the end of the file before every write.
+ * O_EXCL: Ensure that this call creates the file; if the file already exists, the call fails (used alongside O_CREAT).
+ * 
  * \param fd     file descriptor
- * \param name   file name string
+ * \param name   A pointer to a null-terminated string specifying the path to the file you want to open.
  * \param flags  bitwise flags O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_TRUNC, O_APPEND, O_EXCL 
  * \return 0 on success
  */
@@ -120,6 +113,14 @@ int picofs_open(int fd, char *name, int flags)
     char *file_trailer = NULL;
     char *file_data = NULL;
     int open_mode = 0;
+    static bool init_fds = true;
+
+    // zero out all file descriptiors the first time picofs_open is called 
+    if (init_fds)
+    {
+        memset((char *)custom_fds, 0, sizeof(custom_fds));
+        init_fds = false;
+    }
 
     // hex_dump((char *)test_filesystem, 512);
 
@@ -133,9 +134,9 @@ int picofs_open(int fd, char *name, int flags)
         if (flags & FWRITE)
         {
             // need exclusive access for write
-            if (!picofs_file_in_use(file_trailer))
+            if (!picofs_file_in_use(file_trailer) && (!(flags & O_EXCL)))
             {
-                picofs_fd_initialize(fd, (FILE_TRAILER_T *)file_trailer);
+                picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
                 err = picofs_allocate_cache(fd);
                 
                 if (!err)
@@ -150,7 +151,7 @@ int picofs_open(int fd, char *name, int flags)
                         //custom_fds[fd].cache_trailer.file_sequence++;  don't do this we are about to overwrite this 
 
                         // reinitialize the file descriptor using the cache
-                        picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
+                        picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
 
                         // since we are writing to the file set the file descriptor to use the cached trailer
                         custom_fds[fd].file_trailer = &(custom_fds[fd].cache_trailer);
@@ -183,7 +184,7 @@ int picofs_open(int fd, char *name, int flags)
         {
             err = 0;
 
-            picofs_fd_initialize(fd, (FILE_TRAILER_T *)file_trailer);
+            picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
         }               
     }
     else
@@ -192,18 +193,31 @@ int picofs_open(int fd, char *name, int flags)
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
             // create empty file descriptor
-            picofs_fd_initialize(fd, NULL);
+            picofs_fd_initialize(fd, flags, NULL);
 
             // allocate cache for file descriptor
             err = picofs_allocate_cache(fd);
 
-            // create file header in cache
-            if(!picofs_create_file_trailer(fd, name))
+            
+            if(!err)  
             {
-                // reininitialize the file descriptor using the file trailer
-                //picofs_fd_initialize(fd, (FILE_TRAILER_T *)custom_fds[fd].cache);
-                //picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
-                picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache));  // empty file only contains trailer
+                // create file trailer in cache
+                err = picofs_create_file_trailer(fd, name);
+
+                if (!err)
+                {
+                    // reininitialize the file descriptor using the file trailer
+                    //picofs_fd_initialize(fd, (FILE_TRAILER_T *)custom_fds[fd].cache);
+                    //picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
+
+                    printf("COMPARISON ::  %d should equal %d\n", custom_fds[fd].file_len, sizeof(FILE_TRAILER_T));
+                    picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache));  // empty file only contains trailer
+                }
+                else
+                {
+                    // failed to create trailer in the cache so free the cache memory
+                    picofs_deallocate_cache(fd);
+                }
                 
             }
         }
@@ -219,11 +233,12 @@ int picofs_open(int fd, char *name, int flags)
  * \param header file header
  * \return nothing
  */
-int picofs_fd_initialize(int fd, FILE_TRAILER_T *trailer)
+int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
 {
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
-
+        // retain flags passed to open
+        custom_fds[fd].flags = flags;
 
         if (trailer)
         {
@@ -278,6 +293,14 @@ int picofs_allocate_cache(int fd)
 
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
+        // clean up -- this should never happen !!! TODO: remove as this is potentially worse than leaking memory as it could corupt the heap
+        if (custom_fds[fd].cache)
+        {
+            printf("Hanging cache allocation discovered and cleaned up\n");
+            vPortFree(custom_fds[fd].cache);
+            custom_fds[fd].cache = NULL;
+        }
+
         // allocate one 4k block greater than currently used
         cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
 
@@ -309,7 +332,8 @@ bool picofs_file_in_use(char *file_trailer)
     for(i=0; i < FS_MAX_FILE_DESCRIPTORS; i++)
     {
         // TODO: this would be faster if it used file id
-        if (file_trailer && (strcmp(((FILE_TRAILER_T *)file_trailer)->name ,custom_fds[i].file_trailer->name) == 0) && custom_fds[i].in_use)
+        //if (file_trailer && (strcmp(((FILE_TRAILER_T *)file_trailer)->name ,custom_fds[i].file_trailer->name) == 0) && custom_fds[i].in_use)
+        if (file_trailer && (((FILE_TRAILER_T *)file_trailer)->file_id == custom_fds[i].file_trailer->file_id) && custom_fds[i].in_use)        
         {
             in_use= true;
             break;
@@ -336,6 +360,8 @@ int picofs_find_by_name(char *filename, char **trailer)
     u8_t best_status = 0;
     bool first_sequnce = true;
 
+//TODO Make this use file_id to separate various deleted files wih the same name but different file_id
+
     // scan backwards through flash
     p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
 
@@ -346,7 +372,8 @@ int picofs_find_by_name(char *filename, char **trailer)
 
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
-            (strcmp(t->name, filename) == 0))
+            (strcmp(t->name, filename) == 0) &&
+            !picofs_is_file_deleted(t->file_id))
         {
             // match
             if (first_sequnce)
@@ -411,4 +438,45 @@ int picofs_find_by_name(char *filename, char **trailer)
     // printf("file: %s best_sequence %d\n", filename, best_sequence);
 
     return(err);
+}
+
+/*!
+ * \brief check if file has been deleted
+ * 
+ * \param[in]   file_id      file to check
+ * \return true if deleted
+ */
+bool picofs_is_file_deleted(u8_t file_id)
+{
+    int err = -1;
+    int i;
+    u8_t *p = NULL;
+    FILE_TRAILER_T *t = NULL;
+    bool deleted = false;
+
+
+    // scan backwards through flash
+    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+
+    // scan flash
+    while (((char *)p) >= FS_FLASH_START)
+    {
+        t = (FILE_TRAILER_T *)p;
+
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION) &&
+            (t->file_id == file_id) && 
+            (t->file_status))
+        {
+            deleted = true;
+            break;
+        }
+
+        if (p == ((u8_t *)t))
+        {
+            p--;
+        }
+    }
+
+    return(deleted);
 }

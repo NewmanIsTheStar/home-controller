@@ -5,7 +5,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <fcntl.h>
 
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
@@ -85,6 +85,12 @@ int picofs_write(int fd, char *ptr, int len)
 {
     int err = 0;
     int i;
+
+    if (custom_fds[fd].flags & O_APPEND)
+    {
+        // move data_offset to end of file before each write
+        custom_fds[fd].data_offset = custom_fds[fd].data_len;
+    }
 
     for(i=0; i<len; i++)
     {       

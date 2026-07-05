@@ -8,29 +8,9 @@
 #include "picofs.h"
 //#include <unistd.h>
 
-// Example placeholder for your custom file system handle
 
 PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
-
-/*
-name: A pointer to a null-terminated string specifying the path to the file you want to open.
-flags: A bitwise OR mask (|) determining the file access mode and operational behaviors.
-mode: An optional argument (typically an octal number or permission macros) used only when a new file is being created (via O_CREAT or O_TMPFILE). 
-If neither flag is provided, this parameter is ignored.
-
-Common Flags (flags)
-The access mode must include exactly one of the following core options:
-O_RDONLY: Open for reading only.
-O_WRONLY: Open for writing only.
-O_RDWR: Open for both reading and writing.
-
-You can bitwise OR (|) these with additional file creation or status flags:
-O_CREAT: Create the file if it does not exist.
-O_TRUNC: Truncate the file length to 0 if it already exists and is opened for writing.
-O_APPEND: Move the file offset pointer to the end of the file before every write.
-O_EXCL: Ensure that this call creates the file; if the file already exists, the call fails (used alongside O_CREAT).
-*/
 
 // Hook for fopen()
 int __wrap__open(const char *name, int flags, int mode) 
@@ -233,3 +213,46 @@ int __wrap__unlink(const char *name)
 
     return 0;
 }
+
+// Declaration of the original SDK rename function
+//extern int __real_rename(const char *old_path, const char *new_path);
+
+int __wrap_rename(const char *old_path, const char *new_path) 
+{
+    // find a free slot in custom_fds
+    int fd = -1;
+    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    {
+        if (!custom_fds[i].in_use) 
+        {
+            fd = i;
+            break;
+        }
+    }
+    
+    if (fd == -1) 
+    {
+        errno = ENFILE; // Too many open files
+        return -1;
+    }
+
+    if (picofs_open(fd, (char *)old_path, O_WRONLY))
+    {
+        errno = ENOENT; // File not found
+        return -1;
+    }
+
+    custom_fds[fd].in_use = true;
+
+    // TODO: check that this file name doesn't already exist! If it does we need to delete the preexisting file  (we could just always try to delete it)
+    STRNCPY(custom_fds[fd].cache_trailer.name, new_path, sizeof(custom_fds[fd].cache_trailer.name));    
+    
+    picofs_close(fd);
+    
+    custom_fds[fd].in_use = false;
+
+    return 0;
+}
+
+
+

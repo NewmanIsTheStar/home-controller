@@ -27,6 +27,7 @@ typedef struct file_header
 typedef struct 
 {
     bool in_use;
+    int flags;                    // flags passed to open file
     char *file;                   // flash: file start
     size_t file_len;              // flash: length of file including trailer   
     u8_t file_status;             // flash: file status  
@@ -42,7 +43,7 @@ typedef struct
 
 typedef struct file_test
 {
-    u8_t test_data[216];
+    u8_t test_data[224];
     FILE_TRAILER_T test_trailer;    
 } FILE_TEST_T;
 
@@ -61,14 +62,18 @@ int picofs_list_all_files(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area);
 bool picofs_file_in_use(char *file_trailer);
-int picofs_fd_initialize(int fd, FILE_TRAILER_T *trailer);
+int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
 int picofs_allocate_cache(int fd);
+int picofs_deallocate_cache(int fd);
 int picofs_open(int fd, char *name, int flags);
 int picofs_read(int fd, char *ptr, int len);
 int picofs_write(int fd, char *ptr, int len);
 int picofs_create_file_trailer(int fd, char *name);
 int picofs_close(int fd);
 int picofs_delete(char *filename);
-int picofs_is_latest_file_sequence(char *filename, u8_t sequence);
+int picofs_copy(char *src, char *dst);
+int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence);
+u8_t picofs_get_new_file_id(void);
+bool picofs_is_file_deleted(u8_t file_id);
 
 #endif

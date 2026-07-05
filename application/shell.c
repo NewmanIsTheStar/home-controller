@@ -10,6 +10,7 @@
 #include "ping_core.h"
 #include <stdio.h>
 //#include <unistd.h>
+#include "picofs.h"
 
 // defines
 #define ITEM_BUF_LEN (128)
@@ -281,6 +282,9 @@ static void execute_shell_command(const char* cmd)
         shell_printf_nb("ip     - network info\n");
         shell_printf_nb("date   - calendar time\n");     
         shell_printf_nb("hd     - hex dump\n");  
+        shell_printf_nb("rm     - remove file\n");  
+        shell_printf_nb("mv     - move file\n");  
+        shell_printf_nb("cp     - copy file\n");          
     }
     else if (strncmp(cmd, "ping ", 5) == 0)
     {        
@@ -326,7 +330,15 @@ static void execute_shell_command(const char* cmd)
     else if (strncmp(cmd, "rm ", 3) == 0) 
     {
         if (strlen(cmd) > 4) remove((char *)(cmd+3));  
+    } 
+    else if (strncmp(cmd, "mv ", 3) == 0) 
+    {        
+        if (strlen(cmd) > 5) shell_move((char *)cmd+3);   
     }     
+    else if (strncmp(cmd, "cp ", 3) == 0) 
+    {        
+        if (strlen(cmd) > 5) shell_copy((char *)cmd+3);   
+    }          
     else if (strncmp(cmd, "uptime", 4) == 0) 
     {                
         get_delta_string_from_delta_seconds(reply, ITEM_BUF_LEN, unix_time - web.boot_time);
@@ -982,3 +994,111 @@ void shell_printf_nb(const char *format, ...)
     cyw43_arch_lwip_end();
 
 }
+
+/*!
+ * \brief move a file (rename)
+ *
+ * \param[in]  old_name  file source
+ * \param[in]  new_name  file destination
+ * \return nothing
+ */
+int shell_move(char *src_space_dst)
+{
+    FILE *filePointer;
+    char buffer[256];
+    int i, j;
+    char src[16];
+    char dst[16];
+
+    src[0] = 0;
+    dst[0] = 0;
+
+    // extract source
+    for(i=0; i<strlen(src_space_dst); i++)
+    {
+        if (src_space_dst[i] == ' ')
+        {
+            src[i++] = 0;
+            break;
+        }
+
+        src[i] = src_space_dst[i];
+        src[i+1] = 0;
+    }
+
+    // extract destination
+    j = 0;
+    for(; i<strlen(src_space_dst); i++)
+    {
+        if ((src_space_dst[i] == 0) || (!isprint(src_space_dst[i])))
+        {
+            dst[j] = 0;
+            break;
+        }
+
+        dst[j++] = src_space_dst[i];
+        dst[j] = 0;
+    }
+
+    if ((strlen(src) > 2) && (strlen(dst) > 2))
+    {
+        rename(src, dst);
+    }
+
+    return 0;
+}
+
+/*!
+ * \brief copy a file
+ *
+ * \param[in]  old_name  file source
+ * \param[in]  new_name  file destination
+ * \return nothing
+ */
+int shell_copy(char *src_space_dst)
+{
+    FILE *filePointer;
+    char buffer[256];
+    int i, j;
+    char src[16];
+    char dst[16];
+
+    src[0] = 0;
+    dst[0] = 0;
+
+    // extract source
+    for(i=0; i<strlen(src_space_dst); i++)
+    {
+        if (src_space_dst[i] == ' ')
+        {
+            src[i++] = 0;
+            break;
+        }
+
+        src[i] = src_space_dst[i];
+        src[i+1] = 0;
+    }
+
+    // extract destination
+    j = 0;
+    for(; i<strlen(src_space_dst); i++)
+    {
+        if ((src_space_dst[i] == 0) || (!isprint(src_space_dst[i])))
+        {
+            dst[j] = 0;
+            break;
+        }
+
+        dst[j++] = src_space_dst[i];
+        dst[j] = 0;
+    }
+
+    if ((strlen(src) > 2) && (strlen(dst) > 2))
+    {
+        picofs_copy(src, dst);
+    }
+
+    return 0;
+}
+
+

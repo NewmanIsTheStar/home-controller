@@ -81,8 +81,12 @@ extern FILE_TEST_T test_filesystem[10];
 //static variables
 
  
-//int bytes_written = my_fs_write(&custom_fds[target_fd].my_fs_handle, ptr, len);
-
+/*!
+ * \brief close file 
+ *
+ * \param fd     file descriptor
+ * \return 0 on success
+ */
 int picofs_close(int fd)
 {
     int err = -1;
@@ -132,12 +136,8 @@ int picofs_close(int fd)
             err = -2;
         }
 
-        vPortFree(custom_fds[fd].cache);
-
         // clear the cache
-        custom_fds[fd].cache = NULL;
-        custom_fds[fd].cache_len = 0;
-        memset(&custom_fds[fd].cache_trailer, 0, sizeof(FILE_TRAILER_T));
+        picofs_deallocate_cache(fd);
 
         // clear out the remainder of the file descriptor
         custom_fds[fd].file = NULL;
@@ -153,3 +153,26 @@ int picofs_close(int fd)
     return(err);
 }
 
+/*!
+ * \brief deallocate write cache 
+ *
+ * \param fd     file descriptor
+ * \return nothing
+ */
+int picofs_deallocate_cache(int fd)
+{
+    int err = 0;
+
+    if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
+    {
+        // free cache memory
+        vPortFree(custom_fds[fd].cache);
+        custom_fds[fd].cache = NULL;
+
+        // clear the cache        
+        custom_fds[fd].cache_len = 0;
+        memset(&custom_fds[fd].cache_trailer, 0, sizeof(FILE_TRAILER_T));
+    }
+
+    return(err);
+}
