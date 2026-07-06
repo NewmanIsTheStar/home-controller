@@ -94,6 +94,9 @@ int picofs_copy(char *src, char *dst)
     int i;
     int fd;
     u8_t file_id = 255;
+    u8_t file_sequence = 0;
+    FILE_TRAILER_T *existing_dst = NULL;
+
 
     fd = picofs_find_available_fd();   // NB we are bypassing the wrappers so have to manage file descriptors directly in this function
 
@@ -110,16 +113,35 @@ int picofs_copy(char *src, char *dst)
     
     custom_fds[fd].in_use = true;  // this cannot occur before open because open uses this flag to determine if it has exlusive access to the file for write
 
-    file_id = picofs_get_new_file_id();
-
-    if (file_id == 255)
+    // check if destination filename already exists
+    if (picofs_find_by_name(dst, &existing_dst))
     {
-        picofs_release_fd(fd);
-        return -2;        
+        // create new file
+        file_id = picofs_get_new_file_id();
+        file_sequence = 0;
+
+        if (file_id == 255)
+        {
+            picofs_release_fd(fd);
+            return -2;        
+        }
+    }
+    else
+    {
+        // reuse existing destination file
+        if (!existing_dst)
+        {
+            picofs_release_fd(fd);
+            return -3;               
+        }
+
+        file_id = existing_dst->file_id;
+        file_sequence = existing_dst->file_sequence + 1;
     }
 
     // assign new file id and name
     custom_fds[fd].cache_trailer.file_id = file_id;
+    custom_fds[fd].cache_trailer.file_sequence = file_sequence;
     STRNCPY(custom_fds[fd].cache_trailer.name, dst, sizeof(custom_fds[fd].cache_trailer.name));
 
     picofs_close(fd);

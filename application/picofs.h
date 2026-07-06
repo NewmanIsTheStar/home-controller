@@ -57,11 +57,11 @@ typedef enum
 } PFS_DISPLAY_TYPE_T;
 
 int picofs_load_test_data(void);
-int picofs_find_by_name(char *filename, char **trailer);
+int picofs_find_by_name(char *filename, FILE_TRAILER_T **trailer);
 int picofs_list_all_files(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area);
-bool picofs_file_in_use(char *file_trailer);
+bool picofs_file_in_use(FILE_TRAILER_T *file_trailer);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
 int picofs_allocate_cache(int fd);
 int picofs_deallocate_cache(int fd);

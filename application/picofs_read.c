@@ -293,7 +293,7 @@ int picofs_load_test_data(void)
  */
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
 {
-    u8_t *cell = NULL;
+    char *cell = NULL;
     u32_t erase_block_absolute = 0;
     u32_t erase_block_relative = 0;    
     u32_t page_relative = 0;
@@ -304,12 +304,12 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
 
     start_tick = xTaskGetTickCount();
 
-    for(cell = (u8_t *)(FLASH_SCAN_START); cell < (u8_t *)(FLASH_SCAN_END);)
+    for(cell = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
 
         erase_block_absolute = ((u32_t)cell)/4096;
-        erase_block_relative = ((u32_t)cell - (u32_t)FLASH_SCAN_START)/4096;            
-        page_relative = (((u32_t)cell - (u32_t)FLASH_SCAN_START)%4096)/256;  
+        erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/4096;            
+        page_relative = ((u32_t)(cell - FLASH_SCAN_START)%4096)/256;  
         
 
         switch(display)
@@ -355,10 +355,9 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
             }
             
             // skip to next page
-            //cell = (u8_t *)(erase_block_absolute*4096+((page_relative+1)*256));
-            cell = (u8_t *)((u32_t)FLASH_SCAN_START + (erase_block_relative*4096+((page_relative+1)*256)));
+            cell = FLASH_SCAN_START + erase_block_relative*4096+((page_relative+1)*256);
         }
-        else if ((((u32_t)cell - (u32_t)FLASH_SCAN_START)%256) == 255)
+        else if (((cell - FLASH_SCAN_START)%256) == 255)
         {
             switch(display)
             {
@@ -435,7 +434,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
 int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
 {
     int err = 1;
-    u8_t *cell = NULL;
+    char *cell = NULL;
     u32_t erase_block_absolute = 0;
     u32_t erase_block_relative = 0;    
     u32_t page_relative = 0;
@@ -450,17 +449,16 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
 
     contiguous_pages_required = size/256 + size%256?1:0;
 
-    for(cell = (u8_t *)(FLASH_SCAN_START); cell < (u8_t *)(FLASH_SCAN_END);)
+    for(cell = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
-
         erase_block_absolute = ((u32_t)cell)/4096;
-        erase_block_relative = ((u32_t)cell - (u32_t)FLASH_SCAN_START)/4096;            
-        page_relative = (((u32_t)cell)%4096)/256;
+        erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/4096;            
+        page_relative = ((u32_t)(cell - FLASH_SCAN_START)%4096)/256;          
         
         if (*cell != 0xFF)
         {            
-            // skip next page
-            cell = (u8_t *)(erase_block_absolute*4096+((page_relative+1)*256));
+            // skip to next page
+            cell = FLASH_SCAN_START + erase_block_relative*4096+((page_relative+1)*256);
 
             // reset counter
             contiguous_pages_found = 0;
@@ -468,7 +466,7 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
             // remember start address
             *start_of_area = cell;
         }
-        else if (((u32_t)cell%256) == 255)
+        else if (((cell - FLASH_SCAN_START)%256) == 255)
         {                                  
             contiguous_pages_found++;
             free_pages++;
@@ -559,7 +557,7 @@ u8_t picofs_get_new_file_id(void)
     // scan backwards through flash
     p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
 
-    // scan flash
+    // scan flash and create bitmap of all used file_id numbers
     while (((char *)p) >= FS_FLASH_START)
     {
         t = (FILE_TRAILER_T *)p;

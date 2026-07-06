@@ -119,7 +119,7 @@ int picofs_close(int fd)
         }
         else
         {
-            printf("picoFS: out of space appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
+            shell_printf("picoFS: out of cache appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
             err = -2;            
         }
 
@@ -132,7 +132,7 @@ int picofs_close(int fd)
         }
         else
         {
-            printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
+            shell_printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
             err = -2;
         }
 

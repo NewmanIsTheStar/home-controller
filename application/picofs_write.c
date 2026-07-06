@@ -101,7 +101,7 @@ int picofs_write(int fd, char *ptr, int len)
         }
         else
         {
-            printf("picoFS: write truncated, out of cache\n");
+            shell_printf("picoFS: write truncated, out of cache\n");
             err = -1;
             break;
         }

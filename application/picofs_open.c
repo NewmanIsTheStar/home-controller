@@ -110,7 +110,7 @@ extern FILE_TEST_T test_filesystem[10];
 int picofs_open(int fd, char *name, int flags)
 {
     int err = -1;
-    char *file_trailer = NULL;
+    FILE_TRAILER_T *file_trailer = NULL;
     char *file_data = NULL;
     int open_mode = 0;
     static bool init_fds = true;
@@ -324,7 +324,7 @@ int picofs_allocate_cache(int fd)
  * \param file_trailer pointer to file trailer
  * \return nothing
  */
-bool picofs_file_in_use(char *file_trailer)
+bool picofs_file_in_use(FILE_TRAILER_T *file_trailer)
 {
     int i;
     bool in_use = false;
@@ -350,7 +350,7 @@ bool picofs_file_in_use(char *file_trailer)
  * \param[out]  header       pointer to file header
  * \return 0 on success
  */
-int picofs_find_by_name(char *filename, char **trailer)
+int picofs_find_by_name(char *filename, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     int i;
@@ -380,7 +380,7 @@ int picofs_find_by_name(char *filename, char **trailer)
             {
                 best_sequence = t->file_sequence;
                 best_status = t->file_status;
-                *trailer = (char *)t;
+                *trailer = t;
                 err = 0;
                 //p = p + sizeof(FILE_TRAILER_T) + h->file_size;  
                 p = p - t->file_size; 
@@ -394,7 +394,7 @@ int picofs_find_by_name(char *filename, char **trailer)
                 {
                     best_sequence = t->file_sequence;
                     best_status = t->file_status;
-                    *trailer = (char *)t;
+                    *trailer = t;
                     err = 0;
                     //p = p + sizeof(FILE_TRAILER_T) + h->file_size;
                     p = p - t->file_size;                  
