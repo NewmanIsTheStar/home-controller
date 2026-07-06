@@ -72,6 +72,7 @@
 //prototypes
 u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
 u8_t picofs_find_file_at_location(char *search);
+int picofs_iter_next_file(char *current_file);
 
 // external variables
 extern u32_t unix_time;
@@ -308,7 +309,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
 
         erase_block_absolute = ((u32_t)cell)/4096;
         erase_block_relative = ((u32_t)cell - (u32_t)FLASH_SCAN_START)/4096;            
-        page_relative = (((u32_t)cell)%4096)/256;
+        page_relative = (((u32_t)cell - (u32_t)FLASH_SCAN_START)%4096)/256;  
         
 
         switch(display)
@@ -346,17 +347,18 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
             case PFS_DISPLAY_SHELL_PAGE_NUMBERS:
                 //shell_printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
                 shell_printf("[Block%04d, Page%02d]\tused by %d\n", erase_block_relative, page_relative, picofs_find_file_at_location(cell));
-                hex_dump((char *)test_filesystem, 512);
+                //hex_dump((char *)test_filesystem, 512);
                 break;            
             case PFS_DISPLAY_SHELL_PAGE_MAP:
                 shell_printf("\u25A0");
                 break;
             }
             
-            // skip next page
-            cell = (u8_t *)(erase_block_absolute*4096+((page_relative+1)*256));
+            // skip to next page
+            //cell = (u8_t *)(erase_block_absolute*4096+((page_relative+1)*256));
+            cell = (u8_t *)((u32_t)FLASH_SCAN_START + (erase_block_relative*4096+((page_relative+1)*256)));
         }
-        else if (((u32_t)cell%256) == 255)
+        else if ((((u32_t)cell - (u32_t)FLASH_SCAN_START)%256) == 255)
         {
             switch(display)
             {
@@ -680,14 +682,14 @@ u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id
 u8_t picofs_find_file_at_location(char *search)
 {
     int err = -1;
-    u8_t *p = NULL;
+    char *p = NULL;
     FILE_TRAILER_T *t = NULL;
     u8_t file_id = 255;
     u8_t file_sequence = 0;    
     FILE_TRAILER_T *trailer;
     bool found = false;
 
-    if ((search < FS_FLASH_START) || (search > FS_FLASH_END))
+    if ((search < FS_FLASH_START) || (search >= FS_FLASH_END))
     {
         // search location is invalid
         return (255);
@@ -697,18 +699,24 @@ u8_t picofs_find_file_at_location(char *search)
     p = search;
 
     // scan flash
-    while ((char *)p < FS_FLASH_END)
+    while (p < FS_FLASH_END)
     {
         t = (FILE_TRAILER_T *)p;
 
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION))
         {
+            printf("Search began @ %p  found first file trailer @ %p which is a delta of %p\n", search, p, p-search);
             // check that file trailer is for a file that overlaps our search location 
-            if ((char *)(p + sizeof(FILE_TRAILER_T) - t->file_size) <= search)
+            if ((char *)(p /*+ sizeof(FILE_TRAILER_T)*/ - t->file_size) <= search)
             {
                 file_id = t->file_id;
                 file_sequence = t->file_sequence;                
+            }
+            else
+            {
+                printf("ignoring file %s because its size %0x does not overlap the search start point\n", t->name, t->file_size);
+                hex_dump(search, p-search+sizeof(FILE_TRAILER_T));
             }
 
             break;
@@ -720,4 +728,58 @@ u8_t picofs_find_file_at_location(char *search)
     }
 
     return(file_id);
+}
+
+/*!
+ * \brief iterator function to move to the next file in flash
+ * \param[in]   current_file      pointer to current file or NULL to initiate new walk
+ * 
+ * \return 0 on success
+ */
+int picofs_iter_next_file(char *current_file)
+{
+    int not_found = -1;
+    char *p = NULL;
+    FILE_TRAILER_T *t = NULL;
+
+
+    if ((current_file < FS_FLASH_START) || (current_file >= FS_FLASH_END))
+    {
+        p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+    }
+    else
+    {
+        p = current_file;
+    }
+
+    // scan backwards through flash until we find next file
+    do
+    {
+        // move to new location
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION))
+        {
+            p = p - t->file_size;  
+        }        
+        else
+        {
+            p--;
+        }
+
+        // check if new location contains a file trailer
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION))
+        {
+            not_found = 0;
+            break;
+        }
+
+    } while ((p >= FS_FLASH_START) && not_found);
+    
+    if (!not_found)
+    {
+        current_file = p;
+    }
+
+    return(not_found);
 }

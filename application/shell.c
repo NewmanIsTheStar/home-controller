@@ -29,6 +29,7 @@ typedef enum
 // external variables
 extern u32_t unix_time;
 extern WEB_VARIABLES_T web;
+extern FILE_TEST_T test_filesystem[10];
 
 // prototypes
 int shell_edit(char *filename);
@@ -290,7 +291,11 @@ static void execute_shell_command(const char* cmd)
     {        
         STRNCPY(web.ping_target, (char *)cmd+5, sizeof(web.ping_target));  // TODO: this is a kludge, should be passing this data in the queue 
         hc_queue_send(HC_CMD_PING);
-    } 
+    }     
+    else if (strcmp(cmd, "ff") == 0)
+    {
+        hex_dump((char *)test_filesystem, sizeof(test_filesystem));
+    }     
     else if (strcmp(cmd, "lights") == 0)
     {
         hc_queue_send(HC_CMD_LIGHTS);  
