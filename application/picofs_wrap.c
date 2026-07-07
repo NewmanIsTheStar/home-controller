@@ -178,40 +178,7 @@ int _isatty(int fd) {
 
 int __wrap__unlink(const char *name) 
 {
-
-    // find a free slot in custom_fds
-    int fd = -1;
-    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
-    {
-        if (!custom_fds[i].in_use) 
-        {
-            fd = i;
-            break;
-        }
-    }
-    
-    if (fd == -1) 
-    {
-        errno = ENFILE; // Too many open files
-        return -1;
-    }
-
-    if (picofs_open(fd, (char *)name, O_WRONLY))
-    {
-        errno = ENOENT; // File not found
-        return -1;
-    }
-
-    custom_fds[fd].in_use = true;
-
-    custom_fds[fd].file_status = 1;  // mark for deletion
-    custom_fds[fd].data_len = 0;     // empty file
- 
-    picofs_close(fd);
-    
-    custom_fds[fd].in_use = false;
-
-    return 0;
+    return(picofs_unlink(name));
 }
 
 // Declaration of the original SDK rename function
@@ -219,37 +186,8 @@ int __wrap__unlink(const char *name)
 
 int __wrap_rename(const char *old_path, const char *new_path) 
 {
-    // find a free slot in custom_fds
-    int fd = -1;
-    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
-    {
-        if (!custom_fds[i].in_use) 
-        {
-            fd = i;
-            break;
-        }
-    }
-    
-    if (fd == -1) 
-    {
-        errno = ENFILE; // Too many open files
-        return -1;
-    }
 
-    if (picofs_open(fd, (char *)old_path, O_WRONLY))
-    {
-        errno = ENOENT; // File not found
-        return -1;
-    }
-
-    custom_fds[fd].in_use = true;
-
-    // TODO: check that this file name doesn't already exist! If it does we need to delete the preexisting file  (we could just always try to delete it)
-    STRNCPY(custom_fds[fd].cache_trailer.name, new_path, sizeof(custom_fds[fd].cache_trailer.name));    
-    
-    picofs_close(fd);
-    
-    custom_fds[fd].in_use = false;
+    return(picofs_rename(old_path, new_path));
 
     return 0;
 }

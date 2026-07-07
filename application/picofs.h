@@ -57,7 +57,7 @@ typedef enum
 } PFS_DISPLAY_TYPE_T;
 
 int picofs_load_test_data(void);
-int picofs_find_by_name(char *filename, FILE_TRAILER_T **trailer);
+int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer);
 int picofs_list_all_files(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area);
@@ -65,15 +65,18 @@ bool picofs_file_in_use(FILE_TRAILER_T *file_trailer);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
 int picofs_allocate_cache(int fd);
 int picofs_deallocate_cache(int fd);
-int picofs_open(int fd, char *name, int flags);
+int picofs_open(int fd, const char *name, int flags);
 int picofs_read(int fd, char *ptr, int len);
 int picofs_write(int fd, char *ptr, int len);
-int picofs_create_file_trailer(int fd, char *name);
+int picofs_create_file_trailer(int fd, const char *name);
 int picofs_close(int fd);
 int picofs_delete(char *filename);
-int picofs_copy(char *src, char *dst);
+int picofs_copy(const char *src, const char *dst);
 int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence);
 u8_t picofs_get_new_file_id(void);
 bool picofs_is_file_deleted(u8_t file_id);
+int picofs_unlink(const char *name);
+int picofs_rename(const char *src, const char *dst);
+
 
 #endif

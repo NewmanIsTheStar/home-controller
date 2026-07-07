@@ -5,7 +5,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <fcntl.h>
 
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
@@ -504,7 +504,7 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
  *  
  * \return 0 on success
  */
-int picofs_create_file_trailer(int fd, char *name)
+int picofs_create_file_trailer(int fd, const char *name)
 {
     int err = -1;
     u8_t file_id = 255;

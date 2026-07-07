@@ -107,7 +107,7 @@ extern FILE_TEST_T test_filesystem[10];
  * \param flags  bitwise flags O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_TRUNC, O_APPEND, O_EXCL 
  * \return 0 on success
  */
-int picofs_open(int fd, char *name, int flags)
+int picofs_open(int fd, const char *name, int flags)
 {
     int err = -1;
     FILE_TRAILER_T *file_trailer = NULL;
@@ -128,9 +128,12 @@ int picofs_open(int fd, char *name, int flags)
     {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
         // we transform them into more sensible bit flags in the two least significant bits for easier processing
+        printf("Open called with flags = %d\n", flags);
         open_mode = (flags + 1) & (O_ACCMODE);
+        printf("open_mode = %d\n", open_mode);
         MASKED_WRITE(flags, open_mode, O_ACCMODE);
-
+        printf("updated flags = %d\n", flags);
+        
         if (flags & FWRITE)
         {
             // need exclusive access for write
@@ -350,7 +353,7 @@ bool picofs_file_in_use(FILE_TRAILER_T *file_trailer)
  * \param[out]  header       pointer to file header
  * \return 0 on success
  */
-int picofs_find_by_name(char *filename, FILE_TRAILER_T **trailer)
+int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     int i;

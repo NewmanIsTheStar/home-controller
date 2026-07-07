@@ -17,7 +17,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         picofs_open.c
         picofs_write.c
         picofs_close.c
-        picofs_copy.c        
+        picofs_copy.c   
+        picofs_rename.c   
+        picofs_unlink.c                      
 )
 
 set(WEB_FILES)

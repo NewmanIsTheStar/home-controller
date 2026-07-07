@@ -5,6 +5,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 
 #include "hardware/pio.h"
@@ -88,7 +89,7 @@ extern FILE_TEST_T test_filesystem[10];
  * \param fd     file descriptor 
  * \return 0 on success
  */
-int picofs_copy(char *src, char *dst)
+int picofs_copy(const char *src, const char *dst)
 {
     int err = -1;
     int i;
@@ -105,7 +106,7 @@ int picofs_copy(char *src, char *dst)
         return(err);
     }
 
-    if (picofs_open(fd, src, 2))
+    if (picofs_open(fd, src, O_WRONLY))
     {
         errno = ENOENT; // File not found
         return -1;
@@ -144,7 +145,7 @@ int picofs_copy(char *src, char *dst)
     custom_fds[fd].cache_trailer.file_sequence = file_sequence;
     STRNCPY(custom_fds[fd].cache_trailer.name, dst, sizeof(custom_fds[fd].cache_trailer.name));
 
-    picofs_close(fd);
+    err = picofs_close(fd);
     picofs_release_fd(fd);
 
     return(err);
