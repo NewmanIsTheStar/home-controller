@@ -40,6 +40,11 @@ typedef struct
     size_t data_offset;           // flash or RAM: offset used by standard C library functions e.g. fread     
 } PICOFS_FD_T;
 
+typedef struct file_metrics
+{
+    bool valid;  
+    FILE_TRAILER_T *trailer;
+} FILE_METRICS_T;
 
 typedef struct file_test
 {
@@ -77,6 +82,7 @@ u8_t picofs_get_new_file_id(void);
 bool picofs_is_file_deleted(u8_t file_id);
 int picofs_unlink(const char *name);
 int picofs_rename(const char *src, const char *dst);
+int picofs_list_files_by_size(void);
 
 
 #endif

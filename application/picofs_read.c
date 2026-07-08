@@ -71,8 +71,9 @@
 
 //prototypes
 u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
-u8_t picofs_find_file_at_location(char *search);
-int picofs_iter_next_file(char *current_file);
+u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
+int picofs_iter_next_file(FILE_TRAILER_T **current_file);
+int picofs_metrics_size_compare(const void *a, const void *b);
 
 // external variables
 extern u32_t unix_time;
@@ -82,7 +83,7 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 //static variables
 FILE_TEST_T test_filesystem[10];
- 
+FILE_METRICS_T picofs_metrics[256]; 
 
 int picofs_read(int fd, char *ptr, int len)
 {
@@ -118,6 +119,7 @@ int picofs_list_all_files(void)
     int i;
     u8_t *p = NULL;
     FILE_TRAILER_T *t = NULL;
+    bool heading = false;
 
     // scan backwards through flash
     p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
@@ -135,6 +137,12 @@ int picofs_list_all_files(void)
             {
                 if (!t->file_status)  // not deleted
                 {
+                    if (!heading)
+                    {
+                         picofs_printf("Size\t\tFID\tSEQ\tName\n");
+                         heading = true;
+                    }
+                    
                     picofs_printf("%08d\t%d\t%d\t%s\n", t->file_size, t->file_id, t->file_sequence, t->name);
                 }
             }
@@ -168,6 +176,9 @@ int picofs_list_all_files(void)
 
         picofs_list_files_within_size_range(32, 256,  file_id_list, file_size_list, NUM_ROWS(file_id_list));
     }
+
+    // TEST TEST TEST
+    picofs_list_files_by_size();
 
     return(err);
 }
@@ -241,7 +252,7 @@ int picofs_load_test_data(void)
         // STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
         
         test_filesystem[0].test_data[0] = 0;
-        for (i=0; i<216; i++)
+        for (i=0; i<224; i++)
         {
             STRNCAT(test_filesystem[0].test_data, "A", sizeof(test_filesystem[0].test_data));
         }
@@ -259,7 +270,7 @@ int picofs_load_test_data(void)
         STRNCPY(test_filesystem[1].test_trailer.name, "monkey", sizeof("monkey"));
         //STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
         test_filesystem[1].test_data[0] = 0;
-        for (i=0; i<216; i++)
+        for (i=0; i<224; i++)
         {
             STRNCAT(test_filesystem[1].test_data, "B", sizeof(test_filesystem[1].test_data));
         }        
@@ -301,6 +312,9 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
     u32_t total_pages = 0;
     TickType_t start_tick;
     TickType_t elapsed_ticks = 0;
+    FILE_TRAILER_T *trailer = NULL;
+    u8_t file_id = 255;
+    u8_t file_sequence = 0;
 
     start_tick = xTaskGetTickCount();
 
@@ -339,14 +353,32 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
                 break;
             case PFS_DISPLAY_PAGE_NUMBERS:
                 // printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
-                printf("[Block%04d, Page%02d]\tused by %d\n", erase_block_relative, page_relative, picofs_find_file_at_location(cell));
+                file_id = picofs_find_file_at_location(cell, &trailer);
+                if (trailer)
+                {
+                    file_sequence = trailer->file_sequence;
+                }
+                else
+                {
+                    file_sequence = 0;
+                }
+                printf("[Block%04d, Page%02d]\tused   FID%d SEQ%d\n", erase_block_relative, page_relative, file_id, file_sequence);
                 break;
             case PFS_DISPLAY_PAGE_MAP:
                 printf("\u25A0");
                 break;
             case PFS_DISPLAY_SHELL_PAGE_NUMBERS:
                 //shell_printf("[Block%04d, Page%02d]\tused\n", erase_block_relative, page_relative);
-                shell_printf("[Block%04d, Page%02d]\tused by %d\n", erase_block_relative, page_relative, picofs_find_file_at_location(cell));
+                file_id = picofs_find_file_at_location(cell, &trailer);
+                if (trailer)
+                {
+                    file_sequence = trailer->file_sequence;
+                }
+                else
+                {
+                    file_sequence = 0;
+                }
+                shell_printf("[Block%04d, Page%02d]\tused   FID%d SEQ%d\n", erase_block_relative, page_relative, file_id, file_sequence);
                 //hex_dump((char *)test_filesystem, 512);
                 break;            
             case PFS_DISPLAY_SHELL_PAGE_MAP:
@@ -677,15 +709,16 @@ u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id
  * 
  * \return file_id or 255 on failure
  */
-u8_t picofs_find_file_at_location(char *search)
+u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     char *p = NULL;
     FILE_TRAILER_T *t = NULL;
     u8_t file_id = 255;
     u8_t file_sequence = 0;    
-    FILE_TRAILER_T *trailer;
     bool found = false;
+
+    *trailer = NULL;
 
     if ((search < FS_FLASH_START) || (search >= FS_FLASH_END))
     {
@@ -709,7 +742,8 @@ u8_t picofs_find_file_at_location(char *search)
             if ((char *)(p /*+ sizeof(FILE_TRAILER_T)*/ - t->file_size) <= search)
             {
                 file_id = t->file_id;
-                file_sequence = t->file_sequence;                
+                file_sequence = t->file_sequence;
+                *trailer = t;               
             }
             else
             {
@@ -734,25 +768,29 @@ u8_t picofs_find_file_at_location(char *search)
  * 
  * \return 0 on success
  */
-int picofs_iter_next_file(char *current_file)
+int picofs_iter_next_file(FILE_TRAILER_T **current_file)
 {
-    int not_found = -1;
+    int not_found = 1;
     char *p = NULL;
     FILE_TRAILER_T *t = NULL;
+    //uintptr_t flash_end = (uintptr_t)FS_FLASH_START;  // required to hide from gcc optimizer stupidity
 
 
-    if ((current_file < FS_FLASH_START) || (current_file >= FS_FLASH_END))
+    //if (((uintptr_t)current_file < (uintptr_t)FS_FLASH_START) || ((uintptr_t)current_file >= (uintptr_t)FS_FLASH_END))
+    if (*current_file  == NULL)
     {
         p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
     }
     else
     {
-        p = current_file;
+        p = (char *)*current_file;
     }
 
     // scan backwards through flash until we find next file
     do
     {
+        t = (FILE_TRAILER_T *)p;
+
         // move to new location
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION))
@@ -765,6 +803,7 @@ int picofs_iter_next_file(char *current_file)
         }
 
         // check if new location contains a file trailer
+        t = (FILE_TRAILER_T *)p;
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION))
         {
@@ -772,12 +811,92 @@ int picofs_iter_next_file(char *current_file)
             break;
         }
 
+        // block gcc from tracking flash_end and optimizing out the comparison
+       //  __asm__ __volatile__("" : "+r"(flash_end)); 
+
     } while ((p >= FS_FLASH_START) && not_found);
     
     if (!not_found)
     {
-        current_file = p;
+        *current_file = (FILE_TRAILER_T *)p;
+
+        printf("Iterator return: %s %d %p\n", t->name, not_found, *current_file);
+    }
+    else
+    {
+        printf("Iterator returning not found %d\n", not_found);
     }
 
     return(not_found);
+}
+
+/*!
+ * \brief iterator function to move to the next file in flash
+ * \param[in]   current_file      pointer to current file or NULL to initiate new walk
+ * 
+ * \return 0 on success
+ */
+int picofs_metrics_size_compare(const void *a, const void *b)
+{
+    int size_a = 0;
+    int size_b = 0;
+
+    if (((FILE_METRICS_T *)a)->valid)
+    {
+        size_a = ((FILE_METRICS_T*)a)->trailer->file_size;
+    }
+
+    if (((FILE_METRICS_T *)b)->valid)
+    {
+        size_b = ((FILE_METRICS_T*)b)->trailer->file_size;
+    }
+
+    return (size_a - size_b);
+}
+
+/*!
+ * \brief iterator function to move to the next file in flash
+ * \param[in]   current_file      pointer to current file or NULL to initiate new walk
+ * 
+ * \return 0 on success
+ */
+int picofs_list_files_by_size(void)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+
+    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            picofs_metrics[current->file_id].valid = true;
+
+            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            {
+                picofs_metrics[current->file_id].trailer = current;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
+    }
+
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_metrics_size_compare);
+
+    picofs_printf("LIST sorted by size\n");
+
+    for (i=0; i<256; i++)
+    {
+        if (picofs_metrics[i].valid)
+        {
+            picofs_printf("%08d\t%d\t%d\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence);
+        }
+    }
+
+    return(0);
 }

@@ -320,6 +320,10 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_PAGE_NUMBERS);  
     }   
+    else if (strcmp(cmd, "run") == 0) 
+    {
+        hc_queue_send(HC_CMD_BASIC_SCRIPT); 
+    }      
     else if (strncmp(cmd, "edit ", 5) == 0) 
     {
         if (strlen(cmd) > 6) shell_edit((char *)(cmd+5));  
@@ -695,6 +699,8 @@ void shell_printf(const char *format, ...)
     int retry = 0;
     bool complete = false;
 
+    if (format == NULL) return;
+    
     do
     {
         // Guard against potential thread concurrency collisions

@@ -103,7 +103,7 @@
                     body: command
                 });
             } catch (err) {
-                output.textContent += "System Error: Unable to route command payload.\n";
+                output.textContent += "System Error: Unable to transmit command.\n";
             }
             
             window.scrollTo(0, document.body.scrollHeight);
