@@ -111,85 +111,6 @@ int picofs_read(int fd, char *ptr, int len)
  * 
  * \param[out]  header       pointer to file header
  *  *     
- * \return 0 on success
- */
-int picofs_list_all_files(void)
-{
-    int err = -1;
-    int i;
-    u8_t *p = NULL;
-    FILE_TRAILER_T *t = NULL;
-    bool heading = false;
-
-    // scan backwards through flash
-    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
-
-    // scan flash
-    while (((char *)p) >= FS_FLASH_START)
-    {
-        t = (FILE_TRAILER_T *)p;
-
-        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION))
-        {
-            //picofs_printf("CHECKING %08d\t%d\t%s\n", h->file_size, h->file_sequence, h->name);
-            if (picofs_is_latest_file_sequence(t->name, t->file_id, t->file_sequence))
-            {
-                if (!t->file_status)  // not deleted
-                {
-                    if (!heading)
-                    {
-                         picofs_printf("Size\t\tFID\tSEQ\tName\n");
-                         heading = true;
-                    }
-                    
-                    picofs_printf("%08d\t%d\t%d\t%s\n", t->file_size, t->file_id, t->file_sequence, t->name);
-                }
-            }
-
-            p = p - t->file_size;  
-        }
-        else
-        {
-            p--;
-        }
-    }
-
-    // // scan cache
-    // for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
-    // {
-    //     if (custom_fds[i].cache) 
-    //     {
-    //         h = (FILE_HEADER_T *)custom_fds[i].cache;
-
-    //         if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
-    //             (h->picofs_version == FS_VERION))
-    //         {
-    //             picofs_printf("%08d\t%d\t%s*\n", h->file_size, h->file_sequence, h->name);
-    //         }
-    //     }
-    // }   
-    
-    {   // TEST TEST TEST 
-        u8_t file_id_list[10];
-        int file_size_list[10];
-
-        picofs_list_files_within_size_range(32, 256,  file_id_list, file_size_list, NUM_ROWS(file_id_list));
-    }
-
-    // TEST TEST TEST
-    picofs_list_files_by_size();
-
-    return(err);
-}
-
-/*!
- * \brief Print a list of all files in the file system
- * 
- * \param[in]   filename     name to find
- * 
- * \param[out]  header       pointer to file header
- *  *     
  * \return 0 if latest, 1 if not latest sequence
  */
 int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence)
@@ -479,7 +400,7 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
 
     start_tick = xTaskGetTickCount();
 
-    contiguous_pages_required = size/256 + size%256?1:0;
+    contiguous_pages_required = size/256 + (size%256?1:0);
 
     for(cell = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
@@ -855,8 +776,7 @@ int picofs_metrics_size_compare(const void *a, const void *b)
 }
 
 /*!
- * \brief iterator function to move to the next file in flash
- * \param[in]   current_file      pointer to current file or NULL to initiate new walk
+ * \brief list files by size
  * 
  * \return 0 on success
  */
@@ -894,9 +814,98 @@ int picofs_list_files_by_size(void)
     {
         if (picofs_metrics[i].valid)
         {
-            picofs_printf("%08d\t%d\t%d\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence);
+            picofs_printf("%08d\t%d\t%d\t%s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, picofs_metrics[i].trailer->name);
         }
     }
+
+    return(0);
+}
+
+/*!
+ * \brief compare file names
+ * \param[in]   a      pointer to data structure to compare
+ * \param[in]   b      pointer to data structure to compare 
+ * \return 0 on success
+ */
+int picofs_metrics_name_compare(const void *a, const void *b)
+{
+    char *name_a = "";
+    char *name_b = "";
+
+    if (((FILE_METRICS_T *)a)->valid)
+    {
+        name_a = ((FILE_METRICS_T*)a)->trailer->name;
+    }
+
+    if (((FILE_METRICS_T *)b)->valid)
+    {
+        name_b = ((FILE_METRICS_T*)b)->trailer->name;
+    }
+
+    return (strcmp(name_a, name_b));
+}
+
+/*!
+ * \brief Print a list of all files in the file system
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_list_all_files(void)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+    int num_files = 0;
+    int size_files = 0;
+    int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
+    u8_t *consolidation_area = NULL;
+
+    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            picofs_metrics[current->file_id].valid = true;
+            num_files++;
+            size_files_plus_remnants += current->file_size;
+
+            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            {
+                picofs_metrics[current->file_id].trailer = current;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
+    }
+
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
+
+    if (num_files)
+    {
+            picofs_printf("Size\t\tFID\tSEQ\tName\n");
+    }
+
+    for (i=0; i<256; i++)
+    {
+        if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
+        {
+            picofs_printf("%08d\t%d\t%d\t%s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, picofs_metrics[i].trailer->name);
+            size_files += picofs_metrics[i].trailer->file_size;
+        }
+    }
+
+    picofs_printf("\nTotal size    %08d\n", size_files);
+    picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
+
+    picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
 
     return(0);
 }
