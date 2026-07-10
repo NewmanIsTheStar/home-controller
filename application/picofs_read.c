@@ -82,7 +82,7 @@ extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 //static variables
-FILE_TEST_T test_filesystem[10];
+FILE_TEST_T test_filesystem[40];
 FILE_METRICS_T picofs_metrics[256]; 
 
 int picofs_read(int fd, char *ptr, int len)
@@ -160,7 +160,7 @@ int picofs_load_test_data(void)
 
     if (!test_init)
     {
-        memset((void *)test_filesystem, 255, sizeof(test_filesystem));
+        memset((void *)test_filesystem, FS_ERASED_CELL_VALUE, sizeof(test_filesystem));
 
         STRNCPY(test_filesystem[0].test_trailer.magic_number, "pfs", sizeof(test_filesystem[0].test_trailer.magic_number));
         test_filesystem[0].test_trailer.picofs_version = 0;
@@ -234,7 +234,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
     TickType_t start_tick;
     TickType_t elapsed_ticks = 0;
     FILE_TRAILER_T *trailer = NULL;
-    u8_t file_id = 255;
+    u8_t file_id = FS_INVALID_FID;
     u8_t file_sequence = 0;
 
     start_tick = xTaskGetTickCount();
@@ -242,21 +242,21 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
     for(cell = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
 
-        erase_block_absolute = ((u32_t)cell)/4096;
-        erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/4096;            
-        page_relative = ((u32_t)(cell - FLASH_SCAN_START)%4096)/256;  
+        erase_block_absolute = ((u32_t)cell)/FS_ERASE_BLOCK_SIZE;
+        erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_ERASE_BLOCK_SIZE;            
+        page_relative = ((u32_t)(cell - FLASH_SCAN_START)%FS_ERASE_BLOCK_SIZE)/FS_PAGE_SIZE;  
         
 
         switch(display)
         {
         case PFS_DISPLAY_PAGE_MAP:
-            if (((((u32_t)(cell - FLASH_SCAN_START))%4096) == 0))
+            if (((((u32_t)(cell - FLASH_SCAN_START))%FS_ERASE_BLOCK_SIZE) == 0))
             {
                 printf("\n[Block%04d]", erase_block_relative);
             }        
             break;
         case PFS_DISPLAY_SHELL_PAGE_MAP:
-            if (((((u32_t)(cell - FLASH_SCAN_START))%4096) == 0))
+            if (((((u32_t)(cell - FLASH_SCAN_START))%FS_ERASE_BLOCK_SIZE) == 0))
             {
                 shell_printf("\n[Block%04d]", erase_block_relative);
             }  
@@ -265,7 +265,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
             break;
         }
 
-        if (*cell != 0xFF)
+        if (*cell != FS_ERASED_CELL_VALUE)
         {
             switch(display)
             {
@@ -308,9 +308,9 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
             }
             
             // skip to next page
-            cell = FLASH_SCAN_START + erase_block_relative*4096+((page_relative+1)*256);
+            cell = FLASH_SCAN_START + erase_block_relative*FS_ERASE_BLOCK_SIZE+((page_relative+1)*FS_PAGE_SIZE);
         }
-        else if (((cell - FLASH_SCAN_START)%256) == 255)
+        else if (((cell - FLASH_SCAN_START)%FS_PAGE_SIZE) == (FS_PAGE_SIZE-1))  // reached last cell of page
         {
             switch(display)
             {
@@ -353,7 +353,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
     }    
 
     elapsed_ticks = xTaskGetTickCount() - start_tick;
-    total_pages = (FLASH_SCAN_END - FLASH_SCAN_START)/256;
+    total_pages = (FLASH_SCAN_END - FLASH_SCAN_START)/FS_PAGE_SIZE;
 
     switch(display)
     {
@@ -400,18 +400,18 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
 
     start_tick = xTaskGetTickCount();
 
-    contiguous_pages_required = size/256 + (size%256?1:0);
+    contiguous_pages_required = size/FS_PAGE_SIZE + (size%FS_PAGE_SIZE?1:0);
 
     for(cell = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
-        erase_block_absolute = ((u32_t)cell)/4096;
-        erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/4096;            
-        page_relative = ((u32_t)(cell - FLASH_SCAN_START)%4096)/256;          
+        erase_block_absolute = ((u32_t)cell)/FS_ERASE_BLOCK_SIZE;
+        erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_ERASE_BLOCK_SIZE;            
+        page_relative = ((u32_t)(cell - FLASH_SCAN_START)%FS_ERASE_BLOCK_SIZE)/FS_PAGE_SIZE;          
         
-        if (*cell != 0xFF)
+        if (*cell != FS_ERASED_CELL_VALUE)
         {            
             // skip to next page
-            cell = FLASH_SCAN_START + erase_block_relative*4096+((page_relative+1)*256);
+            cell = FLASH_SCAN_START + erase_block_relative*FS_ERASE_BLOCK_SIZE+((page_relative+1)*FS_PAGE_SIZE);
 
             // reset counter
             contiguous_pages_found = 0;
@@ -419,7 +419,7 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
             // remember start address
             *start_of_area = cell;
         }
-        else if (((cell - FLASH_SCAN_START)%256) == 255)
+        else if (((cell - FLASH_SCAN_START)%FS_PAGE_SIZE) == (FS_PAGE_SIZE-1))
         {                                  
             contiguous_pages_found++;
             free_pages++;
@@ -460,12 +460,12 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
 int picofs_create_file_trailer(int fd, const char *name)
 {
     int err = -1;
-    u8_t file_id = 255;
+    u8_t file_id = FS_INVALID_FID;
 
     file_id = picofs_get_new_file_id();
 
     // if file_id is valid and cache is allocated
-    if ((file_id != 255) && custom_fds[fd].cache)
+    if ((file_id != FS_INVALID_FID) && custom_fds[fd].cache)
     {       
         // create new trailer in the fd cache 
         STRNCPY(custom_fds[fd].cache_trailer.magic_number, "pfs", sizeof(custom_fds[fd].cache_trailer.magic_number));                                                            
@@ -490,7 +490,7 @@ int picofs_create_file_trailer(int fd, const char *name)
 /*!
  * \brief get a new file id
  * 
- * \return file_id or 255 on failure
+ * \return file_id or FS_INVALID_FID on failure
  */
 u8_t picofs_get_new_file_id(void)
 {
@@ -500,7 +500,7 @@ u8_t picofs_get_new_file_id(void)
     u8_t file_id_map[32];
     u8_t file_id_bit;
     u8_t file_id_byte;
-    u8_t file_id = 255;
+    u8_t file_id = FS_INVALID_FID;
     FILE_TRAILER_T *trailer;
     bool found = false;
 
@@ -532,7 +532,7 @@ u8_t picofs_get_new_file_id(void)
     }
 
     // scan file_id bitmap to find an unused file_id
-    for (file_id=0; file_id < 255; file_id++)
+    for (file_id=0; file_id < FS_NUM_FID; file_id++)
     {
         file_id_byte = file_id/8;
         file_id_bit = file_id%8;
@@ -567,7 +567,7 @@ u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id
     
 
     // initialize lists
-    memset(file_id_list, 255, sizeof(u8_t)*list_len);
+    memset(file_id_list, FS_INVALID_FID, sizeof(u8_t)*list_len);
     memset(file_size_list, 0, sizeof(int)*list_len);
 
     // scan backwards through flash
@@ -628,14 +628,14 @@ u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id
 /*!
  * \brief find file id and sequence for file at given address
  * 
- * \return file_id or 255 on failure
+ * \return file_id or FS_INVALID_FID on failure
  */
 u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     char *p = NULL;
     FILE_TRAILER_T *t = NULL;
-    u8_t file_id = 255;
+    u8_t file_id = FS_INVALID_FID;
     u8_t file_sequence = 0;    
     bool found = false;
 
@@ -644,7 +644,7 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
     if ((search < FS_FLASH_START) || (search >= FS_FLASH_END))
     {
         // search location is invalid
-        return (255);
+        return (FS_INVALID_FID);
     }
 
     // scan forwards through flash
@@ -805,7 +805,7 @@ int picofs_list_files_by_size(void)
 
     picofs_printf("LIST sorted by size\n");
 
-    for (i=0; i<256; i++)
+    for (i=0; i<FS_PAGE_SIZE; i++)
     {
         if (picofs_metrics[i].valid)
         {
@@ -888,7 +888,7 @@ int picofs_list_all_files(void)
             picofs_printf("Size\t\tFID\tSEQ\tName\n");
     }
 
-    for (i=0; i<256; i++)
+    for (i=0; i<FS_PAGE_SIZE; i++)
     {
         if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
         {

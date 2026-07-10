@@ -4,23 +4,30 @@
 #include <stddef.h>
 #include "shell.h"
 
-// output to either terminal or http shell
-//#define picofs_printf(format, ...) printf("[MACRO] " format, ##__VA_ARGS__)
-#define picofs_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
+
+#define FS_PAGE_SIZE (256)
+// #define FS_ERASE_BLOCK_SIZE (4096)
+#define FS_ERASE_BLOCK_SIZE (1024)
+#define FS_ERASED_CELL_VALUE (255)
+#define FS_NUM_FID (255)        // 0-254
+#define FS_INVALID_FID (255)
 #define FS_MAX_FILE_DESCRIPTORS (8)
 #define FS_FLASH_START ((char *)(&test_filesystem))
 #define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
 #define FS_VERION (0)
-
-#define PROT_NONE  0
-#define PROT_READ  1
-#define PROT_WRITE 2
-#define PROT_EXEC  4
-#define MAP_SHARED  1
-#define MAP_PRIVATE 2
-#define MAP_ANONYMOUS 0x20
+#define PROT_NONE  (0)
+#define PROT_READ  (1)
+#define PROT_WRITE (2)
+#define PROT_EXEC  (4)
+#define MAP_SHARED  (1)
+#define MAP_PRIVATE (2)
+#define MAP_ANONYMOUS (0x20)
 #define MAP_ANON    MAP_ANONYMOUS
 #define MAP_FAILED ((void *)-1)
+
+// print to terminal or http shell
+//#define picofs_printf(format, ...) printf("[picoFS] " format, ##__VA_ARGS__)
+#define picofs_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
 
 typedef struct file_header
 {
@@ -58,7 +65,7 @@ typedef struct file_metrics
 
 typedef struct file_test
 {
-    u8_t test_data[224];
+    u8_t test_data[FS_PAGE_SIZE-sizeof(FILE_TRAILER_T)];
     FILE_TRAILER_T test_trailer;    
 } FILE_TEST_T;
 

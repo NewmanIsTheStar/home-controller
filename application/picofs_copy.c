@@ -94,7 +94,7 @@ int picofs_copy(const char *src, const char *dst)
     int err = -1;
     int i;
     int fd;
-    u8_t file_id = 255;
+    u8_t file_id = FS_INVALID_FID;
     u8_t file_sequence = 0;
     FILE_TRAILER_T *existing_dst = NULL;
 
@@ -121,7 +121,7 @@ int picofs_copy(const char *src, const char *dst)
         file_id = picofs_get_new_file_id();
         file_sequence = 0;
 
-        if (file_id == 255)
+        if (file_id == FS_INVALID_FID)
         {
             picofs_release_fd(fd);
             return -2;        
