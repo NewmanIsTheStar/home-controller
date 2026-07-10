@@ -250,13 +250,13 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
         switch(display)
         {
         case PFS_DISPLAY_PAGE_MAP:
-            if (((((u32_t)cell)%4096) == 0))
+            if (((((u32_t)(cell - FLASH_SCAN_START))%4096) == 0))
             {
                 printf("\n[Block%04d]", erase_block_relative);
             }        
             break;
         case PFS_DISPLAY_SHELL_PAGE_MAP:
-            if (((((u32_t)cell)%4096) == 0))
+            if (((((u32_t)(cell - FLASH_SCAN_START))%4096) == 0))
             {
                 shell_printf("\n[Block%04d]", erase_block_relative);
             }  
@@ -694,11 +694,9 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)
     int not_found = 1;
     char *p = NULL;
     FILE_TRAILER_T *t = NULL;
-    //uintptr_t flash_end = (uintptr_t)FS_FLASH_START;  // required to hide from gcc optimizer stupidity
 
 
-    //if (((uintptr_t)current_file < (uintptr_t)FS_FLASH_START) || ((uintptr_t)current_file >= (uintptr_t)FS_FLASH_END))
-    if (*current_file  == NULL)
+    if (((char *)*current_file < FS_FLASH_START) || ((char *)*current_file >= FS_FLASH_END))
     {
         p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
     }
@@ -732,20 +730,17 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)
             break;
         }
 
-        // block gcc from tracking flash_end and optimizing out the comparison
-       //  __asm__ __volatile__("" : "+r"(flash_end)); 
-
     } while ((p >= FS_FLASH_START) && not_found);
     
     if (!not_found)
     {
         *current_file = (FILE_TRAILER_T *)p;
 
-        printf("Iterator return: %s %d %p\n", t->name, not_found, *current_file);
+        // printf("Iterator return: %s %d %p\n", t->name, not_found, *current_file);
     }
     else
     {
-        printf("Iterator returning not found %d\n", not_found);
+        // printf("Iterator returning not found %d\n", not_found);
     }
 
     return(not_found);

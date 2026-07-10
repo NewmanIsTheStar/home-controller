@@ -12,6 +12,16 @@
 #define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
 #define FS_VERION (0)
 
+#define PROT_NONE  0
+#define PROT_READ  1
+#define PROT_WRITE 2
+#define PROT_EXEC  4
+#define MAP_SHARED  1
+#define MAP_PRIVATE 2
+#define MAP_ANONYMOUS 0x20
+#define MAP_ANON    MAP_ANONYMOUS
+#define MAP_FAILED ((void *)-1)
+
 typedef struct file_header
 {
     u8_t magic_number[4];   // "pfs"
@@ -83,6 +93,7 @@ bool picofs_is_file_deleted(u8_t file_id);
 int picofs_unlink(const char *name);
 int picofs_rename(const char *src, const char *dst);
 int picofs_list_files_by_size(void);
-
+void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
+int picofs_munmap(void *addr, size_t len);
 
 #endif

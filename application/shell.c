@@ -1,4 +1,7 @@
 //#define _GNU_SOURCE 
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "lwip/opt.h"
 #include "lwip/apps/httpd.h"
 #include "lwip/apps/fs.h"
@@ -35,6 +38,7 @@ extern FILE_TEST_T test_filesystem[10];
 int shell_edit(char *filename);
 int shell_cat(char *filename);
 void shell_printf_nb(const char *format, ...);
+int shell_map_test(char *filename);
 
 
 const char http_200_json_response[] = 
@@ -295,6 +299,7 @@ static void execute_shell_command(const char* cmd)
     else if (strcmp(cmd, "ff") == 0)
     {
         hex_dump((char *)test_filesystem, sizeof(test_filesystem));
+
     }     
     else if (strcmp(cmd, "lights") == 0)
     {
@@ -336,6 +341,10 @@ static void execute_shell_command(const char* cmd)
     {        
         if (strlen(cmd) > 5) shell_hex_dump((char *)cmd+3);   
     } 
+    else if (strncmp(cmd, "mt ", 3) == 0) 
+    {        
+        if (strlen(cmd) > 5) shell_map_test((char *)cmd+3);   
+    }         
     else if (strncmp(cmd, "rm ", 3) == 0) 
     {
         if (strlen(cmd) > 4) remove((char *)(cmd+3));  
@@ -1113,3 +1122,55 @@ int shell_copy(char *src_space_dst)
 }
 
 
+
+/*!
+ * \brief print hex dump of buffer
+ * 
+ * \param[in]  filename  file to dump to shell
+ * \return nothing
+ */
+int shell_map_test(char *filename)
+{
+    FILE *filePointer;
+    unsigned char buffer[16];
+    size_t bytes_read = 0;
+    char output_line[160];
+    char output_byte[8];
+    int i;
+    int fd;
+    void *file_data = NULL;
+
+    printf("mmap test %d\n", filename);
+
+    // 1. Open the file in read binary mode ("r")
+    filePointer = fopen(filename, "rb");
+
+    // 2. Check if the file exists and opened successfully
+    if (filePointer == NULL) 
+    {
+        shell_printf_nb("hd: %s: No such file\n", filename);
+        return 1; 
+    }
+
+    fd = fileno(filePointer);
+    
+    
+    file_data = picofs_mmap(NULL, 0, PROT_READ, MAP_SHARED, fd, 0);
+
+    shell_printf_nb("mt: mapping via fopen(): %p\n", file_data);
+    shell_printf_nb("%s\n", file_data);
+
+    // 4. Close the file to free up system resources
+    fclose(filePointer);
+
+
+    fd = open(filename, O_RDONLY);
+    file_data = picofs_mmap(NULL, 0, PROT_READ, MAP_SHARED, fd, 0);
+
+    shell_printf_nb("mt: mapping via open(): %p\n", file_data);
+    shell_printf_nb("%s\n", file_data);
+    
+    close(fd);
+
+    return(0);
+}
