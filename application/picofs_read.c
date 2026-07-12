@@ -73,7 +73,10 @@
 u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
 u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
 int picofs_iter_next_file(FILE_TRAILER_T **current_file);
+int picofs_refresh_metrics(void);
 int picofs_metrics_size_compare(const void *a, const void *b);
+u32_t picofs_get_start_block(FILE_TRAILER_T *trailer);
+u32_t picofs_get_end_block(FILE_TRAILER_T *trailer);
 
 // external variables
 extern u32_t unix_time;
@@ -372,6 +375,10 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
         break;                          
     }   
     
+
+    // TEST TEST TEST 
+    picofs_erase_obsolete_blocks();
+
     return(0);
 }
 
@@ -849,7 +856,256 @@ int picofs_metrics_name_compare(const void *a, const void *b)
  *  *     
  * \return 0 on success
  */
+int picofs_refresh_metrics(void)
+{
+    int err = -1;
+    FILE_TRAILER_T *current = NULL;
+
+    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            picofs_metrics[current->file_id].valid = true;
+
+            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            {
+                picofs_metrics[current->file_id].trailer = current;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
+    }
+
+    return(0);
+}
+
+
+/*!
+ * \brief Print a list of all files in the file system
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
 int picofs_list_all_files(void)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+    int num_files = 0;
+    int size_files = 0;
+    int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
+    u8_t *consolidation_area = NULL;
+
+    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            picofs_metrics[current->file_id].valid = true;
+            num_files++;
+            size_files_plus_remnants += current->file_size;
+
+            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            {
+                picofs_metrics[current->file_id].trailer = current;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
+    }
+
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
+
+    if (num_files)
+    {
+            picofs_printf("Size\t\tFID\tSEQ\tName\n");
+    }
+
+    for (i=0; i<FS_PAGE_SIZE; i++)
+    {
+        if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
+        {
+            picofs_printf("%08d\t%d\t%d\t%s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, picofs_metrics[i].trailer->name);
+            size_files += picofs_metrics[i].trailer->file_size;
+        }
+    }
+
+    picofs_printf("\nTotal size    %08d\n", size_files);
+    picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
+
+    picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
+
+    return(0);
+}
+
+/*!
+ * \brief erase obsolete blocks
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_erase_obsolete_blocks(void)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+    FILE_TRAILER_T *look_ahead = NULL;
+    int num_files = 0;
+    int size_files = 0;
+    int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
+    u8_t *consolidation_area = NULL;
+    u32_t file_start_block = 0;
+    u32_t file_end_block = 0;
+    bool erasure_possible = false;
+    u32_t last_valid_start_block = UINT_MAX;
+
+    picofs_refresh_metrics();
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            //printf("checking %s seq %d\n", current->name, current->file_sequence);
+
+            if (picofs_metrics[current->file_id].trailer != current)
+            {
+
+                file_start_block = picofs_get_start_block(current);
+                file_end_block = picofs_get_end_block(current);
+                
+                //printf("found remnant of file %s start block %d to end block %d\n", current->name, file_start_block, file_end_block);
+
+                if (file_end_block != last_valid_start_block)
+                {
+                    erasure_possible = true;
+                    look_ahead = current;
+
+                    while(!picofs_iter_next_file(&look_ahead))
+                    {
+                        if (picofs_get_end_block(look_ahead) == file_start_block)
+                        {
+                            if (picofs_metrics[look_ahead->file_id].trailer != look_ahead)
+                            {
+                                //printf("lookahead found adjacent obsolete file in the same block\n");
+                                // adjacent obsolete file so expand range to cover it  
+                                file_start_block = picofs_get_start_block(look_ahead); 
+                                current = look_ahead;
+                            }
+                            else
+                            {
+                                //printf("lookahead found adjacent valid file in the same block\n");
+                                // adjacent valid file so we cannot erase blocks that contain the valid file
+                                if (file_end_block > file_start_block)
+                                {
+                                    // eliminate block that contains both files from erasure range
+                                    file_start_block++;
+
+                                    //printf("file start block incremented\n");
+                                }
+                                else
+                                {
+                                    // no erasure possible because first block of obsolete file also contains a valid file
+                                    erasure_possible = false;
+
+                                    //printf("erasure not possible\n");
+                                }
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            //printf("end block and start block not the same -- break\n");
+                            
+                            break;
+                        }
+                    }
+
+                    if (erasure_possible)
+                    {
+                        if (file_start_block == file_end_block)
+                        {
+                            shell_printf("May ERASE Block %d\n", file_start_block);
+                        }
+                        else
+                        {
+                            shell_printf("May ERASE Blocks %d to %d\n", file_start_block, file_end_block);
+                        }
+                        
+                    }
+                }
+            }
+            else
+            {
+                last_valid_start_block = picofs_get_start_block(current);
+                //printf("found valid file with start block %d\n", last_valid_start_block);
+            }
+        }
+    }
+
+    return(0);
+}
+
+/*!
+ * \brief check if erase block is obsolete
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+u32_t picofs_get_start_block(FILE_TRAILER_T *trailer)
+{
+    u32_t start_block;
+    
+    start_block = ((((char *)trailer + sizeof(FILE_TRAILER_T)) - trailer->file_size) - FS_FLASH_START)/FS_ERASE_BLOCK_SIZE; 
+
+    return(start_block);
+}
+
+/*!
+ * \brief check if erase block is obsolete
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+u32_t picofs_get_end_block(FILE_TRAILER_T *trailer)
+{
+    u32_t end_block;
+    
+    end_block = (((char *)trailer + sizeof(FILE_TRAILER_T)) - FS_FLASH_START)/FS_ERASE_BLOCK_SIZE; 
+
+    return(end_block);
+}
+
+/*!
+ * \brief consolidate all files in the file system into a sequential block
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_consolidate_all_files(void)
 {
     int err = -1;
     int i;

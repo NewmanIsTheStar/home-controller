@@ -102,5 +102,7 @@ int picofs_rename(const char *src, const char *dst);
 int picofs_list_files_by_size(void);
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
 int picofs_munmap(void *addr, size_t len);
+int picofs_erase_obsolete_blocks(void);
+int picofs_consolidate_all_files(void);
 
 #endif
