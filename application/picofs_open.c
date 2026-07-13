@@ -384,8 +384,7 @@ int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
                 best_sequence = t->file_sequence;
                 best_status = t->file_status;
                 *trailer = t;
-                err = 0;
-                //p = p + sizeof(FILE_TRAILER_T) + h->file_size;  
+                err = 0; 
                 p = p - t->file_size; 
 
                 first_sequnce = false;
@@ -399,7 +398,6 @@ int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
                     best_status = t->file_status;
                     *trailer = t;
                     err = 0;
-                    //p = p + sizeof(FILE_TRAILER_T) + h->file_size;
                     p = p - t->file_size;                  
                 }
             }

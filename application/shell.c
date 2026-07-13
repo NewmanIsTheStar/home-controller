@@ -328,6 +328,10 @@ static void execute_shell_command(const char* cmd)
     else if (strcmp(cmd, "run") == 0) 
     {
         hc_queue_send(HC_CMD_BASIC_SCRIPT); 
+    }     
+    else if (strcmp(cmd, "disk cleanup") == 0) 
+    {
+        hc_queue_send(HC_CMD_DISK_CLEANUP); 
     }      
     else if (strcmp(cmd, "defrag") == 0) 
     {

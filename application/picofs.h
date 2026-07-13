@@ -104,5 +104,6 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
 int picofs_munmap(void *addr, size_t len);
 int picofs_erase_obsolete_blocks(void);
 int picofs_consolidate_all_files(void);
+int picofs_erase_block_range(int start_block, int end_block);
 
 #endif

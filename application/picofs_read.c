@@ -377,7 +377,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
     
 
     // TEST TEST TEST 
-    //picofs_erase_obsolete_blocks();
+    // picofs_erase_obsolete_blocks();
 
     return(0);
 }
@@ -408,8 +408,9 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
     start_tick = xTaskGetTickCount();
 
     contiguous_pages_required = size/FS_PAGE_SIZE + (size%FS_PAGE_SIZE?1:0);
+    printf("seeking %d contiguous pages\n", contiguous_pages_required);
 
-    for(cell = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
+    for(cell = *start_of_area = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
         erase_block_absolute = ((u32_t)cell)/FS_ERASE_BLOCK_SIZE;
         erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_ERASE_BLOCK_SIZE;            
@@ -450,6 +451,10 @@ int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area)
     {
         // printf("Found erased region starting @%p with size %d in %d ms\n", *start_of_area, size, elapsed_ticks);
         // hex_dump(*start_of_area, 16);
+    }
+    else
+    {
+        // printf("failed to find erased pages\n");
     }
     
     return(err);
@@ -665,7 +670,7 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION))
         {
-            printf("Search began @ %p  found first file trailer @ %p which is a delta of %p\n", search, p, p-search);
+            // printf("Search began @ %p  found first file trailer @ %p which is a delta of %p\n", search, p, p-search);
             // check that file trailer is for a file that overlaps our search location 
             if ((char *)(p - t->file_size) <= search)
             {
@@ -675,7 +680,7 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
             }
             else
             {
-                printf("ignoring file %s because its size %0x does not overlap the search start point\n", t->name, t->file_size);
+                // printf("ignoring file %s because its size %0x does not overlap the search start point\n", t->name, t->file_size);
                 hex_dump(search, p-search+sizeof(FILE_TRAILER_T));
             }
 
@@ -980,7 +985,7 @@ int picofs_erase_obsolete_blocks(void)
     {
         if (current)
         {
-            printf("checking %s seq %d\n", current->name, current->file_sequence);
+            // printf("checking %s seq %d\n", current->name, current->file_sequence);
 
             if (picofs_metrics[current->file_id].trailer != current)
             {
@@ -988,7 +993,7 @@ int picofs_erase_obsolete_blocks(void)
                 file_start_block = picofs_get_start_block(current);
                 file_end_block = picofs_get_end_block(current);
                 
-                printf("found remnant of file %s start block %d to end block %d\n", current->name, file_start_block, file_end_block);
+                // printf("found remnant of file %s start block %d to end block %d\n", current->name, file_start_block, file_end_block);
 
                 if (file_end_block != last_valid_start_block)
                 {
@@ -1001,35 +1006,35 @@ int picofs_erase_obsolete_blocks(void)
                         {
                             if (picofs_metrics[look_ahead->file_id].trailer != look_ahead)
                             {
-                                printf("lookahead found adjacent obsolete file in the same block\n");
+                                // printf("lookahead found adjacent obsolete file in the same block\n");
                                 // adjacent obsolete file so expand range to cover it  
                                 file_start_block = picofs_get_start_block(look_ahead); 
                                 current = look_ahead;
                             }
                             else
                             {
-                                printf("lookahead found adjacent valid file in the same block\n");
+                                // printf("lookahead found adjacent valid file in the same block\n");
                                 // adjacent valid file so we cannot erase blocks that contain the valid file
                                 if (file_end_block > file_start_block)
                                 {
                                     // eliminate block that contains both files from erasure range
                                     file_start_block++;
 
-                                    printf("file start block incremented\n");
+                                    // printf("file start block incremented\n");
                                 }
                                 else
                                 {
                                     // no erasure possible because first block of obsolete file also contains a valid file
                                     erasure_possible = false;
 
-                                    printf("erasure not possible\n");
+                                    // printf("erasure not possible\n");
                                 }
                                 break;
                             }
                         }
                         else
                         {
-                            printf("end block and start block not the same -- break\n");
+                            // printf("end block and start block not the same -- break\n");
                             
                             break;
                         }
@@ -1039,20 +1044,21 @@ int picofs_erase_obsolete_blocks(void)
                     {
                         if (file_start_block == file_end_block)
                         {
-                            shell_printf("May ERASE Block %d\n", file_start_block);
+                            shell_printf("ERASING Block %d\n", file_start_block);
                         }
                         else
                         {
-                            shell_printf("May ERASE Blocks %d to %d\n", file_start_block, file_end_block);
+                            shell_printf("ERASING Blocks %d to %d\n", file_start_block, file_end_block);
                         }
                         
+                        picofs_erase_block_range(file_start_block, file_end_block);
                     }
                 }
             }
             else
             {
                 last_valid_start_block = picofs_get_start_block(current);
-                printf("found valid file with start block %d\n", last_valid_start_block);
+                // printf("found valid file with start block %d\n", last_valid_start_block);
             }
         }
     }
@@ -1091,7 +1097,7 @@ u32_t picofs_get_end_block(FILE_TRAILER_T *trailer)
 {
     u32_t end_block;
     
-    end_block = (((char *)trailer + sizeof(FILE_TRAILER_T)) - FS_FLASH_START)/FS_ERASE_BLOCK_SIZE; 
+    end_block = (((char *)trailer + sizeof(FILE_TRAILER_T) - 1) - FS_FLASH_START)/FS_ERASE_BLOCK_SIZE; 
 
     return(end_block);
 }
@@ -1159,6 +1165,15 @@ int picofs_consolidate_all_files(void)
 
     picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
 
+    // picofs_printf("consolidation_area = %p\n", consolidation_area);
+
+    if (!consolidation_area)
+    {
+        shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
+        picofs_erase_obsolete_blocks();
+        picofs_printf("After erasure, space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
+    }
+
     total_written = 0;
 
     if (consolidation_area)
@@ -1185,4 +1200,22 @@ int picofs_consolidate_all_files(void)
     shell_printf("picofs: consolidation completed total file size is %d bytes\n", total_written);
 
     return(0);
+}
+
+/*!
+ * \brief erase a sequential set of blocks
+ * 
+ * \param[in]   start_block     first block to erase
+ * 
+ * \param[out]  end_block       last block to erase
+ *  *     
+ * \return 0 on success
+ */
+int picofs_erase_block_range(int start_block, int end_block)
+{
+    int err = 0;
+    
+    memset(FS_FLASH_START + start_block*FS_ERASE_BLOCK_SIZE, 255, (end_block-start_block+1)*FS_ERASE_BLOCK_SIZE);
+
+    return(err);
 }
