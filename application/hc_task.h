@@ -14,6 +14,7 @@
 #define HC_CMD_PAGE_MAP (7)
 #define HC_CMD_PAGE_NUMBERS (8)
 #define HC_CMD_SAVE_TEXT_FILE (9)
+#define HC_CMD_DEFRAGMENT (10)
 
 
 typedef enum

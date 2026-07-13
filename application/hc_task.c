@@ -196,7 +196,10 @@ void hc_task(__unused void *params)
                     break;
                 case HC_CMD_SAVE_TEXT_FILE:
                     hc_save_text_file_from_ascii_buffer();
-                    break;                                        
+                    break;  
+                case HC_CMD_DEFRAGMENT:
+                    picofs_consolidate_all_files();
+                    break;
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);
                     break;

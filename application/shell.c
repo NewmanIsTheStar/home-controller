@@ -329,6 +329,10 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_BASIC_SCRIPT); 
     }      
+    else if (strcmp(cmd, "defrag") == 0) 
+    {
+        hc_queue_send(HC_CMD_DEFRAGMENT); 
+    }     
     else if (strncmp(cmd, "edit ", 5) == 0) 
     {
         if (strlen(cmd) > 6) shell_edit((char *)(cmd+5));  

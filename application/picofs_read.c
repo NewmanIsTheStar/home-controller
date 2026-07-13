@@ -86,7 +86,7 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 //static variables
 FILE_TEST_T test_filesystem[40];
-FILE_METRICS_T picofs_metrics[256]; 
+FILE_METRICS_T picofs_metrics[FS_NUM_FID]; 
 
 int picofs_read(int fd, char *ptr, int len)
 {
@@ -377,7 +377,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
     
 
     // TEST TEST TEST 
-    picofs_erase_obsolete_blocks();
+    //picofs_erase_obsolete_blocks();
 
     return(0);
 }
@@ -667,7 +667,7 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
         {
             printf("Search began @ %p  found first file trailer @ %p which is a delta of %p\n", search, p, p-search);
             // check that file trailer is for a file that overlaps our search location 
-            if ((char *)(p /*+ sizeof(FILE_TRAILER_T)*/ - t->file_size) <= search)
+            if ((char *)(p - t->file_size) <= search)
             {
                 file_id = t->file_id;
                 file_sequence = t->file_sequence;
@@ -812,7 +812,7 @@ int picofs_list_files_by_size(void)
 
     picofs_printf("LIST sorted by size\n");
 
-    for (i=0; i<FS_PAGE_SIZE; i++)
+    for (i=0; i<FS_NUM_FID; i++)
     {
         if (picofs_metrics[i].valid)
         {
@@ -933,7 +933,7 @@ int picofs_list_all_files(void)
             picofs_printf("Size\t\tFID\tSEQ\tName\n");
     }
 
-    for (i=0; i<FS_PAGE_SIZE; i++)
+    for (i=0; i<FS_NUM_FID; i++)
     {
         if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
         {
@@ -980,7 +980,7 @@ int picofs_erase_obsolete_blocks(void)
     {
         if (current)
         {
-            //printf("checking %s seq %d\n", current->name, current->file_sequence);
+            printf("checking %s seq %d\n", current->name, current->file_sequence);
 
             if (picofs_metrics[current->file_id].trailer != current)
             {
@@ -988,7 +988,7 @@ int picofs_erase_obsolete_blocks(void)
                 file_start_block = picofs_get_start_block(current);
                 file_end_block = picofs_get_end_block(current);
                 
-                //printf("found remnant of file %s start block %d to end block %d\n", current->name, file_start_block, file_end_block);
+                printf("found remnant of file %s start block %d to end block %d\n", current->name, file_start_block, file_end_block);
 
                 if (file_end_block != last_valid_start_block)
                 {
@@ -1001,35 +1001,35 @@ int picofs_erase_obsolete_blocks(void)
                         {
                             if (picofs_metrics[look_ahead->file_id].trailer != look_ahead)
                             {
-                                //printf("lookahead found adjacent obsolete file in the same block\n");
+                                printf("lookahead found adjacent obsolete file in the same block\n");
                                 // adjacent obsolete file so expand range to cover it  
                                 file_start_block = picofs_get_start_block(look_ahead); 
                                 current = look_ahead;
                             }
                             else
                             {
-                                //printf("lookahead found adjacent valid file in the same block\n");
+                                printf("lookahead found adjacent valid file in the same block\n");
                                 // adjacent valid file so we cannot erase blocks that contain the valid file
                                 if (file_end_block > file_start_block)
                                 {
                                     // eliminate block that contains both files from erasure range
                                     file_start_block++;
 
-                                    //printf("file start block incremented\n");
+                                    printf("file start block incremented\n");
                                 }
                                 else
                                 {
                                     // no erasure possible because first block of obsolete file also contains a valid file
                                     erasure_possible = false;
 
-                                    //printf("erasure not possible\n");
+                                    printf("erasure not possible\n");
                                 }
                                 break;
                             }
                         }
                         else
                         {
-                            //printf("end block and start block not the same -- break\n");
+                            printf("end block and start block not the same -- break\n");
                             
                             break;
                         }
@@ -1052,7 +1052,7 @@ int picofs_erase_obsolete_blocks(void)
             else
             {
                 last_valid_start_block = picofs_get_start_block(current);
-                //printf("found valid file with start block %d\n", last_valid_start_block);
+                printf("found valid file with start block %d\n", last_valid_start_block);
             }
         }
     }
@@ -1114,6 +1114,7 @@ int picofs_consolidate_all_files(void)
     int size_files = 0;
     int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
     u8_t *consolidation_area = NULL;
+    int total_written = 0;
 
     memset(picofs_metrics, 0, sizeof(picofs_metrics));
 
@@ -1144,7 +1145,7 @@ int picofs_consolidate_all_files(void)
             picofs_printf("Size\t\tFID\tSEQ\tName\n");
     }
 
-    for (i=0; i<FS_PAGE_SIZE; i++)
+    for (i=0; i<FS_NUM_FID; i++)
     {
         if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
         {
@@ -1157,6 +1158,31 @@ int picofs_consolidate_all_files(void)
     picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
 
     picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
+
+    total_written = 0;
+
+    if (consolidation_area)
+    {
+        for(i=0; i<FS_NUM_FID; i++)
+        {
+            if (picofs_metrics[i].valid && picofs_metrics[i].trailer)
+            {
+                printf("copying...\n");
+                hex_dump((u8_t *)((char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size), picofs_metrics[i].trailer->file_size);
+                memcpy(consolidation_area + total_written, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
+                total_written += picofs_metrics[i].trailer->file_size;
+                shell_printf("picofs: consolidated file: %s %d bytes\n", picofs_metrics[i].trailer->name, picofs_metrics[i].trailer->file_size);
+            }
+
+            if(total_written >= size_files)
+            {
+                printf("picofs: consolidate: reached total consolidated file size of %d bytes @ FID %d\n", size_files, picofs_metrics[i].trailer->file_id);
+                break;
+            }
+        }
+    }
+
+    shell_printf("picofs: consolidation completed total file size is %d bytes\n", total_written);
 
     return(0);
 }
