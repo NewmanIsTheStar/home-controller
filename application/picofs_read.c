@@ -74,7 +74,8 @@ u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id
 u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
 int picofs_iter_next_file(FILE_TRAILER_T **current_file);
 int picofs_refresh_metrics(void);
-int picofs_metrics_size_compare(const void *a, const void *b);
+int picofs_ascending_size_compare(const void *a, const void *b);
+int picofs_descending_size_compare(const void *a, const void *b);
 u32_t picofs_get_start_block(FILE_TRAILER_T *trailer);
 u32_t picofs_get_end_block(FILE_TRAILER_T *trailer);
 
@@ -764,7 +765,7 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)
  * 
  * \return 0 on success
  */
-int picofs_metrics_size_compare(const void *a, const void *b)
+int picofs_ascending_size_compare(const void *a, const void *b)
 {
     int size_a = 0;
     int size_b = 0;
@@ -780,6 +781,30 @@ int picofs_metrics_size_compare(const void *a, const void *b)
     }
 
     return (size_a - size_b);
+}
+
+/*!
+ * \brief iterator function to move to the next file in flash
+ * \param[in]   current_file      pointer to current file or NULL to initiate new walk
+ * 
+ * \return 0 on success
+ */
+int picofs_descending_size_compare(const void *a, const void *b)
+{
+    int size_a = 0;
+    int size_b = 0;
+
+    if (((FILE_METRICS_T *)a)->valid)
+    {
+        size_a = ((FILE_METRICS_T*)a)->trailer->file_size;
+    }
+
+    if (((FILE_METRICS_T *)b)->valid)
+    {
+        size_b = ((FILE_METRICS_T*)b)->trailer->file_size;
+    }
+
+    return (size_b - size_a);
 }
 
 /*!
@@ -813,7 +838,7 @@ int picofs_list_files_by_size(void)
         }
     }
 
-    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_metrics_size_compare);
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_ascending_size_compare);
 
     picofs_printf("LIST sorted by size\n");
 
@@ -1144,7 +1169,7 @@ int picofs_consolidate_all_files(void)
         }
     }
 
-    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_ascending_size_compare);
 
     if (num_files)
     {
@@ -1218,4 +1243,103 @@ int picofs_erase_block_range(int start_block, int end_block)
     memset(FS_FLASH_START + start_block*FS_ERASE_BLOCK_SIZE, 255, (end_block-start_block+1)*FS_ERASE_BLOCK_SIZE);
 
     return(err);
+}
+
+/*!
+ * \brief consolidate as many files as possible to the given buffer
+ * 
+ * \param[in]   buffer       buffer to place output
+ * \param[out]  len          size of buffer
+ * \param[out]  exclude_fid  FID to exclude (use 255 to not exlude anything)  
+ * \return 0 on success
+ */
+int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+    int num_files = 0;
+    int size_files = 0;
+    int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
+    u8_t *consolidation_area = NULL;
+    int total_written = 0;
+
+    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+    memset(buffer, FS_ERASED_CELL_VALUE, len); 
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            picofs_metrics[current->file_id].valid = true;
+            num_files++;
+            size_files_plus_remnants += current->file_size;
+
+            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            {
+                picofs_metrics[current->file_id].trailer = current;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
+    }
+
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_descending_size_compare);
+
+    if (num_files)
+    {
+            picofs_printf("Size\t\tFID\tSEQ\tName\n");
+    }
+
+    for (i=0; i<FS_NUM_FID; i++)
+    {
+        if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
+        {
+            picofs_printf("%08d\t%d\t%d\t%s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, picofs_metrics[i].trailer->name);
+            size_files += picofs_metrics[i].trailer->file_size;
+        }
+    }
+
+    picofs_printf("\nTotal size    %08d\n", size_files);
+    picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
+
+    total_written = 0;
+    consolidation_area = buffer;
+
+    if (consolidation_area)
+    {
+        for(i=0; i<FS_NUM_FID; i++)
+        {
+            if ((picofs_metrics[i].valid && picofs_metrics[i].trailer) &&
+                (picofs_metrics[i].trailer->file_size < (len - total_written)) &&
+                (picofs_metrics[i].trailer->file_id != exclude_fid))
+            {
+                printf("copying...\n");
+                hex_dump((u8_t *)((char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size), picofs_metrics[i].trailer->file_size);
+                memcpy(consolidation_area + total_written, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
+                total_written += picofs_metrics[i].trailer->file_size;
+                shell_printf("picofs: consolidated file: %s %d bytes\n", picofs_metrics[i].trailer->name, picofs_metrics[i].trailer->file_size);
+            }
+            else
+            {
+                if (picofs_metrics[i].valid)
+                {
+                    printf("Skipped file for speculative consolidation because: size %d vs %d | fid %d vs %d | ptr %p\n", picofs_metrics[i].trailer->file_size, (len - total_written), picofs_metrics[i].trailer->file_id, exclude_fid, picofs_metrics[i].trailer);
+                }
+            }
+
+            if(total_written >= len)
+            {
+                printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", len, picofs_metrics[i].trailer->file_id);
+                break;
+            }
+        }
+    }
+
+    shell_printf("picofs: consolidation completed total size is %d bytes\n", total_written);
+
+    return(0);
 }

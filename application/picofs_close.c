@@ -93,6 +93,7 @@ int picofs_close(int fd)
     int err = -1;
     int i;
     u8_t *erased_area;
+    int padding_len = 0;
 
     if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
     {
@@ -124,11 +125,22 @@ int picofs_close(int fd)
             err = -2;            
         }
 
+        // pad cache with consolidated files
+        if (!err)
+        {
+            padding_len = custom_fds[fd].cache_trailer.file_size%256?(256 - custom_fds[fd].cache_trailer.file_size%256):0;
+
+            if (padding_len)
+            {
+                picofs_consolidate_files_to_buffer(custom_fds[fd].cache + custom_fds[fd].cache_trailer.file_size, padding_len, custom_fds[fd].cache_trailer.file_id);
+            }
+        }
+
         if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area) && (err == 0))
         {
             // printf("about to copy out of cache into flash\n");
             // hex_dump(custom_fds[fd].cache, h->file_size);
-            memcpy(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size);
+            memcpy(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
             err = 0;
         }
         else
