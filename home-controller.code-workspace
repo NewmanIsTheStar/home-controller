@@ -43,6 +43,7 @@
 			"sstream": "c",
 			"string_view": "c",
 			"algorithm": "c"
-		}
+		},
+		"cortex-debug.variableUseNaturalFormat": true
 	}
 }

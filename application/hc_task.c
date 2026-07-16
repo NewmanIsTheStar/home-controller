@@ -132,6 +132,8 @@ void hc_task(__unused void *params)
         config.personality = HOME_CONTROLLER;
     }    
     
+    picofs_initialize();
+
     printf("home controller task started\n");
     while (true)
     {
@@ -363,12 +365,14 @@ int hc_save_text_file_from_ascii_buffer(void)
 
     if (file_ptr == NULL) 
     {
+        printf("ERROR opening file\n");
         perror("Error opening file");
         return EXIT_FAILURE;
     }
 
     if (fputs(editor_text, file_ptr) == EOF) 
     {
+        printf("ERRO writing file\n");
         perror("Error writing to file");
         fclose(file_ptr);
         return EXIT_FAILURE;

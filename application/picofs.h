@@ -11,6 +11,7 @@
 #define FS_ERASED_CELL_VALUE (255)
 #define FS_NUM_FID (255)        // 0-254
 #define FS_INVALID_FID (255)
+#define FS_MAX_SEQ (255)
 #define FS_MAX_FILE_DESCRIPTORS (8)
 #define FS_FLASH_START ((char *)(&test_filesystem))
 #define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
@@ -83,7 +84,7 @@ int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer);
 int picofs_list_all_files(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area);
-bool picofs_file_in_use(FILE_TRAILER_T *file_trailer);
+bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
 int picofs_allocate_cache(int fd);
 int picofs_deallocate_cache(int fd);
@@ -106,5 +107,6 @@ int picofs_erase_obsolete_blocks(void);
 int picofs_consolidate_all_files(void);
 int picofs_erase_block_range(int start_block, int end_block);
 int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid);
+int picofs_initialize(void);
 
 #endif

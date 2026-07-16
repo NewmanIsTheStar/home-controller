@@ -179,8 +179,11 @@ int picofs_deallocate_cache(int fd)
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
         // free cache memory
-        vPortFree(custom_fds[fd].cache);
-        custom_fds[fd].cache = NULL;
+        if (custom_fds[fd].cache)
+        {
+            vPortFree(custom_fds[fd].cache);
+            custom_fds[fd].cache = NULL;
+        }
 
         // clear the cache        
         custom_fds[fd].cache_len = 0;

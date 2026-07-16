@@ -188,7 +188,7 @@ int picofs_load_test_data(void)
         STRNCPY(test_filesystem[1].test_trailer.magic_number, "pfs", sizeof(test_filesystem[1].test_trailer.magic_number));
         test_filesystem[1].test_trailer.picofs_version = 0;
         test_filesystem[1].test_trailer.file_id = 1;    
-        test_filesystem[1].test_trailer.file_sequence = 1;  
+        test_filesystem[1].test_trailer.file_sequence = 254;  
         test_filesystem[1].test_trailer.file_status = 0; 
         test_filesystem[1].test_trailer.file_size = 0; 
         test_filesystem[1].test_trailer.crc = 0;
@@ -1222,9 +1222,14 @@ int picofs_consolidate_all_files(void)
         }
     }
 
-    shell_printf("picofs: consolidation completed total file size is %d bytes\n", total_written);
+    shell_printf("picofs: consolidation completed consolidated size is %d bytes (out of %d bytes)\n", total_written, size_files);
 
-    return(0);
+    if (total_written == size_files)
+    {
+        err = 0;
+    }
+
+    return(err);
 }
 
 /*!

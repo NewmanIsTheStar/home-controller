@@ -32,13 +32,17 @@ int __wrap__open(const char *name, int flags, int mode)
         return -1;
     }
 
+    custom_fds[fd].in_use = true;
+
     if (picofs_open(fd, (char *)name, flags))
     {
         errno = ENOENT; // File not found
+        custom_fds[fd].in_use = false;
         return -1;
     }
 
-    custom_fds[fd].in_use = true;
+    // TEST TEST TEST setting in_use prior to calling picofs_open()
+    //custom_fds[fd].in_use = true;
     
     // Return index offset to avoid colliding with standard stdin/stdout/stderr (0, 1, 2)
     return fd + 3; 

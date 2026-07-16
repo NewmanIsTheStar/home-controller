@@ -113,14 +113,6 @@ int picofs_open(int fd, const char *name, int flags)
     FILE_TRAILER_T *file_trailer = NULL;
     char *file_data = NULL;
     int open_mode = 0;
-    static bool init_fds = true;
-
-    // zero out all file descriptiors the first time picofs_open is called 
-    if (init_fds)
-    {
-        memset((char *)custom_fds, 0, sizeof(custom_fds));
-        init_fds = false;
-    }
 
     // hex_dump((char *)test_filesystem, 512);
 
@@ -137,7 +129,7 @@ int picofs_open(int fd, const char *name, int flags)
         if (flags & FWRITE)
         {
             // need exclusive access for write
-            if (!picofs_file_in_use(file_trailer) && (!(flags & O_EXCL)))
+            if (!picofs_file_in_use(file_trailer, fd) && (!(flags & O_EXCL)))
             {
                 picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
                 err = picofs_allocate_cache(fd);
@@ -158,9 +150,28 @@ int picofs_open(int fd, const char *name, int flags)
 
                         // since we are writing to the file set the file descriptor to use the cached trailer
                         custom_fds[fd].file_trailer = &(custom_fds[fd].cache_trailer);
+
+                        if (custom_fds[fd].file_trailer->file_sequence == FS_MAX_SEQ)
+                        {
+                            // out of sequence numbers so change to new FID and delete old file
+                            custom_fds[fd].file_trailer->file_id = picofs_get_new_file_id();
+                            custom_fds[fd].file_trailer->file_sequence = 0;
+
+                            if (custom_fds[fd].file_trailer->file_id == FS_INVALID_FID)
+                            {
+                                printf("picoFS: out of file identifiers\n");
+                                picofs_deallocate_cache(fd);
+                                err = -6;
+                            }
+                            else
+                            {
+                                picofs_unlink(custom_fds[fd].file_trailer->name); 
+                            }
+                        }
                     }
                     else
                     {
+                        picofs_deallocate_cache(fd);
                         err = -3;
                     }
                 }
@@ -192,6 +203,7 @@ int picofs_open(int fd, const char *name, int flags)
     }
     else
     {
+        printf("FILE DOES NOT EXIST -- CREATING NEW FILE\n");
         // file does not exit
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
@@ -226,6 +238,7 @@ int picofs_open(int fd, const char *name, int flags)
         }
     }
 
+    printf("At completion of picofs_open err %d id %d sq %d sz %d st %d\n", err, custom_fds[fd].file_trailer->file_id, custom_fds[fd].file_trailer->file_sequence, custom_fds[fd].file_trailer->file_size, custom_fds[fd].file_trailer->file_status);
     return(err);
 }
 
@@ -327,22 +340,24 @@ int picofs_allocate_cache(int fd)
  * \param file_trailer pointer to file trailer
  * \return nothing
  */
-bool picofs_file_in_use(FILE_TRAILER_T *file_trailer)
+bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fid)
 {
     int i;
     bool in_use = false;
 
     for(i=0; i < FS_MAX_FILE_DESCRIPTORS; i++)
     {
-        // TODO: this would be faster if it used file id
-        //if (file_trailer && (strcmp(((FILE_TRAILER_T *)file_trailer)->name ,custom_fds[i].file_trailer->name) == 0) && custom_fds[i].in_use)
-        if (file_trailer && (((FILE_TRAILER_T *)file_trailer)->file_id == custom_fds[i].file_trailer->file_id) && custom_fds[i].in_use)        
+        if (i != held_fid)  // don't contend with ourself!
         {
-            in_use= true;
-            break;
+            if (file_trailer && (((FILE_TRAILER_T *)file_trailer)->file_id == custom_fds[i].file_trailer->file_id) && custom_fds[i].in_use)        
+            {
+                in_use= true;
+                break;
+            }
         }
     }
 
+    printf("IN USE = %d\n", in_use);
     return(in_use);
 }
 
@@ -480,4 +495,20 @@ bool picofs_is_file_deleted(u8_t file_id)
     }
 
     return(deleted);
+}
+
+int picofs_initialize(void)
+{
+    int err = -1;
+    static bool init_fds = true;
+
+    // zero out all file descriptiors before using file system 
+    if (init_fds)
+    {
+        memset((char *)custom_fds, 0, sizeof(custom_fds));
+        init_fds = false;
+        err = 0;
+    }
+
+    return(err);
 }
