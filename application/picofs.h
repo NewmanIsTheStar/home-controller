@@ -108,5 +108,6 @@ int picofs_consolidate_all_files(void);
 int picofs_erase_block_range(int start_block, int end_block);
 int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid);
 int picofs_initialize(void);
+int picofs_increment_sequence(FILE_TRAILER_T *trailer);
 
 #endif
