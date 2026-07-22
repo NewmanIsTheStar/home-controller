@@ -203,7 +203,8 @@ void hc_task(__unused void *params)
                     picofs_erase_obsolete_blocks();
                     break;                
                 case HC_CMD_DEFRAGMENT:
-                    picofs_consolidate_all_files();
+                    //picofs_consolidate_all_files();
+                    picofs_consolidate_all_files_in_flash();
                     break;
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);

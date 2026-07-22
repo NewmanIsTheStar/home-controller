@@ -78,6 +78,7 @@ int picofs_ascending_size_compare(const void *a, const void *b);
 int picofs_descending_size_compare(const void *a, const void *b);
 u32_t picofs_get_start_block(FILE_TRAILER_T *trailer);
 u32_t picofs_get_end_block(FILE_TRAILER_T *trailer);
+int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len);
 
 // external variables
 extern u32_t unix_time;
@@ -1169,7 +1170,7 @@ int picofs_consolidate_all_files(void)
         }
     }
 
-    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_ascending_size_compare);
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_descending_size_compare);
 
     if (num_files)
     {
@@ -1197,6 +1198,7 @@ int picofs_consolidate_all_files(void)
         shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
         picofs_erase_obsolete_blocks();
         picofs_printf("After erasure, space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
+        qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_descending_size_compare); // re-sort as picofs_erase_obsolete_blocks() refreshed the metrics
     }
 
     total_written = 0;
@@ -1401,6 +1403,209 @@ int picofs_increment_sequence(FILE_TRAILER_T *trailer)
         trailer->file_sequence++;
         err = 0; 
     }   
+
+    return(err);
+}
+
+int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
+{
+    static char *current_destination = NULL;
+    static char page_buffer[256];
+    static int page_index = 0;
+    static size_t total_bytes = 0;
+    int src_index = 0;
+
+    if (((int)(dst - FS_FLASH_START))%256)
+    {
+        printf("MASSIVE ERROR! Consolidaton area is not page aligned\n");
+    }
+
+    if (dst && (dst != current_destination))
+    {
+        // start new consolidation
+        page_index = 0;
+        total_bytes = 0;
+        current_destination = dst;
+
+        // accumulate and write flash once page ready
+        for (src_index = 0; src_index < src_len; src_index++)
+        {
+            page_buffer[page_index] = src[src_index];
+
+            if (src_index == (src_len - sizeof(FILE_TRAILER_T) + offsetof(FILE_TRAILER_T, file_sequence)))
+            {
+                // try to increment sequence --silently fails if out of sequence numbers [the in-buffer verison does rollover to a new FID] TODO: fix!
+                if (page_buffer[page_index] < (FS_MAX_SEQ-1))
+                {
+                    page_buffer[page_index]++;
+                    printf("INCREMENTED SEQUNECE TO %d\n", page_buffer[page_index]);
+                }
+            }
+
+            if (++page_index == 256)
+            {
+                // program page
+                memcpy(dst+total_bytes, page_buffer, 256); 
+                page_index = 0;
+                total_bytes += 256;               
+            }
+        }        
+    }
+    else if (dst && (dst == current_destination))
+    {
+        // accumulate and write flash once page ready
+        for (src_index = 0; src_index < src_len; src_index++)
+        {
+            page_buffer[page_index] = src[src_index];
+
+            if (src_index == (src_len - sizeof(FILE_TRAILER_T) + offsetof(FILE_TRAILER_T, file_sequence)))
+            {
+                // try to increment sequence --silently fails if out of sequence numbers
+                if (page_buffer[page_index] < (FS_MAX_SEQ-1))
+                {
+                    page_buffer[page_index]++;
+                    printf("INCREMENTED SEQUNECE TO %d\n", page_buffer[page_index]);
+                }
+            }
+
+            if (++page_index == 256)
+            {
+                // program page
+                memcpy(dst+total_bytes, page_buffer, 256); 
+                page_index = 0;
+                total_bytes += 256;               
+            }
+        }
+    }
+    else
+    {
+        if (current_destination)
+        {
+            // end of files -- flush remaining data to flash
+            for (; page_index < 256; page_index++)
+            {
+                page_buffer[page_index] = FS_ERASED_CELL_VALUE;
+            }
+
+            // program page
+            memcpy(dst+total_bytes, page_buffer, 256);
+            page_index = 0;
+            total_bytes += 256;             
+        }
+    }
+
+
+    return(0);
+}
+
+/*!
+ * \brief consolidate all files in the file system into a sequential block
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_consolidate_all_files_in_flash(void)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+    int num_files = 0;
+    int size_files = 0;
+    int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
+    u8_t *consolidation_area = NULL;
+    int total_written = 0;
+
+    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            picofs_metrics[current->file_id].valid = true;
+            num_files++;
+            size_files_plus_remnants += current->file_size;
+
+            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            {
+                picofs_metrics[current->file_id].trailer = current;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
+    }
+
+    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_descending_size_compare);
+
+    if (num_files)
+    {
+            picofs_printf("Size\t\tFID\tSEQ\tName\n");
+    }
+
+    for (i=0; i<FS_NUM_FID; i++)
+    {
+        if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
+        {
+            picofs_printf("%08d\t%d\t%d\t%s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, picofs_metrics[i].trailer->name);
+            size_files += picofs_metrics[i].trailer->file_size;
+        }
+    }
+
+    picofs_printf("\nTotal size    %08d\n", size_files);
+    picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
+
+    picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
+
+    // picofs_printf("consolidation_area = %p\n", consolidation_area);
+
+    if (!consolidation_area)
+    {
+        shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
+        picofs_erase_obsolete_blocks();
+        picofs_printf("After erasure, space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area)?"NO":"YES");
+        qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_descending_size_compare); // re-sort as picofs_erase_obsolete_blocks() refreshed the metrics
+    }
+
+    total_written = 0;
+
+    if (consolidation_area)
+    {
+        for(i=0; i<FS_NUM_FID; i++)
+        {
+            if (picofs_metrics[i].valid && picofs_metrics[i].trailer)
+            {
+                printf("copying...\n");
+                hex_dump((u8_t *)((char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size), picofs_metrics[i].trailer->file_size);
+                //memcpy(consolidation_area + total_written, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
+                picofs_append_to_flash(consolidation_area, size_files, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
+
+                total_written += picofs_metrics[i].trailer->file_size;
+                shell_printf("picofs: consolidated file: %s %d bytes\n", picofs_metrics[i].trailer->name, picofs_metrics[i].trailer->file_size);
+            }
+
+            if(total_written >= size_files)
+            {
+                printf("picofs: consolidate: reached total consolidated file size of %d bytes @ FID %d\n", size_files, picofs_metrics[i].trailer->file_id);
+                break;
+            }
+        }
+
+        // flush the last page to flash
+        picofs_append_to_flash(NULL, 0, NULL, 0);
+    }
+
+
+    shell_printf("picofs: consolidation completed consolidated size is %d bytes (out of %d bytes)\n", total_written, size_files);
+
+    if (total_written == size_files)
+    {
+        err = 0;
+    }
 
     return(err);
 }
