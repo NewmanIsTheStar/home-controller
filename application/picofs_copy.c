@@ -137,7 +137,7 @@ int picofs_copy(const char *src, const char *dst)
         }
 
         file_id = existing_dst->file_id;
-        file_sequence = existing_dst->file_sequence + 1;
+        file_sequence = existing_dst->file_sequence + 1;   // TODO: handle sequence rollover with new FID
     }
 
     // assign new file id and name

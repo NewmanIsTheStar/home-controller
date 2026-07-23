@@ -93,6 +93,7 @@ int picofs_close(int fd)
     int err = -1;
     int i;
     u8_t *erased_area;
+    size_t erased_area_size;
     int padding_len = 0;
 
     if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
@@ -136,7 +137,7 @@ int picofs_close(int fd)
             }
         }
 
-        if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area) && (err == 0))
+        if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size) && (err == 0))
         {
             // printf("about to copy out of cache into flash\n");
             // hex_dump(custom_fds[fd].cache, h->file_size);
