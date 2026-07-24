@@ -72,7 +72,7 @@
 //prototypes
 u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
 u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
-int picofs_iter_next_file(FILE_TRAILER_T **current_file);
+
 int picofs_refresh_metrics(void);
 int picofs_ascending_size_compare(const void *a, const void *b);
 int picofs_descending_size_compare(const void *a, const void *b);

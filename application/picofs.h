@@ -111,5 +111,9 @@ int picofs_erase_block_range(int start_block, int end_block);
 int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid);
 int picofs_initialize(void);
 int picofs_increment_sequence(FILE_TRAILER_T *trailer);
+int picofs_purge_duplicates(char *filename, u8_t keep_fid);
+int picofs_find_by_fid(u8_t fid, FILE_TRAILER_T **trailer);
+int picofs_unlink_fid(u8_t fid);
+int picofs_iter_next_file(FILE_TRAILER_T **current_file);
 
 #endif

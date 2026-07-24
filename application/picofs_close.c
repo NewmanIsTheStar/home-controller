@@ -79,8 +79,9 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[10];
-//static variables
 
+//static variables
+FILE_METRICS_T purge_list[FS_NUM_FID]; 
  
 /*!
  * \brief close file 
@@ -150,6 +151,11 @@ int picofs_close(int fd)
             err = -2;
         }
 
+        if (!err)
+        {
+            picofs_purge_duplicates(custom_fds[fd].cache_trailer.name, custom_fds[fd].cache_trailer.file_id);
+        }
+
         // clear the cache
         picofs_deallocate_cache(fd);
 
@@ -164,6 +170,8 @@ int picofs_close(int fd)
     
     //hex_dump((const char *)test_filesystem, sizeof(test_filesystem));
      
+
+
     return(err);
 }
 
@@ -190,6 +198,64 @@ int picofs_deallocate_cache(int fd)
         custom_fds[fd].cache_len = 0;
         memset(&custom_fds[fd].cache_trailer, 0, sizeof(FILE_TRAILER_T));
     }
+
+    return(err);
+}
+
+/*!
+ * \brief purge files with duplicate names keeping only one file with the given FID
+ * 
+ * \param[in]   filename     delete all duplicate files with this name
+ * 
+ * \param[out]  keep_fid     FID of file to keep
+ *  *     
+ * \return 0 on success
+ */
+int picofs_purge_duplicates(char *filename, u8_t keep_fid)
+{
+    int err = 0;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+    int size_files = 0;
+
+    memset(purge_list, 0, sizeof(purge_list));
+
+    while(!picofs_iter_next_file(&current))
+    {
+        if (current)
+        {
+            purge_list[current->file_id].valid = true;
+
+            if (current->file_sequence >= purge_list[current->file_id].trailer->file_sequence) 
+            {
+                purge_list[current->file_id].trailer = current;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            err = -1;
+            break;
+        }
+    }
+
+    if (!err)
+    {
+        for (i=0; i<FS_NUM_FID; i++)
+        {
+            if ((i != keep_fid) && purge_list[i].valid && !purge_list[i].trailer->file_status && (strcmp(purge_list[i].trailer->name, filename) == 0))
+            {
+                picofs_printf("%08d\t%d\t%d\t%s ***PURGED***\n", purge_list[i].trailer->file_size, purge_list[i].trailer->file_id, purge_list[i].trailer->file_sequence, purge_list[i].trailer->name);
+                picofs_unlink_fid(i); 
+                size_files += purge_list[i].trailer->file_size;
+            }
+        }
+
+        if (size_files)
+        {
+            picofs_printf("Total size of files purged is %d bytes\n", size_files);
+        }
+    }        
 
     return(err);
 }

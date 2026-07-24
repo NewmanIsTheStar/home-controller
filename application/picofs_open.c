@@ -457,6 +457,79 @@ int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
 }
 
 /*!
+ * \brief Get pointer to file header matching passed filename
+ * 
+ * \param[in]   filename     name to find
+ * \param[out]  header       pointer to file header
+ * \return 0 on success
+ */
+int picofs_find_by_fid(u8_t fid, FILE_TRAILER_T **trailer)
+{
+    int err = -1;
+    int i;
+    u8_t *p = NULL;
+    FILE_TRAILER_T *t = NULL;
+    u8_t best_sequence = 0;
+    u8_t best_status = 0;
+    bool first_sequnce = true;
+
+//TODO Make this use file_id to separate various deleted files wih the same name but different file_id
+
+    // scan backwards through flash
+    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+
+    // scan flash
+    while (((char *)p) >= FS_FLASH_START)
+    {
+        t = (FILE_TRAILER_T *)p;
+
+        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+            (t->picofs_version == FS_VERION) &&
+            (t->file_id == fid) &&
+            !picofs_is_file_deleted(t->file_id))
+        {
+            // match
+            if (first_sequnce)
+            {
+                best_sequence = t->file_sequence;
+                best_status = t->file_status;
+                *trailer = t;
+                err = 0; 
+                p = p - t->file_size; 
+
+                first_sequnce = false;
+            }
+            else
+            {
+                // TEST TEST TEST if ((h->file_sequence - best_sequence) < 128)
+                if (t->file_sequence > best_sequence)   //TODO handle sequence wrap around
+                {
+                    best_sequence = t->file_sequence;
+                    best_status = t->file_status;
+                    *trailer = t;
+                    err = 0;
+                    p = p - t->file_size;                  
+                }
+            }
+        }
+
+        if (p == ((u8_t *)t))
+        {
+            p--;
+        }
+    }
+
+
+    if (best_status) // file was deleted
+    {
+        err = -1;
+    }
+
+    return(err);
+}
+
+
+/*!
  * \brief check if file has been deleted
  * 
  * \param[in]   file_id      file to check

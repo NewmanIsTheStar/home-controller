@@ -115,7 +115,19 @@ int picofs_copy(const char *src, const char *dst)
     custom_fds[fd].in_use = true;  // this cannot occur before open because open uses this flag to determine if it has exlusive access to the file for write
 
     // check if destination filename already exists
-    if (picofs_find_by_name(dst, &existing_dst))
+    if (!picofs_find_by_name(dst, &existing_dst) && existing_dst && (existing_dst->file_sequence < (FS_MAX_SEQ - 1)))
+    {
+        // reuse existing destination file
+        if (!existing_dst)
+        {
+            picofs_release_fd(fd);
+            return -3;               
+        }
+
+        file_id = existing_dst->file_id;
+        file_sequence = existing_dst->file_sequence + 1; 
+    }
+    else    
     {
         // create new file
         file_id = picofs_get_new_file_id();
@@ -126,18 +138,6 @@ int picofs_copy(const char *src, const char *dst)
             picofs_release_fd(fd);
             return -2;        
         }
-    }
-    else
-    {
-        // reuse existing destination file
-        if (!existing_dst)
-        {
-            picofs_release_fd(fd);
-            return -3;               
-        }
-
-        file_id = existing_dst->file_id;
-        file_sequence = existing_dst->file_sequence + 1;   // TODO: handle sequence rollover with new FID
     }
 
     // assign new file id and name
