@@ -79,27 +79,36 @@ typedef enum
     PFS_DISPLAY_SHELL_PAGE_MAP = 4    
 } PFS_DISPLAY_TYPE_T;
 
-int picofs_load_test_data(void);
-int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer);
+#define picofs_open(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false)))
+#define picofs_open_by_name(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false)))
+#define picofs_open_for_deletion_by_name(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (true)))
+#define picofs_open_for_deletion_by_fid(fd, fid, flags)  (picofs_open_file((fd), (NULL), (flags), (fid), (true)))
+#define picofs_find_by_name(filename, trailer) (picofs_find_file((filename), (FS_INVALID_FID), (trailer)))
+#define picofs_find_by_fid(fid, trailer) (picofs_find_file((NULL), (fid), (trailer)))
+#define picofs_close(fid) (picofs_close_file((fid), (false)))
+#define picofs_close_for_deletion(fid) (picofs_close_file((fid), (true)))
+#define picofs_unlink_by_name(name) (picofs_unlink((name), (FS_INVALID_FID)))
+#define picofs_unlink_by_fid(fid) (picofs_unlink((NULL), (fid)))
+
+int picofs_unlink(const char *name, u8_t fid);
+int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
 int picofs_list_all_files(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
-//int picofs_find_contiguous_free_area(size_t size, u8_t **start_of_area);
 int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
 int picofs_allocate_cache(int fd);
 int picofs_deallocate_cache(int fd);
-int picofs_open(int fd, const char *name, int flags);
+int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover);
 int picofs_read(int fd, char *ptr, int len);
 int picofs_write(int fd, char *ptr, int len);
 int picofs_create_file_trailer(int fd, const char *name);
-int picofs_close(int fd);
+int picofs_close_file(int fd, bool disable_purge);
 int picofs_delete(char *filename);
 int picofs_copy(const char *src, const char *dst);
 int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence);
 u8_t picofs_get_new_file_id(void);
 bool picofs_is_file_deleted(u8_t file_id);
-int picofs_unlink(const char *name);
 int picofs_rename(const char *src, const char *dst);
 int picofs_list_files_by_size(void);
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
@@ -112,8 +121,8 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
 int picofs_initialize(void);
 int picofs_increment_sequence(FILE_TRAILER_T *trailer);
 int picofs_purge_duplicates(char *filename, u8_t keep_fid);
-int picofs_find_by_fid(u8_t fid, FILE_TRAILER_T **trailer);
-int picofs_unlink_fid(u8_t fid);
 int picofs_iter_next_file(FILE_TRAILER_T **current_file);
+int picofs_load_test_data(void);
+
 
 #endif

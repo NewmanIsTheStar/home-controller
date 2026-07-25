@@ -86,10 +86,11 @@ FILE_METRICS_T purge_list[FS_NUM_FID];
 /*!
  * \brief close file 
  *
- * \param fd     file descriptor
+ * \param fd              file descriptor
+ * \param disable_purge   do not purge duplicate filenames (only used when already executing a purge)
  * \return 0 on success
  */
-int picofs_close(int fd)
+int picofs_close_file(int fd, bool disable_purge)
 {
     int err = -1;
     int i;
@@ -151,7 +152,7 @@ int picofs_close(int fd)
             err = -2;
         }
 
-        if (!err)
+        if (!err && !disable_purge)
         {
             picofs_purge_duplicates(custom_fds[fd].cache_trailer.name, custom_fds[fd].cache_trailer.file_id);
         }
@@ -204,7 +205,9 @@ int picofs_deallocate_cache(int fd)
 
 /*!
  * \brief purge files with duplicate names keeping only one file with the given FID
- * 
+ * \details Duplicate file names may temporarily occur at an intermediate step of certain operations such as copying over
+ *          the top of an existing file.  The original file is not deleted until after the copy is completed.  This function
+ *          is used to find and eliminate all duplicates at the completeion of the operation.
  * \param[in]   filename     delete all duplicate files with this name
  * 
  * \param[out]  keep_fid     FID of file to keep
@@ -246,7 +249,7 @@ int picofs_purge_duplicates(char *filename, u8_t keep_fid)
             if ((i != keep_fid) && purge_list[i].valid && !purge_list[i].trailer->file_status && (strcmp(purge_list[i].trailer->name, filename) == 0))
             {
                 picofs_printf("%08d\t%d\t%d\t%s ***PURGED***\n", purge_list[i].trailer->file_size, purge_list[i].trailer->file_id, purge_list[i].trailer->file_sequence, purge_list[i].trailer->name);
-                picofs_unlink_fid(i); 
+                picofs_unlink_by_fid(i); 
                 size_files += purge_list[i].trailer->file_size;
             }
         }

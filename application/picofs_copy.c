@@ -106,7 +106,7 @@ int picofs_copy(const char *src, const char *dst)
         return(err);
     }
 
-    if (picofs_open(fd, src, O_WRONLY))
+    if (picofs_open_by_name(fd, src, O_WRONLY))
     {
         errno = ENOENT; // File not found
         return -1;

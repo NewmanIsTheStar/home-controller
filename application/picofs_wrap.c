@@ -34,7 +34,7 @@ int __wrap__open(const char *name, int flags, int mode)
 
     custom_fds[fd].in_use = true;
 
-    if (picofs_open(fd, (char *)name, flags))
+    if (picofs_open_by_name(fd, (char *)name, flags))
     {
         errno = ENOENT; // File not found
         custom_fds[fd].in_use = false;
@@ -182,7 +182,7 @@ int _isatty(int fd) {
 
 int __wrap__unlink(const char *name) 
 {
-    return(picofs_unlink(name));
+    return(picofs_unlink_by_name(name));
 }
 
 // Declaration of the original SDK rename function

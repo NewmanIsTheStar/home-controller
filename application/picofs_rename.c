@@ -97,7 +97,7 @@ int picofs_rename(const char *src, const char *dst)
         return(err);
     }
 
-    err = picofs_unlink(src);
+    err = picofs_unlink_by_name(src);
 
     return(err);
 }

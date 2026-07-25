@@ -102,12 +102,14 @@ extern FILE_TEST_T test_filesystem[10];
  * O_APPEND: Move the file offset pointer to the end of the file before every write.
  * O_EXCL: Ensure that this call creates the file; if the file already exists, the call fails (used alongside O_CREAT).
  * 
- * \param fd     file descriptor
- * \param name   A pointer to a null-terminated string specifying the path to the file you want to open.
- * \param flags  bitwise flags O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_TRUNC, O_APPEND, O_EXCL 
+ * \param fd                    file descriptor
+ * \param name                  A pointer to a null-terminated string specifying the path to the file you want to open.
+ * \param flags                 bitwise flags O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_TRUNC, O_APPEND, O_EXCL 
+ * \param fid                   file identifier to use instead of text name 
+ * \param disable_fid_rollover  allow file with maximum sequence number to be opened (this is only used for deletion of the file) 
  * \return 0 on success
  */
-int picofs_open(int fd, const char *name, int flags)
+int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover)
 {
     int err = -1;
     FILE_TRAILER_T *file_trailer = NULL;
@@ -116,7 +118,7 @@ int picofs_open(int fd, const char *name, int flags)
 
     // hex_dump((char *)test_filesystem, 512);
 
-    if (!picofs_find_by_name(name, &file_trailer))
+    if (!picofs_find_file(name, fid, &file_trailer))
     {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
         // we transform them into more sensible bit flags in the two least significant bits for easier processing
@@ -151,7 +153,7 @@ int picofs_open(int fd, const char *name, int flags)
                         // since we are writing to the file set the file descriptor to use the cached trailer
                         custom_fds[fd].file_trailer = &(custom_fds[fd].cache_trailer);
 
-                        if (custom_fds[fd].file_trailer->file_sequence == FS_MAX_SEQ)
+                        if (!disable_fid_rollover && (custom_fds[fd].file_trailer->file_sequence == FS_MAX_SEQ))
                         {
                             // out of sequence numbers so change to new FID and delete old file
                             custom_fds[fd].file_trailer->file_id = picofs_get_new_file_id();
@@ -165,7 +167,7 @@ int picofs_open(int fd, const char *name, int flags)
                             }
                             else
                             {
-                                picofs_unlink(custom_fds[fd].file_trailer->name); 
+                                picofs_unlink_by_name(custom_fds[fd].file_trailer->name); 
                             }
                         }
                     }
@@ -338,6 +340,7 @@ int picofs_allocate_cache(int fd)
  * \brief check if a file is already open  
  *
  * \param file_trailer pointer to file trailer
+ * \param held_fid  fid of file that caller is trying to open exclusively 
  * \return nothing
  */
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fid)
@@ -357,18 +360,19 @@ bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fid)
         }
     }
 
-    printf("IN USE = %d\n", in_use);
+    // printf("IN USE = %d\n", in_use);
     return(in_use);
 }
 
 /*!
- * \brief Get pointer to file header matching passed filename
+ * \brief Get pointer to file header matching either the passed filename or fid.  As fid is unique it preempts name if given.
  * 
  * \param[in]   filename     name to find
- * \param[out]  header       pointer to file header
+ * \param[in]   fid          fid to find or FS_INVALID_FID, if valid the fid is used instead of the name
+ * \param[out]  trailer      pointer to file trailer
  * \return 0 on success
  */
-int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
+int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     int i;
@@ -377,8 +381,6 @@ int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
     u8_t best_sequence = 0;
     u8_t best_status = 0;
     bool first_sequnce = true;
-
-//TODO Make this use file_id to separate various deleted files wih the same name but different file_id
 
     // scan backwards through flash
     p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
@@ -390,7 +392,7 @@ int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
 
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
-            (strcmp(t->name, filename) == 0) &&
+            (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
             !picofs_is_file_deleted(t->file_id))
         {
             // match
@@ -406,103 +408,7 @@ int picofs_find_by_name(const char *filename, FILE_TRAILER_T **trailer)
             }
             else
             {
-                // TEST TEST TEST if ((h->file_sequence - best_sequence) < 128)
-                if (t->file_sequence > best_sequence)   //TODO handle sequence wrap around
-                {
-                    best_sequence = t->file_sequence;
-                    best_status = t->file_status;
-                    *trailer = t;
-                    err = 0;
-                    p = p - t->file_size;                  
-                }
-            }
-        }
-
-        if (p == ((u8_t *)t))
-        {
-            p--;
-        }
-    }
-
-
-    if (best_status) // file was deleted
-    {
-        err = -1;
-    }
-
-
-    // // scan cache
-    // for (i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
-    // {
-    //     if (custom_fds[i].cache) 
-    //     {
-    //         h = (FILE_HEADER_T *)custom_fds[i].cache;
-
-    //         if ((strncmp(h->magic_number, "pfs", 4) == 0) &&
-    //             (h->picofs_version == FS_VERION) &&
-    //             (strcmp(h->name, filename) == 0))
-    //         {
-    //             printf("file: %s cache override with sequence %d\n", filename, h->file_sequence);
-    //             // we presume the cache version is the latest so don't check sequence
-    //             *header = (char *)h;
-    //             err = 0;                
-    //             break;
-    //         }
-    //     }
-    // }
-
-    // printf("file: %s best_sequence %d\n", filename, best_sequence);
-
-    return(err);
-}
-
-/*!
- * \brief Get pointer to file header matching passed filename
- * 
- * \param[in]   filename     name to find
- * \param[out]  header       pointer to file header
- * \return 0 on success
- */
-int picofs_find_by_fid(u8_t fid, FILE_TRAILER_T **trailer)
-{
-    int err = -1;
-    int i;
-    u8_t *p = NULL;
-    FILE_TRAILER_T *t = NULL;
-    u8_t best_sequence = 0;
-    u8_t best_status = 0;
-    bool first_sequnce = true;
-
-//TODO Make this use file_id to separate various deleted files wih the same name but different file_id
-
-    // scan backwards through flash
-    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
-
-    // scan flash
-    while (((char *)p) >= FS_FLASH_START)
-    {
-        t = (FILE_TRAILER_T *)p;
-
-        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION) &&
-            (t->file_id == fid) &&
-            !picofs_is_file_deleted(t->file_id))
-        {
-            // match
-            if (first_sequnce)
-            {
-                best_sequence = t->file_sequence;
-                best_status = t->file_status;
-                *trailer = t;
-                err = 0; 
-                p = p - t->file_size; 
-
-                first_sequnce = false;
-            }
-            else
-            {
-                // TEST TEST TEST if ((h->file_sequence - best_sequence) < 128)
-                if (t->file_sequence > best_sequence)   //TODO handle sequence wrap around
+                if (t->file_sequence > best_sequence) 
                 {
                     best_sequence = t->file_sequence;
                     best_status = t->file_status;
