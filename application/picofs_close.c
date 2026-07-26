@@ -143,7 +143,8 @@ int picofs_close_file(int fd, bool disable_purge)
         {
             // printf("about to copy out of cache into flash\n");
             // hex_dump(custom_fds[fd].cache, h->file_size);
-            memcpy(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
+            //memcpy(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
+            picofs_flash_program(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
             err = 0;
         }
         else

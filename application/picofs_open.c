@@ -167,7 +167,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
                             }
                             else
                             {
-                                picofs_unlink_by_name(custom_fds[fd].file_trailer->name); 
+                                picofs_unlink_by_name(custom_fds[fd].file_trailer->name);  //TODO probably better to use fid
                             }
                         }
                     }
@@ -383,10 +383,10 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
     bool first_sequnce = true;
 
     // scan backwards through flash
-    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+    p = FS_END - 1 - sizeof(FILE_TRAILER_T);
 
     // scan flash
-    while (((char *)p) >= FS_FLASH_START)
+    while (((char *)p) >= FS_START)
     {
         t = (FILE_TRAILER_T *)p;
 
@@ -451,10 +451,10 @@ bool picofs_is_file_deleted(u8_t file_id)
 
 
     // scan backwards through flash
-    p = FS_FLASH_END - 1 - sizeof(FILE_TRAILER_T);
+    p = FS_END - 1 - sizeof(FILE_TRAILER_T);
 
     // scan flash
-    while (((char *)p) >= FS_FLASH_START)
+    while (((char *)p) >= FS_START)
     {
         t = (FILE_TRAILER_T *)p;
 

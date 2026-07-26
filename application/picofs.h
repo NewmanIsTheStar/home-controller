@@ -7,14 +7,17 @@
 
 #define FS_PAGE_SIZE (256)
 // #define FS_ERASE_BLOCK_SIZE (4096)
-#define FS_ERASE_BLOCK_SIZE (1024)
+#define FS_SECTOR_SIZE (1024)
 #define FS_ERASED_CELL_VALUE (255)
 #define FS_NUM_FID (255)        // 0-254
 #define FS_INVALID_FID (255)
 #define FS_MAX_SEQ (255)
 #define FS_MAX_FILE_DESCRIPTORS (8)
-#define FS_FLASH_START ((char *)(&test_filesystem))
-#define FS_FLASH_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
+#define FS_FAKE_FLASH (1)
+#define FS_FLASH_BASE ((char *)(&test_filesystem))
+#define FS_START ((char *)(&test_filesystem))
+#define FS_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
+#define FS_SIZE (sizeof(test_filesystem))
 #define FS_VERION (0)
 #define PROT_NONE  (0)
 #define PROT_READ  (1)
@@ -30,7 +33,7 @@
 //#define picofs_printf(format, ...) printf("[picoFS] " format, ##__VA_ARGS__)
 #define picofs_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
 
-typedef struct file_header
+typedef struct file_trailer
 {
     u8_t magic_number[4];   // "pfs"
     u8_t picofs_version;
@@ -113,16 +116,18 @@ int picofs_rename(const char *src, const char *dst);
 int picofs_list_files_by_size(void);
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
 int picofs_munmap(void *addr, size_t len);
-int picofs_erase_obsolete_blocks(void);
-int picofs_consolidate_all_files(void);
+int picofs_erase_obsolete_sectors(void);
+// int picofs_consolidate_all_files(void);
 int picofs_consolidate_all_files_in_flash(void);
-int picofs_erase_block_range(int start_block, int end_block);
+int picofs_flash_erase_sector_range(int start_block, int end_block);
 int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid);
 int picofs_initialize(void);
 int picofs_increment_sequence(FILE_TRAILER_T *trailer);
 int picofs_purge_duplicates(char *filename, u8_t keep_fid);
 int picofs_iter_next_file(FILE_TRAILER_T **current_file);
 int picofs_load_test_data(void);
+int picofs_flash_program(char *dst, char *src, size_t len);
+int picofs_flash_erase(char *dst, size_t len);
 
 
 #endif

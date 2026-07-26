@@ -200,7 +200,7 @@ void hc_task(__unused void *params)
                     hc_save_text_file_from_ascii_buffer();
                     break;  
                 case HC_CMD_DISK_CLEANUP:
-                    picofs_erase_obsolete_blocks();
+                    picofs_erase_obsolete_sectors();
                     break;                
                 case HC_CMD_DEFRAGMENT:
                     //picofs_consolidate_all_files();
