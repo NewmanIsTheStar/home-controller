@@ -21,7 +21,13 @@ target_sources(${PROJECT_NAME} PRIVATE
         picofs_rename.c   
         picofs_unlink.c
         picofs_mmap.c 
-        picofs_flash.c                     
+        picofs_flash.c 
+        picofs_page.c
+        picofs_test.c  
+        picofs_sector.c 
+        picofs_defrag.c 
+        picofs_list.c 
+        picofs_file.c               
 )
 
 set(WEB_FILES)

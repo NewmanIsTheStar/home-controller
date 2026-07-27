@@ -82,7 +82,7 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
-extern FILE_TEST_T test_filesystem[10];
+extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 
 //static variables
 
@@ -139,7 +139,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
 
     if ((len%FS_PAGE_SIZE) || ((len+flash_offset) > FS_SIZE))
     {
-        printf("picofs: error: picofs_flash_program(): invalid length (%d)\n", len);
+        printf("picofs: error: picofs_flash_program(): invalid length (%d) [offset = %d fs_size = %d\n", len, flash_offset, FS_SIZE);
         return(-2);
     }
 
@@ -230,7 +230,9 @@ int picofs_flash_erase(char *dst, size_t len)
 
     if ((len%FS_SECTOR_SIZE) || ((len+flash_offset) > FS_SIZE))
     {
-        printf("picofs: error: picofs_flash_erase(): invalid length\n");
+        // BUG!  picofs: error: picofs_flash_erase(): invalid length (1024) [offset = 2048 fs_size = 2560
+
+        printf("picofs: error: picofs_flash_erase(): invalid length (%d) [offset = %d fs_size = %d\n", len, flash_offset, FS_SIZE);
         return(-2);
     }
    

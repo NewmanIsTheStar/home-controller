@@ -32,7 +32,7 @@ typedef enum
 // external variables
 extern u32_t unix_time;
 extern WEB_VARIABLES_T web;
-extern FILE_TEST_T test_filesystem[10];
+extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 
 // prototypes
 int shell_edit(char *filename);

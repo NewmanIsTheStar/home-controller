@@ -14,6 +14,7 @@
 #define FS_MAX_SEQ (255)
 #define FS_MAX_FILE_DESCRIPTORS (8)
 #define FS_FAKE_FLASH (1)
+#define FS_TEST_ROWS (40)
 #define FS_FLASH_BASE ((char *)(&test_filesystem))
 #define FS_START ((char *)(&test_filesystem))
 #define FS_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
@@ -28,6 +29,14 @@
 #define MAP_ANONYMOUS (0x20)
 #define MAP_ANON    MAP_ANONYMOUS
 #define MAP_FAILED ((void *)-1)
+
+// REAL FLASH
+// #define FLASH_SCAN_START (0x10000000UL)
+// #define FLASH_SCAN_END (0x10000000UL + PICO_FLASH_SIZE_BYTES)
+
+// FAKE FLASH
+#define FLASH_SCAN_START FS_START
+#define FLASH_SCAN_END FS_END
 
 // print to terminal or http shell
 //#define picofs_printf(format, ...) printf("[picoFS] " format, ##__VA_ARGS__)
@@ -128,6 +137,15 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file);
 int picofs_load_test_data(void);
 int picofs_flash_program(char *dst, char *src, size_t len);
 int picofs_flash_erase(char *dst, size_t len);
-
+u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
+u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
+int picofs_refresh_metrics(void);
+int picofs_ascending_size_compare(const void *a, const void *b);
+int picofs_descending_size_compare(const void *a, const void *b);
+u32_t picofs_get_start_sector(FILE_TRAILER_T *trailer);
+u32_t picofs_get_end_sector(FILE_TRAILER_T *trailer);
+int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len);
+bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_file);
+bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file);
 
 #endif
