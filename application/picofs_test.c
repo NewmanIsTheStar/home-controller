@@ -99,7 +99,7 @@ int picofs_load_test_data(void)
         test_filesystem[0].test_trailer.file_sequence = 0;  
         test_filesystem[0].test_trailer.file_status = 0; 
         test_filesystem[0].test_trailer.file_size = 0; 
-        test_filesystem[0].test_trailer.crc = 0;
+        test_filesystem[0].test_trailer.crc = 0xdd424c0e;  // 0e 4c 42 dd
         STRNCPY(test_filesystem[0].test_trailer.name, "elephant", sizeof("elephant"));  
         // STRNCPY(test_filesystem[0].test_data, "This is test file A.", sizeof("This is test file A.")); 
         
@@ -118,7 +118,7 @@ int picofs_load_test_data(void)
         test_filesystem[1].test_trailer.file_sequence = 253;  
         test_filesystem[1].test_trailer.file_status = 0; 
         test_filesystem[1].test_trailer.file_size = 0; 
-        test_filesystem[1].test_trailer.crc = 0;
+        test_filesystem[1].test_trailer.crc = 0xc9fd01f3;  // f3 01 fd c9
         STRNCPY(test_filesystem[1].test_trailer.name, "monkey", sizeof("monkey"));
         //STRNCPY(test_filesystem[1].test_data, "This is test file B.", sizeof("This is test file B.")); 
         test_filesystem[1].test_data[0] = 0;

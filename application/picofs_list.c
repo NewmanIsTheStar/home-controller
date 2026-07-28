@@ -300,6 +300,7 @@ int picofs_list_all_files(void)
     int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
     u8_t *consolidation_area = NULL;
     size_t consolidation_area_size = 0;
+    u32_t calculated_crc = 0;
 
     memset(picofs_metrics, 0, sizeof(picofs_metrics));
 
@@ -327,14 +328,18 @@ int picofs_list_all_files(void)
 
     if (num_files)
     {
-            picofs_printf("Size\t\tFID\tSEQ\tName\n");
+            picofs_printf("Size\t\tFID\tSEQ\tCRC calc\tCRC file\tName\n");
     }
 
     for (i=0; i<FS_NUM_FID; i++)
     {
         if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
         {
-            picofs_printf("%08d\t%d\t%d\t%s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, picofs_metrics[i].trailer->name);
+
+            // calculate crc
+            calculated_crc = calculate_crc32_universal_unaligned_rtos(((const uint8_t *)(picofs_metrics[i].trailer)) + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size - sizeof(FILE_TRAILER_T));
+            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, calculated_crc, picofs_metrics[i].trailer->crc, picofs_metrics[i].trailer->name);
+
             size_files += picofs_metrics[i].trailer->file_size;
         }
     }
@@ -343,6 +348,9 @@ int picofs_list_all_files(void)
     picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
 
     picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
+
+
+
 
     return(0);
 }

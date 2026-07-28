@@ -115,6 +115,7 @@ int picofs_close_file(int fd, bool disable_purge)
         // set size and status
         custom_fds[fd].cache_trailer.file_size = custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
         custom_fds[fd].cache_trailer.file_status = custom_fds[fd].file_status;
+        custom_fds[fd].cache_trailer.crc = calculate_crc32_universal_unaligned_rtos(custom_fds[fd].cache, custom_fds[fd].data_len);
 
         // append trailer to end of cached file 
         if ((custom_fds[fd].data_len + sizeof(FILE_TRAILER_T)) < custom_fds[fd].cache_len)

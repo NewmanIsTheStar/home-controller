@@ -489,5 +489,8 @@ int picofs_initialize(void)
         err = 0;
     }
 
+    // initialize dma based crc calculator
+    init_crc_subsystem();
+
     return(err);
 }

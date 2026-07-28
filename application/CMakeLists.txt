@@ -27,7 +27,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         picofs_sector.c 
         picofs_defrag.c 
         picofs_list.c 
-        picofs_file.c               
+        picofs_file.c 
+        picofs_crc.c              
 )
 
 set(WEB_FILES)

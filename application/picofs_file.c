@@ -326,7 +326,8 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)    //TODO CHECK CRC! at
         // move to new location
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
-            (t->file_size >= sizeof(FILE_TRAILER_T)))
+            (t->file_size >= sizeof(FILE_TRAILER_T)) &&
+            (t->crc == calculate_crc32_universal_unaligned_rtos(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T))))
         {
             p = p - t->file_size;  
         }        
