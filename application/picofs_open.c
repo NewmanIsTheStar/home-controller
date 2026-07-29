@@ -78,7 +78,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-
+extern FILE_METRICS_T picofs_files[FS_NUM_FID]; 
 //static variables
 
 
@@ -205,7 +205,6 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     }
     else
     {
-        printf("FILE DOES NOT EXIST -- CREATING NEW FILE\n");
         // file does not exit
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
@@ -223,11 +222,6 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
 
                 if (!err)
                 {
-                    // reininitialize the file descriptor using the file trailer
-                    //picofs_fd_initialize(fd, (FILE_TRAILER_T *)custom_fds[fd].cache);
-                    //picofs_fd_initialize(fd, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
-
-                    printf("COMPARISON ::  %d should equal %d\n", custom_fds[fd].file_len, sizeof(FILE_TRAILER_T));
                     picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache));  // empty file only contains trailer
                 }
                 else
@@ -240,7 +234,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
         }
     }
 
-    printf("At completion of picofs_open err %d id %d sq %d sz %d st %d\n", err, custom_fds[fd].file_trailer->file_id, custom_fds[fd].file_trailer->file_sequence, custom_fds[fd].file_trailer->file_size, custom_fds[fd].file_trailer->file_status);
+    //printf("At completion of picofs_open err %d id %d sq %d sz %d st %d\n", err, custom_fds[fd].file_trailer->file_id, custom_fds[fd].file_trailer->file_sequence, custom_fds[fd].file_trailer->file_size, custom_fds[fd].file_trailer->file_status);
     return(err);
 }
 
@@ -382,53 +376,80 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
     u8_t best_status = 0;
     bool first_sequnce = true;
 
-    // scan backwards through flash
-    p = FS_END - 1 - sizeof(FILE_TRAILER_T);
-
-    // scan flash
-    while (((char *)p) >= FS_START)
+    // try ram
+    if ((fid != FS_INVALID_FID) && picofs_files[fid].valid && (fid == picofs_files[fid].trailer->file_id) && (!picofs_files[fid].trailer->file_status))
     {
-        t = (FILE_TRAILER_T *)p;
-
-        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION) &&
-            (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
-            !picofs_is_file_deleted(t->file_id))
+        *trailer = picofs_files[fid].trailer;
+        err = 0;
+        printf("picofs: found file by FID in RAM\n");
+    }
+    else if ((fid == FS_INVALID_FID) && filename)
+    {
+        for(i=0; i < FS_NUM_FID; i++)
         {
-            // match
-            if (first_sequnce)
+            if ((strcmp(filename, picofs_files[i].trailer->name) == 0) && (!picofs_files[i].trailer->file_status))
             {
-                best_sequence = t->file_sequence;
-                best_status = t->file_status;
-                *trailer = t;
-                err = 0; 
-                p = p - t->file_size; 
-
-                first_sequnce = false;
+                *trailer = picofs_files[i].trailer;
+                err = 0;
+                printf("picofs: found file by NAME in RAM\n");
+                break;
             }
-            else
+        }
+    }
+
+    // try flash
+    if (err)
+    {
+        printf("picofs: find file falling back to searching flash\n");
+
+        // scan backwards through flash
+        p = FS_END - 1 - sizeof(FILE_TRAILER_T);
+
+        // scan flash
+        while (((char *)p) >= FS_START)
+        {
+            t = (FILE_TRAILER_T *)p;
+
+            if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+                (t->picofs_version == FS_VERION) &&
+                (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
+                !picofs_is_file_deleted(t->file_id))
             {
-                if (t->file_sequence > best_sequence) 
+                // match
+                if (first_sequnce)
                 {
                     best_sequence = t->file_sequence;
                     best_status = t->file_status;
                     *trailer = t;
-                    err = 0;
-                    p = p - t->file_size;                  
+                    err = 0; 
+                    p = p - t->file_size; 
+
+                    first_sequnce = false;
                 }
+                else
+                {
+                    if (t->file_sequence > best_sequence) 
+                    {
+                        best_sequence = t->file_sequence;
+                        best_status = t->file_status;
+                        *trailer = t;
+                        err = 0;
+                        p = p - t->file_size;                  
+                    }
+                }
+            }
+
+            if (p == ((u8_t *)t))
+            {
+                p--;
             }
         }
 
-        if (p == ((u8_t *)t))
+
+        if (best_status) // file was deleted
         {
-            p--;
+            err = -1;
         }
-    }
-
-
-    if (best_status) // file was deleted
-    {
-        err = -1;
     }
 
     return(err);
@@ -491,6 +512,9 @@ int picofs_initialize(void)
 
     // initialize dma based crc calculator
     init_crc_subsystem();
+
+    // scan flash and cache pointers to all files
+    picofs_refresh_files();
 
     return(err);
 }

@@ -72,9 +72,6 @@
 //prototypes
 int picofs_find_available_fd(void);
 int picofs_release_fd(int fd);
-// int picofs_open_for_deletion_by_name(int fd, const char *name, int flags);
-// int picofs_open_for_deletion_by_fid(int fd, u8_t fid, int flags);
-// int picofs_close_for_deletion(int fd);
 
 // external variables
 extern u32_t unix_time;
@@ -82,6 +79,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+
 //static variables
 
  

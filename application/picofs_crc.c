@@ -129,7 +129,7 @@ void init_crc_subsystem(void) {
     }
 }
 
-uint32_t calculate_crc32_universal_unaligned_rtos(const uint8_t *data_ptr, size_t byte_length) {
+uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t byte_length) {
     uint32_t crc = 0xffffffff;
     bool is_flash = ((uint32_t)data_ptr >= 0x10000000 && (uint32_t)data_ptr < 0x20000000);
 

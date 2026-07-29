@@ -108,6 +108,11 @@ int picofs_load_test_data(void)
         {
             STRNCAT(test_filesystem[0].test_data, "A", sizeof(test_filesystem[0].test_data));
         }
+
+        // TEST TEST TEST
+        // inject corruption into file!
+        test_filesystem[0].test_data[23] = 'X';
+        
         test_filesystem[0].test_trailer.file_size = sizeof(FILE_TRAILER_T) + strlen(test_filesystem[0].test_data) + 1;
         // STRNCPY(test_filesystem[0].test_trailer.magic_number, "spf", sizeof(test_filesystem[0].test_trailer.magic_number));
         // test_filesystem[0].test_trailer.crc = 0;

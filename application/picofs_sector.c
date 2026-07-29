@@ -79,7 +79,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-extern FILE_METRICS_T picofs_metrics[FS_NUM_FID]; 
+extern FILE_METRICS_T picofs_files[FS_NUM_FID]; 
 
 //static variables
 
@@ -109,7 +109,7 @@ int picofs_erase_obsolete_sectors(void)
     bool erasure_possible = false;
     u32_t last_valid_start_sector = UINT_MAX;
 
-    picofs_refresh_metrics();
+    picofs_refresh_files(); //TODO : consider removing
 
     while(!picofs_iter_next_file(&current))
     {
@@ -117,7 +117,7 @@ int picofs_erase_obsolete_sectors(void)
         {
             printf("checking %s seq %d\n", current->name, current->file_sequence);
 
-            if ((picofs_metrics[current->file_id].trailer != current) || picofs_deleted_file_ready_for_erasure(current))
+            if ((picofs_files[current->file_id].trailer != current) || picofs_deleted_file_ready_for_erasure(current))
             {
 
                 file_start_sector = picofs_get_start_sector(current);
@@ -134,7 +134,7 @@ int picofs_erase_obsolete_sectors(void)
                     {
                         if (picofs_get_end_sector(look_ahead) == file_start_sector)
                         {
-                            if ((picofs_metrics[look_ahead->file_id].trailer != look_ahead) || picofs_deleted_file_ready_for_erasure(look_ahead))
+                            if ((picofs_files[look_ahead->file_id].trailer != look_ahead) || picofs_deleted_file_ready_for_erasure(look_ahead))
                             {
                                 printf("---lookahead found adjacent obsolete file in the same sector %s SEQ %d\n", look_ahead->name, look_ahead->file_sequence);
                                 // adjacent obsolete file so expand range to cover it  

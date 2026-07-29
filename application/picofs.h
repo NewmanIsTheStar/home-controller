@@ -104,7 +104,8 @@ typedef enum
 
 int picofs_unlink(const char *name, u8_t fid);
 int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
-int picofs_list_all_files(void);
+int picofs_list_all_files_from_flash(void);
+int picofs_list_all_files_from_cache(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
@@ -139,7 +140,7 @@ int picofs_flash_program(char *dst, char *src, size_t len);
 int picofs_flash_erase(char *dst, size_t len);
 u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
 u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
-int picofs_refresh_metrics(void);
+int picofs_refresh_files(void);
 int picofs_ascending_size_compare(const void *a, const void *b);
 int picofs_descending_size_compare(const void *a, const void *b);
 u32_t picofs_get_start_sector(FILE_TRAILER_T *trailer);
@@ -148,6 +149,6 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
 bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_file);
 bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file);
 void init_crc_subsystem(void);
-uint32_t calculate_crc32_universal_unaligned_rtos(const uint8_t *data_ptr, size_t length);
+uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t length);
 
 #endif

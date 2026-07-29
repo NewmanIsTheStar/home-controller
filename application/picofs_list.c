@@ -79,10 +79,10 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-extern FILE_METRICS_T picofs_metrics[FS_NUM_FID];
+extern FILE_METRICS_T picofs_files[FS_NUM_FID];
 
 //static variables
-
+FILE_METRICS_T list_files[FS_NUM_FID];
 
 /*!
  * \brief get a list of file ids within a specified size range
@@ -222,17 +222,17 @@ int picofs_list_files_by_size(void)
     int i;
     FILE_TRAILER_T *current = NULL;
 
-    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+    memset(list_files, 0, sizeof(list_files));
 
     while(!picofs_iter_next_file(&current))
     {
         if (current)
         {
-            picofs_metrics[current->file_id].valid = true;
+            list_files[current->file_id].valid = true;
 
-            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            if (current->file_sequence >= list_files[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
             {
-                picofs_metrics[current->file_id].trailer = current;
+                list_files[current->file_id].trailer = current;
             }
         }
         else
@@ -242,15 +242,15 @@ int picofs_list_files_by_size(void)
         }
     }
 
-    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_ascending_size_compare);
+    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_METRICS_T), picofs_ascending_size_compare);
 
     picofs_printf("LIST sorted by size\n");
 
     for (i=0; i<FS_NUM_FID; i++)
     {
-        if (picofs_metrics[i].valid)
+        if (list_files[i].valid)
         {
-            picofs_printf("%08d\t%d\t%d\t%s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, picofs_metrics[i].trailer->name);
+            picofs_printf("%08d\t%d\t%d\t%s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->name);
         }
     }
 
@@ -290,7 +290,7 @@ int picofs_metrics_name_compare(const void *a, const void *b)
  *  *     
  * \return 0 on success
  */
-int picofs_list_all_files(void)
+int picofs_list_all_files_from_flash(void)
 {
     int err = -1;
     int i;
@@ -302,19 +302,19 @@ int picofs_list_all_files(void)
     size_t consolidation_area_size = 0;
     u32_t calculated_crc = 0;
 
-    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+    memset(list_files, 0, sizeof(list_files));
 
     while(!picofs_iter_next_file(&current))
     {
         if (current)
         {
-            picofs_metrics[current->file_id].valid = true;
+            list_files[current->file_id].valid = true;
             num_files++;
             size_files_plus_remnants += current->file_size;
 
-            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)
+            if (current->file_sequence >= list_files[current->file_id].trailer->file_sequence)
             {
-                picofs_metrics[current->file_id].trailer = current;
+                list_files[current->file_id].trailer = current;
             }
         }
         else
@@ -324,7 +324,7 @@ int picofs_list_all_files(void)
         }
     }
 
-    qsort(picofs_metrics, NUM_ROWS(picofs_metrics), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
+    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
 
     if (num_files)
     {
@@ -333,14 +333,14 @@ int picofs_list_all_files(void)
 
     for (i=0; i<FS_NUM_FID; i++)
     {
-        if (picofs_metrics[i].valid && !picofs_metrics[i].trailer->file_status)
+        if (list_files[i].valid && !list_files[i].trailer->file_status)
         {
 
             // calculate crc
-            calculated_crc = calculate_crc32_universal_unaligned_rtos(((const uint8_t *)(picofs_metrics[i].trailer)) + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size - sizeof(FILE_TRAILER_T));
-            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_id, picofs_metrics[i].trailer->file_sequence, calculated_crc, picofs_metrics[i].trailer->crc, picofs_metrics[i].trailer->name);
+            calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
+            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, calculated_crc, list_files[i].trailer->crc, list_files[i].trailer->name);
 
-            size_files += picofs_metrics[i].trailer->file_size;
+            size_files += list_files[i].trailer->file_size;
         }
     }
 
@@ -350,7 +350,66 @@ int picofs_list_all_files(void)
     picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
 
 
+    picofs_printf("LIST from RAM Cache\n");
+    for (i=0; i<FS_NUM_FID; i++)
+    {
+        if (picofs_files[i].valid && !picofs_files[i].trailer->file_status)
+        {
 
+            // calculate crc
+            calculated_crc = picofs_calculate_crc32(((const uint8_t *)(picofs_files[i].trailer)) + sizeof(FILE_TRAILER_T) - picofs_files[i].trailer->file_size, picofs_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
+            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", picofs_files[i].trailer->file_size, picofs_files[i].trailer->file_id, picofs_files[i].trailer->file_sequence, calculated_crc, picofs_files[i].trailer->crc, picofs_files[i].trailer->name);
+
+        }
+    }
+
+
+    return(0);
+}
+
+/*!
+ * \brief Print a list of all files in the file system cache
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_list_all_files_from_cache(void)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *current = NULL;
+    bool heading = false;
+    int size_files = 0;
+    u8_t *consolidation_area = NULL;
+    size_t consolidation_area_size = 0;
+    u32_t calculated_crc = 0;
+
+    memcpy(list_files, picofs_files, sizeof(list_files));
+
+    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
+
+    for (i=0; i<FS_NUM_FID; i++)
+    {
+        if (list_files[i].valid && !list_files[i].trailer->file_status)
+        {
+
+            if (!heading)
+            {
+                picofs_printf("Size\t\tFID\tSEQ\tCRC calc\tCRC file\tName\n");
+                heading = true;
+            }
+            // calculate crc
+            calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
+            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, calculated_crc, list_files[i].trailer->crc, list_files[i].trailer->name);
+
+            size_files += list_files[i].trailer->file_size;
+        }
+    }
+
+    picofs_printf("\nTotal size    %08d\n", size_files);
 
     return(0);
 }

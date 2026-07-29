@@ -79,6 +79,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+extern FILE_METRICS_T picofs_files[FS_NUM_FID];
 
 //static variables
 FILE_METRICS_T purge_list[FS_NUM_FID]; 
@@ -115,7 +116,7 @@ int picofs_close_file(int fd, bool disable_purge)
         // set size and status
         custom_fds[fd].cache_trailer.file_size = custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
         custom_fds[fd].cache_trailer.file_status = custom_fds[fd].file_status;
-        custom_fds[fd].cache_trailer.crc = calculate_crc32_universal_unaligned_rtos(custom_fds[fd].cache, custom_fds[fd].data_len);
+        custom_fds[fd].cache_trailer.crc = picofs_calculate_crc32(custom_fds[fd].cache, custom_fds[fd].data_len);
 
         // append trailer to end of cached file 
         if ((custom_fds[fd].data_len + sizeof(FILE_TRAILER_T)) < custom_fds[fd].cache_len)
@@ -142,10 +143,12 @@ int picofs_close_file(int fd, bool disable_purge)
 
         if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size) && (err == 0))
         {
-            // printf("about to copy out of cache into flash\n");
-            // hex_dump(custom_fds[fd].cache, h->file_size);
-            //memcpy(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
             picofs_flash_program(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
+            
+            // // update global file list
+            // picofs_files[custom_fds[fd].cache_trailer.file_id].trailer = (FILE_TRAILER_T *)(erased_area + custom_fds[fd].cache_trailer.file_size - sizeof(FILE_TRAILER_T));
+            // picofs_files[custom_fds[fd].cache_trailer.file_id].valid = true;
+
             err = 0;
         }
         else
@@ -173,7 +176,8 @@ int picofs_close_file(int fd, bool disable_purge)
     
     //hex_dump((const char *)test_filesystem, sizeof(test_filesystem));
      
-
+    // update global list of files
+    picofs_refresh_files();
 
     return(err);
 }

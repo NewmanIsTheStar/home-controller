@@ -82,7 +82,7 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 
 
 //static variables
-FILE_METRICS_T picofs_metrics[FS_NUM_FID]; 
+FILE_METRICS_T picofs_files[FS_NUM_FID]; 
 
 
 /*!
@@ -302,7 +302,7 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
  * 
  * \return 0 on success
  */
-int picofs_iter_next_file(FILE_TRAILER_T **current_file)    //TODO CHECK CRC! at present an erased hole in the file that is filled with new files will be skipped over!!!
+int picofs_iter_next_file(FILE_TRAILER_T **current_file)
 {
     int not_found = 1;
     char *p = NULL;
@@ -327,7 +327,7 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)    //TODO CHECK CRC! at
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
             (t->file_size >= sizeof(FILE_TRAILER_T)) &&
-            (t->crc == calculate_crc32_universal_unaligned_rtos(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T))))
+            (t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T))))
         {
             p = p - t->file_size;  
         }        
@@ -366,30 +366,26 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)    //TODO CHECK CRC! at
 
 
 /*!
- * \brief Print a list of all files in the file system
- * 
- * \param[in]   filename     name to find
- * 
- * \param[out]  header       pointer to file header
- *  *     
+ * \brief rebuild the global list of files
+ *     
  * \return 0 on success
  */
-int picofs_refresh_metrics(void)
+int picofs_refresh_files(void)
 {
     int err = -1;
     FILE_TRAILER_T *current = NULL;
 
-    memset(picofs_metrics, 0, sizeof(picofs_metrics));
+    memset(picofs_files, 0, sizeof(picofs_files));
 
     while(!picofs_iter_next_file(&current))
     {
         if (current)
         {
-            picofs_metrics[current->file_id].valid = true;
+            picofs_files[current->file_id].valid = true;
 
-            if (current->file_sequence >= picofs_metrics[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            if (current->file_sequence >= picofs_files[current->file_id].trailer->file_sequence) 
             {
-                picofs_metrics[current->file_id].trailer = current;
+                picofs_files[current->file_id].trailer = current;
             }
         }
         else
@@ -404,10 +400,13 @@ int picofs_refresh_metrics(void)
 
 
 
-
-
-
-
+/*!
+ * \brief increment sequence number and handle rollover
+ * 
+ * \param[in]   trailer     trailer to modify
+ *     
+ * \return 0 on success
+ */
 int picofs_increment_sequence(FILE_TRAILER_T *trailer)
 {
     int err = -1;
@@ -437,14 +436,11 @@ int picofs_increment_sequence(FILE_TRAILER_T *trailer)
 
 
 
-
 /*!
  * \brief check if deleted file has remnants in other sectors (this means it cannot be erased)
  * 
- * \param[in]   filename     name to find
+ * \param[in]   deleted_file     deleted file trailer
  * 
- * \param[out]  header       pointer to file header
- *  *     
  * \return 0 on success
  */
 bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_file)
@@ -461,7 +457,7 @@ bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_f
     if (deleted_file_start_sector != deleted_file_end_sector)
     {
         printf("picofs: error: deleted file spans sectors %d to %d\n", deleted_file_start_sector, deleted_file_end_sector);
-        return(false);
+        return(true);
     }
 
     while(!picofs_iter_next_file(&current))
@@ -485,18 +481,14 @@ bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_f
         }
     }
 
-
-
     return(has_remnants);
 }
 
 /*!
  * \brief check if file is deleted and can erased
  * 
- * \param[in]   filename     name to find
- * 
- * \param[out]  header       pointer to file header
- *  *     
+ * \param[in]   candidate_file     candidate file trailer
+ *     
  * \return 0 on success
  */
 bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file)

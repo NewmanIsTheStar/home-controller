@@ -185,7 +185,8 @@ void hc_task(__unused void *params)
                     dump_text_buffer();
                     break;   
                 case HC_CMD_LIST:
-                    picofs_list_all_files();
+                    //picofs_list_all_files_from_flash();
+                    picofs_list_all_files_from_cache();
                     break;
                 case HC_CMD_PING:
                     shell_ping(web.ping_target);
