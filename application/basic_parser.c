@@ -191,7 +191,8 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
     double fAnswer;
     teToken eToken;
     int iEndOfString;
-	char acTemp[3000];
+	//char acTemp[3000];
+    char acTemp[128];
 
     pcActivePos = pcResult;
     *pcActivePos = '\0';

@@ -150,5 +150,6 @@ bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_f
 bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file);
 void init_crc_subsystem(void);
 uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t length);
+int picofs_expand_cache(int fd);
 
 #endif

@@ -16,6 +16,7 @@
 #define HC_CMD_SAVE_TEXT_FILE (9)
 #define HC_CMD_DEFRAGMENT (10)
 #define HC_CMD_DISK_CLEANUP (11)
+#define HC_CMD_BASIC_FILE (12)
 
 
 typedef enum

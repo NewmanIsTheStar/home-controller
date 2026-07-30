@@ -33,7 +33,7 @@ WORKER_TASK_T worker_tasks[] =
 //     {   thermostat_task,"Thermostat Task",      8096,   5},        
 // #endif
 
-  {   hc_task,        "Home Controller Task", 8096,   1},      
+  {   hc_task,        "Home Controller Task", 2*8096,   1},      
   {   discovery_task, "Discovery Task",       8096,   1},          
 
     // end of table

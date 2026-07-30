@@ -178,6 +178,10 @@ void hc_task(__unused void *params)
                     basic_program[current_buffer_index+1] = 0;
                     basic_Interpreter(NULL, NULL, basic_program, current_buffer_index, true);                
                     break;
+                case HC_CMD_BASIC_FILE:
+                    basic_Interpreter(web.basic_file_to_execute, NULL, NULL, 0, false);                
+                    for(i=0; i<4000; i++) {printf("MONKEY\n");}
+                    break;                    
                 case HC_CMD_LIGHTS:
                     shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
                     break;  

@@ -313,10 +313,14 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_DUMP_PROGRAM);  
     } 
-    else if (strcmp(cmd, "run") == 0) 
+    else if (strncmp(cmd, "run ", 4) == 0) 
     {
-        hc_queue_send(HC_CMD_BASIC_SCRIPT);  
-    } 
+        if (strlen(cmd) > 5)
+        {
+            web.basic_file_to_execute = ((char *)(cmd+4)); 
+            hc_queue_send(HC_CMD_BASIC_FILE);  
+        }
+    }     
     else if (strcmp(cmd, "df") == 0) 
     {
         hc_queue_send(HC_CMD_PAGE_MAP);  
@@ -324,11 +328,7 @@ static void execute_shell_command(const char* cmd)
     else if (strcmp(cmd, "df n") == 0) 
     {
         hc_queue_send(HC_CMD_PAGE_NUMBERS);  
-    }   
-    else if (strcmp(cmd, "run") == 0) 
-    {
-        hc_queue_send(HC_CMD_BASIC_SCRIPT); 
-    }     
+    }      
     else if (strcmp(cmd, "disk cleanup") == 0) 
     {
         hc_queue_send(HC_CMD_DISK_CLEANUP); 

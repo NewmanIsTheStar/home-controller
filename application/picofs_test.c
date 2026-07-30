@@ -135,6 +135,21 @@ int picofs_load_test_data(void)
         // STRNCPY(test_filesystem[1].test_trailer.magic_number, "spf", sizeof(test_filesystem[1].test_trailer.magic_number));    
         // test_filesystem[1].test_trailer.crc = 0; 
     
+        STRNCPY(test_filesystem[2].test_trailer.magic_number, "pfs", sizeof(test_filesystem[2].test_trailer.magic_number));
+        test_filesystem[2].test_trailer.picofs_version = 0;
+        test_filesystem[2].test_trailer.file_id = 2;    
+        test_filesystem[2].test_trailer.file_sequence = 0;  
+        test_filesystem[2].test_trailer.file_status = 0; 
+        test_filesystem[2].test_trailer.file_size = 0; 
+        test_filesystem[2].test_trailer.crc = 0x5af465bc; 
+        STRNCPY(test_filesystem[2].test_trailer.name, "goat", sizeof("goat"));
+        test_filesystem[2].test_data[0] = 0;
+        
+        memset((void *)test_filesystem[2].test_data, 0, 224);
+        STRNCAT(test_filesystem[2].test_data, "10 FOR X = 0 TO 3\n20 FOR Y = 0 TO 4095\n30 PRINT X;\" \";Y\n40 NEXT\n50 NEXT\n", sizeof(test_filesystem[2].test_data));
+        test_filesystem[2].test_trailer.file_size = 256; 
+
+
         test_init = true;
     }
 

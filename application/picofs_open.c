@@ -329,6 +329,44 @@ int picofs_allocate_cache(int fd)
     return(err);
 }
 
+/*!
+ * \brief expand cache by one sector
+ *
+ * \param fd     file descriptor
+ * \return nothing
+ */
+int picofs_expand_cache(int fd)
+{
+    int err = -1;
+    size_t cache_size = 0;
+    char *expanded_cache = NULL;
+
+    if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS) && (custom_fds[fd].cache))
+    {
+        // allocate one 4k block greater than currently used
+        cache_size = ((custom_fds[fd].cache_len + (4*1024))/(4*1024))*(4*1024);        
+        expanded_cache = pvPortMalloc(cache_size);
+
+        if (expanded_cache)
+        {
+            // copy original cache content into the expanded cache
+            memcpy(expanded_cache, custom_fds[fd].cache, custom_fds[fd].cache_len);
+
+            // delete original cache
+            vPortFree(custom_fds[fd].cache);
+
+            // point file descriptor to the new expanded cache
+            custom_fds[fd].cache = expanded_cache;
+            custom_fds[fd].cache_len = cache_size;
+            custom_fds[fd].data = expanded_cache;
+
+            err = 0;
+        }
+    }
+
+    return(err);
+}
+
 
 /*!
  * \brief check if a file is already open  

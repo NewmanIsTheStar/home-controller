@@ -99,6 +99,10 @@ int picofs_write(int fd, char *ptr, int len)
             custom_fds[fd].data[custom_fds[fd].data_offset + i] = ptr[i];
             
         }
+        else if (!picofs_expand_cache(fd))
+        {
+            custom_fds[fd].data[custom_fds[fd].data_offset + i] = ptr[i];
+        }
         else
         {
             shell_printf("picoFS: write truncated, out of cache\n");
