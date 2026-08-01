@@ -6,7 +6,7 @@
 
 
 #define FS_PAGE_SIZE (256)
-// #define FS_ERASE_BLOCK_SIZE (4096)
+// #define FS_SECTOR_SIZE (4096)
 #define FS_SECTOR_SIZE (1024)
 #define FS_ERASED_CELL_VALUE (255)
 #define FS_NUM_FID (255)        // 0-254
@@ -14,11 +14,12 @@
 #define FS_MAX_SEQ (255)
 #define FS_MAX_FILE_DESCRIPTORS (8)
 #define FS_FAKE_FLASH (1)
-#define FS_TEST_ROWS (40)
+#define FS_TEST_ROWS (128)
 #define FS_FLASH_BASE ((char *)(&test_filesystem))
 #define FS_START ((char *)(&test_filesystem))
 #define FS_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
 #define FS_SIZE (sizeof(test_filesystem))
+#define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
 #define FS_VERION (0)
 #define PROT_NONE  (0)
 #define PROT_READ  (1)

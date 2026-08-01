@@ -70,7 +70,8 @@
 
 
 //prototypes
-
+bool picofs_sector_in_use(u32_t sector);
+bool picofs_sector_erased(u32_t sector);
 
 
 // external variables
@@ -84,7 +85,122 @@ extern FILE_METRICS_T picofs_files[FS_NUM_FID];
 //static variables
 
 
+/*!
+ * \brief erase obsolete sectors
+ * 
+ *    
+ * \return 0 on success
+ */
+int picofs_erase_obsolete_sectors(void)
+{
+    int err = -1;
+    u32_t i;
+    u32_t start_sector;
+    u32_t end_sector;    
 
+    picofs_refresh_files(); //TODO : consider removing
+
+    for(start_sector=0; start_sector < FS_NUM_SECTORS; start_sector++)
+    {
+        if (!picofs_sector_in_use(start_sector) && !picofs_sector_erased(start_sector))
+        {
+            end_sector = start_sector;
+
+            // try to expand range
+            for (i = start_sector; i < FS_NUM_SECTORS; i++)
+            {
+                if ((!picofs_sector_in_use(i)) && !picofs_sector_erased(i))
+                {
+                    end_sector = i;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (start_sector == end_sector)
+            {
+                //printf("--ERASING Sector %d\n", start_sector);
+                shell_printf("--ERASING Sector %d\n", start_sector);
+            }
+            else
+            {
+                //printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
+                shell_printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
+            }
+
+            picofs_flash_erase_sector_range(start_sector, end_sector);
+            start_sector = end_sector;
+        }
+    }
+
+    return(err);
+}
+
+/*!
+ * \brief check if sector used by any file
+ * 
+ * \param[in]   sector     sector to check
+ * 
+ *     
+ * \return 0 on success
+ */
+bool picofs_sector_in_use(u32_t sector)
+{
+    u32_t start_sector = 0;
+    u32_t end_sector = 0;
+    bool in_use = false;
+    int i;
+    
+    for(i=0; i < FS_NUM_FID; i++)
+    {
+        if (picofs_files[i].valid && picofs_files[i].trailer)
+        {
+            start_sector = picofs_get_start_sector(picofs_files[i].trailer);
+
+            end_sector = picofs_get_end_sector(picofs_files[i].trailer);
+
+            if ((sector >= start_sector) && (sector <= end_sector))
+            {
+                in_use= true;
+                break;
+            }
+        }
+    }
+
+    return(in_use);
+}
+
+/*!
+ * \brief check if sector is erased
+ * 
+ * \param[in]   sector     sector to check
+ * 
+ *     
+ * \return 0 on success
+ */
+bool picofs_sector_erased(u32_t sector)
+{
+    u32_t start_sector = 0;
+    u32_t end_sector = 0;
+    bool erased = true;
+    int i;
+    char *cell;
+    
+    for(cell = (char *)(FLASH_SCAN_START + sector *FS_SECTOR_SIZE); cell < (char *)(FLASH_SCAN_START + (sector+1) *FS_SECTOR_SIZE); cell++)
+    {        
+        if (*cell != FS_ERASED_CELL_VALUE)
+        {            
+            erased = false;
+            break;
+        }
+    }
+
+    return(erased);
+}
+
+#ifdef OBSOLETE_JUNK   // way too complicated and incomplete
 /*!
  * \brief erase obsolete sectors
  * 
@@ -201,6 +317,7 @@ int picofs_erase_obsolete_sectors(void)
     
     return(0);
 }
+#endif
 
 /*!
  * \brief check if sector is obsolete

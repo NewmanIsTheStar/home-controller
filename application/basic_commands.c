@@ -1931,9 +1931,7 @@ void basic_PrintToFile(void)
 
     eval_StringLine(acOutput, sizeof(acOutput), 1);
 
-    printf("Basic printToFile calling printf with %s\n", acOutput);
     err = fprintf(psContext->apFileHandles[iFileNumber], "%s", acOutput);
-    printf("Basic printToFile printf returned %d\n", err);
 }
 
 
