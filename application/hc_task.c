@@ -84,6 +84,7 @@ int hc_wait(TickType_t timeout);
 int hc_initialize_queue(void);
 int hc_initialize(void);
 int hc_save_text_file_from_ascii_buffer(void);
+int hc_cat(char *filename);
 
 // external variables
 extern NON_VOL_VARIABLES_T config;
@@ -185,7 +186,11 @@ void hc_task(__unused void *params)
                     // SLEEP_MS(5000);
                     // printf("Will now attempt to run script %s\n", web.basic_file_to_execute);
                     basic_Interpreter(web.basic_file_to_execute, NULL, NULL, 0, true);                
-                    break;                    
+                    break; 
+                case HC_CMD_CAT_FILE:
+                    hc_cat(web.file_to_cat);                
+                    break;                     
+                                      
                 case HC_CMD_LIGHTS:
                     shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
                     break;  
@@ -393,4 +398,40 @@ int hc_save_text_file_from_ascii_buffer(void)
     //printf("Data successfully saved to output.txt\n");
 
     return EXIT_SUCCESS;
+}
+
+
+/*!
+ * \brief print the contents of a text file to the shell
+ *
+ * \param[in]  filename  file to print to shell
+ * \return nothing
+ */
+int hc_cat(char *filename)
+{
+    FILE *filePointer;
+    char buffer[128];
+
+    // open the file in read mode ("r")
+    filePointer = fopen(filename, "r");
+
+    // check if the file exists and opened successfully
+    if (filePointer == NULL) 
+    {
+        shell_printf("cat: %s: No such file\n", filename);
+        return 1; 
+    }
+
+    // read and print the file line-by-line
+    while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
+    {
+        shell_printf("%s", buffer); 
+        // printf("%s", buffer);
+        // SLEEP_MS(100);
+    }
+
+    // close the file to free up system resources
+    fclose(filePointer);
+
+    return 0;
 }

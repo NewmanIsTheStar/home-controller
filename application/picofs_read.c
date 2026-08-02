@@ -98,6 +98,8 @@ int picofs_read(int fd, char *ptr, int len)
 {
     int i;
 
+    //printf("read start offset = %d\n", custom_fds[fd].data_offset);
+
     for(i=0; i<len; i++)
     {       
         if ((custom_fds[fd].data_offset + i) < custom_fds[fd].data_len)
@@ -106,11 +108,16 @@ int picofs_read(int fd, char *ptr, int len)
         }
         else
         {
+            //printf("truncated read @ offset = %d i = %d\n", custom_fds[fd].data_offset, i);
             break;
         }
     }
+    
+    //hex_dump(ptr, i);
+    
+    custom_fds[fd].data_offset += i;
 
-    custom_fds[fd].data_offset += i; 
+    //printf("new offset = %d\n", custom_fds[fd].data_offset);
 
     return(i);
 }

@@ -343,7 +343,8 @@ static void execute_shell_command(const char* cmd)
     }                 
     else if (strncmp(cmd, "cat ", 4) == 0) 
     {
-        if (strlen(cmd) > 5) shell_cat((char *)(cmd+4));  
+        web.file_to_cat = ((char *)(cmd+4)); 
+        hc_queue_send(HC_CMD_CAT_FILE);  
     } 
     else if (strncmp(cmd, "hd ", 3) == 0) 
     {        
@@ -742,7 +743,8 @@ void shell_printf(const char *format, ...)
             check_and_flush_queue();
             complete = true;
             cyw43_arch_lwip_end();            
-        } else
+        } 
+        else
         {
             // Optional: Log an internal overflow drop event error here if buffer size isn't deep enough
             cyw43_arch_lwip_end();
@@ -754,6 +756,7 @@ void shell_printf(const char *format, ...)
         retry++;
     } while (!complete && retry < 200);
 
+    //if (retry >= 200) printf("DROP\n");
 
 }
 
@@ -838,7 +841,7 @@ int shell_edit(char *filename)
 int shell_cat(char *filename)
 {
     FILE *filePointer;
-    char buffer[256];
+    char buffer[128];
 
     // open the file in read mode ("r")
     filePointer = fopen(filename, "r");

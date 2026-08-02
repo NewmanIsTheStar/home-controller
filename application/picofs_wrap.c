@@ -77,7 +77,7 @@ int __wrap__read(int fd, char *ptr, int len)
 
     bytes_read = picofs_read(target_fd, ptr, len);
 
-    custom_fds[target_fd].data_offset += bytes_read;
+    //custom_fds[target_fd].data_offset += bytes_read;  THIS IS DONE IS picofs_read()
 
     return(bytes_read); 
 }
