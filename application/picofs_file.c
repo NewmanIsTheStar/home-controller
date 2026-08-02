@@ -82,7 +82,7 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 
 
 //static variables
-FILE_METRICS_T picofs_files[FS_NUM_FID]; 
+FILE_STATUS_T picofs_files[FS_NUM_FID]; 
 
 
 /*!

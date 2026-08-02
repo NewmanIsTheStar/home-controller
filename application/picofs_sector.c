@@ -80,7 +80,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-extern FILE_METRICS_T picofs_files[FS_NUM_FID]; 
+extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
 
 //static variables
 
@@ -163,8 +163,12 @@ bool picofs_sector_in_use(u32_t sector)
 
             if ((sector >= start_sector) && (sector <= end_sector))
             {
-                in_use= true;
-                break;
+                // check if deleted file that is ready for erasure
+                if (!(picofs_files[i].trailer->file_status && picofs_deleted_file_ready_for_erasure(picofs_files[i].trailer)))
+                {
+                    in_use= true;
+                    break;
+                }
             }
         }
     }

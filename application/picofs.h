@@ -73,9 +73,10 @@ typedef struct
 
 typedef struct file_metrics
 {
-    bool valid;  
+    bool valid; 
+    bool pending_deletion;
     FILE_TRAILER_T *trailer;
-} FILE_METRICS_T;
+} FILE_STATUS_T;
 
 typedef struct file_test
 {

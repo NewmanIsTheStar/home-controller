@@ -78,7 +78,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-extern FILE_METRICS_T picofs_files[FS_NUM_FID]; 
+extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
 //static variables
 
 

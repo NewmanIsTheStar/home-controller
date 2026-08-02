@@ -79,10 +79,10 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-extern FILE_METRICS_T picofs_files[FS_NUM_FID];
+extern FILE_STATUS_T picofs_files[FS_NUM_FID];
 
 //static variables
-FILE_METRICS_T list_files[FS_NUM_FID];
+FILE_STATUS_T list_files[FS_NUM_FID];
 
 /*!
  * \brief get a list of file ids within a specified size range
@@ -174,14 +174,14 @@ int picofs_ascending_size_compare(const void *a, const void *b)
     int size_a = 0;
     int size_b = 0;
 
-    if (((FILE_METRICS_T *)a)->valid)
+    if (((FILE_STATUS_T *)a)->valid)
     {
-        size_a = ((FILE_METRICS_T*)a)->trailer->file_size;
+        size_a = ((FILE_STATUS_T*)a)->trailer->file_size;
     }
 
-    if (((FILE_METRICS_T *)b)->valid)
+    if (((FILE_STATUS_T *)b)->valid)
     {
-        size_b = ((FILE_METRICS_T*)b)->trailer->file_size;
+        size_b = ((FILE_STATUS_T*)b)->trailer->file_size;
     }
 
     return (size_a - size_b);
@@ -198,14 +198,14 @@ int picofs_descending_size_compare(const void *a, const void *b)
     int size_a = 0;
     int size_b = 0;
 
-    if (((FILE_METRICS_T *)a)->valid)
+    if (((FILE_STATUS_T *)a)->valid)
     {
-        size_a = ((FILE_METRICS_T*)a)->trailer->file_size;
+        size_a = ((FILE_STATUS_T*)a)->trailer->file_size;
     }
 
-    if (((FILE_METRICS_T *)b)->valid)
+    if (((FILE_STATUS_T *)b)->valid)
     {
-        size_b = ((FILE_METRICS_T*)b)->trailer->file_size;
+        size_b = ((FILE_STATUS_T*)b)->trailer->file_size;
     }
 
     return (size_b - size_a);
@@ -242,7 +242,7 @@ int picofs_list_files_by_size(void)
         }
     }
 
-    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_METRICS_T), picofs_ascending_size_compare);
+    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_STATUS_T), picofs_ascending_size_compare);
 
     picofs_printf("LIST sorted by size\n");
 
@@ -268,14 +268,14 @@ int picofs_metrics_name_compare(const void *a, const void *b)
     char *name_a = "";
     char *name_b = "";
 
-    if (((FILE_METRICS_T *)a)->valid)
+    if (((FILE_STATUS_T *)a)->valid)
     {
-        name_a = ((FILE_METRICS_T*)a)->trailer->name;
+        name_a = ((FILE_STATUS_T*)a)->trailer->name;
     }
 
-    if (((FILE_METRICS_T *)b)->valid)
+    if (((FILE_STATUS_T *)b)->valid)
     {
-        name_b = ((FILE_METRICS_T*)b)->trailer->name;
+        name_b = ((FILE_STATUS_T*)b)->trailer->name;
     }
 
     return (strcmp(name_a, name_b));
@@ -324,7 +324,7 @@ int picofs_list_all_files_from_flash(void)
         }
     }
 
-    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
+    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_STATUS_T), picofs_metrics_name_compare);
 
     if (num_files)
     {
@@ -389,7 +389,7 @@ int picofs_list_all_files_from_cache(void)
 
     memcpy(list_files, picofs_files, sizeof(list_files));
 
-    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_METRICS_T), picofs_metrics_name_compare);
+    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_STATUS_T), picofs_metrics_name_compare);
 
     for (i=0; i<FS_NUM_FID; i++)
     {

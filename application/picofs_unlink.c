@@ -109,7 +109,7 @@ int picofs_unlink(const char *name, u8_t fid)
     custom_fds[fd].file_status = 1;  // mark for deletion
     custom_fds[fd].data_len = 0;     // empty file
  
-    picofs_close(fd);
+    picofs_close_file(fd, true);
     
     picofs_release_fd(fd);
 

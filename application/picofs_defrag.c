@@ -79,10 +79,10 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-extern FILE_METRICS_T picofs_files[FS_NUM_FID]; 
+extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
 
 //static variables
-FILE_METRICS_T consoldation_files[FS_NUM_FID]; 
+FILE_STATUS_T consoldation_files[FS_NUM_FID]; 
 
 
 /*!
@@ -129,7 +129,7 @@ int picofs_consolidate_all_files_in_flash(void)
         }
     }
 
-    qsort(consoldation_files, NUM_ROWS(consoldation_files), sizeof(FILE_METRICS_T), picofs_descending_size_compare);
+    qsort(consoldation_files, NUM_ROWS(consoldation_files), sizeof(FILE_STATUS_T), picofs_descending_size_compare);
 
     if (num_files)
     {
@@ -201,14 +201,20 @@ int picofs_consolidate_all_files_in_flash(void)
 
                         picofs_append_to_flash(consolidation_area, size_files, (char *)&modified_trailer, sizeof(FILE_TRAILER_T));
     
-                        total_written += sizeof(FILE_TRAILER_T);                        
+                        total_written += sizeof(FILE_TRAILER_T);    
+                        
+                        printf("Deleted inline name = %s FID = %d\n", modified_trailer.name, modified_trailer.file_sequence);
+                    }
+                    else
+                    {
+                        consoldation_files[i].pending_deletion = true;
                     }
                 }
             }
 
             if(total_written >= size_files)
             {
-                printf("picofs: consolidate: reached total consolidated file size of %d bytes @ FID %d\n", size_files, consoldation_files[i].trailer->file_id);
+                printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", size_files, consoldation_files[i].trailer->file_id);
                 break;
             }
         }
@@ -217,9 +223,16 @@ int picofs_consolidate_all_files_in_flash(void)
         picofs_append_to_flash(NULL, 0, NULL, 0);
 
         // find and delete all duplicates created by rollovers that could not be handled during consolidation
-        // TODO int picofs_purge_duplicates(char *filename, u8_t keep_fid)
+        for (i=0; i<FS_NUM_FID; i++)
+        {        
+            if ((consoldation_files[i].valid) && (consoldation_files[i].trailer) && (consoldation_files[i].pending_deletion))
+            {
+                picofs_unlink(consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_id);
+                consoldation_files[i].pending_deletion = false;
+                shell_printf("picofs: cleanup after FID rollover of %s\n", consoldation_files[i].trailer->name); 
+            }
+        }
     }
-
 
     shell_printf("picofs: consolidation completed consolidated size is %d bytes (out of %d bytes)\n", total_written, size_files);
 
@@ -228,6 +241,8 @@ int picofs_consolidate_all_files_in_flash(void)
         err = 0;
     }
 
+    picofs_refresh_files();
+    
     return(err);
 }
 
@@ -377,7 +392,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
         }
     }
 
-    qsort(consoldation_files, NUM_ROWS(consoldation_files), sizeof(FILE_METRICS_T), picofs_descending_size_compare);
+    qsort(consoldation_files, NUM_ROWS(consoldation_files), sizeof(FILE_STATUS_T), picofs_descending_size_compare);
 
     if (num_files)
     {
