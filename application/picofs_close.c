@@ -80,6 +80,7 @@ extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 extern FILE_STATUS_T picofs_files[FS_NUM_FID];
+extern int system_file_version;
 
 //static variables
 FILE_STATUS_T purge_list[FS_NUM_FID]; 
@@ -178,6 +179,8 @@ int picofs_close_file(int fd, bool disable_purge)
      
     // update global list of files
     picofs_refresh_files();
+
+    system_file_version++;
 
     return(err);
 }

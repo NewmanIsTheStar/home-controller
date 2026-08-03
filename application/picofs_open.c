@@ -79,6 +79,10 @@ extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
+
+// global variable
+int system_file_version = 1;  // used to track changes to filesystem for shell tab-completion
+
 //static variables
 
 
@@ -583,6 +587,9 @@ int picofs_initialize(void)
 {
     int err = -1;
     static bool init_fds = true;
+
+    // track file system state for shell tab-completion
+    system_file_version = 1;
 
     // zero out all file descriptiors before using file system 
     if (init_fds)

@@ -178,4 +178,7 @@ Increase MQTT_OUTPUT_RINGBUF_SIZE: If sending multiple subscription requests in 
 // Newman turned on for websocket shell
 #define LWIP_HTTPD_SUPPORT_WEBSOCKET 1
 
+// Newman enabled to support etag for dynamic changes to tab completion
+//#define LWIP_HTTPD_SUPPORT_CUSTOM_HEADERS 1
+
 #endif

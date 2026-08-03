@@ -100,6 +100,10 @@ HTTP_RX_TYPE_T current_post = HTTP_RX_UNKNOWN;
 static char post_buffer[ITEM_BUF_LEN];
 static uint16_t post_len = 0;
 
+// tracker variable for the filesystem state
+extern int system_file_version; 
+static char last_client_etag[16] = {0};
+
 /*!
  * \brief Decodes a URL-encoded string in-place.
  *
@@ -405,6 +409,8 @@ static void execute_shell_command(const char* cmd)
  */
 int fs_open_custom(struct fs_file *file, const char *name) 
 {
+    static int filesystem_change_counter = 0;
+
     if (strcmp(name, "/listen.shtml") == 0) 
     {
         file->flags = FS_FILE_FLAGS_HEADER_INCLUDED;
@@ -483,10 +489,40 @@ int fs_open_custom(struct fs_file *file, const char *name)
         // Cache file pointer structure ahead of loop test parsing
         pending_get_text = file;        
         return 1;
-    }      
+    }   
+    
+ if (strcmp(name, "/commands.json") == 0) 
+    {
+        ascii_ram_buffer[0] = 0;
+        picofs_generate_tab_completion_file_list(ascii_ram_buffer, sizeof(ascii_ram_buffer));
+
+        size_t len = strlen(ascii_ram_buffer);
+        file->data = ascii_ram_buffer;
+        file->len = len;
+        file->index = len;
+        //file->pextension = NULL;
+        file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+
+        // Cache file pointer structure ahead of loop test parsing
+        pending_get_text = file;        
+        return 1;
+    }    
 
     return 0;
 }
+
+// /**
+//  * lwIP Hook: Optional callback triggered if LWIP_HTTPD_SUPPORT_CUSTOM_HEADERS is enabled.
+//  * It catches the incoming If-None-Match header from the browser before fs_open is processed.
+//  */
+// err_t httpd_parse_custom_header(void *connection_id, const char *header_name, const char *header_value)
+// {
+//     if (strcasecmp(header_name, "If-None-Match") == 0) {
+//         // Strip quotes if the browser passed them (e.g., "v1" -> v1)
+//         strncpy(last_client_etag, header_value, sizeof(last_client_etag) - 1);
+//     }
+//     return ERR_OK;
+// }
 
 /*!
  * \brief close custom file

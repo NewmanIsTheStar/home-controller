@@ -94,7 +94,7 @@ void discovery_task(__unused void *params)
     printf("discovery task started\n");
     while (true)
     {        
-        if (0/*(config.personality == HOME_CONTROLLER)*/)
+        if ((config.personality == HOME_CONTROLLER))
         {
             if ((unix_time - last_shelly_scan) > (60*60))
             {

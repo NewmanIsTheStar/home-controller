@@ -416,14 +416,46 @@ int picofs_list_all_files_from_cache(void)
                 heading = true;
             }
             // calculate crc            
-            picofs_printf("%08d\t%d\t%d\t%08x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
+            picofs_printf("%8d\t%3d\t%3d\t%8x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
 
             size_files += list_files[i].trailer->file_size;
         }
     }
 
-    picofs_printf("\nTotal size    %08d\n", size_files);
+    picofs_printf("\n%8d bytes\n", size_files);
 
     return(0);
 }
 
+/*!
+ * \brief generate filename tab completion list
+ * 
+ * \param[in]   filename     name to find
+ * 
+ * \param[out]  header       pointer to file header
+ *  *     
+ * \return 0 on success
+ */
+int picofs_generate_tab_completion_file_list(char *buffer, int len)
+{
+    int err = -1;
+    int i;
+
+    STRNCAT(buffer, "[\n", len);
+    STRNCAT(buffer, "\"cat\",", len);
+    STRNCAT(buffer, "\"ls\",", len);
+    STRNCAT(buffer, "\"df\"", len);   // <====  no tailing comma on last item before file list!
+
+    for (i=0; i<FS_NUM_FID; i++)
+    {
+        if (picofs_files[i].valid && !picofs_files[i].trailer->file_status)
+        {
+            STRNCAT(buffer, ", \"", len);
+            STRNCAT(buffer, picofs_files[i].trailer->name, len);
+            STRNCAT(buffer, "\"", len);
+        }
+    }
+    STRNCAT(buffer, "\n]\n", len);
+
+    return(0);
+}

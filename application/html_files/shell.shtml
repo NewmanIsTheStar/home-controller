@@ -12,6 +12,14 @@
             padding: 20px;
             margin: 0;
         }
+        ::selection {
+            background: #00ff00;
+            color: #121212;
+        }
+        ::-moz-selection {
+            background: #00ff00;
+            color: #121212;
+        }
         #terminal {
             max-width: 1000px;
             margin: 0 auto;
@@ -58,13 +66,72 @@
     let history = [];
     let historyIndex = -1;
 
-    // Keep focus on the text input area when clicking inside the window
-    document.addEventListener('click', () => cmdInput.focus());
+    // Word Dictionary (mix of commands and paths/files)
+    let serverCommands = [
+        'help', 'status', 'edit', 'reboot', 'ls', 'cat', 'rm',
+        'main.py', 'boot.py', 'lib/', 'lib/asyncio/', 'config.json', 'data.csv'
+    ]; 
+    let matchingCommands = [];
+    let completionIndex = 0;
+    let currentPrefix = '';
+    let commandPrefixStr = ''; // Stores everything before the word being completed
+    let lastTabPrintedList = false; // Prevents spamming match list on multi-tabs
+
+    // Fetch dictionary from server on startup
+    async function loadCompletionWords() {
+        try {
+            const response = await fetch('/commands.json');
+            if (response.ok) {
+                serverCommands = await response.json();
+            }
+        } catch (err) {}
+    }
+
+    // Refocus on click if user isn't highlighting text
+    document.addEventListener('click', (e) => {
+        const selection = window.getSelection().toString();
+        if (!selection && e.target !== cmdInput) {
+            cmdInput.focus();
+        }
+    });
+
+    // Auto-focus input when typing alphanumeric keys anywhere
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('Arrow') || e.key === 'Tab') {
+            return;
+        }
+        if (document.activeElement !== cmdInput) {
+            cmdInput.focus();
+        }
+    });
+
+    // Reset completion loops on normal input typing
+    cmdInput.addEventListener('input', () => {
+        matchingCommands = [];
+        completionIndex = 0;
+        currentPrefix = '';
+        commandPrefixStr = '';
+        lastTabPrintedList = false;
+    });
+
+    // Ctrl + Shift + C clipboard shortcut
+    document.addEventListener('keydown', async (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
+            e.preventDefault();
+            const selectedText = window.getSelection().toString();
+            if (selectedText) {
+                try {
+                    await navigator.clipboard.writeText(selectedText);
+                } catch (err) {
+                    console.error("Failed to copy text: ", err);
+                }
+            }
+        }
+    });
 
     // Continuous listening engine (Long Polling)
     async function listenForBackendUpdates() {
         try {
-            // This fetch hangs until the Pico sends data or a timeout occurs
             const response = await fetch('/listen.shtml');
             if (response.ok) {
                 const text = await response.text();
@@ -73,30 +140,67 @@
                     window.scrollTo(0, document.body.scrollHeight);
                 }
             }
-        } catch (err) {
-            // Fail silently on network drops; the timeout restarts the pipe
-        }
-        
-        // Instantly re-open the listening channel to wait for the next update
+        } catch (err) {}
         setTimeout(listenForBackendUpdates, 50);
     }
 
-    // Command submission handler
+    // Input handlers
     cmdInput.addEventListener('keydown', async function(e) {
+        // Smart Tab Completion Engine Interceptor
+        if (e.key === 'Tab') {
+            e.preventDefault();
+
+            const currentInputValue = this.value;
+            
+            // Build matches on the first tab press
+            if (matchingCommands.length === 0) {
+                // Parse out the last word for path/argument completion support
+                const words = currentInputValue.split(' ');
+                currentPrefix = words[words.length - 1];
+                
+                // Reconstruct the immutable baseline string before our target token
+                commandPrefixStr = words.slice(0, words.length - 1).join(' ');
+                if (commandPrefixStr.length > 0) commandPrefixStr += ' ';
+
+                // Filter words matching the prefix
+                matchingCommands = serverCommands.filter(cmd => 
+                    cmd.toLowerCase().startsWith(currentPrefix.toLowerCase())
+                );
+                completionIndex = 0;
+                lastTabPrintedList = false;
+            }
+
+            // Execute display updates if matches exist
+            if (matchingCommands.length > 0) {
+                // If there are multiple matches and we haven't shown them yet, list them Bash-style
+                if (matchingCommands.length > 1 && !lastTabPrintedList) {
+                    output.textContent += `\n${matchingCommands.join('    ')}\n`;
+                    lastTabPrintedList = true;
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
+
+                // Inject selected match back into input stream
+                this.value = commandPrefixStr + matchingCommands[completionIndex];
+                completionIndex = (completionIndex + 1) % matchingCommands.length;
+            }
+            return;
+        }
+
         if (e.key === 'Enter') {
             const command = this.value.trim();
             if (!command) return;
 
-            // Echo local typing input out to display window
             output.textContent += `\npico-shell> ${command}\n`;
             this.value = '';
 
-            // Update local command up/down history arrays
+            // Clean up autocomplete scopes
+            matchingCommands = [];
+            lastTabPrintedList = false;
+
             history.push(command);
             historyIndex = history.length;
 
             try {
-                // Send command payload over a fast POST route
                 await fetch('/exec', {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
@@ -111,10 +215,8 @@
             if (command.includes("edit")) {
                 window.location.href = "/edit.shtml";
             }
-            
         } 
         
-        // Command history navigation (Up Arrow)
         else if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (historyIndex > 0) {
@@ -123,7 +225,6 @@
             }
         } 
         
-        // Command history navigation (Down Arrow)
         else if (e.key === 'ArrowDown') {
             e.preventDefault();
             if (historyIndex < history.length - 1) {
@@ -136,8 +237,8 @@
         }
     });
 
-    // Fire up the listener loop as soon as page structures boot
     output.textContent = "Shell Ready. Waiting for data...\n";
+    loadCompletionWords();
     listenForBackendUpdates();
 </script>
 

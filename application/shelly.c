@@ -225,7 +225,7 @@ int shelly_discover_devices(void)
                 }
 
                 printf("IP = %s SHELLY_DEVICE_TYPE = %s SHELLY_DEVICE_ID = %s\n", ipstring, device_type, device_id);
-                shelly_dump_discovered_devices();
+                //shelly_dump_discovered_devices();
                 
                 number_of_shelly_devices++;
                 printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);
@@ -475,13 +475,27 @@ int shelly_dump_discovered_devices(void)
 {
     int err = 0;
     int i = 0;
+    FILE *fp;
 
-    if (num_discovered_shelly_devices)
+    fp = fopen("discovered", "w");
+
+    if (fp)
     {
-        for(i=0; i<num_discovered_shelly_devices; i++)
+        if (num_discovered_shelly_devices)
         {
-            printf("IP = %d.%d.%d.%d Type = %d\n", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type);
+            fprintf(fp, "[\n");
+
+            for(i=0; i<num_discovered_shelly_devices; i++)
+            {
+                //printf("IP = %d.%d.%d.%d Type = %d\n", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type);
+                //fprintf(fp, "IP = %d.%d.%d.%d Type = %d\n", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type);                
+                fprintf(fp, "{ \"ip\": \"%d.%d.%d.%d\", \"type\": %d }%s", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type, (i+1)<num_discovered_shelly_devices?",\n":"\n");                
+                 
+            }
+             fprintf(fp, "]\n");
         }
+
+        fclose(fp);
     }
 
     return(err);
