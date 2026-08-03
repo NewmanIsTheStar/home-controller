@@ -491,23 +491,95 @@ int fs_open_custom(struct fs_file *file, const char *name)
         return 1;
     }   
     
- if (strcmp(name, "/commands.json") == 0) 
-    {
-        ascii_ram_buffer[0] = 0;
-        picofs_generate_tab_completion_file_list(ascii_ram_buffer, sizeof(ascii_ram_buffer));
+// THIS WORKS BUT does not dynamically update the dictionary when new files are added    
+//  if (strcmp(name, "/commands.json") == 0) 
+//     {
+//         ascii_ram_buffer[0] = 0;
+//         picofs_generate_tab_completion_file_list(ascii_ram_buffer, sizeof(ascii_ram_buffer));
 
-        size_t len = strlen(ascii_ram_buffer);
+//         size_t len = strlen(ascii_ram_buffer);
+//         file->data = ascii_ram_buffer;
+//         file->len = len;
+//         file->index = len;
+//         //file->pextension = NULL;
+//         file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+
+//         // Cache file pointer structure ahead of loop test parsing
+//         pending_get_text = file;        
+//         return 1;
+//     }    
+
+// Inside your file routing function...
+if (strncmp(name, "/commands.json", 14) == 0) 
+{
+    ascii_ram_buffer[0] = 0;
+    static int system_file_version = 1; 
+
+    // Construct the string we are searching for (e.g., "?v=1")
+    char version_query[32];
+    snprintf(version_query, sizeof(version_query), "?v=%d", system_file_version);
+
+    // If the browser passed our exact current version value in the URL
+    if (strstr(name, version_query) != NULL) 
+    {
+        // Return a zero-body HTTP 304 Not Modified string response
+        size_t len = snprintf(ascii_ram_buffer, sizeof(ascii_ram_buffer),
+            "HTTP/1.1 304 Not Modified\r\n"
+            "Connection: keep-alive\r\n"
+            "\r\n");
+
         file->data = ascii_ram_buffer;
         file->len = len;
         file->index = len;
-        //file->pextension = NULL;
         file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
-
-        // Cache file pointer structure ahead of loop test parsing
+        
         pending_get_text = file;        
         return 1;
-    }    
+    }
+    else 
+    {
+        // 1. Build a strict layout header template block. 
+        // We hardcode a known 5-digit placeholder string ("00000") for Content-Length.
+        int header_len = snprintf(ascii_ram_buffer, sizeof(ascii_ram_buffer),
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: 00000\r\n" 
+            "\r\n");
 
+        // 2. Generate JSON directly into ascii_ram_buffer immediately following the header block
+        char *json_start_ptr = ascii_ram_buffer + header_len;
+        size_t available_json_space = sizeof(ascii_ram_buffer) - header_len;
+        
+        picofs_generate_tab_completion_file_list(json_start_ptr, available_json_space);
+        size_t json_len = strlen(json_start_ptr);
+
+        // 3. Find the exact text window location of our "00000" placeholder sequence inside the buffer
+        // and patch it manually using snprintf safely inside its isolated slot.
+        char *length_placeholder_ptr = strstr(ascii_ram_buffer, "Content-Length: ");
+        if (length_placeholder_ptr != NULL) {
+            // Step forward 16 characters past "Content-Length: " to target "00000"
+            char *target_digits = length_placeholder_ptr + 16;
+            
+            // Print exactly 5 digits into this window slot.
+            // This overwrites "00000" with your actual size (e.g., "00142") 
+            // without adding an accidental null-terminator byte to cut off your JSON string.
+            char temp_digits[6];
+            snprintf(temp_digits, sizeof(temp_digits), "%05d", (int)json_len);
+            memcpy(target_digits, temp_digits, 5);
+        }
+
+        // 4. Calculate total explicit layout length safely
+        size_t total_len = header_len + json_len;
+        file->data = ascii_ram_buffer;
+        file->len = total_len;
+        file->index = total_len;
+        file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+
+        pending_get_text = file;        
+        return 1;
+    }
+    
+}    
     return 0;
 }
 

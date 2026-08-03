@@ -80,6 +80,7 @@ extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 extern FILE_STATUS_T picofs_files[FS_NUM_FID];
+extern int system_file_version;
 
 //static variables
 FILE_STATUS_T list_files[FS_NUM_FID];
@@ -440,8 +441,13 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
 {
     int err = -1;
     int i;
+    char version[16];
 
-    STRNCAT(buffer, "[\n", len);
+    STRNCAT(buffer, "{\"v\": ", len);
+    sprintf(version, "%d", system_file_version);
+    STRNCAT(buffer, version, len);
+    STRNCAT(buffer, ", \"words\": ", len);
+    STRNCAT(buffer, "[", len);
     STRNCAT(buffer, "\"cat\",", len);
     STRNCAT(buffer, "\"ls\",", len);
     STRNCAT(buffer, "\"df\"", len);   // <====  no tailing comma on last item before file list!
@@ -455,7 +461,9 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
             STRNCAT(buffer, "\"", len);
         }
     }
-    STRNCAT(buffer, "\n]\n", len);
+    STRNCAT(buffer, "]}\n", len);
+
+    //printf("%s\n", buffer);
 
     return(0);
 }

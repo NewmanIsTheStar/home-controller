@@ -12,10 +12,12 @@
             padding: 20px;
             margin: 0;
         }
+        /* Custom styling for highlighted text selection */
         ::selection {
             background: #00ff00;
             color: #121212;
         }
+        /* For older Firefox support */
         ::-moz-selection {
             background: #00ff00;
             color: #121212;
@@ -66,7 +68,7 @@
     let history = [];
     let historyIndex = -1;
 
-    // Word Dictionary (mix of commands and paths/files)
+    // Word Dictionary (Baseline fallbacks until server populates them)
     let serverCommands = [
         'help', 'status', 'edit', 'reboot', 'ls', 'cat', 'rm',
         'main.py', 'boot.py', 'lib/', 'lib/asyncio/', 'config.json', 'data.csv'
@@ -74,18 +76,71 @@
     let matchingCommands = [];
     let completionIndex = 0;
     let currentPrefix = '';
-    let commandPrefixStr = ''; // Stores everything before the word being completed
-    let lastTabPrintedList = false; // Prevents spamming match list on multi-tabs
+    let commandPrefixStr = ''; 
+    let lastTabPrintedList = false;
 
-    // Fetch dictionary from server on startup
-    async function loadCompletionWords() {
+    // Option 2 Client Variable: Local cache version tracker
+    let currentDictionaryVersion = 0; 
+
+    // Robust Dictionary Update Loop (Option 2)
+    async function listenForCommandUpdates() {
         try {
-            const response = await fetch('/commands.json');
-            if (response.ok) {
-                serverCommands = await response.json();
+            // Pass local version and a cache-buster timestamp explicitly
+            const response = await fetch(`/commands.json?v=${currentDictionaryVersion}&ts=${Date.now()}`);
+            
+            // Status 200 means server generated a fresh payload structure envelope
+            if (response.ok && response.status === 200) {
+                const data = await response.json(); // Expects: { v: X, words: [...] }
+                
+                console.log("Successfully fetched dictionary from Pico:", data);
+                
+                // Safety check to ensure incoming data layout contains our payload keys
+                if (data && data.words && data.v !== currentDictionaryVersion) {
+                    currentDictionaryVersion = data.v;
+                    serverCommands = data.words;
+                    
+                    // Break active auto-complete loops to safely match new arrays
+                    matchingCommands = []; 
+                    console.log("Tab completion updated to server version:", currentDictionaryVersion);
+                }
             }
-        } catch (err) {}
+        } catch (err) {
+            console.error("Dictionary engine parsing block error:", err);
+        }
+        
+        // Keep this at a relaxed 3 seconds to save Pico CPU power
+        setTimeout(listenForCommandUpdates, 3000);
     }
+
+    // // Debugging version of the Dictionary Update Loop
+    // async function listenForCommandUpdates() {
+    //     let rawText = "";
+    //     try {
+    //         const response = await fetch(`/commands.json?v=${currentDictionaryVersion}&ts=${Date.now()}`);
+            
+    //         if (response.ok && response.status === 200) {
+    //             rawText = await response.text(); // 1. Read as a raw string first
+                
+    //             // 2. Safely parse the raw string manually
+    //             const data = JSON.parse(rawText); 
+                
+    //             if (data && data.words && data.v !== currentDictionaryVersion) {
+    //                 currentDictionaryVersion = data.v;
+    //                 serverCommands = data.words;
+    //                 matchingCommands = []; 
+    //                 console.log("Tab completion updated! Current array version:", currentDictionaryVersion);
+    //             }
+    //         }
+    //     } catch (err) {
+    //         console.group("❌ JSON PARSING FAILURE DIAGNOSTIC");
+    //         console.error("The parser failed with message:", err.message);
+    //         console.log("The exact raw string received from your Pico 2 W was:");
+    //         console.log("%c" + rawText, "color: #ff0000; background: #222; padding: 5px; font-family: monospace;");
+    //         console.groupEnd();
+    //     }
+        
+    //     setTimeout(listenForCommandUpdates, 3000);
+    // }
 
     // Refocus on click if user isn't highlighting text
     document.addEventListener('click', (e) => {
@@ -129,40 +184,45 @@
         }
     });
 
-    // Continuous listening engine (Long Polling)
+    // Hardened Log Streaming Loop with backoff protection
     async function listenForBackendUpdates() {
+        let nextDelay = 50; // Fast lane loop reset (50ms) when everything is healthy
+
         try {
-            const response = await fetch('/listen.shtml');
+            const response = await fetch(`/listen.shtml?ts=${Date.now()}`);
+            
             if (response.ok) {
                 const text = await response.text();
                 if (text.length > 0) {
                     output.textContent += text;
                     window.scrollTo(0, document.body.scrollHeight);
                 }
+            } else {
+                // Server responded with an error code (e.g., 404, 500)
+                nextDelay = 1000; // Slow down to protect the Pico web server
             }
-        } catch (err) {}
-        setTimeout(listenForBackendUpdates, 50);
+        } catch (err) {
+            // Catches network drops, empty responses, and TCP dropouts cleanly.
+            // Slower backoff window prevents crushing your single-threaded Pico core.
+            nextDelay = 1000; 
+        }
+        
+        setTimeout(listenForBackendUpdates, nextDelay);
     }
 
-    // Input handlers
+    // Input handlers for command line interactions
     cmdInput.addEventListener('keydown', async function(e) {
-        // Smart Tab Completion Engine Interceptor
         if (e.key === 'Tab') {
             e.preventDefault();
 
             const currentInputValue = this.value;
-            
-            // Build matches on the first tab press
             if (matchingCommands.length === 0) {
-                // Parse out the last word for path/argument completion support
                 const words = currentInputValue.split(' ');
                 currentPrefix = words[words.length - 1];
                 
-                // Reconstruct the immutable baseline string before our target token
                 commandPrefixStr = words.slice(0, words.length - 1).join(' ');
                 if (commandPrefixStr.length > 0) commandPrefixStr += ' ';
 
-                // Filter words matching the prefix
                 matchingCommands = serverCommands.filter(cmd => 
                     cmd.toLowerCase().startsWith(currentPrefix.toLowerCase())
                 );
@@ -170,16 +230,13 @@
                 lastTabPrintedList = false;
             }
 
-            // Execute display updates if matches exist
             if (matchingCommands.length > 0) {
-                // If there are multiple matches and we haven't shown them yet, list them Bash-style
                 if (matchingCommands.length > 1 && !lastTabPrintedList) {
                     output.textContent += `\n${matchingCommands.join('    ')}\n`;
                     lastTabPrintedList = true;
                     window.scrollTo(0, document.body.scrollHeight);
                 }
 
-                // Inject selected match back into input stream
                 this.value = commandPrefixStr + matchingCommands[completionIndex];
                 completionIndex = (completionIndex + 1) % matchingCommands.length;
             }
@@ -193,7 +250,6 @@
             output.textContent += `\npico-shell> ${command}\n`;
             this.value = '';
 
-            // Clean up autocomplete scopes
             matchingCommands = [];
             lastTabPrintedList = false;
 
@@ -238,7 +294,9 @@
     });
 
     output.textContent = "Shell Ready. Waiting for data...\n";
-    loadCompletionWords();
+    
+    // Boot up both background loop engines independently
+    listenForCommandUpdates();
     listenForBackendUpdates();
 </script>
 
