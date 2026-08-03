@@ -86,56 +86,76 @@ FILE_STATUS_T picofs_files[FS_NUM_FID];
 
 
 /*!
- * \brief Print a list of all files in the file system
+ * \brief check if sequence number is the latest for given file name by scanning flash
  * 
  * \param[in]   filename     name to find
+ * \param[in]   file_id      fid to find
  * 
- * \param[out]  header       pointer to file header
+ * \param[out]  sequence       pointer to file header
  *  *     
  * \return 0 if latest, 1 if not latest sequence
  */
-int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence)
+int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t sequence)
 {
     int islatest = 1;
-    int i;
-    u8_t *p = NULL;
     FILE_TRAILER_T *t = NULL;
 
-    //picofs_printf("Checking %s seq %d\n", filename, sequence);
-
-
-    // scan backwards through flash
-    p = FS_END - 1 - sizeof(FILE_TRAILER_T);
-
-    // scan flash
-    while (((char *)p) >= FS_START)
+    while(!picofs_iter_next_file(&t, false))
     {
-        t = (FILE_TRAILER_T *)p;
-
-        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION) &&
-            /*(strcmp(t->name, filename) == 0)*/ t->file_id == file_id)
+        if (t)
         {
-            if (t->file_sequence > sequence)  // TODO: handle wrap around
+            if (((t->file_id == file_id) || (strcmp(t->name, filename) == 0)) && (t->file_sequence > sequence))
             {
                islatest = 0;  // we found a later sequence
                break;
             }
-
-            p = p - t->file_size;  
         }
         else
         {
-            p--;
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
         }
     }
 
     return(islatest);
 }
 
+/*!
+ * \brief check if sequence number is the latest for given file name using cache
+ * 
+ * \param[in]   filename     name to find
+ * \param[in]   file_id      fid to find
+ * \param[out]  sequence       pointer to file header
+ *  *     
+ * \return 0 if latest, 1 if not latest sequence
+ */
+int picofs_is_latest_file_sequence_from_cache(char *filename, u8_t file_id, u8_t sequence)
+{
+    int islatest = 1;
+    int i;
+    
+    // use fid if provided to index directly
+    if (file_id != FS_INVALID_FID)
+    {
+        if (picofs_files[i].trailer->file_sequence > sequence)
+        {
+            islatest = 0;
+        }
+    }
+    else // search for name
+    {
+        for(i=0; i< FS_NUM_FID; i++)
+        {
+            if ((strcmp(picofs_files[i].trailer->name, filename) == 0) && (picofs_files[i].trailer->file_sequence > sequence))
+            {
+                islatest = 0;
+                break;
+            }
+        }
+    }
 
-
-
+    return(islatest);
+}
 
 
 /*!
@@ -184,56 +204,69 @@ int picofs_create_file_trailer(int fd, const char *name)
  */
 u8_t picofs_get_new_file_id(void)
 {
-    int err = -1;
-    u8_t *p = NULL;
-    FILE_TRAILER_T *t = NULL;
-    u8_t file_id_map[32];
-    u8_t file_id_bit;
-    u8_t file_id_byte;
-    u8_t file_id = FS_INVALID_FID;
-    FILE_TRAILER_T *trailer;
-    bool found = false;
+    // int err = -1;
+    // u8_t *p = NULL;
+    // FILE_TRAILER_T *t = NULL;
+    // u8_t file_id_map[32];
+    // u8_t file_id_bit;
+    // u8_t file_id_byte;
+    // u8_t file_id = FS_INVALID_FID;
+    // FILE_TRAILER_T *trailer;
+    // bool found = false;
 
-    // initialize file id map
-    memset(file_id_map, 0, sizeof(file_id_map));
+    // // initialize file id map
+    // memset(file_id_map, 0, sizeof(file_id_map));
 
-    // scan backwards through flash
-    p = FS_END - 1 - sizeof(FILE_TRAILER_T);
+    // // scan backwards through flash
+    // p = FS_END - 1 - sizeof(FILE_TRAILER_T);
 
-    // scan flash and create bitmap of all used file_id numbers
-    while (((char *)p) >= FS_START)
-    {
-        t = (FILE_TRAILER_T *)p;
+    // // scan flash and create bitmap of all used file_id numbers
+    // while (((char *)p) >= FS_START)
+    // {
+    //     t = (FILE_TRAILER_T *)p;
 
-        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION))
-        {
-            // update file_id bitmap
-            file_id_byte = t->file_id/8;
-            file_id_bit = t->file_id%8;
-            file_id_map[file_id_byte] |= (1<<file_id_bit);
+    //     if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+    //         (t->picofs_version == FS_VERION))
+    //     {
+    //         // update file_id bitmap
+    //         file_id_byte = t->file_id/8;
+    //         file_id_bit = t->file_id%8;
+    //         file_id_map[file_id_byte] |= (1<<file_id_bit);
 
-            p = p - t->file_size;  
-        }
-        else
-        {
-            p--;
-        }
-    }
+    //         p = p - t->file_size;  
+    //     }
+    //     else
+    //     {
+    //         p--;
+    //     }
+    // }
 
-    // scan file_id bitmap to find an unused file_id
-    for (file_id=0; file_id < FS_NUM_FID; file_id++)
-    {
-        file_id_byte = file_id/8;
-        file_id_bit = file_id%8;
+    // // scan file_id bitmap to find an unused file_id
+    // for (file_id=0; file_id < FS_NUM_FID; file_id++)
+    // {
+    //     file_id_byte = file_id/8;
+    //     file_id_bit = file_id%8;
         
-        if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
+    //     if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
+    //     {
+    //         break;
+    //     }        
+    // }
+
+    int i;
+    int fid = FS_INVALID_FID;
+
+    for(i=0; i<FS_NUM_FID; i++)
+    {
+        if (!picofs_files[i].valid)
         {
+            // TODO: locking and claim fid as reserved but not valid yet
+            fid = i;
             break;
-        }        
+        }
     }
 
-    return(file_id);
+    return(fid);
 }
 
 
@@ -302,7 +335,7 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
  * 
  * \return 0 on success
  */
-int picofs_iter_next_file(FILE_TRAILER_T **current_file)
+int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
 {
     int not_found = 1;
     char *p = NULL;
@@ -327,7 +360,7 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
             (t->file_size >= sizeof(FILE_TRAILER_T)) &&
-            (t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T))))
+            (ignore_crc || (t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T)))))
         {
             p = p - t->file_size;  
         }        
@@ -339,7 +372,9 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file)
         // check if new location contains a file trailer
         t = (FILE_TRAILER_T *)p;
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION))
+            (t->picofs_version == FS_VERION) &&
+            (t->file_size >= sizeof(FILE_TRAILER_T)) &&
+            (ignore_crc || (t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T)))))            
         {
             not_found = 0;
             break;
@@ -377,13 +412,13 @@ int picofs_refresh_files(void)
 
     memset(picofs_files, 0, sizeof(picofs_files));
 
-    while(!picofs_iter_next_file(&current))
+    while(!picofs_iter_next_file(&current, false))
     {
         if (current)
         {
             picofs_files[current->file_id].valid = true;
 
-            if (current->file_sequence >= picofs_files[current->file_id].trailer->file_sequence) 
+            if ((current->file_sequence >= picofs_files[current->file_id].trailer->file_sequence))
             {
                 picofs_files[current->file_id].trailer = current;
             }
@@ -460,7 +495,7 @@ bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_f
         return(true);
     }
 
-    while(!picofs_iter_next_file(&current))
+    while(!picofs_iter_next_file(&current, false))
     {
         if (current)
         {

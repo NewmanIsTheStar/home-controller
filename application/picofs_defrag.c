@@ -109,7 +109,7 @@ int picofs_consolidate_all_files_in_flash(void)
 
     memset(consoldation_files, 0, sizeof(consoldation_files));
 
-    while(!picofs_iter_next_file(&current))
+    while(!picofs_iter_next_file(&current, false))
     {
         if (current)
         {
@@ -198,6 +198,7 @@ int picofs_consolidate_all_files_in_flash(void)
                         modified_trailer.file_sequence = FS_MAX_SEQ;
                         modified_trailer.file_status = 1;
                         modified_trailer.file_size = sizeof(FILE_TRAILER_T);
+                        modified_trailer.crc = 0; //  CRC of an empty buffer is 0  NB crc covers data but not the trailer  
 
                         picofs_append_to_flash(consolidation_area, size_files, (char *)&modified_trailer, sizeof(FILE_TRAILER_T));
     
@@ -279,16 +280,6 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
         {
             page_buffer[page_index] = src[src_index];
 
-            // if (src_index == (src_len - sizeof(FILE_TRAILER_T) + offsetof(FILE_TRAILER_T, file_sequence)))
-            // {
-            //     // try to increment sequence --silently fails if out of sequence numbers [the in-buffer verison does rollover to a new FID] TODO: fix!
-            //     if (page_buffer[page_index] < (FS_MAX_SEQ-1))
-            //     {
-            //         page_buffer[page_index]++;
-            //         printf("INCREMENTED SEQUNECE TO %d\n", page_buffer[page_index]);
-            //     }
-            // }
-
             if (++page_index == 256)
             {
                 // program page
@@ -305,16 +296,6 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
         for (src_index = 0; src_index < src_len; src_index++)
         {
             page_buffer[page_index] = src[src_index];
-
-            // if (src_index == (src_len - sizeof(FILE_TRAILER_T) + offsetof(FILE_TRAILER_T, file_sequence)))
-            // {
-            //     // try to increment sequence --silently fails if out of sequence numbers
-            //     if (page_buffer[page_index] < (FS_MAX_SEQ-1))
-            //     {
-            //         page_buffer[page_index]++;
-            //         printf("INCREMENTED SEQUNECE TO %d\n", page_buffer[page_index]);
-            //     }
-            // }
 
             if (++page_index == 256)
             {
@@ -372,7 +353,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
     memset(consoldation_files, 0, sizeof(consoldation_files));
     memset(buffer, FS_ERASED_CELL_VALUE, len); 
 
-    while(!picofs_iter_next_file(&current))
+    while(!picofs_iter_next_file(&current, false))
     {
         if (current)
         {
@@ -449,7 +430,8 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                     memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer, sizeof(FILE_TRAILER_T));
                     ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_status = 1;                     // mark for deletion
                     ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_size = sizeof(FILE_TRAILER_T);  // empty file
-                    ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_sequence = FS_MAX_SEQ;         // last sequence
+                    ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_sequence = FS_MAX_SEQ;          // last sequence
+                    ((FILE_TRAILER_T *)(consolidation_area + total_written))->crc = 0;                             // CRC of an empty file is zero
                     total_written += sizeof(FILE_TRAILER_T);
                 }
                 else

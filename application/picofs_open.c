@@ -412,7 +412,7 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
     FILE_TRAILER_T *t = NULL;
     u8_t best_sequence = 0;
     u8_t best_status = 0;
-    bool first_sequnce = true;
+    //bool first_sequnce = true;
 
     // try ram
     if ((fid != FS_INVALID_FID) && picofs_files[fid].valid && (fid == picofs_files[fid].trailer->file_id) && (!picofs_files[fid].trailer->file_status))
@@ -435,59 +435,94 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
         }
     }
 
+    // // try flash
+    // if (err)
+    // {
+    //     printf("picofs: find file falling back to searching flash\n");
+
+    //     // scan backwards through flash
+    //     p = FS_END - 1 - sizeof(FILE_TRAILER_T);
+
+    //     // scan flash
+    //     while (((char *)p) >= FS_START)
+    //     {
+    //         t = (FILE_TRAILER_T *)p;
+
+    //         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+    //             (t->picofs_version == FS_VERION) &&
+    //             (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
+    //             !picofs_is_file_deleted(t->file_id))
+    //         {
+    //             // match
+    //             if (first_sequnce)
+    //             {
+    //                 best_sequence = t->file_sequence;
+    //                 best_status = t->file_status;
+    //                 *trailer = t;
+    //                 err = 0; 
+    //                 p = p - t->file_size; 
+
+    //                 first_sequnce = false;
+    //             }
+    //             else
+    //             {
+    //                 if (t->file_sequence > best_sequence) 
+    //                 {
+    //                     best_sequence = t->file_sequence;
+    //                     best_status = t->file_status;
+    //                     *trailer = t;
+    //                     err = 0;
+    //                     p = p - t->file_size;                  
+    //                 }
+    //             }
+    //         }
+
+    //         if (p == ((u8_t *)t))
+    //         {
+    //             p--;
+    //         }
+    //     }
+
+
+    //     if (best_status) // file was deleted
+    //     {
+    //         err = -1;
+    //     }
+    // }
+
     // try flash
     if (err)
     {
-        printf("picofs: find file falling back to searching flash\n");
-
-        // scan backwards through flash
-        p = FS_END - 1 - sizeof(FILE_TRAILER_T);
-
-        // scan flash
-        while (((char *)p) >= FS_START)
+        while(!picofs_iter_next_file(&t, false))
         {
-            t = (FILE_TRAILER_T *)p;
-
-            if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-                (t->picofs_version == FS_VERION) &&
-                (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
-                !picofs_is_file_deleted(t->file_id))
+            if (t)
             {
-                // match
-                if (first_sequnce)
+                if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+                    (t->picofs_version == FS_VERION) &&
+                    (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
+                    !picofs_is_file_deleted_from_flash(t->file_id))
                 {
-                    best_sequence = t->file_sequence;
-                    best_status = t->file_status;
-                    *trailer = t;
-                    err = 0; 
-                    p = p - t->file_size; 
-
-                    first_sequnce = false;
-                }
-                else
-                {
-                    if (t->file_sequence > best_sequence) 
+                    // match
+                    if (t->file_sequence >= best_sequence) 
                     {
                         best_sequence = t->file_sequence;
                         best_status = t->file_status;
                         *trailer = t;
-                        err = 0;
-                        p = p - t->file_size;                  
+                        err = 0;               
                     }
                 }
             }
-
-            if (p == ((u8_t *)t))
+            else
             {
-                p--;
+                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+                break;
             }
         }
-
 
         if (best_status) // file was deleted
         {
             err = -1;
-        }
+        }    
     }
 
     return(err);
@@ -500,36 +535,45 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
  * \param[in]   file_id      file to check
  * \return true if deleted
  */
-bool picofs_is_file_deleted(u8_t file_id)
+bool picofs_is_file_deleted_from_flash(u8_t file_id)
 {
     int err = -1;
-    int i;
-    u8_t *p = NULL;
     FILE_TRAILER_T *t = NULL;
     bool deleted = false;
 
-
-    // scan backwards through flash
-    p = FS_END - 1 - sizeof(FILE_TRAILER_T);
-
-    // scan flash
-    while (((char *)p) >= FS_START)
+    while(!picofs_iter_next_file(&t, false))
     {
-        t = (FILE_TRAILER_T *)p;
-
-        if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-            (t->picofs_version == FS_VERION) &&
-            (t->file_id == file_id) && 
-            (t->file_status))
+        if (t)
         {
-            deleted = true;
+            if ((t->file_id == file_id) && (t->file_status))
+            {
+                deleted = true;
+                break;
+            }
+        }
+        else
+        {
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
+    }
 
-        if (p == ((u8_t *)t))
-        {
-            p--;
-        }
+    return(deleted);
+}
+
+/*!
+ * \brief check if file has been deleted
+ * 
+ * \param[in]   file_id      file to check
+ * \return true if deleted
+ */
+bool picofs_is_file_deleted_from_cache(u8_t file_id)
+{
+    bool deleted = false;
+
+    if (picofs_files[file_id].trailer->file_status)
+    {
+        deleted = true;
     }
 
     return(deleted);

@@ -162,16 +162,18 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_Print(void)
 {
+    //int err;
     //char acOutput[5000];  original PC version
     char acOutput[128];  // max size supported by ring buffer used for http shell
 
     eval_StringLine(acOutput, sizeof(acOutput), 1);
 
     basic_printf("%s", acOutput);
+    //err = fprintf(0, "%s", acOutput);
 
     //printf("%s", acOutput);
 
-    //printf("MONKEY\n");
+    //basic_printf("MONKEY\n");
 
     //pico_send_async_text(acOutput);
     //shell_print_string(acOutput);  // this one blocks if the queue is full, stalling ther basic program but reducing data loss

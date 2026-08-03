@@ -239,9 +239,9 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
               }
               else
               {
-                  //strcpy(pcActivePos, psContext->acToken);
-                  STRNCPY(pcActivePos, psContext->acToken, sizeof(psContext->acToken));  // this deals with acToken being truncated but still assumes enough space left in output buffer (which is huge)
-                  pcActivePos += nLength;
+                strncpy(pcActivePos, psContext->acToken, nResultLen - (pcActivePos - pcResult));
+                pcActivePos += nLength;
+
               }
               iLineFeed = 1;
               break;

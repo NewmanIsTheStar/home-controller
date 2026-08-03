@@ -229,7 +229,7 @@ int picofs_purge_duplicates(char *filename, u8_t keep_fid)
 
     memset(purge_list, 0, sizeof(purge_list));
 
-    while(!picofs_iter_next_file(&current))
+    while(!picofs_iter_next_file(&current, false))
     {
         if (current)
         {

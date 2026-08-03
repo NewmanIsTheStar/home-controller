@@ -106,7 +106,7 @@ typedef enum
 
 int picofs_unlink(const char *name, u8_t fid);
 int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
-int picofs_list_all_files_from_flash(void);
+int picofs_list_all_files_from_flash(bool ignore_crc);
 int picofs_list_all_files_from_cache(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size);
@@ -121,9 +121,10 @@ int picofs_create_file_trailer(int fd, const char *name);
 int picofs_close_file(int fd, bool disable_purge);
 int picofs_delete(char *filename);
 int picofs_copy(const char *src, const char *dst);
-int picofs_is_latest_file_sequence(char *filename, u8_t file_id, u8_t sequence);
+int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t sequence);
 u8_t picofs_get_new_file_id(void);
-bool picofs_is_file_deleted(u8_t file_id);
+bool picofs_is_file_deleted_from_flash(u8_t file_id);
+bool picofs_is_file_deleted_from_cache(u8_t file_id);
 int picofs_rename(const char *src, const char *dst);
 int picofs_list_files_by_size(void);
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
@@ -136,7 +137,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
 int picofs_initialize(void);
 int picofs_increment_sequence(FILE_TRAILER_T *trailer);
 int picofs_purge_duplicates(char *filename, u8_t keep_fid);
-int picofs_iter_next_file(FILE_TRAILER_T **current_file);
+int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc);
 int picofs_load_test_data(void);
 int picofs_flash_program(char *dst, char *src, size_t len);
 int picofs_flash_erase(char *dst, size_t len);

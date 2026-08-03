@@ -141,13 +141,13 @@ int picofs_load_test_data(void)
         test_filesystem[2].test_trailer.file_sequence = 0;  
         test_filesystem[2].test_trailer.file_status = 0; 
         test_filesystem[2].test_trailer.file_size = 0; 
-        test_filesystem[2].test_trailer.crc = 0x5af465bc; 
+        test_filesystem[2].test_trailer.crc = 0x3585422b; 
         STRNCPY(test_filesystem[2].test_trailer.name, "goat", sizeof("goat"));
         test_filesystem[2].test_data[0] = 0;
         
         memset((void *)test_filesystem[2].test_data, 0, 224);
         //STRNCAT(test_filesystem[2].test_data, "10 FOR X = 0 TO 3\n20 FOR Y = 0 TO 4095\n30 PRINT X;\" \";Y\n40 NEXT\n50 NEXT\n", sizeof(test_filesystem[2].test_data));
-        STRNCAT(test_filesystem[2].test_data, "5 OPEN \"bigfile\" FOR OUTPUT AS 1\n10 FOR X = 0 TO 3\n20 FOR Y = 0 TO 300\n30 PRINT# 1, Y\n40 NEXT\n50 NEXT\n60 CLOSE 1\n", sizeof(test_filesystem[2].test_data));        
+        STRNCAT(test_filesystem[2].test_data, "5 OPEN \"bigfile\" FOR OUTPUT AS 1\n10 FOR X = 0 TO 3\n20 FOR Y = 0 TO 300\n30 PRINT# 1, \"SECTOR \";X;\" CELL \";Y\n35 PRINT \"SECTOR \";X;\" CELL \";Y\n40 NEXT\n50 NEXT\n60 CLOSE 1\n", sizeof(test_filesystem[2].test_data));        
         test_filesystem[2].test_trailer.file_size = 256; 
 
 

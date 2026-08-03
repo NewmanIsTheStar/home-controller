@@ -120,7 +120,7 @@ u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id
             (t->picofs_version == FS_VERION))
         {
             // check range
-            if ((t->file_size >= size_lo) && (t->file_size < size_hi) && picofs_is_latest_file_sequence(t->name, t->file_id, t->file_sequence))
+            if ((t->file_size >= size_lo) && (t->file_size < size_hi) && picofs_is_latest_file_sequence_from_flash(t->name, t->file_id, t->file_sequence))
             {
                 already_in_list = false;
                 for(i=0; i<num_matching_files; i++)
@@ -224,7 +224,7 @@ int picofs_list_files_by_size(void)
 
     memset(list_files, 0, sizeof(list_files));
 
-    while(!picofs_iter_next_file(&current))
+    while(!picofs_iter_next_file(&current, false))
     {
         if (current)
         {
@@ -290,7 +290,7 @@ int picofs_metrics_name_compare(const void *a, const void *b)
  *  *     
  * \return 0 on success
  */
-int picofs_list_all_files_from_flash(void)
+int picofs_list_all_files_from_flash(bool ignore_crc)
 {
     int err = -1;
     int i;
@@ -302,66 +302,80 @@ int picofs_list_all_files_from_flash(void)
     size_t consolidation_area_size = 0;
     u32_t calculated_crc = 0;
 
-    memset(list_files, 0, sizeof(list_files));
-
-    while(!picofs_iter_next_file(&current))
+    if (!ignore_crc) // well ordered list
     {
-        if (current)
-        {
-            list_files[current->file_id].valid = true;
-            num_files++;
-            size_files_plus_remnants += current->file_size;
+        memset(list_files, 0, sizeof(list_files));
 
-            if (current->file_sequence >= list_files[current->file_id].trailer->file_sequence)
+        while(!picofs_iter_next_file(&current, ignore_crc))
+        {
+            if (current)
             {
-                list_files[current->file_id].trailer = current;
+                list_files[current->file_id].valid = true;
+                num_files++;
+                size_files_plus_remnants += current->file_size;
+
+                if (current->file_sequence >= list_files[current->file_id].trailer->file_sequence)
+                {
+                    list_files[current->file_id].trailer = current;
+                }
+            }
+            else
+            {
+                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+                break;
             }
         }
-        else
+
+        qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_STATUS_T), picofs_metrics_name_compare);
+
+        if (num_files)
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
-            break;
-        }
-    }
-
-    qsort(list_files, NUM_ROWS(list_files), sizeof(FILE_STATUS_T), picofs_metrics_name_compare);
-
-    if (num_files)
-    {
             picofs_printf("Size\t\tFID\tSEQ\tCRC calc\tCRC file\tName\n");
-    }
+        }
 
-    for (i=0; i<FS_NUM_FID; i++)
-    {
-        if (list_files[i].valid && !list_files[i].trailer->file_status)
+        for (i=0; i<FS_NUM_FID; i++)
         {
+            if (list_files[i].valid && !list_files[i].trailer->file_status)
+            {
 
-            // calculate crc
-            calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
-            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, calculated_crc, list_files[i].trailer->crc, list_files[i].trailer->name);
+                // calculate crc
+                calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
+                picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s%s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, calculated_crc, list_files[i].trailer->crc, list_files[i].trailer->name, calculated_crc == list_files[i].trailer->crc?"":" *corrupt*");
 
-            size_files += list_files[i].trailer->file_size;
+                size_files += list_files[i].trailer->file_size;
+            }
+        }
+
+        picofs_printf("\nTotal size    %08d\n", size_files);
+        picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
+
+        picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
+    }
+    else  // display raw file remnants -- cannot assume self consistency as CRCs are being ignored!
+    {
+        while(!picofs_iter_next_file(&current, ignore_crc))
+        {
+            if (current)
+            {
+                if (!num_files)
+                {
+                    picofs_printf("Size\t\tFID\tSEQ\tCRC calc\tCRC file\tName\n");
+                }    
+
+                // calculate crc
+                calculated_crc = picofs_calculate_crc32(((const uint8_t *)current + sizeof(FILE_TRAILER_T) - current->file_size), current->file_size - sizeof(FILE_TRAILER_T));
+                picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s%s\n", current->file_size, current->file_id, current->file_sequence, calculated_crc, current->crc, current->name, calculated_crc == current->crc?"":" *corrupt*");
+
+                num_files++;
+            }
+            else
+            {
+                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+                break;
+            }
         }
     }
 
-    picofs_printf("\nTotal size    %08d\n", size_files);
-    picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
-
-    picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
-
-
-    picofs_printf("LIST from RAM Cache\n");
-    for (i=0; i<FS_NUM_FID; i++)
-    {
-        if (picofs_files[i].valid && !picofs_files[i].trailer->file_status)
-        {
-
-            // calculate crc
-            calculated_crc = picofs_calculate_crc32(((const uint8_t *)(picofs_files[i].trailer)) + sizeof(FILE_TRAILER_T) - picofs_files[i].trailer->file_size, picofs_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
-            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", picofs_files[i].trailer->file_size, picofs_files[i].trailer->file_id, picofs_files[i].trailer->file_sequence, calculated_crc, picofs_files[i].trailer->crc, picofs_files[i].trailer->name);
-
-        }
-    }
 
 
     return(0);
@@ -398,12 +412,11 @@ int picofs_list_all_files_from_cache(void)
 
             if (!heading)
             {
-                picofs_printf("Size\t\tFID\tSEQ\tCRC calc\tCRC file\tName\n");
+                picofs_printf("Size\t\tFID\tSEQ\tCRC     \tName\n");
                 heading = true;
             }
-            // calculate crc
-            calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
-            picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, calculated_crc, list_files[i].trailer->crc, list_files[i].trailer->name);
+            // calculate crc            
+            picofs_printf("%08d\t%d\t%d\t%08x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
 
             size_files += list_files[i].trailer->file_size;
         }

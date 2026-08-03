@@ -305,10 +305,14 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_LIGHTS);  
     } 
+    else if (strcmp(cmd, "ls a") == 0) 
+    {
+        hc_queue_send(HC_CMD_LIST_CORRUPT);          
+    } 
     else if (strcmp(cmd, "ls") == 0) 
     {
         hc_queue_send(HC_CMD_LIST);          
-    } 
+    }     
     else if (strcmp(cmd, "dump program") == 0) 
     {
         hc_queue_send(HC_CMD_DUMP_PROGRAM);  
