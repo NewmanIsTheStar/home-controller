@@ -79,7 +79,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
-extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
+//extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
 
 //static variables
 FILE_STATUS_T consoldation_files[FS_NUM_FID]; 
@@ -156,8 +156,13 @@ int picofs_consolidate_all_files_in_flash(void)
     {
         shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
         picofs_erase_obsolete_sectors();
-        picofs_printf("After erasure, space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
-        //qsort(consoldation_files, NUM_ROWS(consoldation_files), sizeof(FILE_METRICS_T), picofs_descending_size_compare); // re-sort as picofs_erase_obsolete_blocks() refreshed the metrics
+
+        if (picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size))
+        {
+            picofs_printf("After erasure, we still have insufficent space to consolidate.  --ABORT--\n"); 
+
+            //TODO: try asking for less space and try packing files in reverse order (smallest first) or dropping large files
+        }
     }
 
     total_written = 0;
@@ -169,7 +174,7 @@ int picofs_consolidate_all_files_in_flash(void)
             if (consoldation_files[i].valid && consoldation_files[i].trailer)
             {
                 printf("copying...\n");
-                hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
+                //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
                 //memcpy(consolidation_area + total_written, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
                 
                 // append file data and exclude trailer

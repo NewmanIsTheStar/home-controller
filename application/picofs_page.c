@@ -322,6 +322,8 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
     else
     {
         // printf("failed to find erased pages\n");
+        *start_of_area = NULL;
+        *actual_size = 0;
     }
     
     return(err);

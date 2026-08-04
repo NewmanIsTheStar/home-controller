@@ -41,6 +41,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
+#include "semphr.h"
 
 #include "stdarg.h"
 
@@ -80,6 +81,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+extern SemaphoreHandle_t picofs_mutex;
 //static variables
 
  
@@ -99,54 +101,64 @@ int picofs_copy(const char *src, const char *dst)
     FILE_TRAILER_T *existing_dst = NULL;
 
 
-    fd = picofs_find_available_fd();   // NB we are bypassing the wrappers so have to manage file descriptors directly in this function
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
+    { 
 
-    if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
-    {
-        return(err);
-    }
+        fd = picofs_find_available_fd();   // NB we are bypassing the wrappers so have to manage file descriptors directly in this function
 
-    if (picofs_open_by_name(fd, src, O_WRONLY))
-    {
-        errno = ENOENT; // File not found
-        return -1;
-    }    
-    
-    custom_fds[fd].in_use = true;  // this cannot occur before open because open uses this flag to determine if it has exlusive access to the file for write
-
-    // check if destination filename already exists
-    if (!picofs_find_by_name(dst, &existing_dst) && existing_dst && (existing_dst->file_sequence < (FS_MAX_SEQ - 1)))
-    {
-        // reuse existing destination file
-        if (!existing_dst)
+        if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
         {
-            picofs_release_fd(fd);
-            return -3;               
+            xSemaphoreGive(picofs_mutex);
+            return(err);
         }
 
-        file_id = existing_dst->file_id;
-        file_sequence = existing_dst->file_sequence + 1; 
-    }
-    else    
-    {
-        // create new file
-        file_id = picofs_get_new_file_id();
-        file_sequence = 0;
-
-        if (file_id == FS_INVALID_FID)
+        if (picofs_open_by_name(fd, src, O_WRONLY))
         {
-            picofs_release_fd(fd);
-            return -2;        
+            errno = ENOENT; // File not found
+            xSemaphoreGive(picofs_mutex);
+            return -1;
+        }    
+        
+        custom_fds[fd].in_use = true;  // this cannot occur before open because open uses this flag to determine if it has exlusive access to the file for write
+
+        // check if destination filename already exists
+        if (!picofs_find_by_name(dst, &existing_dst) && existing_dst && (existing_dst->file_sequence < (FS_MAX_SEQ - 1)))
+        {
+            // reuse existing destination file
+            if (!existing_dst)
+            {
+                picofs_release_fd(fd);
+                xSemaphoreGive(picofs_mutex);
+                return -3;               
+            }
+
+            file_id = existing_dst->file_id;
+            file_sequence = existing_dst->file_sequence + 1; 
         }
+        else    
+        {
+            // create new file
+            file_id = picofs_get_new_file_id();
+            file_sequence = 0;
+
+            if (file_id == FS_INVALID_FID)
+            {
+                picofs_release_fd(fd);
+                xSemaphoreGive(picofs_mutex);
+                return -2;        
+            }
+        }
+
+        // assign new file id and name
+        custom_fds[fd].cache_trailer.file_id = file_id;
+        custom_fds[fd].cache_trailer.file_sequence = file_sequence;
+        STRNCPY(custom_fds[fd].cache_trailer.name, dst, sizeof(custom_fds[fd].cache_trailer.name));
+
+        err = picofs_close(fd);
+        picofs_release_fd(fd);
+
+        xSemaphoreGive(picofs_mutex);
     }
-
-    // assign new file id and name
-    custom_fds[fd].cache_trailer.file_id = file_id;
-    custom_fds[fd].cache_trailer.file_sequence = file_sequence;
-    STRNCPY(custom_fds[fd].cache_trailer.name, dst, sizeof(custom_fds[fd].cache_trailer.name));
-
-    err = picofs_close(fd);
-    picofs_release_fd(fd);
 
     return(err);
 }

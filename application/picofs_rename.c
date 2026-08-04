@@ -40,6 +40,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
+#include "semphr.h"
 
 #include "stdarg.h"
 
@@ -78,6 +79,8 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+extern SemaphoreHandle_t picofs_mutex;
+
 //static variables
 
  
@@ -89,16 +92,21 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
  */
 int picofs_rename(const char *src, const char *dst)
 {
-    int err = 0;
+    int err = -1;
 
-    err = picofs_copy(src, dst);
+    err = picofs_copy(src, dst);   // NB picofs_copy takes care of locking internally
     if (err)
     {
         return(err);
     }
 
-    err = picofs_unlink_by_name(src);
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
+    {  
+        err = picofs_unlink_by_name(src);
 
+        xSemaphoreGive(picofs_mutex);
+    }    
+    
     return(err);
 }
 

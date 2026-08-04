@@ -4,10 +4,69 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "pluto.h"
-#include "picofs.h"
+// #include "pluto.h"
+// #include "picofs.h"
 //#include <unistd.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+
+#include "hardware/pio.h"
+#include "hardware/clocks.h"
+// #include "generated/ws2812.pio.h"
+
+// TODO - prune this list of includes
+#include "pico/cyw43_arch.h"
+#include "pico/stdlib.h"
+#include "pico/rand.h"
+#include "pico/util/datetime.h"
+//#include "hardware/rtc.h"
+#include "hardware/watchdog.h"
+#include "pico/flash.h"
+#include <hardware/flash.h>
+
+#include "lwip/opt.h"
+#include "lwip/sockets.h"
+#include "lwip/netdb.h"
+#include "lwip/sys.h"
+#include <lwip/dns.h>
+
+
+#include "lwip/netif.h"
+#include "lwip/ip4_addr.h"
+#include "lwip/apps/lwiperf.h"
+#include "lwip/apps/sntp.h"
+#include "lwip/apps/httpd.h"
+#include "dhcpserver.h"
+#include "dnsserver.h"
+
+#include "time.h"
+#include "FreeRTOS.h"
+#include "FreeRTOSConfig.h"
+#include "task.h"
+#include "semphr.h"
+
+#include "stdarg.h"
+
+// #include "weather.h"
+#include "cgi.h"
+#include "ssi.h"
+#include "flash.h"
+#include "utility.h"
+#include "config.h"
+#include "watchdog.h"
+#include "pluto.h"
+// #include "led_strip.h"
+#include "udp.h"
+// #include "message.h"
+// #include "message_defs.h"
+// #include "powerwall.h"
+#include "shelly.h"
+#include "discovery_task.h"
+#include "picofs.h"
+
+extern SemaphoreHandle_t picofs_mutex;
 
 PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
@@ -15,35 +74,42 @@ PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 // Hook for fopen()
 int __wrap__open(const char *name, int flags, int mode) 
 {
-    // find a free slot in custom_fds
     int fd = -1;
-    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
     {
-        if (!custom_fds[i].in_use) 
+        // find a free slot in custom_fds
+        for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
         {
-            fd = i;
-            break;
+            if (!custom_fds[i].in_use) 
+            {
+                fd = i;
+                break;
+            }
         }
+        
+        if (fd == -1) 
+        {
+            errno = ENFILE; // Too many open files
+            xSemaphoreGive(picofs_mutex);
+            return -1;
+        }
+
+        custom_fds[fd].in_use = true;
+
+        if (picofs_open_by_name(fd, (char *)name, flags))
+        {
+            errno = ENOENT; // File not found
+            custom_fds[fd].in_use = false;
+            xSemaphoreGive(picofs_mutex);
+            return -1;
+        }
+
+        xSemaphoreGive(picofs_mutex);
     }
     
-    if (fd == -1) 
-    {
-        errno = ENFILE; // Too many open files
-        return -1;
-    }
+   
 
-    custom_fds[fd].in_use = true;
-
-    if (picofs_open_by_name(fd, (char *)name, flags))
-    {
-        errno = ENOENT; // File not found
-        custom_fds[fd].in_use = false;
-        return -1;
-    }
-
-    // TEST TEST TEST setting in_use prior to calling picofs_open()
-    //custom_fds[fd].in_use = true;
-    
     // Return index offset to avoid colliding with standard stdin/stdout/stderr (0, 1, 2)
     return fd + 3; 
 }
@@ -163,9 +229,15 @@ int __wrap__close(int fd) {
         return -1;
     }
 
-    picofs_close(target_fd);
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
+    {    
+        picofs_close(target_fd);
     
-    custom_fds[target_fd].in_use = false;
+        custom_fds[target_fd].in_use = false;
+
+        xSemaphoreGive(picofs_mutex);
+    }
+
     return 0;
 }
 
@@ -182,7 +254,16 @@ int _isatty(int fd) {
 
 int __wrap__unlink(const char *name) 
 {
-    return(picofs_unlink_by_name(name));
+    int err = -1;
+
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
+    {  
+        err = picofs_unlink_by_name(name);
+
+        xSemaphoreGive(picofs_mutex);
+    }
+
+    return(err);
 }
 
 // Declaration of the original SDK rename function
@@ -191,7 +272,7 @@ int __wrap__unlink(const char *name)
 int __wrap_rename(const char *old_path, const char *new_path) 
 {
 
-    return(picofs_rename(old_path, new_path));
+    return(picofs_rename(old_path, new_path));  // NB picofs_rename takes care of locking internally
 
     return 0;
 }

@@ -40,6 +40,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
+#include "semphr.h"
 
 #include "stdarg.h"
 
@@ -82,6 +83,7 @@ extern FILE_STATUS_T picofs_files[FS_NUM_FID];
 
 // global variable
 int system_file_version = 1;  // used to track changes to filesystem for shell tab-completion
+SemaphoreHandle_t picofs_mutex = NULL;
 
 //static variables
 
@@ -604,6 +606,8 @@ int picofs_initialize(void)
 
     // scan flash and cache pointers to all files
     picofs_refresh_files();
+
+    picofs_mutex = xSemaphoreCreateMutex();
 
     return(err);
 }
