@@ -40,6 +40,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
+#include "semphr.h"
 
 #include "stdarg.h"
 
@@ -81,6 +82,7 @@ extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
+extern SemaphoreHandle_t picofs_mutex;
 
 //static variables
 
@@ -98,41 +100,46 @@ int picofs_erase_obsolete_sectors(void)
     u32_t start_sector;
     u32_t end_sector;    
 
-    picofs_refresh_files(); //TODO : consider removing
-
-    for(start_sector=0; start_sector < FS_NUM_SECTORS; start_sector++)
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
     {
-        if (!picofs_sector_in_use(start_sector) && !picofs_sector_erased(start_sector))
-        {
-            end_sector = start_sector;
+        picofs_refresh_files(); //TODO : consider removing
 
-            // try to expand range
-            for (i = start_sector; i < FS_NUM_SECTORS; i++)
+        for(start_sector=0; start_sector < FS_NUM_SECTORS; start_sector++)
+        {
+            if (!picofs_sector_in_use(start_sector) && !picofs_sector_erased(start_sector))
             {
-                if ((!picofs_sector_in_use(i)) && !picofs_sector_erased(i))
+                end_sector = start_sector;
+
+                // try to expand range
+                for (i = start_sector; i < FS_NUM_SECTORS; i++)
                 {
-                    end_sector = i;
+                    if ((!picofs_sector_in_use(i)) && !picofs_sector_erased(i))
+                    {
+                        end_sector = i;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                if (start_sector == end_sector)
+                {
+                    //printf("--ERASING Sector %d\n", start_sector);
+                    shell_printf("--ERASING Sector %d\n", start_sector);
                 }
                 else
                 {
-                    break;
+                    //printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
+                    shell_printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
                 }
-            }
 
-            if (start_sector == end_sector)
-            {
-                //printf("--ERASING Sector %d\n", start_sector);
-                shell_printf("--ERASING Sector %d\n", start_sector);
+                picofs_flash_erase_sector_range(start_sector, end_sector);
+                start_sector = end_sector;
             }
-            else
-            {
-                //printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
-                shell_printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
-            }
-
-            picofs_flash_erase_sector_range(start_sector, end_sector);
-            start_sector = end_sector;
         }
+
+        xSemaphoreGive(picofs_mutex); 
     }
 
     return(err);
@@ -153,6 +160,7 @@ bool picofs_sector_in_use(u32_t sector)
     bool in_use = false;
     int i;
     
+    // check flash
     for(i=0; i < FS_NUM_FID; i++)
     {
         if (picofs_files[i].valid && picofs_files[i].trailer)
@@ -170,6 +178,25 @@ bool picofs_sector_in_use(u32_t sector)
                     break;
                 }
             }
+        }
+    }
+
+    // check open READ file descriptors (writes are in RAM cache and not affected by erasing flash sectors)
+    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    {
+        if ((custom_fds[i].in_use) && (custom_fds[i].flags & FREAD) && (custom_fds[i].file_trailer))
+        {
+            start_sector = picofs_get_start_sector(custom_fds[i].file_trailer);
+
+            end_sector = picofs_get_end_sector(custom_fds[i].file_trailer);
+
+            if ((sector >= start_sector) && (sector <= end_sector))
+            {
+                in_use= true;
+                break;
+            }
+
+            //TODO: atomically shift reader's FD to point to latest SEQ if the reader is using an obsolete copy due to consolidation
         }
     }
 
