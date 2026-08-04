@@ -70,8 +70,8 @@
 
     // Word Dictionary (Baseline fallbacks until server populates them)
     let serverCommands = [
-        'help', 'status', 'edit', 'reboot', 'ls', 'cat', 'rm',
-        'main.py', 'boot.py', 'lib/', 'lib/asyncio/', 'config.json', 'data.csv'
+        'help', 'ip', 'ping', 'ls', 'cat', 'uptime', 'date',
+        'hd', 'rm', 'mv', 'cp', 'df', 'defrag', 'disk', 'cleanup', 'run'
     ]; 
     let matchingCommands = [];
     let completionIndex = 0;
@@ -82,7 +82,7 @@
     // Option 2 Client Variable: Local cache version tracker
     let currentDictionaryVersion = 0; 
 
-    // Robust Dictionary Update Loop (Option 2)
+    // Robust Dictionary Update Loop
     async function listenForCommandUpdates() {
         try {
             // Pass local version and a cache-buster timestamp explicitly
@@ -111,36 +111,6 @@
         // Keep this at a relaxed 3 seconds to save Pico CPU power
         setTimeout(listenForCommandUpdates, 3000);
     }
-
-    // // Debugging version of the Dictionary Update Loop
-    // async function listenForCommandUpdates() {
-    //     let rawText = "";
-    //     try {
-    //         const response = await fetch(`/commands.json?v=${currentDictionaryVersion}&ts=${Date.now()}`);
-            
-    //         if (response.ok && response.status === 200) {
-    //             rawText = await response.text(); // 1. Read as a raw string first
-                
-    //             // 2. Safely parse the raw string manually
-    //             const data = JSON.parse(rawText); 
-                
-    //             if (data && data.words && data.v !== currentDictionaryVersion) {
-    //                 currentDictionaryVersion = data.v;
-    //                 serverCommands = data.words;
-    //                 matchingCommands = []; 
-    //                 console.log("Tab completion updated! Current array version:", currentDictionaryVersion);
-    //             }
-    //         }
-    //     } catch (err) {
-    //         console.group("❌ JSON PARSING FAILURE DIAGNOSTIC");
-    //         console.error("The parser failed with message:", err.message);
-    //         console.log("The exact raw string received from your Pico 2 W was:");
-    //         console.log("%c" + rawText, "color: #ff0000; background: #222; padding: 5px; font-family: monospace;");
-    //         console.groupEnd();
-    //     }
-        
-    //     setTimeout(listenForCommandUpdates, 3000);
-    // }
 
     // Refocus on click if user isn't highlighting text
     document.addEventListener('click', (e) => {

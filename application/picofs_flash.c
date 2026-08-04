@@ -179,7 +179,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
 
 
 /*!
- * \brief Shim for programming flash pages with second core suspended and interrupts disabled
+ * \brief Shim for erasing flash pages with second core suspended and interrupts disabled
  * 
  * \param[in]   ptr flash offset, RAM source and data length 
  */
@@ -224,7 +224,7 @@ int picofs_flash_erase(char *dst, size_t len)
 
     if (flash_offset%FS_SECTOR_SIZE)
     {
-        printf("picofs: error: picofs_flash_erase(): invalid block offset\n");
+        printf("picofs: error: picofs_flash_erase(): invalid sector offset\n");
         return(-1);
     }
 
@@ -265,12 +265,6 @@ int picofs_flash_erase_sector_range(int start_sector, int end_sector)
 {
     int err = 0;
     
-    // #if FS_FAKE_FLASH
-    //     memset(FS_START + start_sector*FS_SECTOR_SIZE, 255, (end_sector-start_sector+1)*FS_SECTOR_SIZE);
-    // #else
-    //     picofs_flash_erase(FS_START + start_sector*FS_SECTOR_SIZE, (end_sector-start_sector+1)*FS_SECTOR_SIZE);
-    // #endif
-
     picofs_flash_erase(FS_START + start_sector*FS_SECTOR_SIZE, (end_sector-start_sector+1)*FS_SECTOR_SIZE);
 
     return(err);

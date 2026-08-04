@@ -282,18 +282,22 @@ static void execute_shell_command(const char* cmd)
 
     if (strcmp(cmd, "help") == 0) 
     {
-        shell_printf_nb("help   - show options\n");
-        shell_printf_nb("ip     - network info\n");
-        shell_printf_nb("ping   - check ip connectivity\n");
-        shell_printf_nb("ls     - list files\n");
-        shell_printf_nb("cat    - print text file\n");
-        shell_printf_nb("uptime - time since boot\n");
-        shell_printf_nb("ip     - network info\n");
-        shell_printf_nb("date   - calendar time\n");     
-        shell_printf_nb("hd     - hex dump\n");  
-        shell_printf_nb("rm     - remove file\n");  
-        shell_printf_nb("mv     - move file\n");  
-        shell_printf_nb("cp     - copy file\n");          
+        shell_printf_nb("help    - show options\n");
+        shell_printf_nb("cat     - print text file\n");
+        shell_printf_nb("cleanup - erase obsolete sectors of file system\n");
+        shell_printf_nb("cp      - copy file\n");
+        shell_printf_nb("date    - calendar time\n");
+        shell_printf_nb("defrag  - defragment file system\n");
+        shell_printf_nb("df      - show file system usage\n");
+        shell_printf_nb("edit    - edit a text file\n");
+        shell_printf_nb("hd      - hex dump\n");
+        shell_printf_nb("ip      - network info\n");
+        shell_printf_nb("ls      - list files\n");
+        shell_printf_nb("mv      - move file\n");
+        shell_printf_nb("ping    - check ip connectivity\n");
+        shell_printf_nb("rm      - remove file\n");
+        shell_printf_nb("run     - execute a basic script\n");
+        shell_printf_nb("uptime  - time since boot\n");    
     }
     else if (strncmp(cmd, "ping ", 5) == 0)
     {        
@@ -337,7 +341,7 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_PAGE_NUMBERS);  
     }      
-    else if (strcmp(cmd, "disk cleanup") == 0) 
+    else if (strcmp(cmd, "cleanup") == 0) 
     {
         hc_queue_send(HC_CMD_DISK_CLEANUP); 
     }      

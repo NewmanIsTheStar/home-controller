@@ -448,8 +448,21 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
     STRNCAT(buffer, version, len);
     STRNCAT(buffer, ", \"words\": ", len);
     STRNCAT(buffer, "[", len);
-    STRNCAT(buffer, "\"cat\",", len);
+    STRNCAT(buffer, "\"help\",", len);
+    STRNCAT(buffer, "\"ip\",", len);
     STRNCAT(buffer, "\"ls\",", len);
+    STRNCAT(buffer, "\"cat\",", len);
+    STRNCAT(buffer, "\"uptime\",", len);
+    STRNCAT(buffer, "\"date\",", len);
+    STRNCAT(buffer, "\"hd\",", len);
+    STRNCAT(buffer, "\"rm\",", len);  
+    STRNCAT(buffer, "\"mv\",", len);  
+    STRNCAT(buffer, "\"cp\",", len);  
+    STRNCAT(buffer, "\"defrag\",", len);  
+    STRNCAT(buffer, "\"disk\",", len);  
+    STRNCAT(buffer, "\"cleanup\",", len); 
+    STRNCAT(buffer, "\"run\",", len);     
+    STRNCAT(buffer, "\"edit\",", len);                                               
     STRNCAT(buffer, "\"df\"", len);   // <====  no tailing comma on last item before file list!
 
     for (i=0; i<FS_NUM_FID; i++)

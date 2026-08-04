@@ -489,7 +489,7 @@ int shelly_dump_discovered_devices(void)
             {
                 //printf("IP = %d.%d.%d.%d Type = %d\n", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type);
                 //fprintf(fp, "IP = %d.%d.%d.%d Type = %d\n", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type);                
-                fprintf(fp, "{ \"ip\": \"%d.%d.%d.%d\", \"type\": %d }%s", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type, (i+1)<num_discovered_shelly_devices?",\n":"\n");                
+                fprintf(fp, "  { \"ip\": \"%d.%d.%d.%d\", \"type\": %d }%s", ((u8_t *)&discovered_shelly[i].ip)[3], ((u8_t *)&discovered_shelly[i].ip)[2], ((u8_t *)&discovered_shelly[i].ip)[1], ((u8_t *)&discovered_shelly[i].ip)[0], discovered_shelly[i].type, (i+1)<num_discovered_shelly_devices?",\n":"\n");                
                  
             }
              fprintf(fp, "]\n");
