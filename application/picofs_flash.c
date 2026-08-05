@@ -82,7 +82,9 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
+#if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#endif
 
 //static variables
 
@@ -104,7 +106,7 @@ void __no_inline_not_in_flash_func(picofs_flash_program_shim)(void *ptr)
             return;
         }
 
-        if ((parameters->len%FS_PAGE_SIZE) || ((parameters->len + parameters->dst_offset) > FS_SIZE))
+        if ((parameters->len%FS_PAGE_SIZE) || ((char *)(parameters->len + parameters->dst_offset + FS_FLASH_BASE) > FS_END))  
         {
             return;
         }
@@ -137,9 +139,9 @@ int picofs_flash_program(char *dst, char *src, size_t len)
         return(-1);
     }
 
-    if ((len%FS_PAGE_SIZE) || ((len+flash_offset) > FS_SIZE))
+    if ((len%FS_PAGE_SIZE) || ((dst+len) > FS_END))
     {
-        printf("picofs: error: picofs_flash_program(): invalid length (%d) [offset = %d fs_size = %d\n", len, flash_offset, FS_SIZE);
+        printf("picofs: error: picofs_flash_program(): invalid length (%#0x) [dst+len = %#0p FS_END = $%p]\n", dst+len, FS_END);
         return(-2);
     }
 
@@ -148,6 +150,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     shim_parameters.src = src;
     shim_parameters.len = len;
 
+    printf("offset = %#0x len = %#0x plus FS_BASE = %#0x", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
    
     err = flash_safe_execute(picofs_flash_program_shim, &shim_parameters, 5000);
 
@@ -194,7 +197,7 @@ void __no_inline_not_in_flash_func(picofs_flash_erase_shim)(void *ptr)
             return;
         }
 
-        if ((parameters->len%FS_PAGE_SIZE) || ((parameters->len + parameters->dst_offset) > FS_SIZE))
+        if ((parameters->len%FS_PAGE_SIZE) || ((char *)(parameters->len + parameters->dst_offset + FS_FLASH_BASE) > FS_END))
         {
             return;
         }
@@ -203,7 +206,7 @@ void __no_inline_not_in_flash_func(picofs_flash_erase_shim)(void *ptr)
         #if FS_FAKE_FLASH
             memset((char *)(FS_FLASH_BASE+parameters->dst_offset), FS_ERASED_CELL_VALUE, parameters->len);
         #else            
-            flash_range_erase(parameters->dst_offset, parameters->src, parameters->len);
+            flash_range_erase(parameters->dst_offset, parameters->len);
         #endif   
 
     }
@@ -228,11 +231,11 @@ int picofs_flash_erase(char *dst, size_t len)
         return(-1);
     }
 
-    if ((len%FS_SECTOR_SIZE) || ((len+flash_offset) > FS_SIZE))
+    if ((len%FS_SECTOR_SIZE) || ((dst+len) > FS_END))        
     {
         // BUG!  picofs: error: picofs_flash_erase(): invalid length (1024) [offset = 2048 fs_size = 2560
 
-        printf("picofs: error: picofs_flash_erase(): invalid length (%d) [offset = %d fs_size = %d\n", len, flash_offset, FS_SIZE);
+        printf("picofs: error: picofs_flash_erase(): invalid length ($%0x) [dst+len= $%p FS_END = $%p]\n", dst+len, FS_END);
         return(-2);
     }
    

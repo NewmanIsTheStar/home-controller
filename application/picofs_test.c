@@ -81,11 +81,15 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 
 //static variables
-FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#if FAKE_FLASH == 1
+extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#endif
 
 
 int picofs_load_test_data(void)
 {
+    #if FS_FAKE_FLASH == 1
+
     static bool test_init = false;
     int i;
 
@@ -154,5 +158,7 @@ int picofs_load_test_data(void)
         test_init = true;
     }
 
+    #endif
+    
     return (0);
 }

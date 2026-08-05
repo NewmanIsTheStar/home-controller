@@ -78,7 +78,9 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
+#if FS_FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#endif
 extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
 
 // global variable
@@ -597,17 +599,30 @@ int picofs_initialize(void)
     if (init_fds)
     {
         memset((char *)custom_fds, 0, sizeof(custom_fds));
-        init_fds = false;
-        err = 0;
+        init_fds = false;        
     }
 
     // initialize dma based crc calculator
+    printf("picofs_initialize crc...\n");
     init_crc_subsystem();
 
     // scan flash and cache pointers to all files
+    printf("picofs_initialize refreshing file cache...\n");
     picofs_refresh_files();
 
+    printf("picofs_initialize creating semaphone...\n");
     picofs_mutex = xSemaphoreCreateMutex();
+
+    if (picofs_mutex)
+    {
+        printf("picofs: init: success creating mutex\n");
+        err = 0;
+    }
+    else
+    {
+        printf("picofs: init: failed to create mutext **FUBAR**\n");
+        err = -99;
+    }
 
     return(err);
 }

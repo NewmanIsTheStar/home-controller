@@ -78,7 +78,9 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
+#if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#endif
 extern int system_file_version;
 
 //static variables
@@ -143,6 +145,7 @@ int picofs_close_file(int fd, bool disable_purge)
 
         if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size) && (err == 0))
         {
+            
             picofs_flash_program(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
             
             // // update global file list

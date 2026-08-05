@@ -32,7 +32,9 @@ typedef enum
 // external variables
 extern u32_t unix_time;
 extern WEB_VARIABLES_T web;
+#if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#endif
 
 // prototypes
 int shell_edit(char *filename);
@@ -306,7 +308,9 @@ static void execute_shell_command(const char* cmd)
     }     
     else if (strcmp(cmd, "ff") == 0)
     {
+        #if FS_FAKE_FLASH == 1
         hex_dump((char *)test_filesystem, sizeof(test_filesystem));
+        #endif
 
     }     
     else if (strcmp(cmd, "lights") == 0)

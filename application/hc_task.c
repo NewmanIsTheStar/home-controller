@@ -133,6 +133,7 @@ void hc_task(__unused void *params)
         config.personality = HOME_CONTROLLER;
     }    
     
+    printf("home controller task initializing file system...\n");
     picofs_initialize();
 
     printf("home controller task started\n");

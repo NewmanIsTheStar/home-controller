@@ -83,7 +83,9 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
+#if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#endif
 
 //static variables
 // FILE_METRICS_T purge_list[FS_NUM_FID]; 
@@ -136,16 +138,16 @@ uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t byte_length) {
     if (xSemaphoreTake(xSnifferMutex, portMAX_DELAY) == pdTRUE) {
         
         // --- FIX FOR RANDOM FIRST-RUN CHECKSUM ---
-        if (is_flash) {
-            // Force reset the hardware stream controller counter to kill any active fetches
-            xip_ctrl_hw->stream_ctr = 0;
+        // if (is_flash) {
+        //     // Force reset the hardware stream controller counter to kill any active fetches
+        //     xip_ctrl_hw->stream_ctr = 0;
             
-            // Drain the hardware FIFO queue entirely to destroy stale, uninitialized data
-            while (xip_ctrl_hw->stream_fifo != 0) {
-                __compiler_memory_barrier();
-            }
-        }
-        // ------------------------------------------
+        //     // Drain the hardware FIFO queue entirely to destroy stale, uninitialized data
+        //     while (xip_ctrl_hw->stream_fifo != 0) {
+        //         __compiler_memory_barrier();
+        //     }
+        // }
+        // // ------------------------------------------
 
         g_claimed_dma_chan = dma_claim_unused_channel(true);
         dma_channel_config c = dma_channel_get_default_config(g_claimed_dma_chan);
@@ -202,5 +204,6 @@ uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t byte_length) {
         xSemaphoreGive(xSnifferMutex);
     }
     
-    return ~crc;
+    //return ~crc;
+    return 0;
 }

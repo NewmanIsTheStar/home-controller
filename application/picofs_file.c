@@ -78,7 +78,9 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
-extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#if FAKE_FLASH == 1
+FILE_TEST_T test_filesystem[FS_TEST_ROWS];
+#endif
 
 
 //static variables
@@ -341,6 +343,7 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
     char *p = NULL;
     FILE_TRAILER_T *t = NULL;
 
+    //ignore_crc = true;
 
     if (((char *)*current_file < FS_START) || ((char *)*current_file >= FS_END))
     {

@@ -5,21 +5,35 @@
 #include "shell.h"
 
 
-#define FS_PAGE_SIZE (256)
-// #define FS_SECTOR_SIZE (4096)
+
+#define FS_FAKE_FLASH (0)
+
+
+#if FS_FAKE_FLASH == 1
 #define FS_SECTOR_SIZE (1024)
-#define FS_ERASED_CELL_VALUE (255)
-#define FS_NUM_FID (255)        // 0-254
-#define FS_INVALID_FID (255)
-#define FS_MAX_SEQ (255)
-#define FS_MAX_FILE_DESCRIPTORS (8)
-#define FS_FAKE_FLASH (1)
 #define FS_TEST_ROWS (128)
 #define FS_FLASH_BASE ((char *)(&test_filesystem))
 #define FS_START ((char *)(&test_filesystem))
 #define FS_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
 #define FS_SIZE (sizeof(test_filesystem))
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
+#else
+#define FS_SECTOR_SIZE (4096)
+#define FS_FLASH_BASE (XIP_BASE)
+#define FS_START ((char *)(XIP_BASE + (PICO_FLASH_SIZE_BYTES/2)))
+#define FS_END ((char *)(XIP_BASE + PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE)))
+#define FS_SIZE (FS_END - FS_START)
+#define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
+#endif
+
+#define FS_PAGE_SIZE (256)
+#define FS_ERASED_CELL_VALUE (255)
+#define FS_NUM_FID (255)        // 0-254
+#define FS_INVALID_FID (255)
+#define FS_MAX_SEQ (255)
+#define FS_MAX_FILE_DESCRIPTORS (8)
+
+
 #define FS_VERION (0)
 #define PROT_NONE  (0)
 #define PROT_READ  (1)
