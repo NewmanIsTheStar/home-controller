@@ -19,7 +19,8 @@ Description:A BASIC interpreter with langauge extensions for SNMP and automatic
 #include "basic.h"
 //#include "Gpib_cmd.h"
 //#include "Relay.h"  
-#include "hc_task.h"                     
+#include "hc_task.h"       
+#include "picofs.h"              
 
 
 /*External Variables*/
@@ -47,6 +48,7 @@ static bool context_initialized = false;       // used to persist context in int
 /*Local Prototypes*/
 void display_ScriptLine(void);
 void basic_Stop(void);
+int load_program_using_mmap(char *p, char *fname, tsBasicContext *psContext);
 
 /*BASIC command lookup table*/
 tsCommand asCommandTable[] =
@@ -155,7 +157,16 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
     if (reset_context || !context_initialized)
     {
         /*Create a new BASIC Context*/
-        basic_CreateContext(pcFileName, pcArguments);
+        if (program_in_memory)
+        {
+            // create ram buffer for program
+            basic_CreateContext(pcFileName, pcArguments, false);
+        }
+        else
+        {
+            // use mmap for program in flash
+            basic_CreateContext(pcFileName, pcArguments, true);
+        }
     }
 
     if (program_in_memory)
@@ -165,7 +176,9 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
         printf("PROGRAM BEGIN\n%s\nPROGRAM END\n", psContext->pcProgram);
     }
 	/*Load the program to execute from file*/
-	else if(!load_program(psContext->pcProgramCounter, pcFileName))
+	//else if(!load_program(psContext->pcProgramCounter, pcFileName))
+    // TEST TEST TEST using mmap
+	else if(!load_program_using_mmap(psContext->pcProgramCounter, pcFileName, apsContextStack[iContextIndex]))        
 	{
 		basic_printf("Could not open BASIC script file\n");
        
@@ -396,6 +409,46 @@ int load_program(char *p, char *fname)
     
     return 1;
 }
+
+/***************************************************************************
+Function    :  load_program using mmap
+Description :  Load a program.
+Returns     :  1 = Rock and Roll
+***************************************************************************/
+int load_program_using_mmap(char *p, char *fname, tsBasicContext *psContext)
+{
+    FILE *fp;
+    int i=0;
+    const char acProgramTerminator[] = "\r\nEND";
+    char *program = NULL;
+    int fd;
+
+    program = p;
+
+    if(!(fp=fopen(fname, "rb"))) return 0;
+
+    // get file descriptor
+    fd = fileno(fp);
+
+    program = picofs_mmap(NULL, 0, PROT_READ, MAP_SHARED, fd, 0);
+
+    if (program)
+    {
+        printf("basic: mmap success\n");
+        psContext->pcProgram = program;
+        psContext->pcProgramCounter = program;
+    }
+    else
+    {
+        printf("basic: mmap failure\n");
+    }
+
+  
+    fclose(fp);
+    
+    return 1;
+}
+
 
 /***************************************************************************
 Function    :  load_program_from_ram
@@ -722,7 +775,7 @@ Description :  Allocates memory on the context stack for a new instance of
 Returns     :  SUCCESS = index of the new context on the context stack
                FAIL = -1
 ***************************************************************************/
-int basic_CreateContext(char *pcFileName, char *pcArguments)
+int basic_CreateContext(char *pcFileName, char *pcArguments, bool mmap_program)
 {
     int x;
     int iStatus = -1;
@@ -745,10 +798,17 @@ int basic_CreateContext(char *pcFileName, char *pcArguments)
 
         if (psNewContext != NULL)
         {
-            /*Allocate memory for the program */
-	        pcNewProgram = malloc(PROG_SIZE);
+            if (!mmap_program)
+            {
+                /*Allocate memory for the program */
+	            pcNewProgram = malloc(PROG_SIZE);
+            }
+            else
+            {
+                psNewContext->mmap = true;
+            }
 
-            if (pcNewProgram != NULL)
+            if ((pcNewProgram != NULL) || (mmap_program))
             {
                 /*Push new context on context stack*/
                 apsContextStack[++iContextIndex] = psNewContext;
@@ -1261,7 +1321,11 @@ int basic_DestroyContext(void)
                 if ((apsContextStack[iContextIndex] != NULL) &&
                     (apsContextStack[iContextIndex]->pcProgram != NULL))
                 {
-                    free(apsContextStack[iContextIndex]->pcProgram);
+                    // don't need to free program memory if mmap
+                    if (!apsContextStack[iContextIndex]->mmap)
+                    {
+                        free(apsContextStack[iContextIndex]->pcProgram);
+                    }
                     free(apsContextStack[iContextIndex]);
                 }
             
@@ -1757,7 +1821,7 @@ int basic_InterpretFunction(char *pcFunctionBody, int iFuncNum)
     int iIndex;
 
     /*Create a new BASIC Context*/
-    basic_CreateContext("FUNCTION CALL", NULL);
+    basic_CreateContext("FUNCTION CALL", NULL, false);
 
 
     // copy some info from callers context

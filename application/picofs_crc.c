@@ -12,7 +12,7 @@
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"
@@ -71,6 +71,7 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
+extern SemaphoreHandle_t crc_mutex;
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 #endif
@@ -169,64 +170,72 @@ void __not_in_flash_func(dma_crc_irq_handler)() {
  *
  * \param src   data to use for crc calculation
  * \param len   length of data
- * \return 0 on success
+ * \return CRC on success
  */
-uint32_t picofs_calculate_crc32(const uint8_t *src, size_t len) {
-    // Basic guard: This code example assumes one CRC request at a time.
-    // In a multi-task production environment, protect this section with a Mutex!
+uint32_t picofs_calculate_crc32(const uint8_t *src, size_t len) 
+{
+    if (xSemaphoreTake(crc_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
+    {    
+        // Save current task reference so the ISR knows who to wake up
+        xCrcTaskToNotify = xTaskGetCurrentTaskHandle();
+
+        // Claim a free DMA channel dynamically
+        g_allocated_dma_chan = dma_claim_unused_channel(true);
+        
+        // Configure hardware sniffer (Mode 0x0 = Standard IEEE 802.3 CRC-32)
+        dma_sniffer_enable(g_allocated_dma_chan, 0x0, true);
+        dma_hw->sniff_data = 0xFFFFFFFF; // Seed register
+
+        // Configure DMA parameters
+        dma_channel_config c = dma_channel_get_default_config(g_allocated_dma_chan);
+        channel_config_set_sniff_enable(&c, true);
+        channel_config_set_transfer_data_size(&c, DMA_SIZE_8); // Byte alignment safe
+        channel_config_set_read_increment(&c, true);
+        channel_config_set_write_increment(&c, false);
+
+        // Reset dummy memory target
+        g_dummy_dest = 0;
+
+        // Hook up the IRQ hardware line
+        dma_channel_set_irq0_enabled(g_allocated_dma_chan, true);
+        
+        // Bind shared DMA IRQ0 line to our specific handler function
+        irq_set_exclusive_handler(DMA_IRQ_0, dma_crc_irq_handler);
+        irq_set_enabled(DMA_IRQ_0, true);
+
+        // Launch the DMA operation asynchronously
+        dma_channel_configure(
+            g_allocated_dma_chan,
+            &c,
+            (void*)&g_dummy_dest, 
+            src,                  
+            len,                  
+            true // Trigger execution immediately
+        );
+
+        // YIELD THE CPU: The task sleeps block until notified by ISR
+        // Consumes 0% CPU cycles while calculating large chunks or reading slow flash
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+        // Cleanup and free up hardware allocations
+        dma_channel_set_irq0_enabled(g_allocated_dma_chan, false);
+        irq_set_enabled(DMA_IRQ_0, false);
+        dma_sniffer_disable();
+        
+        uint32_t final_crc = dma_hw->sniff_data ^ 0xFFFFFFFF; // Inverse post-process
+
+        dma_channel_unclaim(g_allocated_dma_chan);
+        g_allocated_dma_chan = -1;
+
+        xSemaphoreGive(crc_mutex); 
+
+        return final_crc;
+    }
+    else
+    {
+        return(0xffffffff);
+    }
     
-    // 1. Save current task reference so the ISR knows who to wake up
-    xCrcTaskToNotify = xTaskGetCurrentTaskHandle();
-
-    // 2. Claim a free DMA channel dynamically
-    g_allocated_dma_chan = dma_claim_unused_channel(true);
-    
-    // 3. Configure hardware sniffer (Mode 0x0 = Standard IEEE 802.3 CRC-32)
-    dma_sniffer_enable(g_allocated_dma_chan, 0x0, true);
-    dma_hw->sniff_data = 0xFFFFFFFF; // Seed register
-
-    // 4. Configure DMA parameters
-    dma_channel_config c = dma_channel_get_default_config(g_allocated_dma_chan);
-    channel_config_set_sniff_enable(&c, true);
-    channel_config_set_transfer_data_size(&c, DMA_SIZE_8); // Byte alignment safe
-    channel_config_set_read_increment(&c, true);
-    channel_config_set_write_increment(&c, false);
-
-    // Reset dummy memory target
-    g_dummy_dest = 0;
-
-    // 5. Hook up the IRQ hardware line
-    dma_channel_set_irq0_enabled(g_allocated_dma_chan, true);
-    
-    // Bind shared DMA IRQ0 line to our specific handler function
-    irq_set_exclusive_handler(DMA_IRQ_0, dma_crc_irq_handler);
-    irq_set_enabled(DMA_IRQ_0, true);
-
-    // 6. Launch the DMA operation asynchronously
-    dma_channel_configure(
-        g_allocated_dma_chan,
-        &c,
-        (void*)&g_dummy_dest, 
-        src,                  
-        len,                  
-        true // Trigger execution immediately
-    );
-
-    // 7. YIELD THE CPU: The task sleeps block until notified by ISR
-    // Consumes 0% CPU cycles while calculating large chunks or reading slow flash
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-    // 8. Cleanup and free up hardware allocations
-    dma_channel_set_irq0_enabled(g_allocated_dma_chan, false);
-    irq_set_enabled(DMA_IRQ_0, false);
-    dma_sniffer_disable();
-    
-    uint32_t final_crc = dma_hw->sniff_data ^ 0xFFFFFFFF; // Inverse post-process
-
-    dma_channel_unclaim(g_allocated_dma_chan);
-    g_allocated_dma_chan = -1;
-
-    return final_crc;
 }
 
 #endif

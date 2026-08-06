@@ -11,7 +11,7 @@
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"
@@ -219,7 +219,7 @@ int picofs_descending_size_compare(const void *a, const void *b)
  * 
  * \return 0 on success
  */
-int picofs_list_files_by_size(void)  // TODO mutex protection for dma crc
+int picofs_list_files_by_size(void)
 {
     int err = -1;
     int i;
@@ -233,7 +233,7 @@ int picofs_list_files_by_size(void)  // TODO mutex protection for dma crc
         {
             list_files[current->file_id].valid = true;
 
-            if (current->file_sequence >= list_files[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            if (current->file_sequence >= list_files[current->file_id].trailer->file_sequence) 
             {
                 list_files[current->file_id].trailer = current;
             }
@@ -293,7 +293,7 @@ int picofs_metrics_name_compare(const void *a, const void *b)
  *  *     
  * \return 0 on success
  */
-int picofs_list_all_files_from_flash(bool ignore_crc)   // TODO add mutex protection since this uses dma crc
+int picofs_list_all_files_from_flash(bool ignore_crc)
 {
     int err = -1;
     int i;

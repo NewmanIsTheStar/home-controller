@@ -215,6 +215,9 @@ void boss_task(__unused void *params)
     // start watchdog
     xTaskCreate(watchdog_task, "Watchdog Task", configMINIMAL_STACK_SIZE, NULL, WATCHDOG_TASK_PRIORITY, NULL);
 
+    // initialize file system
+    picofs_initialize();
+
     // get configuration from flash
     config_read(); 
     

@@ -12,7 +12,7 @@
 #include "hardware/clocks.h"
 #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"

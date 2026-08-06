@@ -143,7 +143,7 @@ int picofs_rename(const char *src, const char *dst);
 int picofs_list_files_by_size(void);
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
 int picofs_munmap(void *addr, size_t len);
-int picofs_erase_obsolete_sectors(void);
+int picofs_erase_obsolete_sectors(bool picofs_mutext_held);
 // int picofs_consolidate_all_files(void);
 int picofs_consolidate_all_files_in_flash(void);
 int picofs_flash_erase_sector_range(int start_block, int end_block);

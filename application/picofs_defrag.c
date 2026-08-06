@@ -11,7 +11,7 @@
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"
@@ -40,6 +40,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
+#include "semphr.h"
 
 #include "stdarg.h"
 
@@ -78,6 +79,7 @@ extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
+extern SemaphoreHandle_t picofs_mutex;
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 #endif
@@ -96,7 +98,7 @@ FILE_STATUS_T consoldation_files[FS_NUM_FID];
  *  *     
  * \return 0 on success
  */
-int picofs_consolidate_all_files_in_flash(void)  // TODO add mutex protection since iter uses dma crc
+int picofs_consolidate_all_files_in_flash(void)
 {
     int err = -1;
     int i;
@@ -109,147 +111,152 @@ int picofs_consolidate_all_files_in_flash(void)  // TODO add mutex protection si
     int total_written = 0;
     FILE_TRAILER_T modified_trailer;
 
-    memset(consoldation_files, 0, sizeof(consoldation_files));
-
-    while(!picofs_iter_next_file(&current, false))
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
     {
-        if (current)
-        {
-            consoldation_files[current->file_id].valid = true;
-            num_files++;
-            size_files_plus_remnants += current->file_size;
+        memset(consoldation_files, 0, sizeof(consoldation_files));
 
-            if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+        while(!picofs_iter_next_file(&current, false))
+        {
+            if (current)
             {
-                consoldation_files[current->file_id].trailer = current;
-            }
-        }
-        else
-        {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
-            break;
-        }
-    }
+                consoldation_files[current->file_id].valid = true;
+                num_files++;
+                size_files_plus_remnants += current->file_size;
 
-    qsort(consoldation_files, NUM_ROWS(consoldation_files), sizeof(FILE_STATUS_T), picofs_descending_size_compare);
-
-    if (num_files)
-    {
-            picofs_printf("Size\t\tFID\tSEQ\tName\n");
-    }
-
-    for (i=0; i<FS_NUM_FID; i++)
-    {
-        if (consoldation_files[i].valid && !consoldation_files[i].trailer->file_status)
-        {
-            picofs_printf("%08d\t%d\t%d\t%s\n", consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_id, consoldation_files[i].trailer->file_sequence, consoldation_files[i].trailer->name);
-            size_files += consoldation_files[i].trailer->file_size;
-        }
-    }
-
-    picofs_printf("\nTotal size    %08d\n", size_files);
-    picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
-
-    picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
-
-    // picofs_printf("consolidation_area = %p\n", consolidation_area);
-
-    if (!consolidation_area)
-    {
-        shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
-        picofs_erase_obsolete_sectors();
-
-        if (picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size))
-        {
-            picofs_printf("After erasure, we still have insufficent space to consolidate.  --ABORT--\n"); 
-
-            //TODO: try asking for less space and try packing files in reverse order (smallest first) or dropping large files
-        }
-    }
-
-    total_written = 0;
-
-    if (consolidation_area)
-    {
-        for(i=0; i<FS_NUM_FID; i++)
-        {
-            if (consoldation_files[i].valid && consoldation_files[i].trailer)
-            {
-                printf("copying...\n");
-                //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
-                //memcpy(consolidation_area + total_written, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
-                
-                // append file data and exclude trailer
-                picofs_append_to_flash(consolidation_area, size_files, (char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
-                
-                // make local copy of trailer and increment sequence
-                memcpy(&modified_trailer, consoldation_files[i].trailer, sizeof(FILE_TRAILER_T));
-                picofs_increment_sequence(&modified_trailer);
-
-                // append modified trailer
-                picofs_append_to_flash(consolidation_area, size_files, (char *)&modified_trailer, sizeof(FILE_TRAILER_T));
-                
-                total_written += consoldation_files[i].trailer->file_size;
-                shell_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
-
-                // check for FID rollover
-                if (modified_trailer.file_id != consoldation_files[i].trailer->file_id)
+                if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence) 
                 {
-                    // roll over occured so need to delete old FID if space permits
-                    if (consolidation_area_size > (size_files + sizeof(FILE_TRAILER_T)))
-                    {
-                        size_files += sizeof(FILE_TRAILER_T);
-
-                        // create empty file indicating the deletion of old fid
-                        modified_trailer.file_id = consoldation_files[i].trailer->file_id;
-                        modified_trailer.file_sequence = FS_MAX_SEQ;
-                        modified_trailer.file_status = 1;
-                        modified_trailer.file_size = sizeof(FILE_TRAILER_T);
-                        modified_trailer.crc = 0; //  CRC of an empty buffer is 0  NB crc covers data but not the trailer  
-
-                        picofs_append_to_flash(consolidation_area, size_files, (char *)&modified_trailer, sizeof(FILE_TRAILER_T));
-    
-                        total_written += sizeof(FILE_TRAILER_T);    
-                        
-                        printf("Deleted inline name = %s FID = %d\n", modified_trailer.name, modified_trailer.file_sequence);
-                    }
-                    else
-                    {
-                        consoldation_files[i].pending_deletion = true;
-                    }
+                    consoldation_files[current->file_id].trailer = current;
                 }
             }
-
-            if(total_written >= size_files)
+            else
             {
-                printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", size_files, consoldation_files[i].trailer->file_id);
+                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
                 break;
             }
         }
 
-        // flush the last page to flash
-        picofs_append_to_flash(NULL, 0, NULL, 0);
+        qsort(consoldation_files, NUM_ROWS(consoldation_files), sizeof(FILE_STATUS_T), picofs_descending_size_compare);
 
-        // find and delete all duplicates created by rollovers that could not be handled during consolidation
+        if (num_files)
+        {
+                picofs_printf("Size\t\tFID\tSEQ\tName\n");
+        }
+
         for (i=0; i<FS_NUM_FID; i++)
-        {        
-            if ((consoldation_files[i].valid) && (consoldation_files[i].trailer) && (consoldation_files[i].pending_deletion))
+        {
+            if (consoldation_files[i].valid && !consoldation_files[i].trailer->file_status)
             {
-                picofs_unlink(consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_id);
-                consoldation_files[i].pending_deletion = false;
-                shell_printf("picofs: cleanup after FID rollover of %s\n", consoldation_files[i].trailer->name); 
+                picofs_printf("%08d\t%d\t%d\t%s\n", consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_id, consoldation_files[i].trailer->file_sequence, consoldation_files[i].trailer->name);
+                size_files += consoldation_files[i].trailer->file_size;
             }
         }
+
+        picofs_printf("\nTotal size    %08d\n", size_files);
+        picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
+
+        picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
+
+        // picofs_printf("consolidation_area = %p\n", consolidation_area);
+
+        if (!consolidation_area)
+        {
+            shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
+            picofs_erase_obsolete_sectors(true);
+
+            if (picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size))
+            {
+                picofs_printf("After erasure, we still have insufficent space to consolidate.  --ABORT--\n"); 
+
+                //TODO: try asking for less space and try packing files in reverse order (smallest first) or dropping large files
+            }
+        }
+
+        total_written = 0;
+
+        if (consolidation_area)
+        {
+            for(i=0; i<FS_NUM_FID; i++)
+            {
+                if (consoldation_files[i].valid && consoldation_files[i].trailer)
+                {
+                    printf("copying...\n");
+                    //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
+                    //memcpy(consolidation_area + total_written, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
+                    
+                    // append file data and exclude trailer
+                    picofs_append_to_flash(consolidation_area, size_files, (char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
+                    
+                    // make local copy of trailer and increment sequence
+                    memcpy(&modified_trailer, consoldation_files[i].trailer, sizeof(FILE_TRAILER_T));
+                    picofs_increment_sequence(&modified_trailer);
+
+                    // append modified trailer
+                    picofs_append_to_flash(consolidation_area, size_files, (char *)&modified_trailer, sizeof(FILE_TRAILER_T));
+                    
+                    total_written += consoldation_files[i].trailer->file_size;
+                    shell_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
+
+                    // check for FID rollover
+                    if (modified_trailer.file_id != consoldation_files[i].trailer->file_id)
+                    {
+                        // roll over occured so need to delete old FID if space permits
+                        if (consolidation_area_size > (size_files + sizeof(FILE_TRAILER_T)))
+                        {
+                            size_files += sizeof(FILE_TRAILER_T);
+
+                            // create empty file indicating the deletion of old fid
+                            modified_trailer.file_id = consoldation_files[i].trailer->file_id;
+                            modified_trailer.file_sequence = FS_MAX_SEQ;
+                            modified_trailer.file_status = 1;
+                            modified_trailer.file_size = sizeof(FILE_TRAILER_T);
+                            modified_trailer.crc = 0; //  CRC of an empty buffer is 0  NB crc covers data but not the trailer  
+
+                            picofs_append_to_flash(consolidation_area, size_files, (char *)&modified_trailer, sizeof(FILE_TRAILER_T));
+        
+                            total_written += sizeof(FILE_TRAILER_T);    
+                            
+                            printf("Deleted inline name = %s FID = %d\n", modified_trailer.name, modified_trailer.file_sequence);
+                        }
+                        else
+                        {
+                            consoldation_files[i].pending_deletion = true;
+                        }
+                    }
+                }
+
+                if(total_written >= size_files)
+                {
+                    printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", size_files, consoldation_files[i].trailer->file_id);
+                    break;
+                }
+            }
+
+            // flush the last page to flash
+            picofs_append_to_flash(NULL, 0, NULL, 0);
+
+            // find and delete all duplicates created by rollovers that could not be handled during consolidation
+            for (i=0; i<FS_NUM_FID; i++)
+            {        
+                if ((consoldation_files[i].valid) && (consoldation_files[i].trailer) && (consoldation_files[i].pending_deletion))
+                {
+                    picofs_unlink(consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_id);
+                    consoldation_files[i].pending_deletion = false;
+                    shell_printf("picofs: cleanup after FID rollover of %s\n", consoldation_files[i].trailer->name); 
+                }
+            }
+        }
+
+        shell_printf("picofs: consolidation completed consolidated size is %d bytes (out of %d bytes)\n", total_written, size_files);
+
+        if (total_written == size_files)
+        {
+            err = 0;
+        }
+
+        picofs_refresh_files();
+
+        xSemaphoreGive(picofs_mutex);
     }
-
-    shell_printf("picofs: consolidation completed consolidated size is %d bytes (out of %d bytes)\n", total_written, size_files);
-
-    if (total_written == size_files)
-    {
-        err = 0;
-    }
-
-    picofs_refresh_files();
     
     return(err);
 }
@@ -346,7 +353,7 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
  * \param[out]  exclude_fid  FID to exclude (use 255 to not exlude anything)  
  * \return 0 on success
  */
-int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)  // TODO add mutex to protect dma crc used by iter
+int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
 {
     int err = -1;
     int i;
@@ -368,7 +375,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
             num_files++;
             size_files_plus_remnants += current->file_size;
 
-            if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence)    // TODO proper handling of sequence wrap around!
+            if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence) 
             {
                 consoldation_files[current->file_id].trailer = current;
             }

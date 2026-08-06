@@ -199,6 +199,7 @@ typedef struct
     char acSharedVariables[NUM_SHARED_VARIABLES][VAR_NAME_LEN];  
     char acCommonVariables[NUM_COMMON_VARIABLES][VAR_NAME_LEN]; 
     char acFileName[256];
+    bool mmap;
 } tsBasicContext;
 
 
@@ -257,7 +258,8 @@ void basic_Com(void),           basic_ShellyGet(void),  basic_ShellySwitch(void)
 /*Other prototypes*/
 void update_SnmpVariables(void),dump_Variables(void);
 void get_Bracket(char cBracket),basic_NotImplemented(void);
-int basic_CreateContext(char *pcFileName, char *pcArguments);
+//int basic_CreateContext(char *pcFileName, char *pcArguments);
+int basic_CreateContext(char *pcFileName, char *pcArguments, bool mmap_program);
 int basic_DestroyContext(void);
 int load_program(char *p, char *fname);
 int load_program_from_ram(char *p, char *s, int len);

@@ -88,3 +88,33 @@ void* __wrap_realloc(void* ptr, size_t size) {
     return new_ptr;
 }
 
+// # The Pico SDK's CMake build system inherently applies the --wrap flag to standard memory routines at compile time.
+
+// # The Target:
+// # When you call standard malloc(), the linker quietly translates it into __wrap_malloc().
+
+// # The Memory Pool:
+// # This wrapped function draws memory from a continuous block of unallocated runtime SRAM calculated by the linker file
+// #  (memmap_default.ld), utilizing all remaining RAM left over after accounting for your code's binary size, 
+// #  global/static variables (.data and .bss), and hardware stacks.
+
+// # When you introduce FreeRTOS to a Pi Pico C SDK project, the default wrapping creates a famous architectural conflict.
+
+// # The Dilemma: 
+// # If you implement FreeRTOS's popular heap_4.c or heap_5.c schemes, the kernel expects to claim a chunk of
+// #  memory for pvPortMalloc() via its own arrays. Meanwhile, your standard library functions and C++ new/delete keywords
+// #   will continue to blindly look at the Pico SDK's wrapped heap.
+
+// # The Consequence:
+// # You end up with two competing memory managers wasting and fragmenting the Pico’s 264KB of SRAM. Even worse, if you
+// #  try to use heap_3.c (which forwards FreeRTOS calls to standard malloc), the overlapping mutex locks from both the
+// #   Pico SDK and FreeRTOS can conflict and cause a core deadlock.
+
+// #   Setting these flags strips away the SDK's default wrapper hooks. This allows you to either rely entirely on standard
+// #  Newlib memory with a properly tuned thread-safe integration layer or manually map __wrap_malloc pointers directly
+// #   over to FreeRTOS's pvPortMalloc.
+
+
+// # # Disable the Pico SDK's default memory and C++ allocation overrides
+// # add_compile_definitions(SKIP_PICO_MALLOC=1)
+// # add_compile_definitions(PICO_CXX_DISABLE_ALLOCATION_OVERRIDES=1)

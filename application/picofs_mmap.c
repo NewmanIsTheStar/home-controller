@@ -12,7 +12,7 @@
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"
@@ -136,7 +136,7 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
             return(MAP_FAILED);
         }
 
-        if (offset > custom_fds[target_fd].file_trailer->file_size - sizeof(FILE_TRAILER_T))
+        if (offset > (custom_fds[target_fd].file_trailer->file_size - sizeof(FILE_TRAILER_T)))
         {
             return(MAP_FAILED);
         }
@@ -154,7 +154,7 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
     // calculate direct pointer in XIP address space
     uintptr_t xip_address = XIP_BASE + offset;
     
-    // Ensure bounds match standard flash boundaries (e.g., 2MB max for standard pico)
+    // Ensure bounds match standard flash boundaries
     if (offset + len > PICO_FLASH_SIZE_BYTES) 
     {
         //errno = ENXIO;

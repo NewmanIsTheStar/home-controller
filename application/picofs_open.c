@@ -11,7 +11,7 @@
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"
@@ -86,6 +86,7 @@ extern FILE_STATUS_T picofs_files[FS_NUM_FID];
 // global variable
 int system_file_version = 1;  // used to track changes to filesystem for shell tab-completion
 SemaphoreHandle_t picofs_mutex = NULL;
+SemaphoreHandle_t crc_mutex = NULL;
 
 //static variables
 
@@ -534,7 +535,7 @@ bool picofs_is_file_deleted_from_cache(u8_t file_id)
 
 int picofs_initialize(void)
 {
-    int err = -1;
+    int err = 0;
     static bool init_fds = true;
 
     // track file system state for shell tab-completion
@@ -547,23 +548,43 @@ int picofs_initialize(void)
         init_fds = false;        
     }
 
+    if (!err)
+    {
+        printf("picofs_initialize creating file system semaphone...\n");
+        picofs_mutex = xSemaphoreCreateMutex();
+
+        if (picofs_mutex)
+        {
+            printf("picofs: init: success creating file system mutex\n");
+            err = 0;
+        }
+        else
+        {
+            printf("picofs: init: failed to create file system mutext **FUBAR**\n");
+            err = -99;
+        }
+    }
+
+    if (!err)
+    {    
+        printf("picofs_initialize creating crc dma semaphone...\n");
+        crc_mutex = xSemaphoreCreateMutex();
+
+        if (crc_mutex)
+        {
+            printf("picofs: init: success creating crc mutex\n");
+            err = 0;
+        }
+        else
+        {
+            printf("picofs: init: failed to create crc mutext **FUBAR**\n");
+            err = -101;
+        }
+    }
+
     // scan flash and cache pointers to all files
     printf("picofs_initialize refreshing file cache...\n");
     picofs_refresh_files();
-
-    printf("picofs_initialize creating semaphone...\n");
-    picofs_mutex = xSemaphoreCreateMutex();
-
-    if (picofs_mutex)
-    {
-        printf("picofs: init: success creating mutex\n");
-        err = 0;
-    }
-    else
-    {
-        printf("picofs: init: failed to create mutext **FUBAR**\n");
-        err = -99;
-    }
 
     return(err);
 }

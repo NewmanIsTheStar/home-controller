@@ -12,7 +12,7 @@
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"
@@ -133,8 +133,8 @@ void hc_task(__unused void *params)
         config.personality = HOME_CONTROLLER;
     }    
     
-    printf("home controller task initializing file system...\n");
-    picofs_initialize();
+    // printf("home controller task initializing file system...\n");
+    // picofs_initialize();
 
     printf("home controller task started\n");
     while (true)
@@ -217,7 +217,7 @@ void hc_task(__unused void *params)
                     hc_save_text_file_from_ascii_buffer();
                     break;  
                 case HC_CMD_DISK_CLEANUP:
-                    picofs_erase_obsolete_sectors();
+                    picofs_erase_obsolete_sectors(false);
                     break;                
                 case HC_CMD_DEFRAGMENT:
                     //picofs_consolidate_all_files();

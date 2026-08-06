@@ -11,7 +11,7 @@
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
-// TODO - prune this list of includes
+// Prune this list of includes
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/rand.h"
@@ -97,7 +97,7 @@ FILE_STATUS_T picofs_files[FS_NUM_FID];
  *  *     
  * \return 0 if latest, 1 if not latest sequence
  */
-int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t sequence)  // TODO mutex protection for dma crc
+int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t sequence) 
 {
     int islatest = 1;
     FILE_TRAILER_T *t = NULL;
@@ -408,7 +408,7 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
  *     
  * \return 0 on success
  */
-int picofs_refresh_files(void)  // TODO mutext protection for dma crc
+int picofs_refresh_files(void) 
 {
     int err = -1;
     FILE_TRAILER_T *current = NULL;
@@ -481,7 +481,7 @@ int picofs_increment_sequence(FILE_TRAILER_T *trailer)
  * 
  * \return 0 on success
  */
-bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_file)  // TODO mutex protection for dma crc
+bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_file) 
 {
     bool has_remnants = false;
     int i;
