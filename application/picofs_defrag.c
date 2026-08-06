@@ -96,7 +96,7 @@ FILE_STATUS_T consoldation_files[FS_NUM_FID];
  *  *     
  * \return 0 on success
  */
-int picofs_consolidate_all_files_in_flash(void)
+int picofs_consolidate_all_files_in_flash(void)  // TODO add mutex protection since iter uses dma crc
 {
     int err = -1;
     int i;
@@ -346,7 +346,7 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
  * \param[out]  exclude_fid  FID to exclude (use 255 to not exlude anything)  
  * \return 0 on success
  */
-int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
+int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)  // TODO add mutex to protect dma crc used by iter
 {
     int err = -1;
     int i;

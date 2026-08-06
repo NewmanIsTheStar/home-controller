@@ -443,61 +443,6 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
         }
     }
 
-    // // try flash
-    // if (err)
-    // {
-    //     printf("picofs: find file falling back to searching flash\n");
-
-    //     // scan backwards through flash
-    //     p = FS_END - 1 - sizeof(FILE_TRAILER_T);
-
-    //     // scan flash
-    //     while (((char *)p) >= FS_START)
-    //     {
-    //         t = (FILE_TRAILER_T *)p;
-
-    //         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-    //             (t->picofs_version == FS_VERION) &&
-    //             (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
-    //             !picofs_is_file_deleted(t->file_id))
-    //         {
-    //             // match
-    //             if (first_sequnce)
-    //             {
-    //                 best_sequence = t->file_sequence;
-    //                 best_status = t->file_status;
-    //                 *trailer = t;
-    //                 err = 0; 
-    //                 p = p - t->file_size; 
-
-    //                 first_sequnce = false;
-    //             }
-    //             else
-    //             {
-    //                 if (t->file_sequence > best_sequence) 
-    //                 {
-    //                     best_sequence = t->file_sequence;
-    //                     best_status = t->file_status;
-    //                     *trailer = t;
-    //                     err = 0;
-    //                     p = p - t->file_size;                  
-    //                 }
-    //             }
-    //         }
-
-    //         if (p == ((u8_t *)t))
-    //         {
-    //             p--;
-    //         }
-    //     }
-
-
-    //     if (best_status) // file was deleted
-    //     {
-    //         err = -1;
-    //     }
-    // }
-
     // try flash
     if (err)
     {
@@ -601,10 +546,6 @@ int picofs_initialize(void)
         memset((char *)custom_fds, 0, sizeof(custom_fds));
         init_fds = false;        
     }
-
-    // initialize dma based crc calculator
-    printf("picofs_initialize crc...\n");
-    init_crc_subsystem();
 
     // scan flash and cache pointers to all files
     printf("picofs_initialize refreshing file cache...\n");

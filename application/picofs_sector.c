@@ -95,7 +95,7 @@ extern SemaphoreHandle_t picofs_mutex;
  *    
  * \return 0 on success
  */
-int picofs_erase_obsolete_sectors(void)
+int picofs_erase_obsolete_sectors(void)   // TODO: deadlock avoidance!  mutex for protecting dma crc could easily get called twice here if not careful
 {
     int err = -1;
     u32_t i;
@@ -104,7 +104,7 @@ int picofs_erase_obsolete_sectors(void)
 
     if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
     {
-        picofs_refresh_files(); //TODO : consider removing
+        picofs_refresh_files(); //TODO : consider removing  // AVOID DEADLOCK when adding mutex for dma crc -- we likely will hold the lock already when this function is called!
 
         for(start_sector=0; start_sector < FS_NUM_SECTORS; start_sector++)
         {

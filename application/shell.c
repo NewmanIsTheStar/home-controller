@@ -92,6 +92,7 @@ static struct fs_file *pending_listen_file = NULL;
 static struct fs_file *pending_get_text = NULL;
 
 // Application RAM Storage variables
+char tab_completion_buffer[1024];
 char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_PROGRAM_SIZE];
 size_t current_buffer_index = 0;
 bool post_validation_success = true;
@@ -520,7 +521,7 @@ int fs_open_custom(struct fs_file *file, const char *name)
 // Inside your file routing function...
 if (strncmp(name, "/commands.json", 14) == 0) 
 {
-    ascii_ram_buffer[0] = 0;
+    tab_completion_buffer[0] = 0;
     static int system_file_version = 1; 
 
     // Construct the string we are searching for (e.g., "?v=1")
@@ -531,12 +532,12 @@ if (strncmp(name, "/commands.json", 14) == 0)
     if (strstr(name, version_query) != NULL) 
     {
         // Return a zero-body HTTP 304 Not Modified string response
-        size_t len = snprintf(ascii_ram_buffer, sizeof(ascii_ram_buffer),
+        size_t len = snprintf(tab_completion_buffer, sizeof(tab_completion_buffer),
             "HTTP/1.1 304 Not Modified\r\n"
             "Connection: keep-alive\r\n"
             "\r\n");
 
-        file->data = ascii_ram_buffer;
+        file->data = tab_completion_buffer;
         file->len = len;
         file->index = len;
         file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
@@ -548,22 +549,22 @@ if (strncmp(name, "/commands.json", 14) == 0)
     {
         // 1. Build a strict layout header template block. 
         // We hardcode a known 5-digit placeholder string ("00000") for Content-Length.
-        int header_len = snprintf(ascii_ram_buffer, sizeof(ascii_ram_buffer),
+        int header_len = snprintf(tab_completion_buffer, sizeof(tab_completion_buffer),
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: application/json\r\n"
             "Content-Length: 00000\r\n" 
             "\r\n");
 
         // 2. Generate JSON directly into ascii_ram_buffer immediately following the header block
-        char *json_start_ptr = ascii_ram_buffer + header_len;
-        size_t available_json_space = sizeof(ascii_ram_buffer) - header_len;
+        char *json_start_ptr = tab_completion_buffer + header_len;
+        size_t available_json_space = sizeof(tab_completion_buffer) - header_len;
         
         picofs_generate_tab_completion_file_list(json_start_ptr, available_json_space);
         size_t json_len = strlen(json_start_ptr);
 
         // 3. Find the exact text window location of our "00000" placeholder sequence inside the buffer
         // and patch it manually using snprintf safely inside its isolated slot.
-        char *length_placeholder_ptr = strstr(ascii_ram_buffer, "Content-Length: ");
+        char *length_placeholder_ptr = strstr(tab_completion_buffer, "Content-Length: ");
         if (length_placeholder_ptr != NULL) {
             // Step forward 16 characters past "Content-Length: " to target "00000"
             char *target_digits = length_placeholder_ptr + 16;
@@ -578,7 +579,7 @@ if (strncmp(name, "/commands.json", 14) == 0)
 
         // 4. Calculate total explicit layout length safely
         size_t total_len = header_len + json_len;
-        file->data = ascii_ram_buffer;
+        file->data = tab_completion_buffer;
         file->len = total_len;
         file->index = total_len;
         file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;

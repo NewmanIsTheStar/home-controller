@@ -219,7 +219,7 @@ int picofs_descending_size_compare(const void *a, const void *b)
  * 
  * \return 0 on success
  */
-int picofs_list_files_by_size(void)
+int picofs_list_files_by_size(void)  // TODO mutex protection for dma crc
 {
     int err = -1;
     int i;
@@ -293,7 +293,7 @@ int picofs_metrics_name_compare(const void *a, const void *b)
  *  *     
  * \return 0 on success
  */
-int picofs_list_all_files_from_flash(bool ignore_crc)
+int picofs_list_all_files_from_flash(bool ignore_crc)   // TODO add mutex protection since this uses dma crc
 {
     int err = -1;
     int i;
