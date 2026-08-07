@@ -174,24 +174,18 @@ void hc_task(__unused void *params)
                 switch(hc_message)
                 {
                 case HC_CMD_BASIC_INTERACTIVE:
-                    basic_Interpreter(NULL, NULL, basic_program_buffer, strlen(basic_program_buffer), false);
+                    basic_Interpreter(IM_INTERACTIVE, NULL, NULL, basic_program_buffer, strlen(basic_program_buffer));
                     break;
                 case HC_CMD_BASIC_SCRIPT:
-                    basic_program[current_buffer_index+1] = 0;
-                    basic_Interpreter(NULL, NULL, basic_program, current_buffer_index, true);                
+                    basic_program[current_buffer_index++] = 0;
+                    basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index);                
                     break;
                 case HC_CMD_BASIC_FILE:
-                    // basic_program[current_buffer_index+1] = 0;
-                    // basic_Interpreter(NULL, NULL, basic_program, current_buffer_index, true);                  
-                    // printf("DELAY 5 SECONDS\n");
-                    // SLEEP_MS(5000);
-                    // printf("Will now attempt to run script %s\n", web.basic_file_to_execute);
-                    basic_Interpreter(web.basic_file_to_execute, NULL, NULL, 0, true);                
+                    basic_Interpreter(IM_MMAP_FILE, NULL, web.basic_file_to_execute, NULL, 0);                
                     break; 
                 case HC_CMD_CAT_FILE:
                     hc_cat(web.file_to_cat);                
-                    break;                     
-                                      
+                    break;                                                        
                 case HC_CMD_LIGHTS:
                     shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
                     break;  

@@ -14,6 +14,15 @@ Description:BASIC defintions.
 //#define basic_printf(format, ...) printf("[MACRO] " format, ##__VA_ARGS__)
 #define basic_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
 
+typedef enum 
+{
+    IM_INTERACTIVE,                          // used to execute command lines one at a time as entered by the user
+    IM_LOAD_FILE_INTO_RAM,                   // file containing basic program is loaded into RAM allocated by the interpreter
+    IM_MMAP_FILE,                            // file containing basic program is mapped directly to execute in place (no additional memory allocated)
+    IM_COPY_FILE_FROM_PASSED_BUFFER,         // basic program in a buffer is copied into RAM allocated by the interpreter
+    IM_EXECUTE_IN_PASSED_RAM_BUFFER          // based program in a buffer is execute in place (no additional memory is allocated)
+} teInterpreterMode;
+
 // extracted from snmp_def.h
 enum keys
 {
@@ -200,6 +209,7 @@ typedef struct
     char acCommonVariables[NUM_COMMON_VARIABLES][VAR_NAME_LEN]; 
     char acFileName[256];
     bool mmap;
+    int iProgramLength;
 } tsBasicContext;
 
 
@@ -280,7 +290,9 @@ tsForStack fpop(void);
 void wpush(tsWhileStack i);
 tsWhileStack wpop(void);
 void update_DateAndTime(void);
-int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context);
+//int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context);
+int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileName, char *program_in_memory, int len_program_in_memory);
+int basic_ResetInteractiveContext(void);
 
 int get_token(void);
 int next_token(void);

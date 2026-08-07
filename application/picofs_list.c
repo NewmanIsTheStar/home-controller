@@ -419,7 +419,7 @@ int picofs_list_all_files_from_cache(void)
                 heading = true;
             }
             // calculate crc            
-            picofs_printf("%8d\t%3d\t%3d\t%8x\t%-16s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
+            picofs_printf("%8d\t%3d\t%3d\t%8x\t%-16s\n", list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T), list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
 
             size_files += list_files[i].trailer->file_size;
         }
@@ -482,3 +482,32 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
 
     return(0);
 }
+
+/*!
+ * \brief size of application data within file
+ * 
+ * \param[in]   filename     name to find
+ * 
+ *  
+ * \return 0 on success
+ */
+int picofs_get_file_size(char *filename)
+{
+    int i;
+    int size_files = 0;
+
+
+    memcpy(list_files, picofs_files, sizeof(list_files));
+
+    for (i=0; i<FS_NUM_FID; i++)
+    {
+        if (list_files[i].valid && !list_files[i].trailer->file_status && (strcasecmp(filename, list_files[i].trailer->name) == 0))
+        {
+            size_files = list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T);
+            break;
+        }
+    }
+
+    return(size_files);
+}
+

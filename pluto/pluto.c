@@ -9,6 +9,11 @@
 #error "LWIP_HTTPD_SUPPORT_WEBSOCKET must be enabled in lwipopts.h to use this file!"
 #endif
 
+#include <stdio.h>
+#include <sys/stat.h> 
+#include <string.h>
+#include <errno.h>
+
 #include "pico/cyw43_arch.h"
 #include "pico/types.h"
 #include "pico/stdlib.h"
@@ -92,6 +97,7 @@ int set_gpio_defaults(void);
 void print_reset_reason(void);
 void print_tasks_list(void);
 int test_myfilesystem(void);
+int test_stat(void);
 
 // TODO -- put in header file
 //void init_websocket_subsystem(void);
@@ -217,6 +223,7 @@ void boss_task(__unused void *params)
 
     // initialize file system
     picofs_initialize();
+    test_stat(); 
 
     // get configuration from flash
     config_read(); 
@@ -1076,6 +1083,32 @@ int test_myfilesystem(void)
 
     // 4. Close the file to free up system resources
     fclose(filePointer);
+
+    return 0;
+}
+
+
+int test_stat(void) 
+{
+    // 1. Define the path to your file
+    const char *filename = "goat";
+    
+    // 2. Create a stat structure to hold the file details
+    struct stat file_status;
+
+    // 3. Call stat() passing the filename and the address of your structure
+    if (stat(filename, &file_status) != 0) {
+        // If stat returns anything other than 0, an error occurred
+        fprintf(stderr, "Error reading file status: %s\n", strerror(errno));
+        return 1;
+    }
+
+    // 4. Extract the file size from the st_size member variable
+    // st_size is natively represented in bytes
+    long long file_size = (long long)file_status.st_size;
+
+    printf("File: %s\n", filename);
+    printf("Size: %lld bytes\n", file_size);
 
     return 0;
 }

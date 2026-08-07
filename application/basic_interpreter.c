@@ -6,6 +6,11 @@ Description:A BASIC interpreter with langauge extensions for SNMP and automatic
 //Use this define to enable parent scripts to continue after a child has crashed
 //#define PARENTS_CONTINUE_AFTER_ERROR
 
+#include <stdio.h>
+#include <sys/stat.h> 
+#include <string.h>
+#include <errno.h>
+
 /*Include Files*/
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,6 +54,7 @@ static bool context_initialized = false;       // used to persist context in int
 void display_ScriptLine(void);
 void basic_Stop(void);
 int load_program_using_mmap(char *p, char *fname, tsBasicContext *psContext);
+int load_program_in_place(char *p, tsBasicContext *psContext);
 
 /*BASIC command lookup table*/
 tsCommand asCommandTable[] =
@@ -141,6 +147,15 @@ tsCommand asCommandTable[] =
     "",                 END,                basic_Ignore    
 };
 
+
+int basic_ResetInteractiveContext(void)
+{
+    // recreate context
+    basic_CreateContext("commandline", "", false);  // TODO file and arguments
+
+    return(0);
+}
+
 /***************************************************************************
 Function    :  basic_Interpreter
 Description :  Launchs a new instance of the BASIC interpreter and executes
@@ -148,46 +163,69 @@ Description :  Launchs a new instance of the BASIC interpreter and executes
 Returns     :  0 - OK
                1 - error initialising BASIC interpreter
 ***************************************************************************/
-int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context)
+int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileName, char *program_in_memory, int len_program_in_memory)
 {
 	int x;
 	int iKey;
     int iInkeyIndex;
+    int load_ok = 0;
+    struct stat file_status;
 
-    if (reset_context || !context_initialized)
+    switch(mode)
     {
-        /*Create a new BASIC Context*/
-        if (program_in_memory)
+    default:
+    case IM_INTERACTIVE:
+        if (!context_initialized)
         {
-            // create ram buffer for program
             basic_CreateContext(pcFileName, pcArguments, false);
+            load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
+            apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;
         }
-        else
-        {
-            // use mmap for program in flash
-            basic_CreateContext(pcFileName, pcArguments, true);
-        }
+        break;
+    
+    case IM_EXECUTE_IN_PASSED_RAM_BUFFER:
+        basic_CreateContext(pcFileName, pcArguments, false);  
+        load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
+        apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;     
+    break;        
+
+    case IM_COPY_FILE_FROM_PASSED_BUFFER:
+        basic_CreateContext(pcFileName, pcArguments, true);  
+        load_ok = load_program_from_ram(psContext->pcProgram, program_in_memory, len_program_in_memory);
+        apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;       
+        break;
+
+    case IM_LOAD_FILE_INTO_RAM:
+        basic_CreateContext(pcFileName, pcArguments, true); 
+        load_ok = load_program(psContext->pcProgramCounter, pcFileName); 
+
+         if (stat(pcFileName, &file_status) == 0)
+         { 
+            apsContextStack[iContextIndex]->iProgramLength = file_status.st_size;
+         }
+        break;
+
+    case IM_MMAP_FILE:                           
+        basic_CreateContext(pcFileName, pcArguments, false);
+        load_ok = load_program_using_mmap(psContext->pcProgramCounter, pcFileName, apsContextStack[iContextIndex]);
+
+         if (stat(pcFileName, &file_status) == 0)
+         { 
+            apsContextStack[iContextIndex]->iProgramLength = file_status.st_size;
+         }
+        break;           
     }
 
-    if (program_in_memory)
-    {
-        /*Copy the program to execute from RAM*/
-        load_program_from_ram(psContext->pcProgram, program_in_memory, len_program_in_memory);  //TODO: this will change if we allow entering programs line by line
-        printf("PROGRAM BEGIN\n%s\nPROGRAM END\n", psContext->pcProgram);
-    }
-	/*Load the program to execute from file*/
-	//else if(!load_program(psContext->pcProgramCounter, pcFileName))
-    // TEST TEST TEST using mmap
-	else if(!load_program_using_mmap(psContext->pcProgramCounter, pcFileName, apsContextStack[iContextIndex]))        
+	if(!load_ok)        
 	{
-		basic_printf("Could not open BASIC script file\n");
+		basic_printf("Could not load BASIC to execute\n");
        
         /*Erase the current context*/
         basic_DestroyContext();
 
         /*Check for nested BASIC programs*/
         // if (iContextIndex >=0) ORIGINAL
-        if (iContextIndex >0)  // Newman altered 2026-06-19        
+        if (iContextIndex > 0)  // Newman altered 2026-06-19        
         {
             /*Reactivate the parent program*/
             bScriptFileActive = 1;
@@ -334,7 +372,7 @@ int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memo
 
 	} while (psContext->eToken != FINISHED);
 
-    if (reset_context || syntax_error_occured)   // temporary hack to clean up interactive shell after syntax error
+    if (/*reset_context || */syntax_error_occured)   // TODO -- is this needed?  original explanation: temporary hack to clean up interactive shell after syntax error
     {
         /*Erase the current context*/
         basic_DestroyContext();
@@ -434,7 +472,6 @@ int load_program_using_mmap(char *p, char *fname, tsBasicContext *psContext)
 
     if (program)
     {
-        printf("basic: mmap success\n");
         psContext->pcProgram = program;
         psContext->pcProgramCounter = program;
     }
@@ -446,6 +483,19 @@ int load_program_using_mmap(char *p, char *fname, tsBasicContext *psContext)
   
     fclose(fp);
     
+    return 1;
+}
+
+/***************************************************************************
+Function    :  load_program in place useing passed buffer
+Description :  Load a program.
+Returns     :  1 = Rock and Roll
+***************************************************************************/
+int load_program_in_place(char *p, tsBasicContext *psContext)
+{
+    psContext->pcProgram = p;
+    psContext->pcProgramCounter = p;
+       
     return 1;
 }
 
@@ -775,7 +825,7 @@ Description :  Allocates memory on the context stack for a new instance of
 Returns     :  SUCCESS = index of the new context on the context stack
                FAIL = -1
 ***************************************************************************/
-int basic_CreateContext(char *pcFileName, char *pcArguments, bool mmap_program)
+int basic_CreateContext(char *pcFileName, char *pcArguments, bool allocate_program_memory)
 {
     int x;
     int iStatus = -1;
@@ -798,7 +848,7 @@ int basic_CreateContext(char *pcFileName, char *pcArguments, bool mmap_program)
 
         if (psNewContext != NULL)
         {
-            if (!mmap_program)
+            if (allocate_program_memory)
             {
                 /*Allocate memory for the program */
 	            pcNewProgram = malloc(PROG_SIZE);
@@ -808,7 +858,7 @@ int basic_CreateContext(char *pcFileName, char *pcArguments, bool mmap_program)
                 psNewContext->mmap = true;
             }
 
-            if ((pcNewProgram != NULL) || (mmap_program))
+            if ((pcNewProgram != NULL) || (!allocate_program_memory))
             {
                 /*Push new context on context stack*/
                 apsContextStack[++iContextIndex] = psNewContext;

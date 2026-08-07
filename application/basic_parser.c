@@ -1242,6 +1242,7 @@ int get_token(void)
     /*Check for End of File or program termination*/
     if((*psContext->pcProgramCounter==0) ||
        (*psContext->pcProgramCounter==-1) ||
+       (psContext->pcProgramCounter >= (psContext->pcProgram + psContext->iProgramLength)) ||
        syntax_error_occured)
     {
         *psContext->acToken = 0;
@@ -1436,7 +1437,7 @@ int get_token(void)
         }
     }
 
-    if ((psContext->eTokenType == 0) && (*psContext->pcProgramCounter!=0))  // Newman added check for end of string
+    if ((psContext->eTokenType == 0) && (*psContext->pcProgramCounter!=0) && (psContext->pcProgramCounter < (psContext->pcProgram + psContext->iProgramLength)))  // Newman added check for end of string
     {
         /*Kludge to prevent lockup when illegal characters are encountered.
         If an unrecognised token is found then move the PC forward one character.
@@ -1445,7 +1446,7 @@ int get_token(void)
         psContext->pcProgramCounter++;
     }
 
-    //basic_printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
+    //printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
     return psContext->eTokenType;
 }
 

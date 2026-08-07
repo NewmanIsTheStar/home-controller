@@ -169,5 +169,6 @@ void init_crc_subsystem(void);
 uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t length);
 int picofs_expand_cache(int fd);
 int picofs_generate_tab_completion_file_list(char *buffer, int len);
+int picofs_get_file_size(char *filename);
 
 #endif

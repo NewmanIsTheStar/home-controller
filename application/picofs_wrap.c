@@ -1,5 +1,5 @@
 //#define _GNU_SOURCE 
-
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -277,5 +277,11 @@ int __wrap_rename(const char *old_path, const char *new_path)
     return 0;
 }
 
+int _stat(const char *filepath, struct stat *st) {
+    // Your hook logic here
+    
+    st->st_size = picofs_get_file_size((char *)filepath);
 
+    return 0;
+}
 
