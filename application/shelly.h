@@ -15,5 +15,6 @@ int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value
 int shelly_cache_insert_parameter(uint8_t device_index, char *device_parameter, uint8_t *parameter_index);
 int shelly_cache_insert_device(uint8_t *device_ip, uint8_t *device_index);
 int shelly_cache_clear(void);
+int shelly_cache_dump(void);
 
 #endif

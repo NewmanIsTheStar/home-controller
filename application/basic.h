@@ -208,7 +208,7 @@ typedef struct
     char acSharedVariables[NUM_SHARED_VARIABLES][VAR_NAME_LEN];  
     char acCommonVariables[NUM_COMMON_VARIABLES][VAR_NAME_LEN]; 
     char acFileName[256];
-    bool mmap;
+    bool allocate_program_memory;               // manage program memory automatically (not used when passed a buffer to execute in-place or using mmap)
     int iProgramLength;
 } tsBasicContext;
 

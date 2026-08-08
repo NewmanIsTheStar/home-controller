@@ -2297,7 +2297,7 @@ void basic_Run(void)
     acArguments[0] = 0;
 	get_token();
 	//basic_printf("tok = %s\n", psContext->acToken);	
-	while(psContext->eToken != EOL)
+	while((psContext->eToken != EOL) && (psContext->eToken != FINISHED))
 	{
 
 		strcat(acArguments, " ");
@@ -2349,7 +2349,7 @@ void basic_Run(void)
     
     /*Recursive call of the BASIC interpreter*/
     // TODO -- readScriptFile(acProgramName);
-    basic_printf("TODO: readScriptFile\n");
+    basic_printf("Not implemented.  You must specify a file name.\n");
 }
 
 

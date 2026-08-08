@@ -48,7 +48,7 @@ int bClearInkey = 0;                        //flag used to indicate BASIC has re
 // tsBasicContext *apsContextStack[BASIC_RECURSION_DEPTH] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 //                                                           NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 tsBasicContext *apsContextStack[BASIC_RECURSION_DEPTH] = {NULL};
-static bool context_initialized = false;       // used to persist context in interactive shell
+static bool interactive_context_initialized = false;       // used to persist context in interactive shell
 
 /*Local Prototypes*/
 void display_ScriptLine(void);
@@ -151,7 +151,10 @@ tsCommand asCommandTable[] =
 int basic_ResetInteractiveContext(void)
 {
     // recreate context
-    basic_CreateContext("commandline", "", false);  // TODO file and arguments
+    //basic_CreateContext("commandline", "", false);  // TODO file and arguments
+
+    basic_DestroyContext();
+    interactive_context_initialized = false;
 
     return(0);
 }
@@ -175,12 +178,14 @@ int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileNam
     {
     default:
     case IM_INTERACTIVE:
-        if (!context_initialized)
+        if (!interactive_context_initialized)
         {
             basic_CreateContext(pcFileName, pcArguments, false);
-            load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
-            apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;
+            interactive_context_initialized = true;
         }
+
+        load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
+        apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;        
         break;
     
     case IM_EXECUTE_IN_PASSED_RAM_BUFFER:
@@ -372,12 +377,33 @@ int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileNam
 
 	} while (psContext->eToken != FINISHED);
 
-    if (/*reset_context || */syntax_error_occured)   // TODO -- is this needed?  original explanation: temporary hack to clean up interactive shell after syntax error
+    // if (/*reset_context || */syntax_error_occured)   // TODO -- is this needed?  original explanation: temporary hack to clean up interactive shell after syntax error
+    // {
+    //     /*Erase the current context*/
+    //     basic_DestroyContext();
+    //     syntax_error_occured = false;
+    // }
+
+    switch(mode)
     {
-        /*Erase the current context*/
+    default:
+    case IM_INTERACTIVE: 
+        if (syntax_error_occured)
+        {
+            // basic_DestroyContext();                            // TODO: is it really necesary to destroy the context
+            // interactive_context_initialized = false;           // TODO: is it really necesary to destroy the context
+            syntax_error_occured = false;
+        }     
+        break;
+    
+    case IM_EXECUTE_IN_PASSED_RAM_BUFFER:
+    case IM_COPY_FILE_FROM_PASSED_BUFFER:
+    case IM_LOAD_FILE_INTO_RAM:
+    case IM_MMAP_FILE:                           
         basic_DestroyContext();
-        syntax_error_occured = false;
-    }
+        syntax_error_occured = false;                           //TODO: consider interaction with nested scripts, should this flag be within the context structure?
+        break;           
+    }    
 
     /*Check for nested BASIC programs*/
     if (iContextIndex >=0)        // TODO why = 0???
@@ -474,6 +500,8 @@ int load_program_using_mmap(char *p, char *fname, tsBasicContext *psContext)
     {
         psContext->pcProgram = program;
         psContext->pcProgramCounter = program;
+
+        STRNCPY(psContext->acFileName, fname, sizeof(psContext->acFileName));
     }
     else
     {
@@ -495,7 +523,9 @@ int load_program_in_place(char *p, tsBasicContext *psContext)
 {
     psContext->pcProgram = p;
     psContext->pcProgramCounter = p;
-       
+
+    STRNCPY(psContext->acFileName, "command line", sizeof(psContext->acFileName));
+
     return 1;
 }
 
@@ -526,7 +556,7 @@ int load_program_from_ram(char *p, char *s, int len)
         strcat(program, acProgramTerminator);
     }
   
-    STRNCPY(psContext->acFileName, "command line", sizeof(psContext->acFileName));
+    STRNCPY(psContext->acFileName, "RAM buffer", sizeof(psContext->acFileName));
     psContext->pcProgramCounter = psContext->pcProgram;
 
     return 1;
@@ -855,7 +885,7 @@ int basic_CreateContext(char *pcFileName, char *pcArguments, bool allocate_progr
             }
             else
             {
-                psNewContext->mmap = true;
+                psNewContext->allocate_program_memory = true;
             }
 
             if ((pcNewProgram != NULL) || (!allocate_program_memory))
@@ -1143,8 +1173,8 @@ int basic_DestroyContext(void)
     int iCurrentContextIndex;
     double fTemp;
 
-    // clear interactive shell context
-    context_initialized = false;
+    // // clear interactive shell context
+    // interactive_context_initialized = false;
 
     if (iContextIndex != -1)
     {
@@ -1371,8 +1401,8 @@ int basic_DestroyContext(void)
                 if ((apsContextStack[iContextIndex] != NULL) &&
                     (apsContextStack[iContextIndex]->pcProgram != NULL))
                 {
-                    // don't need to free program memory if mmap
-                    if (!apsContextStack[iContextIndex]->mmap)
+                    // don't need to free program memory if not allocate_program_memory
+                    if (!apsContextStack[iContextIndex]->allocate_program_memory)
                     {
                         free(apsContextStack[iContextIndex]->pcProgram);
                     }
