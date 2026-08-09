@@ -81,6 +81,8 @@ int shelly_parse_header(char *buffer);
 char *find_next_space_on_line(char *buffer);
 int shelly_add_discovered_device(u32_t ip, SHELLY_DEVICE_TYPE_T type);
 int shelly_dump_discovered_devices(void);
+int shelly_cache_insert_json_kvps(char *device_ip);
+int strip_quotes(char *dst, char *src);
 //void ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array);
 
 
@@ -203,6 +205,8 @@ int shelly_discover_devices(void)
             //query_status(ipstring);
             if (shelly_http_request(HTTP_GET, "/shelly", ipstring, NULL) == 200)
             {
+                shelly_cache_insert_json_kvps((char *)&ip_to_query);
+
                 // get device type
                 if (jsonp_get_value(&shelly_parser_context, "root.\"type\"", device_type, sizeof(device_type), false))
                 {
@@ -386,7 +390,7 @@ int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *c
                                 //start_of_json += 2; // point to opening brace
 
                                 jsonp_parse_buffer(&shelly_parser_context, start_of_json, false);
-                                jsonp_dump_key_value_pairs(&shelly_parser_context);
+                                jsonp_dump_key_value_pairs(&shelly_parser_context);                        
                             }
 
                             err = http_error;
@@ -519,6 +523,42 @@ int shelly_dump_discovered_devices(void)
     return(err);
 }
 
+int shelly_cache_insert_json_kvps(char *device_ip)
+{
+    int err = 0;
+    int key_index;
+    int key_heirarchy;
+    char name[32];
+    char value[64];
+
+    for(key_index=0; key_index<NUM_ROWS(shelly_parser_context.jsonp_key); key_index++)
+    {
+        name[0] = 0;
+        
+        if ((shelly_parser_context.jsonp_key[key_index][0] != 255))
+        {
+            for (key_heirarchy=0; key_heirarchy<NUM_ROWS(shelly_parser_context.jsonp_key[0]); key_heirarchy++)
+            {
+                if ((shelly_parser_context.jsonp_key[key_index][key_heirarchy] != 255))
+                {
+                    if (key_heirarchy != 0)
+                    {
+                        STRAPPEND(name, ".");
+                    }
+
+                    strip_quotes(value, shelly_parser_context.jsonp_token[shelly_parser_context.jsonp_key[key_index][key_heirarchy]]);
+
+                    STRAPPEND(name, value);
+                }
+            }
+        
+            shelly_cache_set_value(device_ip, name, shelly_parser_context.jsonp_value[key_index]);
+        }
+    }
+
+    return(err);
+}
+
 int shelly_cache_set_value(char *device_ip, char *parameter_name, char *parameter_value)
 {
     int err = 0;
@@ -611,7 +651,7 @@ int shelly_cache_insert_parameter(uint8_t device_index, char *parameter_name, ui
     uint8_t i = 0;
     uint8_t j = 0;
 
-    for(j=0; j<NUM_ROWS(shelly_cache.shelly_triple_device_index); j++)   // TODO: should this search for an existing entry and overwrite it?
+    for(j=0; j<NUM_ROWS(shelly_cache.shelly_triple_device_index); j++)
     {
         if (shelly_cache.shelly_triple_device_index[j] == 255)
         {
@@ -756,4 +796,36 @@ int shelly_cache_dump(void)
         }
     }
     return(0);
+}
+
+int strip_quotes(char *dst, char *src)
+{
+    int err = 0;
+    int len;
+    int start;
+    int end;
+    int i = 0;
+    int j = 0;
+
+    len = strlen(src);
+
+    if ((len > 0) && (src[0] == '"') && (src[len-1] == '"'))
+    {
+        start = 1;
+        end = len-1; 
+    }
+    else
+    {
+        start = 0;
+        end = len;
+    }
+
+    for (i=start; i < end; i++)
+    {
+        dst[j++] = src[i];
+    }
+
+    dst[j] = 0;
+
+    return(err);
 }
