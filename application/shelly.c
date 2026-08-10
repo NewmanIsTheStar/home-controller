@@ -57,10 +57,10 @@ typedef struct
 {
     uint8_t shelly_device_ip[64][4];
     uint8_t shelly_device_type[64];
-    uint8_t shelly_triple_device_index[128];
-    uint8_t shelly_triple_name_index[128];
-    char shelly_triple_value[128][32];
-    char shelly_parameter_name[64][32];   
+    uint8_t shelly_triple_device_index[255];
+    uint8_t shelly_triple_name_index[255];
+    char shelly_triple_value[255][32];
+    char shelly_parameter_name[255][32];   
 } SHELLY_CACHE_T;
 
 // external variables
@@ -337,7 +337,7 @@ int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *c
 
     if(socket>= 0)
     {
-        printf("SEND [%d bytes]\n%s\n", length, request); 
+        //printf("SEND [%d bytes]\n%s\n", length, request); 
         
         if (socket >= 0)
         {
@@ -345,9 +345,9 @@ int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *c
 
             if (sent_bytes)
             {
-                printf("sent_bytes = %d\n", sent_bytes);
+                //printf("sent_bytes = %d\n", sent_bytes);
 
-                printf("waiting to receive response...\n");                    
+                //printf("waiting to receive response...\n");                    
                 for (retry=0; retry<5; retry++)
                 {
                     FD_ZERO(&readset);
@@ -375,22 +375,22 @@ int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *c
     
                         if (received_bytes > 0)
                         {
-                            hex_dump(rx_buffer, received_bytes);
+                            //hex_dump(rx_buffer, received_bytes);
 
-                            print_printable_text(rx_buffer);
+                            //print_printable_text(rx_buffer);
 
-                            printf("parse header\n");
+                            //printf("parse header\n");
                             http_error = shelly_parse_header(rx_buffer);
-                            printf("http error code = %d\n", http_error);
+                            //printf("http error code = %d\n", http_error);
 
-                            printf("parse json\n");
+                            //printf("parse json\n");
                             start_of_json = strcasestr(rx_buffer, "\r\n{");
                             if (start_of_json)
                             {
                                 //start_of_json += 2; // point to opening brace
 
                                 jsonp_parse_buffer(&shelly_parser_context, start_of_json, false);
-                                jsonp_dump_key_value_pairs(&shelly_parser_context);                        
+                                //jsonp_dump_key_value_pairs(&shelly_parser_context);                        
                             }
 
                             err = http_error;
@@ -566,19 +566,19 @@ int shelly_cache_set_value(char *device_ip, char *parameter_name, char *paramete
     uint8_t parameter_index = 255;
 
     err = shelly_cache_insert_device(device_ip, &device_index);
-    printf("err = %d device index = %d\n", err, device_index);
+    //printf("err = %d device index = %d\n", err, device_index);
 
     if(!err)
     {
         err = shelly_cache_insert_parameter(device_index, parameter_name, &parameter_index);
-        printf("err = %d parameter_index = %d\n", err, parameter_index);
+        //printf("err = %d parameter_index = %d\n", err, parameter_index);
     }
 
     if(!err)
     {
         CLIP(parameter_index, 0, NUM_ROWS(shelly_cache.shelly_triple_value));
         strncpy(shelly_cache.shelly_triple_value[parameter_index], parameter_value, sizeof(shelly_cache.shelly_triple_value[parameter_index])); 
-        printf("parameter value [%d] = %s\n", parameter_index, shelly_cache.shelly_triple_value[parameter_index]);
+        //printf("parameter value [%d] = %s\n", parameter_index, shelly_cache.shelly_triple_value[parameter_index]);
     }
 
     return(err);
@@ -594,13 +594,14 @@ int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value
 
     for(device_index=0; device_index<NUM_ROWS(shelly_cache.shelly_device_ip); device_index++)
     {
-        printf("%d.%d.%d.%d vs %d.%d.%d.%d\n", device_ip[0], device_ip[1], device_ip[2], device_ip[3], shelly_cache.shelly_device_ip[device_index][0], shelly_cache.shelly_device_ip[device_index][1], shelly_cache.shelly_device_ip[device_index][2], shelly_cache.shelly_device_ip[device_index][3]);
+        //printf("%d.%d.%d.%d vs %d.%d.%d.%d\n", device_ip[0], device_ip[1], device_ip[2], device_ip[3], shelly_cache.shelly_device_ip[device_index][0], shelly_cache.shelly_device_ip[device_index][1], shelly_cache.shelly_device_ip[device_index][2], shelly_cache.shelly_device_ip[device_index][3]);
         if ((device_ip[0] == shelly_cache.shelly_device_ip[device_index][0]) &&
             (device_ip[1] == shelly_cache.shelly_device_ip[device_index][1]) &&
             (device_ip[2] == shelly_cache.shelly_device_ip[device_index][2]) &&
             (device_ip[3] == shelly_cache.shelly_device_ip[device_index][3]))
         {
             // ip match
+            //printf("IP MATCH\n");
             err = 0;
             break;
         }
@@ -612,7 +613,7 @@ int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value
         {
             err = -2;
 
-            printf("%s vs %s\n", parameter_name, shelly_cache.shelly_parameter_name[name_index]);
+            //printf("%s vs %s\n", parameter_name, shelly_cache.shelly_parameter_name[name_index]);
             if (strncmp(parameter_name, shelly_cache.shelly_parameter_name[name_index], sizeof(shelly_cache.shelly_parameter_name[name_index])) == 0)
             {
                 // name match
@@ -622,19 +623,21 @@ int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value
         }
     }
 
+    //printf("Seeking device(%d) = %0x parameter name (%d) = %s\n", device_index, *device_ip, name_index, shelly_cache.shelly_parameter_name[name_index]);
+
     if (!err)
     {
         for(parameter_index=0; parameter_index<NUM_ROWS(shelly_cache.shelly_triple_device_index); parameter_index++)
         {
             err = -3;
 
-            printf("device_index: %d vs %d  name_index %d vs %d\n", shelly_cache.shelly_triple_device_index[parameter_index], device_index, shelly_cache.shelly_triple_name_index[parameter_index], name_index);
+            //printf("device_index: %d vs %d  name_index %d vs %d\n", shelly_cache.shelly_triple_device_index[parameter_index], device_index, shelly_cache.shelly_triple_name_index[parameter_index], name_index);
             if ((shelly_cache.shelly_triple_device_index[parameter_index] == device_index) &&
                 (shelly_cache.shelly_triple_name_index[parameter_index] == name_index))
             {
                 // ip and name match
                 STRNCPY(value, shelly_cache.shelly_triple_value[parameter_index], value_len);
-                printf("value = %s\n", value);
+                //printf("value = %s\n", value);
                 err = 0;
                 break;
             }
@@ -783,7 +786,8 @@ int shelly_cache_dump(void)
     {
         if ((shelly_cache.shelly_triple_device_index[i] != 255) && (shelly_cache.shelly_triple_name_index[i] != 255))
         {
-            printf("%d.%d.%d.%d %s = %s\n", shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][3],
+            printf("%8d: %d.%d.%d.%d %s = %s\n", i,
+                                            shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][3],
                                             shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][2],
                                             shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][1],
                                             shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][0],
@@ -792,7 +796,7 @@ int shelly_cache_dump(void)
         }
         else
         {
-            printf("Skipping device_index %d name_index %d value = %s\n", shelly_cache.shelly_triple_device_index[i], shelly_cache.shelly_triple_name_index[i], shelly_cache.shelly_triple_value[i]);
+            //printf("Skipping device_index %d name_index %d value = %s\n", shelly_cache.shelly_triple_device_index[i], shelly_cache.shelly_triple_name_index[i], shelly_cache.shelly_triple_value[i]);
         }
     }
     return(0);

@@ -56,6 +56,7 @@ char bSuperSlowMode = 0;
 /*Local Prototype*/
 void get_Parameter(char *pcCommandLine);
 void basic_SetFocus(void);
+void basic_ShellyReturn(char *return_value);
 
 
 int processCommand(char *pcString)
@@ -1470,6 +1471,9 @@ void basic_ShellyGet(void)
         }
     }
 
+    // copy result into return values
+    basic_ShellyReturn(psContext->asStringVariables[iIndex].acValue);
+
 } /*End basic_ShellyGet*/
 
 
@@ -1595,3 +1599,26 @@ void basic_ShellySwitch(void)
 } /*End basic_ShellySwitch*/
 
  
+/***************************************************************************
+Function    :  basic_ShellyReturn
+Description :  Return from ShellyGet
+Returns     :  Nothing
+***************************************************************************/
+void basic_ShellyReturn(char *return_value)
+{
+    int iIntIndex;
+    int iFltIndex;
+    char *return_string;
+
+    // find return variables
+    iIntIndex = find_Variable("returnvalue%", INTEGERVARIABLE);
+    iFltIndex = find_Variable("returnvalue",  FLOATVARIABLE);
+    return_string = get_StringVariable("returnvalue$");
+
+    // copy return value into string return
+    STRNCPY(return_string, return_value, STRING_VAR_LEN);
+ 
+    // attempt to extract an integer and a float return value from the string
+    sscanf(return_string, "%d", &psContext->asIntegerVariables[iIntIndex].iValue);
+    sscanf(return_string, "%f", &psContext->asFloatVariables[iFltIndex].fValue);
+}

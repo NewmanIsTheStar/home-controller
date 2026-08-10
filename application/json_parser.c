@@ -290,7 +290,12 @@ int jsonp_parse_buffer(JSON_PARSER_CONTEXT_T *context, char *buffer, bool contin
             if (isprint(buffer[context->i]))
             {            
                 //printf("%c", shelly_json_string[i]);
-                context->entity[context->depth][context->j++] = buffer[context->i];
+                
+                // ignore leading spaces
+                if (context->j || (buffer[context->i] != ' '))
+                {
+                    context->entity[context->depth][context->j++] = buffer[context->i];
+                }
             }
         }
 

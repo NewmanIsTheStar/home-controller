@@ -57,6 +57,7 @@ tsFunction asFunctionTable[] =
     "chr$",             CHR$,
     "len$",             LEN$,
     "asc",              ASC,
+    "shelly_get",       SHELLY_GET,
     
     /*Insert new functions above this line*/
     "",                 END, 
@@ -194,6 +195,7 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
 	//char acTemp[3000];
     char acTemp[128];
 
+
     pcActivePos = pcResult;
     *pcActivePos = '\0';
 
@@ -270,6 +272,12 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
 						iTemp = acTemp[0];
                         pcActivePos += sprintf(pcActivePos, "%d", (char)iTemp);
                         get_Bracket(')');
+                        break;
+
+                    case SHELLY_GET:
+                        basic_ShellyGet();
+                        nStrVarIdx = find_Variable("returnvalue$", STRINGVARIABLE);
+                        pcActivePos += sprintf(pcActivePos, "%s", psContext->asStringVariables[nStrVarIdx].acValue);                       
                         break;
 						
                     default:
@@ -921,10 +929,9 @@ void eval_function(int *piAnswer, double *pfAnswer)
 {
     int iFunction =  0;
 	char acTemp[3000];
-
+    
     iFunction = psContext->eToken;
     
-
 	if (iFunction == LEN$)
 	{
 		//get_Bracket('(');
@@ -948,6 +955,15 @@ void eval_function(int *piAnswer, double *pfAnswer)
 
 		get_Bracket(')');    
 		get_token();
+    }
+    else if (iFunction == SHELLY_GET)
+    {
+        basic_ShellyGet();
+
+        *piAnswer = get_IntegerVariable("returnvalue%");
+        *pfAnswer = get_FloatVariable("returnvalue");        
+        
+        get_token();
     }
 	else
 	{
@@ -1446,7 +1462,7 @@ int get_token(void)
         psContext->pcProgramCounter++;
     }
 
-    //printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
+    //shell_printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
     return psContext->eTokenType;
 }
 

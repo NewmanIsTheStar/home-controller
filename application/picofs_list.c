@@ -460,8 +460,7 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
     STRNCAT(buffer, "\"rm\",", len);  
     STRNCAT(buffer, "\"mv\",", len);  
     STRNCAT(buffer, "\"cp\",", len);  
-    STRNCAT(buffer, "\"defrag\",", len);  
-    STRNCAT(buffer, "\"disk\",", len);  
+    STRNCAT(buffer, "\"defrag\",", len);   
     STRNCAT(buffer, "\"cleanup\",", len); 
     STRNCAT(buffer, "\"run\",", len);     
     STRNCAT(buffer, "\"edit\",", len);                                               
