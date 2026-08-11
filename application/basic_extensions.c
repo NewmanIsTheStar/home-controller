@@ -1380,6 +1380,7 @@ void basic_ShellyGet(void)
     char parameter_name[32];
     int iIndex = -1;
     uint8_t device_ip[4] = {0,0,0,0};
+    char result[20];
 
     /*Get the opening bracket*/
     get_Bracket('(');
@@ -1439,40 +1440,55 @@ void basic_ShellyGet(void)
         break;
     }
 
-    // comma
+    // comma OR closing bracket
     get_token();
 
-    // return variable
-    get_token();
-    
-    switch(psContext->eTokenType)
+    if ((psContext->eTokenType == DELIMITER) && (psContext->acToken[0] == ','))
     {
-    case STRINGVARIABLE:
-        iIndex = find_Variable(psContext->acToken, STRINGVARIABLE);
-	    if (iIndex == -1) iIndex = create_Variable(psContext->acToken, STRINGVARIABLE);
-        break;
-    default:
-        syntax_error(SYNTAX);
-        break;
-    }
+        // optional return variable
+        get_token();
+        
+        switch(psContext->eTokenType)
+        {
+        case STRINGVARIABLE:
+            iIndex = find_Variable(psContext->acToken, STRINGVARIABLE);
+            if (iIndex == -1) iIndex = create_Variable(psContext->acToken, STRINGVARIABLE);
+            break;
+        default:
+            syntax_error(SYNTAX);
+            break;
+        }
 
-    /*Get the closing bracket*/
-    get_Bracket(')');
+        /*Get the closing bracket*/
+        get_Bracket(')');
+    }
+    else if ((psContext->eTokenType == DELIMITER) && (psContext->acToken[0] == ')'))
+    {
+        iIndex = -1;
+    }
+    else
+    {
+       syntax_error(SYNTAX); 
+    }
 
     // convert ip address string to 4 bytes
     ip_string_to_int_array_pton(device_ip_string, device_ip); 
 
-    if(iIndex >=0 )
+
+    if (shelly_cache_get_value(device_ip, parameter_name, result, sizeof(result)))
     {
-        if (shelly_cache_get_value(device_ip, parameter_name, psContext->asStringVariables[iIndex].acValue, sizeof(psContext->asStringVariables[iIndex].acValue)))
-        {
-            basic_printf("RUNTIME ERROR: shelly_get failed (%s)\n", psContext->asStringVariables[iIndex].acValue);
-            psContext->asStringVariables[iIndex].acValue[0] = 0;    
-        }
+        basic_printf("RUNTIME ERROR: shelly_get failed (%s)\n", parameter_name);
+        result[0] = 0;    
     }
 
-    // copy result into return values
-    basic_ShellyReturn(psContext->asStringVariables[iIndex].acValue);
+    // copy result into function return values
+    basic_ShellyReturn(result);
+
+    // copy result into optional return variable if provided by the caller
+    if(iIndex >=0 )
+    {
+        STRNCPY(psContext->asStringVariables[iIndex].acValue, result, sizeof(psContext->asStringVariables[iIndex].acValue));
+    }
 
 } /*End basic_ShellyGet*/
 
@@ -1556,7 +1572,8 @@ void basic_ShellySwitch(void)
     default:
     case QUOTE:    
     case STRING:
-        strncpy(relay_string, psContext->acToken, sizeof(relay_string));  //TODO: strip quotes -- add in-place modification function to utility.c
+        STRNCPY(relay_string, psContext->acToken, sizeof(relay_string));
+        strip_quotes(relay_string, relay_string);  // TODO: confirm this works in place (src == dst) -- should unless compiler messes with the loop
         break;
     }
 
@@ -1594,6 +1611,7 @@ void basic_ShellySwitch(void)
 
     // construct shelly command
     snprintf(command_string, sizeof(command_string), "/relay/%s?turn=%s", relay_string, state_string);
+    printf("CMD = %s IP = %s\n", command_string, device_ip_string);
 
     shelly_http_request(HTTP_GET, command_string, device_ip_string, NULL);
 } /*End basic_ShellySwitch*/
@@ -1622,3 +1640,4 @@ void basic_ShellyReturn(char *return_value)
     sscanf(return_string, "%d", &psContext->asIntegerVariables[iIntIndex].iValue);
     sscanf(return_string, "%f", &psContext->asFloatVariables[iFltIndex].fValue);
 }
+

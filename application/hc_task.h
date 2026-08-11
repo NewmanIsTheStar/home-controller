@@ -18,7 +18,8 @@
 #define HC_CMD_DISK_CLEANUP (11)
 #define HC_CMD_BASIC_FILE (12)
 #define HC_CMD_CAT_FILE (13)
-#define HC_CMD_LIST_CORRUPT 14
+#define HC_CMD_LIST_CORRUPT (14)
+#define HC_CMD_SHELLY_DEVICE_DUMP 15
 
 typedef enum
 {

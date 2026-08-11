@@ -35,6 +35,7 @@
 #include "json_parser.h"
 #include "pluto.h"
 #include "ping_core.h"
+#include "shell.h"
 
 #define GET_REQUEST "GET / HTTP/1.0\r\n\r\n"
 
@@ -222,22 +223,22 @@ int shelly_discover_devices(void)
                 if (strcasecmp(device_type, "\"SHSW-25\"") == 0)
                 {
                     shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_SHSW_25);
-                    shelly_cache_set_value((char *)&ip_to_query, "type", device_type);
+                    shelly_cache_set_value((char *)&ip_to_query, "known_type", device_type);
                 }
                 else if (strncasecmp(device_id, "\"shellypluswdus", 15) == 0)
                 {
                     shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_PLUSWDUS);
-                    shelly_cache_set_value((char *)&ip_to_query, "type", device_id);
+                    shelly_cache_set_value((char *)&ip_to_query, "known_type", device_id);
                 }      
                 else if (strncasecmp(device_id, "\"shellyplus1", 12) == 0)
                 {
                     shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_PLUS1);
-                    shelly_cache_set_value((char *)&ip_to_query, "type", device_id);
+                    shelly_cache_set_value((char *)&ip_to_query, "known_type", device_id);
                 }  
                 else if (strncasecmp(device_id, "\"shellyplus2pm", 14) == 0)
                 {
                     shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_PLUS2PM);
-                    shelly_cache_set_value((char *)&ip_to_query, "type", device_id);
+                    shelly_cache_set_value((char *)&ip_to_query, "known_type", device_id);
                 }                                            
                 else
                 {
@@ -375,9 +376,9 @@ int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *c
     
                         if (received_bytes > 0)
                         {
-                            //hex_dump(rx_buffer, received_bytes);
+                            // hex_dump(rx_buffer, received_bytes);
 
-                            //print_printable_text(rx_buffer);
+                            // print_printable_text(rx_buffer);
 
                             //printf("parse header\n");
                             http_error = shelly_parse_header(rx_buffer);
@@ -584,7 +585,7 @@ int shelly_cache_set_value(char *device_ip, char *parameter_name, char *paramete
     return(err);
 }
 
-int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value, size_t value_len)
+int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value, size_t value_len)  //TODO: would it be simpler to just compare IP as a 32 object?
 {
     int err = -1;
     uint8_t device_index;
@@ -799,6 +800,51 @@ int shelly_cache_dump(void)
             //printf("Skipping device_index %d name_index %d value = %s\n", shelly_cache.shelly_triple_device_index[i], shelly_cache.shelly_triple_name_index[i], shelly_cache.shelly_triple_value[i]);
         }
     }
+    return(0);
+}
+
+int shelly_cache_device_dump(char *ipv4_string)
+{
+    int i;
+    u32_t ip;
+    int values[4] = {0,0,0,0};
+    u8_t byte = 0;
+    int num_cache_entries = 0;
+
+    sscanf(ipv4_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
+    
+    ip   = 0x00000000;
+    for(i=0; i<4; i++)
+    {
+        byte = (u8_t)values[i];
+        ip = ip<<8 | byte;
+    }
+
+    shell_printf("shelly cache entries for device @ %d.%d.%d.%d\n",
+                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][3],
+                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][2],
+                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][1],
+                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][0]);
+
+    for (i=0; i<NUM_ROWS(shelly_cache.shelly_triple_value); i++)
+    {
+        if ((shelly_cache.shelly_triple_device_index[i] != 255) &&
+            (shelly_cache.shelly_triple_name_index[i] != 255) &&
+            (ip == *(u32_t *)shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]]))
+        {
+            shell_printf("\t%s = %s\n",
+                shelly_cache.shelly_parameter_name[shelly_cache.shelly_triple_name_index[i]],
+                shelly_cache.shelly_triple_value[i]);
+
+            num_cache_entries++; 
+        }
+    }
+
+    if (!num_cache_entries)
+    {
+        shell_printf("\tnone\n");
+    }
+
     return(0);
 }
 

@@ -330,6 +330,14 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_DUMP_PROGRAM);  
     } 
+    else if (strncmp(cmd, "shelly dump ", 12) == 0) 
+    {
+        if (strlen(cmd) > 13)
+        {
+            web.shelly_device_ip = ((char *)(cmd+12)); 
+            hc_queue_send(HC_CMD_SHELLY_DEVICE_DUMP);  
+        }
+    }     
     else if (strncmp(cmd, "run ", 4) == 0) 
     {
         if (strlen(cmd) > 5)

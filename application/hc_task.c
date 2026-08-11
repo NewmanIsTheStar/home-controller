@@ -188,7 +188,10 @@ void hc_task(__unused void *params)
                     break;                                                        
                 case HC_CMD_LIGHTS:
                     shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
-                    break;  
+                    break; 
+                case HC_CMD_SHELLY_DEVICE_DUMP :
+                    shelly_cache_device_dump(web.shelly_device_ip);
+                    break;
                 case HC_CMD_DUMP_PROGRAM:
                     dump_text_buffer();
                     break;   

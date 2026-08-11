@@ -503,16 +503,20 @@ Calibration:
 http://192.168.xxx.xxx/calibrate
 
 
-PICO HOSTNAME CHANGE
-<initialize cyw43 driver>
-...
-cyw43_arch_enable_sta_mode();
-...
-cyw43_arch_lwip_begin();
-struct netif *n = &cyw43_state.netif[CYW43_ITF_STA];
-netif_set_hostname(n, my_hostname);
-netif_set_up(n);
-cyw43_arch_lwip_end();
-...
-<connect to Wifi using cyw43_arch_wifi_connect_(), etc...>
 
+
+You can get a relay channel name on Gen2+ Shelly devices using the Switch.GetConfig RPC method via an HTTP GET
+ request to http://<device_ip>/rpc/Switch.GetConfig?id=<channel_index>.API RequestEndpoint
+ 
+  URL: http://<device_ip>/rpc/Switch.GetConfig?id=0 
+ 
+ (replace 0 with your target channel ID like 0, 1, etc.)
+ 
+ Alternative JSON-RPC POST payload: {"id": 1, "method": "Switch.GetConfig", "params": {"id": 0}}
+
+Gen1 firmware does not store or return custom names for individual channels via the local HTTP endpoint
+ (/settings or /status). Custom channel names are entirely managed and saved by the Shelly Cloud application
+  or your chosen smart home platform (like Home Assistant or HomeSeer).
+
+On Gen1 Shelly devices (like the original Shelly 1, Shelly 2.5, or Shelly Plug), the local API does not use RPC commands.
+ Instead, it uses a simpler, traditional URL-based system.
