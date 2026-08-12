@@ -76,7 +76,7 @@ extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 
 //static variables
-
+TaskHandle_t validator_task_handle;
 
 /*!
  * \brief home controller task
@@ -89,12 +89,23 @@ void discovery_task(__unused void *params)
 {
     SOCKADDR_IN sClientAddress;  
     int received_bytes = 0;  
-    u32_t last_shelly_scan = 0;       
+    u32_t last_shelly_scan = 0; 
+    BaseType_t task_creation_status = 0;      
     
     printf("discovery task started\n");
+
+    task_creation_status = xTaskCreate(http_validator_task, "validator", 8192, NULL, 1, &validator_task_handle);
+        
+    if (task_creation_status != pdPASS)
+    {
+        printf("VALIDATOR TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
+    }
+
+    init_mdns_scanner();
+
     while (true)
     {        
-        if ((config.personality == HOME_CONTROLLER))
+        if ((/*config.personality == HOME_CONTROLLER)*/0))
         {
             if ((unix_time - last_shelly_scan) > (60*60))
             {

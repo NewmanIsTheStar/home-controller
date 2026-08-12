@@ -4,6 +4,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         hc_task.c
         discovery_task.c
         shelly.c 
+        shelly_discovery.c
         json_parser.c
         basic_commands.c
         basic_extensions.c
