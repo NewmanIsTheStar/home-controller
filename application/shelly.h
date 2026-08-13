@@ -21,5 +21,6 @@ int strip_quotes(char *dst, char *src);
 void http_validator_task(void *pvParameters);
 void init_mdns_scanner();
 void mdns_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
+void websocket_client_task(void *pvParameters);
 
 #endif

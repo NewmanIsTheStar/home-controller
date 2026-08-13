@@ -94,14 +94,22 @@ void discovery_task(__unused void *params)
     
     printf("discovery task started\n");
 
-    task_creation_status = xTaskCreate(http_validator_task, "validator", 8192, NULL, 1, &validator_task_handle);
+
+    // task_creation_status = xTaskCreate(http_validator_task, "validator", 8192, NULL, 1, &validator_task_handle);
+        
+    // if (task_creation_status != pdPASS)
+    // {
+    //     printf("VALIDATOR TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
+    // }
+
+    task_creation_status = xTaskCreate(websocket_client_task, "websocket task", 8192, NULL, 1, &validator_task_handle);
         
     if (task_creation_status != pdPASS)
     {
-        printf("VALIDATOR TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
+        printf("WEBSOCKET TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
     }
 
-    init_mdns_scanner();
+    //init_mdns_scanner();
 
     while (true)
     {        

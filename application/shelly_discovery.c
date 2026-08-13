@@ -538,3 +538,16 @@ The primary parsing loop must parse exactly Answers + Authority + Additional rec
     • TCP Non-Blocking Timeouts: Shelly devices on sleep mode or slow Wi-Fi links can hang threads. Set the lwIP Netconn receive timeout (netconn_set_rcvtimeo(conn, 2000))
       to a maximum of 2 seconds so a dead device doesn't lock up a worker task.
 */
+
+/*
+By default, Shelly Gen 1 devices use the standard CoAP multicast address 224.0.1.187 on UDP port 5683 for CoIoT multicast (mcast) communications
+
+Use Inbound WebSockets (Best for Multi-Hub Local Control)While the device only supports one outbound connection, its local Inbound WebSocket endpoint
+ (ws://<SHELLY_IP>/rpc) can handle multiple concurrent connections from different clients.How to use it: Instead of forcing the Shelly to dial out to the hubs,
+  configure your smart home platforms (such as Home Assistant and Hubitat) to independently connect to the Shelly device directly. Both hubs can stay connected, 
+  poll, and receive push events over this inbound connection at the exact same time.
+
+ Share Data via MQTTIf you need true standalone, multiple-client status delivery where the device handles pushing data out, MQTT is the industry standard.
+ How to use it: Enable MQTT in the Shelly settings. Have the Shelly publish its state changes to a centralized MQTT Broker (like Mosquitto). Any number of
+  distinct smart home hubs can subscribe to that broker simultaneously to get immediate updates without placing any extra load on the Shelly hardware.
+*/
