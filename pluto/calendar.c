@@ -1423,11 +1423,7 @@ int get_time_string_from_unix_time(uint32_t unixtime, char *time_string, int len
 #define M_PI 3.14159265358979323846
 #endif
 
-typedef struct {
-    double sunrise; 
-    double sunset;  
-    int success;    
-} SolarTimes;
+
 
 double degToRad(double degrees) {
     return degrees * M_PI / 180.0;

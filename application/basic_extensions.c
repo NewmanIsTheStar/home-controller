@@ -1521,16 +1521,16 @@ void basic_ShellySwitch(void)
     case STRINGVARIABLE:
         strncpy(device_ip_string, get_StringVariable(psContext->acToken), sizeof(device_ip_string));
         break;
-        case DELIMITER:
-        case INTEGERVARIABLE:        
-        case COMMAND:
-        case LABEL:
-        case FLOATVARIABLE:        
-        case FUNCTION:
-        case LOGIC:
-        case USERFUNCTION:
-            syntax_error(SYNTAX);
-            break;
+    case DELIMITER:
+    case INTEGERVARIABLE:        
+    case COMMAND:
+    case LABEL:
+    case FLOATVARIABLE:        
+    case FUNCTION:
+    case LOGIC:
+    case USERFUNCTION:
+        syntax_error(SYNTAX);
+        break;
     default:
     case QUOTE:    
     case NUMBER:
@@ -1550,25 +1550,25 @@ void basic_ShellySwitch(void)
     case STRINGVARIABLE:
         strncpy(relay_string, get_StringVariable(psContext->acToken), sizeof(relay_string));
         break;
-        case DELIMITER:
-        case COMMAND:
-        case LABEL:
-        case FUNCTION:
-        case LOGIC:
-        case USERFUNCTION:
-            syntax_error(SYNTAX);
-            break;
-        case INTEGERVARIABLE: 
-            relay = get_IntegerVariable(psContext->acToken);
-            snprintf(relay_string, sizeof(relay_string), "%d", relay);
-            break;
-        case FLOATVARIABLE:
-            relay = (int)round(get_FloatVariable(psContext->acToken));
-            snprintf(relay_string, sizeof(relay_string), "%d", relay);             
-            break;  
-        case NUMBER:
-            strncpy(relay_string, psContext->acToken, sizeof(relay_string));                      
-            break;
+    case DELIMITER:
+    case COMMAND:
+    case LABEL:
+    case FUNCTION:
+    case LOGIC:
+    case USERFUNCTION:
+        syntax_error(SYNTAX);
+        break;
+    case INTEGERVARIABLE: 
+        relay = get_IntegerVariable(psContext->acToken);
+        snprintf(relay_string, sizeof(relay_string), "%d", relay);
+        break;
+    case FLOATVARIABLE:
+        relay = (int)round(get_FloatVariable(psContext->acToken));
+        snprintf(relay_string, sizeof(relay_string), "%d", relay);             
+        break;  
+    case NUMBER:
+        strncpy(relay_string, psContext->acToken, sizeof(relay_string));                      
+        break;
     default:
     case QUOTE:    
     case STRING:
@@ -1641,3 +1641,5 @@ void basic_ShellyReturn(char *return_value)
     sscanf(return_string, "%f", &psContext->asFloatVariables[iFltIndex].fValue);
 }
 
+
+//SolarTimes calculateSolarTimes(int dayOfYear, double latitude, double longitude) 

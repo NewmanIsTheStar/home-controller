@@ -14,6 +14,13 @@ typedef enum
     SCHEDULE_NEVER = 2,
 } SCHEDULE_QUERY_STATUS_LT;
 
+typedef struct {
+    double sunrise; 
+    double sunset;  
+    int success;    
+} SolarTimes;
+
+SolarTimes calculateSolarTimes(int dayOfYear, double latitude, double longitude);
 int set_daylight_saving_dates(void);
 int sanitize_daylight_saving_date(char *in, char *out, int len);
 int get_day_of_week(int m,int d,int y);

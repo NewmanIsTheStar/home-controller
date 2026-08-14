@@ -94,7 +94,7 @@ void discovery_task(__unused void *params)
     
     printf("discovery task started\n");
 
-
+// THIS CODE connects to the multicast group used by shelly devices to announce status changes.  Gen1 devices are very talkative. 
     // task_creation_status = xTaskCreate(http_validator_task, "validator", 8192, NULL, 1, &validator_task_handle);
         
     // if (task_creation_status != pdPASS)
@@ -102,12 +102,13 @@ void discovery_task(__unused void *params)
     //     printf("VALIDATOR TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
     // }
 
-    task_creation_status = xTaskCreate(websocket_client_task, "websocket task", 8192, NULL, 1, &validator_task_handle);
+// THIS CODE uses a websocket to connect to a shelly device [incomplete -- need to send http get].  However, this won't scale well as it uses too much RAM on the Pico2.
+    // task_creation_status = xTaskCreate(websocket_client_task, "websocket task", 8192, NULL, 1, &validator_task_handle);
         
-    if (task_creation_status != pdPASS)
-    {
-        printf("WEBSOCKET TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
-    }
+    // if (task_creation_status != pdPASS)
+    // {
+    //     printf("WEBSOCKET TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
+    // }
 
     //init_mdns_scanner();
 
