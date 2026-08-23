@@ -110,6 +110,20 @@ void discovery_task(__unused void *params)
     //     printf("WEBSOCKET TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
     // }
 
+// THIS CODE uses a webhook -- shelly device sends a pre-configured get request when motion detected 
+    // task_creation_status = xTaskCreate(webhook_server_task, "webshook task", 8192, NULL, 1, &validator_task_handle);
+        
+    // if (task_creation_status != pdPASS)
+    // {
+    //     printf("WEBSOCKET TASK :: xTaskCreate failed -- return value [%d]\n", task_creation_status);
+    // }
+
+    sys_thread_new("webhook_server", 
+               webhook_server_task, 
+               NULL, 
+               4096,   // Stack size
+               1);     // Priority
+
     //init_mdns_scanner();
 
     while (true)

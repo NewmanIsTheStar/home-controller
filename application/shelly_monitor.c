@@ -204,15 +204,17 @@ void websocket_client_task(void *pvParameters)
         vTaskDelete(NULL);
     }
 
-    // 2. Transmit the Handshake Upgrade Request
+    // 2. Transmit the Handshake Upgrade Request targeting the Gen2 RPC endpoint
     int handshake_len = snprintf(buffer, BUFFER_SIZE,
-                                 "GET / HTTP/1.1\r\n"
+                                 "GET /rpc HTTP/1.1\r\n"                  // <-- FIX 1: Change / to /rpc
                                  "Host: %s:%d\r\n"
                                  "Upgrade: websocket\r\n"
                                  "Connection: Upgrade\r\n"
                                  "Sec-WebSocket-Key: %s\r\n"
-                                 "Sec-WebSocket-Version: 13\r\n\r\n",
+                                 "Sec-WebSocket-Version: 13\r\n"
+                                 "Accept-Encoding: identity\r\n\r\n",    // <-- FIX 2: Explicitly forbid gzip
                                  SERVER_IP, SERVER_PORT, CLIENT_WS_KEY);
+
 
     send(socket_fd, buffer, handshake_len, 0);
 
@@ -297,3 +299,100 @@ Use Inbound WebSockets (Best for Multi-Hub Local Control)While the device only s
  How to use it: Enable MQTT in the Shelly settings. Have the Shelly publish its state changes to a centralized MQTT Broker (like Mosquitto). Any number of
   distinct smart home hubs can subscribe to that broker simultaneously to get immediate updates without placing any extra load on the Shelly hardware.
 */
+
+
+#define LISTEN_PORT 8080
+#define RX_BUFFER_SIZE 512
+
+void webhook_server_task(void *pvParameters)
+{
+    int listen_fd, client_fd;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    char *rx_buffer = pvPortMalloc(RX_BUFFER_SIZE);
+
+    if (!rx_buffer) {
+        printf("Failed to allocate memory for webhook buffer.\n");
+        vTaskDelete(NULL);
+    }
+
+    // 1. Create a standard streaming TCP socket
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (listen_fd < 0) {
+        printf("Failed to create listening socket.\n");
+        vPortFree(rx_buffer);
+        vTaskDelete(NULL);
+    }
+
+    // 2. Bind the socket to port 8080
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY; // Listen on all network interfaces
+    server_addr.sin_port = htons(LISTEN_PORT);
+
+    if (bind(listen_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        printf("Socket bind failed.\n");
+        close(listen_fd);
+        vPortFree(rx_buffer);
+        vTaskDelete(NULL);
+    }
+
+    // 3. Start listening for incoming connections (Queue backlog of 2)
+    if (listen(listen_fd, 2) < 0) {
+        printf("Socket listen failed.\n");
+        close(listen_fd);
+        vPortFree(rx_buffer);
+        vTaskDelete(NULL);
+    }
+
+    printf("Webhook Server started! Listening for Shelly on port %d...\n", LISTEN_PORT);
+
+    // 4. Main server loop
+    while (1) 
+    {
+        // Block until the Shelly wakes up and connects
+        client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+        if (client_fd < 0) {
+            continue; 
+        }
+
+        memset(rx_buffer, 0, RX_BUFFER_SIZE);
+        int bytes_received = recv(client_fd, rx_buffer, RX_BUFFER_SIZE - 1, 0);
+
+        if (bytes_received > 0) 
+        {
+            // 5. Basic URL Routing / Parsing logic
+            if (strstr(rx_buffer, "GET /motion_active") != NULL) 
+            {
+                printf("[ALERT] Motion Detected by Shelly!\n");
+                // Run your custom motion handling logic here (e.g., turn on a LED or relay)
+            } 
+            else if (strstr(rx_buffer, "GET /motion_blind") != NULL) 
+            {
+                printf("[INFO] Motion cleared / Device is blind.\n");
+            }
+            else
+            {
+                printf("unhandled motion message\n");
+            }
+            
+            // 6. Send a standard HTTP 200 OK back to the Shelly so it knows we received it
+            const char *http_response = 
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: text/plain\r\n"
+                "Content-Length: 2\r\n"
+                "Connection: close\r\n\r\n"
+                "OK";
+                
+            send(client_fd, http_response, strlen(http_response), 0);
+        }
+
+        // 7. Close client connection immediately so Shelly can go right back to sleep
+        close(client_fd);
+        vTaskDelay(pdMS_TO_TICKS(10)); // Yield to prevent watchdog starvation
+    }
+
+    // Cleanup (Unreachable in standard execution)
+    close(listen_fd);
+    vPortFree(rx_buffer);
+    vTaskDelete(NULL);
+}

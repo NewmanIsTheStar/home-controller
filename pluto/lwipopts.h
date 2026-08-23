@@ -181,4 +181,10 @@ Increase MQTT_OUTPUT_RINGBUF_SIZE: If sending multiple subscription requests in 
 // Newman enabled to support etag for dynamic changes to tab completion
 //#define LWIP_HTTPD_SUPPORT_CUSTOM_HEADERS 1
 
+// Newman added for webhook test task
+#define DEFAULT_ACCEPTMBOX_SIZE         6   // Backlog queue depth for listen()
+#define DEFAULT_TCP_RECVMBOX_SIZE       6   
+#define MEMP_NUM_SYS_MBOX               10  // Total concurrent mailboxes allowed
+#define MEMP_NUM_SYS_SEM                10  // Total concurrent semaphores allowed
+
 #endif
