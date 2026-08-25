@@ -1934,7 +1934,10 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                         //printf("redirecting to landscape.shtml\n");
                         printed = snprintf(pcInsert, iInsertLen, "/ts_thermostat.shtml");
                     }            
-                    break;                
+                    break;     
+                case HOME_CONTROLLER:
+                        printed = snprintf(pcInsert, iInsertLen, "/dashboard.shtml");
+                        break;                                
                 }
             }
         }                                                                                                                                                   
@@ -1985,7 +1988,10 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     {
                         printed = snprintf(pcInsert, iInsertLen, "/t_schedule.cgi?day=0");
                     }            
-                    break;                
+                    break;  
+                case HOME_CONTROLLER:
+                        printed = snprintf(pcInsert, iInsertLen, "/dashboard.shtml");
+                        break;                      
                 }
             }
         }                                                                                                                                                   

@@ -380,10 +380,14 @@ void basic_If(void)
         syntax_error(NOT_VAR);       
     }
     
-
-
     /* Process THEN token */
-    get_token();
+    get_token(); 
+
+    // Newman added in 2026  -- allow THEN to be on newline
+    while (psContext->eToken == EOL)
+    {
+        get_token();
+    }   
 
     if ( psContext->eToken != THEN )
     {

@@ -598,6 +598,14 @@ void eval_bitwise(int *piAnswer, double *pfAnswer)
           ((psContext->eTokenType == LOGIC) && ((op == 'a') || (op == 'o'))))
     {
         get_token();
+
+        //Newman added in 2026  -- allow conditions on multiple lines if line break occurs immediately after AND or OR
+        while (psContext->eToken == EOL)
+        {
+            get_token();
+        } 
+        
+
         eval_bitshift(&iTemp, &fTemp);
     
         switch(op)

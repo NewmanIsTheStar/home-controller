@@ -80,39 +80,6 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
     }
 }
 
-// moved to pluto.c
-
-// /*!
-//  * \brief convert string to integer times ten plus tenths e.g. "78.32" => 783
-//  *
-//  * \param[in]  value_string index of cgi handler in cgi_handlers table
-//  * 
-//  * \return integer = value x 10
-//  */
-// int get_int_with_tenths_from_string(char *value_string)
-// {
-//     int whole_part = 0;
-//     int tenths_part = 0;
-//     int new_value = 0;
-
-//     whole_part = 0;
-//     tenths_part = 0;
-
-//     sscanf(value_string, ".%d", &tenths_part);  
-//     sscanf(value_string, "%d.%d", &whole_part, &tenths_part);  
-
-//     while (tenths_part > 10)
-//     {
-//         if ((tenths_part>10) && (tenths_part<100)) tenths_part += 5;  // round up
-//         tenths_part /= 10;
-//     }
-
-//     CLIP(tenths_part, 0, 9);
-
-//     new_value = whole_part*10 + tenths_part;   
-
-//     return(new_value);
-// }
 
 // /*!
 //  * \brief cgi handler
@@ -4208,7 +4175,7 @@ static const MY_CGI_T system_cgi_handlers[] = {
 /**
  * Global CGI handler used when LWIP_HTTPD_CGI_SSI == 1 (new style)
  * 
- * @param uri The URI requested by the client (e.g., "/leds.cgi")
+ * @param uri The URI requested by the client (e.g., "/cgi_leds.shtml")
  * @param iNumParams Number of parameters parsed from the query string
  * @param pcParam Array of parameter name strings
  * @param pcValue Array of parameter value strings
@@ -4218,34 +4185,11 @@ void httpd_cgi_handler(struct fs_file *file, const char* uri, int iNumParams,
                        char **pcParam, char **pcValue, void *connection_state) 
 {
     int i;
+    WEB_SESSION_STATE_T *session = NULL;
 
-
-  
-
-    // 2. Parse the parameters out of the GET query string (e.g., /config.shtml?led=2&bright=80)
-    // for (int i = 0; i < iNumParams; i++) {
-    //     if (strcmp(pcParam[i], "led") == 0) {
-    //         session->requested_led_id = atoi(pcValue[i]);
-    //     } 
-    //     else if (strcmp(pcParam[i], "bright") == 0) {
-    //         session->requested_brightness = atoi(pcValue[i]);
-    //     }
-    // }
-
-
-
-
-    // Explicitly route URIs to your actual logic functions
-    // if (strcmp(uri, "/leds.cgi") == 0) {
-    //     // You can extract parameters here or call your old handler function
-    //     // e.g., return led_cgi_handler(uri, iNumParams, pcParam, pcValue);
-    //     return "/index.shtml"; 
-    // }
-
+    // all html files requiring cgi have file names begining with "/cgi_"
     if (strncasecmp("/cgi_", uri, 5) == 0)
-    {
-  
-        
+    {        
         for(i=0; i<NUM_ROWS(system_cgi_handlers); i++)
         {
             printf("checking CGI URI: %s vs %s\n", system_cgi_handlers[i].pcCGIName, uri);
@@ -4253,6 +4197,7 @@ void httpd_cgi_handler(struct fs_file *file, const char* uri, int iNumParams,
             {
                 if (system_cgi_handlers[i].pfnCGIHandler)
                 {
+                    //>>> TODO: all cgi handlers need to take the connection_state as a parameter and insert selected parameters into it as they are parsed <<<
                     printf("calling handler for %s\n", system_cgi_handlers[i].pcCGIName);
                     system_cgi_handlers[i].pfnCGIHandler(0, iNumParams, pcParam, pcValue);
                 }
@@ -4262,13 +4207,6 @@ void httpd_cgi_handler(struct fs_file *file, const char* uri, int iNumParams,
     }
 }
 
-// ****CODE merged into shell.c where we already handle custom files
-// void fs_close_custom(struct fs_file *file) {
-//     if (file != NULL && file->state != NULL) {
-//         mem_free(file->state);
-//         file->state = NULL;
-//     }
-// }
 
 /**
  * Called by lwIP when an HTTP file is opened.
