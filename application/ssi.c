@@ -1187,7 +1187,7 @@ APPLICATION_SSI_TAGS
 };
 
 
-u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen)
+u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_state)
 {
     size_t printed;
     char timestamp[50];

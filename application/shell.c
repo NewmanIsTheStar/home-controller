@@ -625,14 +625,23 @@ void fs_close_custom(struct fs_file *file)
     {
         pending_listen_file = NULL;
     }
+    // *******THIS CODE IS UNRELATED TO THE SHELL -- it is for the CGI_SSI web_context memory to be released
+    // else if (file != NULL && file->state != NULL)
+    // {
+    //     printf("RELEASING web context memory @%p\n", file->state);
+    //     mem_free(file->state);
+    //     file->state = NULL;
+
+
+    //     hex_dump(file->data, 32);
+    // }
 
     // TEST TEST TEST         AUTORUN BASIC SCRIPT AFTER FILE UPLOAD
     // if (pending_get_text == file) 
     // {
     //     pending_get_text = NULL;
     //     hc_queue_send(HC_CMD_BASIC_SCRIPT);        
-    // }
-
+    // }    
 }
 
 

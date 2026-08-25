@@ -14,6 +14,7 @@
  #include "hardware/watchdog.h"
 
 #include "lwip/apps/httpd.h"
+#include "lwip/apps/fs.h"
 #include "lwip/sockets.h"
 
 #include "time.h"
@@ -32,6 +33,13 @@
 #include "worker_tasks.h"
 #include "pluto.h"
 #include "hc_task.h"
+
+typedef const char *(*tMYCGIHandler)(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
+typedef struct
+{
+    const char *pcCGIName;
+    tMYCGIHandler pfnCGIHandler;
+} MY_CGI_T;
 
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
@@ -4088,9 +4096,13 @@ const char * cgi_save_text_file_handler(int iIndex, int iNumParams, char *pcPara
     return "/edit.shtml";
 }
 
+#if LWIP_HTTPD_CGI == 1
 // CGI requests and their respective handlers  --Add new entires at bottom--
 static const tCGI cgi_handlers[] = {
-
+    // ** shell uri to ignore
+    {"/listen.shtml",                   NULL}, 
+    {"/commands.json",                  NULL}, 
+    
     // *** system handlers start ***
     {"/gpio_default.cgi",               cgi_gpio_default_handler}, 
     {"/wificountry.cgi",                cgi_wificountry_handler},      
@@ -4104,9 +4116,7 @@ static const tCGI cgi_handlers[] = {
     {"/personality.cgi",                cgi_personality_handler},                 
     // *** system handlers end ***
 
-    // *** application handlers start ***   
-     {"/basic_run.cgi",                 cgi_basic_run_handler},  
-     {"/save_text_file.cgi",            cgi_save_text_file_handler},  
+
 
     // {"/rs_default.cgi",                 cgi_remote_switch_relay_handler},     
     // {"/rs_gpio_max.cgi",                cgi_rs_gpio_max_handler},   
@@ -4162,14 +4172,150 @@ static const tCGI cgi_handlers[] = {
     // {"/t_sensors.cgi",                  cgi_temperature_sensors},
     // {"/t_advanced.cgi",                 cgi_advanced_settings},                            
 };
+#endif
 
 /*!
- * \brief initialize cgi handlers
+ * \brief initialize cgi handlers when LWIP_HTTPD_CGI == 1 (old style)
  * 
  * \return nothing
  */
 void cgi_init(void)
 {
+    #if LWIP_HTTPD_CGI == 1
     http_set_cgi_handlers(cgi_handlers, NUM_ROWS(cgi_handlers));
+    #endif
 }
 
+
+static const MY_CGI_T system_cgi_handlers[] = {
+    // ** shell uri to ignore
+    {"/listen.shtml",                   NULL}, 
+    {"/commands.json",                  NULL}, 
+
+    // *** system handlers ***
+    {"/cgi_gpio_default.shtml",               cgi_gpio_default_handler}, 
+    {"/cgi_wificountry.shtml",                cgi_wificountry_handler},      
+    {"/cgi_network.shtml",                    cgi_network_handler}, 
+    {"/cgi_reboot.shtml",                     cgi_reboot_handler},              
+    {"/cgi_time.shtml",                       cgi_time_handler},
+    {"/cgi_syslog.shtml",                     cgi_syslog_handler}, 
+    {"/cgi_mqtt.shtml",                       cgi_mqtt_handler},    
+    {"/cgi_units.shtml",                      cgi_units_handler},   
+    {"/cgi_swload.shtml",                     cgi_software_load_handler},
+    {"/cgi_personality.shtml",                cgi_personality_handler}, 
+};
+
+/**
+ * Global CGI handler used when LWIP_HTTPD_CGI_SSI == 1 (new style)
+ * 
+ * @param uri The URI requested by the client (e.g., "/leds.cgi")
+ * @param iNumParams Number of parameters parsed from the query string
+ * @param pcParam Array of parameter name strings
+ * @param pcValue Array of parameter value strings
+ * @return The filename/URI of the page to load next (e.g., "/index.shtml")
+ */
+void httpd_cgi_handler(struct fs_file *file, const char* uri, int iNumParams, 
+                       char **pcParam, char **pcValue, void *connection_state) 
+{
+    int i;
+
+
+  
+
+    // 2. Parse the parameters out of the GET query string (e.g., /config.shtml?led=2&bright=80)
+    // for (int i = 0; i < iNumParams; i++) {
+    //     if (strcmp(pcParam[i], "led") == 0) {
+    //         session->requested_led_id = atoi(pcValue[i]);
+    //     } 
+    //     else if (strcmp(pcParam[i], "bright") == 0) {
+    //         session->requested_brightness = atoi(pcValue[i]);
+    //     }
+    // }
+
+
+
+
+    // Explicitly route URIs to your actual logic functions
+    // if (strcmp(uri, "/leds.cgi") == 0) {
+    //     // You can extract parameters here or call your old handler function
+    //     // e.g., return led_cgi_handler(uri, iNumParams, pcParam, pcValue);
+    //     return "/index.shtml"; 
+    // }
+
+    if (strncasecmp("/cgi_", uri, 5) == 0)
+    {
+  
+        
+        for(i=0; i<NUM_ROWS(system_cgi_handlers); i++)
+        {
+            printf("checking CGI URI: %s vs %s\n", system_cgi_handlers[i].pcCGIName, uri);
+            if (strcasecmp(system_cgi_handlers[i].pcCGIName, uri) == 0) 
+            {
+                if (system_cgi_handlers[i].pfnCGIHandler)
+                {
+                    printf("calling handler for %s\n", system_cgi_handlers[i].pcCGIName);
+                    system_cgi_handlers[i].pfnCGIHandler(0, iNumParams, pcParam, pcValue);
+                }
+                break;
+            }
+        }
+    }
+}
+
+// ****CODE merged into shell.c where we already handle custom files
+// void fs_close_custom(struct fs_file *file) {
+//     if (file != NULL && file->state != NULL) {
+//         mem_free(file->state);
+//         file->state = NULL;
+//     }
+// }
+
+/**
+ * Called by lwIP when an HTTP file is opened.
+ * Return a pointer to your state data or NULL if not needed.
+ */
+void *fs_state_init(struct fs_file *file, const char *name)
+{
+    WEB_SESSION_STATE_T *session = NULL;
+
+    if (strncasecmp("/cgi_", name, 5) == 0)
+    {
+        if (file->state == NULL)
+        {
+            // allocate block memory for this specific file request session
+            session = (WEB_SESSION_STATE_T *)mem_malloc(sizeof(WEB_SESSION_STATE_T));
+            if (session) 
+            {
+                // set baseline defaults
+                session->thermostat_day = 0;
+                session->thermostat_period_row = 0;
+                session->rmtsw_relay_day = 0;
+                session->rmtsw_relay_period_row = 0; 
+
+                // bind custom tracking struct directly to the file instance
+                file->state = session;             
+                printf("allocated memory for web context @%p\n", session);
+            }
+        }
+        else
+        {
+            printf("refusing to allocate memory for web context as it already exists\n");
+        } 
+    }
+
+    return session; 
+}
+
+/**
+ * Called by lwIP when an HTTP file is closed.
+ * Use this to free memory allocated in fs_state_init.
+ */
+void fs_state_free(struct fs_file *file, void *state)
+{
+    if (state != NULL) 
+    {
+        printf("RELEASING web context memory @%p\n", file->state);    
+        mem_free(state);
+        file->state = NULL;
+    }    
+}
