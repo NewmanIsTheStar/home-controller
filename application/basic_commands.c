@@ -376,7 +376,6 @@ void basic_If(void)
     else
     {
         /*Big! Mistake*/
-        basic_printf("Thanks Bill! We have discovered a bug in the Microsoft C++ compiler\n");
         syntax_error(NOT_VAR);       
     }
     

@@ -81,6 +81,14 @@ void config_blank_to_v1(void *previous_config)
         config.shelly_parameter_name[i][0] = 0;        
     }
     
+    for(i=0; i<NUM_ROWS(config.automation_name); i++)
+    {
+        //config.automation_name[i][0] = 0;
+        sprintf(config.automation_name[i], "automation%02d", i);
+        config.automation_triggered[i] = 0;
+        config.automation_state[i] = 0;
+    }
+
 }
 
 

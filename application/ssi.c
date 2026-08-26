@@ -2362,172 +2362,117 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         //     printf("error - setpoint_name is not longer supported\n");
         // }                     
         // break; 
-        // case SSI_sp1tmp: //sp1tmp
-        // case SSI_sp2tmp: //sp2tmp
-        // case SSI_sp3tmp: //sp3tmp
-        // case SSI_sp4tmp: //sp4tmp
-        // case SSI_sp5tmp: //sp5tmp
-        // case SSI_sp6tmp: //sp6tmp
-        // case SSI_sp7tmp: //sp7tmp
-        // case SSI_sp8tmp: //sp8tmp
-        // case SSI_sp9tmp: //sp9tmp
-        // case SSI_sp10tmp: //sp10tmp
-        // case SSI_sp11tmp: //sp11tmp
-        // case SSI_sp12tmp: //sp12tmp
-        // case SSI_sp13tmp: //sp13tmp
-        // case SSI_sp14tmp: //sp14tmp
-        // case SSI_sp15tmp: //sp15tmp
-        // case SSI_sp16tmp: //sp16tmp
-        // case SSI_sp17tmp:
-        // case SSI_sp18tmp:
-        // case SSI_sp19tmp:
-        // case SSI_sp20tmp:
-        // case SSI_sp21tmp:
-        // case SSI_sp22tmp:
-        // case SSI_sp23tmp:
-        // case SSI_sp24tmp:
-        // case SSI_sp25tmp:
-        // case SSI_sp26tmp:
-        // case SSI_sp27tmp:
-        // case SSI_sp28tmp:
-        // case SSI_sp29tmp:
-        // case SSI_sp30tmp:
-        // case SSI_sp31tmp:
-        // case SSI_sp32tmp:                
-        // {
-        //     switch(config.setpoint_mode[iIndex-SSI_sp1tmp])
-        //     {
-        //     case HVAC_AUTO:
-        //     case HVAC_HEATING_ONLY:
-        //     case HVAC_COOLING_ONLY:
-        //         switch(config.setpoint_temperaturex10[iIndex-SSI_sp1tmp])
-        //         {
-        //         case SETPOINT_TEMP_INVALID_FAN:
-        //         case SETPOINT_TEMP_INVALID_OFF:
-        //         case SETPOINT_TEMP_UNDEFINED:
-        //             printed = snprintf(pcInsert, iInsertLen, "");
-        //             break;
-        //         default:
-        //             printed = snprintf(pcInsert, iInsertLen, "%d &deg;%c", config.setpoint_temperaturex10[iIndex-SSI_sp1tmp]/10, config.use_archaic_units?'F':'C'); 
-
-        //             // if (strlen(pcInsert) < 2)
-        //             // {
-        //             //     // add leading space to maintain column alignment  -- sensible indoor temperatures are 2 digits!
-        //             //     printed = snprintf(pcInsert, iInsertLen, "&nbsp;&nbsp;%d", config.setpoint_temperaturex10[iIndex-SSI_sp1tmp]/10);    
-        //             // }
-        //             break;                                    
-        //         }
-        //         break;
-        //     case HVAC_FAN_ONLY:
-        //         printed = snprintf(pcInsert, iInsertLen, "-");
-        //         break;                
-        //     case HVAC_HEAT_AND_COOL:
-        //         printed = snprintf(pcInsert, iInsertLen, "%d / %d &deg;%c", config.setpoint_heating_temperaturex10[iIndex-SSI_sp1tmp]/10, config.setpoint_cooling_temperaturex10[iIndex-SSI_sp1tmp]/10, config.use_archaic_units?'F':'C'); 
-        //         break;
-        //     default:
-        //     case HVAC_OFF:
-        //         printed = snprintf(pcInsert, iInsertLen, "-");            
-        //         break;                
-        //     }
-        // }                     
-        // break;
-        // case SSI_ts1st:
-        // case SSI_ts2st:
-        // case SSI_ts3st:
-        // case SSI_ts4st:
-        // case SSI_ts5st:
-        // case SSI_ts6st:
-        // case SSI_ts7st:
-        // case SSI_ts8st:
-        // case SSI_ts9st:
-        // case SSI_ts10st:
-        // case SSI_ts11st:
-        // case SSI_ts12st:
-        // case SSI_ts13st:
-        // case SSI_ts14st:
-        // case SSI_ts15st:
-        // case SSI_ts16st:
-        // case SSI_ts17st:
-        // case SSI_ts18st:
-        // case SSI_ts19st:
-        // case SSI_ts20st:
-        // case SSI_ts21st:
-        // case SSI_ts22st:
-        // case SSI_ts23st:
-        // case SSI_ts24st:
-        // case SSI_ts25st:
-        // case SSI_ts26st:
-        // case SSI_ts27st:
-        // case SSI_ts28st:
-        // case SSI_ts29st:
-        // case SSI_ts30st:
-        // case SSI_ts31st:
-        // case SSI_ts32st:                        
-        // {
-        //     //printed = mow_to_string(pcInsert, iInsertLen, config.setpoint_start_mow[iIndex-SSI_ts1st]);
-        //     printed = mow_to_time_string(pcInsert, iInsertLen, config.setpoint_start_mow[iIndex-SSI_ts1st]);            
-        // }
-        // break; 
-        // case SSI_sp1mde:
-        // case SSI_sp2mde:
-        // case SSI_sp3mde:
-        // case SSI_sp4mde:
-        // case SSI_sp5mde:
-        // case SSI_sp6mde:
-        // case SSI_sp7mde:
-        // case SSI_sp8mde:
-        // case SSI_sp9mde:
-        // case SSI_sp10mde:
-        // case SSI_sp11mde:
-        // case SSI_sp12mde:
-        // case SSI_sp13mde:
-        // case SSI_sp14mde:
-        // case SSI_sp15mde:
-        // case SSI_sp16mde:
-        // case SSI_sp17mde:
-        // case SSI_sp18mde:
-        // case SSI_sp19mde:
-        // case SSI_sp20mde:
-        // case SSI_sp21mde:
-        // case SSI_sp22mde:
-        // case SSI_sp23mde:
-        // case SSI_sp24mde:
-        // case SSI_sp25mde:
-        // case SSI_sp26mde:
-        // case SSI_sp27mde:
-        // case SSI_sp28mde:
-        // case SSI_sp29mde:
-        // case SSI_sp30mde:
-        // case SSI_sp31mde:
-        // case SSI_sp32mde:                        
-        // {
-        //     switch(config.setpoint_mode[iIndex-SSI_sp1mde])
-        //     {
-        //     case HVAC_AUTO:
-        //         printed = snprintf(pcInsert, iInsertLen, "Auto");
-        //         break;
-        //     case HVAC_HEATING_ONLY:
-        //         printed = snprintf(pcInsert, iInsertLen, "Heat Only");
-        //         break;
-        //     case HVAC_COOLING_ONLY:
-        //         printed = snprintf(pcInsert, iInsertLen, "Cool Only");
-        //         break;                                            
-        //     case HVAC_FAN_ONLY:
-        //         printed = snprintf(pcInsert, iInsertLen, "Fan Only");
-        //         break;
-        //     case HVAC_HEAT_AND_COOL:
-        //         printed = snprintf(pcInsert, iInsertLen, "Heat & Cool");
-        //         break;                
-        //     default:
-        //         printed = snprintf(pcInsert, iInsertLen, "Default (%d)", config.setpoint_mode[iIndex-SSI_sp1mde]);            
-        //         break;              
-        //     case HVAC_OFF:
-        //         printed = snprintf(pcInsert, iInsertLen, "Off");            
-        //         break;   
-        //     }
-         
-        // }
-        // break;         
+        case SSI_sp1tmp: // sp1tmp = automation state
+        case SSI_sp2tmp: 
+        case SSI_sp3tmp: 
+        case SSI_sp4tmp: 
+        case SSI_sp5tmp: 
+        case SSI_sp6tmp: 
+        case SSI_sp7tmp: 
+        case SSI_sp8tmp: 
+        case SSI_sp9tmp: 
+        case SSI_sp10tmp: 
+        case SSI_sp11tmp: 
+        case SSI_sp12tmp: 
+        case SSI_sp13tmp: 
+        case SSI_sp14tmp: 
+        case SSI_sp15tmp: 
+        case SSI_sp16tmp: 
+        case SSI_sp17tmp:
+        case SSI_sp18tmp:
+        case SSI_sp19tmp:
+        case SSI_sp20tmp:
+        case SSI_sp21tmp:
+        case SSI_sp22tmp:
+        case SSI_sp23tmp:
+        case SSI_sp24tmp:
+        case SSI_sp25tmp:
+        case SSI_sp26tmp:
+        case SSI_sp27tmp:
+        case SSI_sp28tmp:
+        case SSI_sp29tmp:
+        case SSI_sp30tmp:
+        case SSI_sp31tmp:
+        case SSI_sp32tmp:                
+        {
+            printed = snprintf(pcInsert, iInsertLen, "%s", config.automation_state[iIndex-SSI_sp1tmp]?"enabled":"disabled");
+        }                     
+        break;
+        case SSI_ts1st:  // ts1st = automation name
+        case SSI_ts2st:
+        case SSI_ts3st:
+        case SSI_ts4st:
+        case SSI_ts5st:
+        case SSI_ts6st:
+        case SSI_ts7st:
+        case SSI_ts8st:
+        case SSI_ts9st:
+        case SSI_ts10st:
+        case SSI_ts11st:
+        case SSI_ts12st:
+        case SSI_ts13st:
+        case SSI_ts14st:
+        case SSI_ts15st:
+        case SSI_ts16st:
+        case SSI_ts17st:
+        case SSI_ts18st:
+        case SSI_ts19st:
+        case SSI_ts20st:
+        case SSI_ts21st:
+        case SSI_ts22st:
+        case SSI_ts23st:
+        case SSI_ts24st:
+        case SSI_ts25st:
+        case SSI_ts26st:
+        case SSI_ts27st:
+        case SSI_ts28st:
+        case SSI_ts29st:
+        case SSI_ts30st:
+        case SSI_ts31st:
+        case SSI_ts32st:                        
+        {
+            printed = snprintf(pcInsert, iInsertLen, "%s", config.automation_name[iIndex-SSI_ts1st]);            
+        }
+        break; 
+        case SSI_sp1mde:  // sp1mde = automation last triggered timestamp
+        case SSI_sp2mde:
+        case SSI_sp3mde:
+        case SSI_sp4mde:
+        case SSI_sp5mde:
+        case SSI_sp6mde:
+        case SSI_sp7mde:
+        case SSI_sp8mde:
+        case SSI_sp9mde:
+        case SSI_sp10mde:
+        case SSI_sp11mde:
+        case SSI_sp12mde:
+        case SSI_sp13mde:
+        case SSI_sp14mde:
+        case SSI_sp15mde:
+        case SSI_sp16mde:
+        case SSI_sp17mde:
+        case SSI_sp18mde:
+        case SSI_sp19mde:
+        case SSI_sp20mde:
+        case SSI_sp21mde:
+        case SSI_sp22mde:
+        case SSI_sp23mde:
+        case SSI_sp24mde:
+        case SSI_sp25mde:
+        case SSI_sp26mde:
+        case SSI_sp27mde:
+        case SSI_sp28mde:
+        case SSI_sp29mde:
+        case SSI_sp30mde:
+        case SSI_sp31mde:
+        case SSI_sp32mde:                        
+        {
+            if (!get_timestamp_from_unix_time(config.automation_triggered[iIndex-SSI_sp1mde], timestamp, sizeof(timestamp), 0, 1))
+            {
+                printed = snprintf(pcInsert, iInsertLen, "%s", timestamp);
+            }         
+        }
+        break;         
         // case SSI_ts1en:
         // case SSI_ts2en:
         // case SSI_ts3en:
@@ -2550,52 +2495,50 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         //     printf("error - thermostat_period_end_mow is no longer supported\n");
         // }
         // break;                  
-        // case SSI_ts1vz:
-        // case SSI_ts2vz:
-        // case SSI_ts3vz:
-        // case SSI_ts4vz:
-        // case SSI_ts5vz:
-        // case SSI_ts6vz:
-        // case SSI_ts7vz:
-        // case SSI_ts8vz:
-        // case SSI_ts9vz:
-        // case SSI_ts10vz:
-        // case SSI_ts11vz:
-        // case SSI_ts12vz:
-        // case SSI_ts13vz:
-        // case SSI_ts14vz:
-        // case SSI_ts15vz:
-        // case SSI_ts16vz:
-        // case SSI_ts17vz:
-        // case SSI_ts18vz:
-        // case SSI_ts19vz:
-        // case SSI_ts20vz:
-        // case SSI_ts21vz:
-        // case SSI_ts22vz:
-        // case SSI_ts23vz:
-        // case SSI_ts24vz:
-        // case SSI_ts25vz:
-        // case SSI_ts26vz:
-        // case SSI_ts27vz:
-        // case SSI_ts28vz:
-        // case SSI_ts29vz:
-        // case SSI_ts30vz:
-        // case SSI_ts31vz:
-        // case SSI_ts32vz:                        
-        // {
-        //     //printf("row = %d web.day= %d mow = %d dfm = %d\n", (iIndex-SSI_ts1vz)%16, web.thermostat_day, config.setpoint_start_mow[iIndex-SSI_ts1vz], get_day_from_mow(config.setpoint_start_mow[iIndex-SSI_ts1vz]));
-        //     //if ((iIndex-SSI_ts1vz)%16 >= config.thermostat_period_number)
-        //     if ((get_day_from_mow(config.setpoint_start_mow[iIndex-SSI_ts1vz]) != web.thermostat_day) ||
-        //         (config.setpoint_start_mow[iIndex-SSI_ts1vz] <0))
-        //     {     
-        //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
-        //     }
-        //     else
-        //     {
-        //         printed = 0;
-        //     }             
-        // }
-        // break;   
+        case SSI_ts1vz:
+        case SSI_ts2vz:
+        case SSI_ts3vz:
+        case SSI_ts4vz:
+        case SSI_ts5vz:
+        case SSI_ts6vz:
+        case SSI_ts7vz:
+        case SSI_ts8vz:
+        case SSI_ts9vz:
+        case SSI_ts10vz:
+        case SSI_ts11vz:
+        case SSI_ts12vz:
+        case SSI_ts13vz:
+        case SSI_ts14vz:
+        case SSI_ts15vz:
+        case SSI_ts16vz:
+        case SSI_ts17vz:
+        case SSI_ts18vz:
+        case SSI_ts19vz:
+        case SSI_ts20vz:
+        case SSI_ts21vz:
+        case SSI_ts22vz:
+        case SSI_ts23vz:
+        case SSI_ts24vz:
+        case SSI_ts25vz:
+        case SSI_ts26vz:
+        case SSI_ts27vz:
+        case SSI_ts28vz:
+        case SSI_ts29vz:
+        case SSI_ts30vz:
+        case SSI_ts31vz:
+        case SSI_ts32vz:                        
+        {
+            // if ((get_day_from_mow(config.setpoint_start_mow[iIndex-SSI_ts1vz]) != web.thermostat_day) ||
+            //     (config.setpoint_start_mow[iIndex-SSI_ts1vz] <0))
+            // {     
+            //     printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
+            // }
+            // else
+            {
+                printed = 0;
+            }             
+        }
+        break;   
         // case SSI_ts1in:
         // case SSI_ts2in:
         // case SSI_ts3in:

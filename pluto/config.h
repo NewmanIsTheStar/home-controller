@@ -97,6 +97,9 @@ typedef struct
     uint8_t shelly_parameter_name_index[128];
     char shelly_parameter_value[16][32];   //shelly_parameter_value[128][32];
     char shelly_parameter_name[16][32];  // shelly_parameter_name[64][32];    
+    char automation_name[32][32];
+    uint32_t automation_triggered[32];
+    char automation_state[32];
     // ***application config end***    
     uint16_t crc;
     
