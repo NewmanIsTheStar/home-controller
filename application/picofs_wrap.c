@@ -285,3 +285,31 @@ int _stat(const char *filepath, struct stat *st) {
     return 0;
 }
 
+
+// Hook for ftruncate
+int _ftruncate(int fd, off_t length) 
+{
+    int result = 0;
+    // // 1. Validate that the file descriptor belongs to your filesystem
+    // if (!myfs_is_valid_fd(fd)) {
+    //     errno = EBADF; // Bad file descriptor
+    //     return -1;
+    // }
+
+    // if (length < 0) {
+    //     errno = EINVAL; // Invalid argument
+    //     return -1;
+    // }
+
+    // 2. Call your actual backend filesystem logic
+    //int result = myfs_backend_truncate(fd, (size_t)length);
+    
+    if (result != 0) 
+    {
+        errno = EIO; // Or map to a more specific error like ENOSPC (No space left)
+        return -1;
+    }
+
+    return 0; // Success
+}
+

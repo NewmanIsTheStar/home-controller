@@ -176,8 +176,8 @@ int picofs_create_file_trailer(int fd, const char *name)
 
     file_id = picofs_get_new_file_id();
 
-    // if file_id is valid and cache is allocated
-    if ((file_id != FS_INVALID_FID) && custom_fds[fd].cache)
+    // if file_id is valid
+    if ((file_id != FS_INVALID_FID))
     {       
         // create new trailer in the fd cache 
         STRNCPY(custom_fds[fd].cache_trailer.magic_number, "pfs", sizeof(custom_fds[fd].cache_trailer.magic_number));                                                            
@@ -189,11 +189,14 @@ int picofs_create_file_trailer(int fd, const char *name)
         custom_fds[fd].cache_trailer.crc = 0;
         STRNCPY(custom_fds[fd].cache_trailer.name, name, sizeof(custom_fds[fd].cache_trailer.name));
 
-        // store trailer in the cached file too (this is used to bootstrap the second initialization of the fd from cache)
-        memcpy(custom_fds[fd].cache, (char *)&(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
-
         err = 0;
     }
+
+    // store trailer in the cached file too (this is used to bootstrap the second initialization of the fd from cache)
+    if (!err && custom_fds[fd].cache)
+    {        
+        memcpy(custom_fds[fd].cache, (char *)&(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
+    }    
 
     return(err);
 }
@@ -206,55 +209,6 @@ int picofs_create_file_trailer(int fd, const char *name)
  */
 u8_t picofs_get_new_file_id(void)
 {
-    // int err = -1;
-    // u8_t *p = NULL;
-    // FILE_TRAILER_T *t = NULL;
-    // u8_t file_id_map[32];
-    // u8_t file_id_bit;
-    // u8_t file_id_byte;
-    // u8_t file_id = FS_INVALID_FID;
-    // FILE_TRAILER_T *trailer;
-    // bool found = false;
-
-    // // initialize file id map
-    // memset(file_id_map, 0, sizeof(file_id_map));
-
-    // // scan backwards through flash
-    // p = FS_END - 1 - sizeof(FILE_TRAILER_T);
-
-    // // scan flash and create bitmap of all used file_id numbers
-    // while (((char *)p) >= FS_START)
-    // {
-    //     t = (FILE_TRAILER_T *)p;
-
-    //     if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-    //         (t->picofs_version == FS_VERION))
-    //     {
-    //         // update file_id bitmap
-    //         file_id_byte = t->file_id/8;
-    //         file_id_bit = t->file_id%8;
-    //         file_id_map[file_id_byte] |= (1<<file_id_bit);
-
-    //         p = p - t->file_size;  
-    //     }
-    //     else
-    //     {
-    //         p--;
-    //     }
-    // }
-
-    // // scan file_id bitmap to find an unused file_id
-    // for (file_id=0; file_id < FS_NUM_FID; file_id++)
-    // {
-    //     file_id_byte = file_id/8;
-    //     file_id_bit = file_id%8;
-        
-    //     if (!(file_id_map[file_id_byte] & (1<<file_id_bit)))
-    //     {
-    //         break;
-    //     }        
-    // }
-
     int i;
     int fid = FS_INVALID_FID;
 

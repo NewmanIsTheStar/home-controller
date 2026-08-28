@@ -15,11 +15,19 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
+// #define _GNU_SOURCE // Required for O_DIRECT on Linux
+//#include <fcntl.h>
+//#include <unistd.h>
+//#include <stdlib.h>
+//#include <stdio.h>
+
+
 #include "config.h"
 #include "pluto.h"
 #include "utility.h"
 
 #include "flash.h"
+#include "picofs.h"
 
 //#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
 //#define DISABLE_CONFIG_VALIDATION (1)
@@ -417,3 +425,39 @@ void config_system_variable_initialize(void)
     cfg->mqtt_password[0] = 0;
     cfg->mqtt_broker_address[0] = 0;
 }
+
+
+// #define _GNU_SOURCE // Required for O_DIRECT on Linux
+// #include <fcntl.h>
+// #include <unistd.h>
+// #include <stdlib.h>
+// #include <stdio.h>
+
+// int write_buffer_direct(const char* filename, size_t total_bytes) {
+//     // 1. Allocate memory aligned to 4KB page boundaries
+//     void* buffer = NULL;
+//     if (posix_memalign(&buffer, 4096, total_bytes) != 0) {
+//         perror("Failed to allocate aligned memory");
+//         return -1;
+//     }
+
+//     // Fill your buffer with data here...
+
+//     // 2. Open file with O_DIRECT to bypass OS page cache duplication
+//     int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC /*| O_DIRECT*/, 0644);
+//     if (fd < 0) {
+//         perror("Failed to open file with O_DIRECT");
+//         free(buffer);
+//         return -1;
+//     }
+
+//     // 3. Write directly to disk (Zero-copy to page cache)
+//     ssize_t bytes_written = write(fd, buffer, total_bytes);
+//     if (bytes_written < 0) {
+//         perror("Direct write failed");
+//     }
+
+//     close(fd);
+//     free(buffer);
+//     return (bytes_written == (ssize_t)total_bytes) ? 0 : -1;
+// }

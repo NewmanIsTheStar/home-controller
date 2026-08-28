@@ -94,7 +94,7 @@ int picofs_write(int fd, char *ptr, int len)
 
     for(i=0; i<len; i++)
     {       
-        if ((custom_fds[fd].data_offset + i) < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T)))
+        if (custom_fds[fd].cache_len && (custom_fds[fd].data_offset + i) < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T)))
         {
             custom_fds[fd].data[custom_fds[fd].data_offset + i] = ptr[i];
             
@@ -129,3 +129,77 @@ int picofs_write(int fd, char *ptr, int len)
     return(i);
 }
 
+
+/*!
+ * \brief expand cache by one sector
+ *
+ * \param fd     file descriptor
+ * \return nothing
+ */
+int picofs_expand_cache(int fd)
+{
+    int err = -1;
+    size_t cache_size = 0;
+    char *expanded_cache = NULL;
+
+    if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS) )
+    {
+        // allocate one 4k block greater than currently used
+        cache_size = ((custom_fds[fd].cache_len + (4*1024))/(4*1024))*(4*1024);        
+        expanded_cache = pvPortMalloc(cache_size);
+
+        if (expanded_cache && custom_fds[fd].cache)
+        {
+            // copy original cache content into the expanded cache
+            memcpy(expanded_cache, custom_fds[fd].cache, custom_fds[fd].cache_len);
+
+            // delete original cache
+            vPortFree(custom_fds[fd].cache);
+            //custom_fds[fd].cache = NULL;
+        }
+
+        if (expanded_cache)
+        {
+            // point file descriptor to the new expanded cache
+            custom_fds[fd].cache = expanded_cache;
+            custom_fds[fd].cache_len = cache_size;
+            custom_fds[fd].data = expanded_cache;
+
+            err = 0;
+        }
+    }
+
+    return(err);
+}
+
+
+// TODO: zero-copy write buffer to file in one shot
+int write_buffer_direct(const char* filename, size_t total_bytes) 
+{
+    // 1. Allocate memory aligned to 4KB page boundaries
+    void* buffer = NULL;
+    if (posix_memalign(&buffer, 4096, total_bytes) != 0) {
+        perror("Failed to allocate aligned memory");
+        return -1;
+    }
+
+    // Fill your buffer with data here...
+
+    // 2. Open file with O_DIRECT to bypass OS page cache duplication
+    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC /*| O_DIRECT*/, 0644);
+    if (fd < 0) {
+        perror("Failed to open file with O_DIRECT");
+        free(buffer);
+        return -1;
+    }
+
+    // 3. Write directly to disk (Zero-copy to page cache)
+    ssize_t bytes_written = write(fd, buffer, total_bytes);
+    if (bytes_written < 0) {
+        perror("Direct write failed");
+    }
+
+    close(fd);
+    free(buffer);
+    return (bytes_written == (ssize_t)total_bytes) ? 0 : -1;
+}

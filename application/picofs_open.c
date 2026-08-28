@@ -71,7 +71,7 @@
 
 
 //prototypes
-
+int picofs_fd_new(int fd, int flags, char *name);
 
 // external variables
 extern u32_t unix_time;
@@ -214,32 +214,38 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     }
     else
     {
-        // file does not exit
+        // file does not exist
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
-            // create empty file descriptor
-            picofs_fd_initialize(fd, flags, NULL);
+            // create new file and do not allocate cache
+            err = picofs_fd_new(fd, flags, (char *)name);
 
-            // allocate cache for file descriptor
-            err = picofs_allocate_cache(fd);
+            // ORIGINAL CODE ALLOCATES CACHE WHEN NEW FILE IS OPENED
+            // WE NOW DO NOT ALLOCATE CACHE UNTIL EITHER THE FIRST WRITE OR (better) TRUNCATE CALL
+
+            // // create empty file descriptor
+            // picofs_fd_initialize(fd, flags, NULL);
+
+            // // allocate cache for file descriptor
+            // err = picofs_allocate_cache(fd);
 
             
-            if(!err)  
-            {
-                // create file trailer in cache
-                err = picofs_create_file_trailer(fd, name);
+            // if(!err)  
+            // {
+            //     // create file trailer in cache
+            //     err = picofs_create_file_trailer(fd, name);
 
-                if (!err)
-                {
-                    picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache));  // empty file only contains trailer
-                }
-                else
-                {
-                    // failed to create trailer in the cache so free the cache memory
-                    picofs_deallocate_cache(fd);
-                }
+            //     if (!err)
+            //     {
+            //         picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache));  // empty file only contains trailer
+            //     }
+            //     else
+            //     {
+            //         // failed to create trailer in the cache so free the cache memory
+            //         picofs_deallocate_cache(fd);
+            //     }
                 
-            }
+            // }
         }
     }
 
@@ -247,8 +253,40 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     return(err);
 }
 
+
 /*!
- * \brief allocate RAM cache for file writes
+ * \brief initialize file descriptor for access to a ***new file about to be created***
+ *
+ * \param fd     file descriptor
+ * \param header file header
+ * \return nothing
+ */
+int picofs_fd_new(int fd, int flags, char *name)
+{
+    int err = -1;
+
+    if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
+    {
+        // set defaults 
+        custom_fds[fd].flags = flags;
+        custom_fds[fd].file = NULL;
+        custom_fds[fd].file_len = 0;
+        custom_fds[fd].file_status = 0;
+        custom_fds[fd].cache = NULL;                 
+        custom_fds[fd].cache_len = 0;                  
+        custom_fds[fd].file_trailer = NULL;
+        custom_fds[fd].data = NULL;
+        custom_fds[fd].data_len = 0;
+        custom_fds[fd].data_offset = 0;
+        
+        err = picofs_create_file_trailer(fd, name);
+    }
+
+    return(err);
+}
+
+/*!
+ * \brief initialize file descriptor for access to an ***existing file***
  *
  * \param fd     file descriptor
  * \param header file header
@@ -338,43 +376,9 @@ int picofs_allocate_cache(int fd)
     return(err);
 }
 
-/*!
- * \brief expand cache by one sector
- *
- * \param fd     file descriptor
- * \return nothing
- */
-int picofs_expand_cache(int fd)
-{
-    int err = -1;
-    size_t cache_size = 0;
-    char *expanded_cache = NULL;
 
-    if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS) && (custom_fds[fd].cache))
-    {
-        // allocate one 4k block greater than currently used
-        cache_size = ((custom_fds[fd].cache_len + (4*1024))/(4*1024))*(4*1024);        
-        expanded_cache = pvPortMalloc(cache_size);
 
-        if (expanded_cache)
-        {
-            // copy original cache content into the expanded cache
-            memcpy(expanded_cache, custom_fds[fd].cache, custom_fds[fd].cache_len);
 
-            // delete original cache
-            vPortFree(custom_fds[fd].cache);
-
-            // point file descriptor to the new expanded cache
-            custom_fds[fd].cache = expanded_cache;
-            custom_fds[fd].cache_len = cache_size;
-            custom_fds[fd].data = expanded_cache;
-
-            err = 0;
-        }
-    }
-
-    return(err);
-}
 
 
 /*!
