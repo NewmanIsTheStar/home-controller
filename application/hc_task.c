@@ -130,7 +130,7 @@ void hc_task(__unused void *params)
     if (strcasecmp(APP_NAME, "home-controller") == 0)
     {
         // force personality to match single purpose application
-        config.personality = HOME_CONTROLLER;
+        cfg->personality = HOME_CONTROLLER;
     }    
     
     // printf("home controller task initializing file system...\n");
@@ -146,7 +146,7 @@ void hc_task(__unused void *params)
 
         //dump_text_buffer();
 
-        if ((config.personality == HOME_CONTROLLER))
+        if ((cfg->personality == HOME_CONTROLLER))
         {
             //TEST TEST TEST
             // printf("Begin shelly test\n");

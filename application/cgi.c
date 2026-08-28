@@ -98,9 +98,9 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     {
 //         // Look at the argument to check if schedule is to be turned on (x=1) or off (x=0)
 //         if(strcmp(pcValue[0], "0") == 0)
-//             config.irrigation_enable = 0;
+//             cfg->irrigation_enable = 0;
 //         else if(strcmp(pcValue[0], "1") == 0)
-//             config.irrigation_enable = 1;
+//             cfg->irrigation_enable = 1;
 //     }
     
 //     // Send the index page back to the user
@@ -123,7 +123,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     CLIP(iIndex, 1, 7);
 
 //     //toggle the state (assumes index 1-7 used in cgi_handlers[] for weekdays)
-//     config.day_schedule_enable[iIndex-1] = !config.day_schedule_enable[iIndex-1];
+//     cfg->day_schedule_enable[iIndex-1] = !cfg->day_schedule_enable[iIndex-1];
 
 //     config_changed();
 
@@ -160,7 +160,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 
 //     CLIP(i, 0, 6);
 
-//     config.zone_duration[0][i]++;
+//     cfg->zone_duration[0][i]++;
 
 //     // Send the next page back to the user
 //     config_changed();
@@ -196,9 +196,9 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     CLIP(i, 0, 6);
 
 //     //toggle the state (assumes index 1-7 used in cgi_handlers[] for weekdays)
-//     if(config.zone_duration[0][i] > 0)
+//     if(cfg->zone_duration[0][i] > 0)
 //     {
-//         config.zone_duration[0][i]--;
+//         cfg->zone_duration[0][i]--;
 //     }
 
 //     // Send the next page back to the user
@@ -236,12 +236,12 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     CLIP(i, 0, 6);
 
 //     // add 60 minutes
-//     config.day_start[i] += 60;
+//     cfg->day_start[i] += 60;
 
 //     // wrap around at 24 hours
-//     if (config.day_start[i] >= (24*60))
+//     if (cfg->day_start[i] >= (24*60))
 //     {
-//         config.day_start[i] -= (24*60);
+//         cfg->day_start[i] -= (24*60);
 //     }
 
 //     // Send the next page back to the user
@@ -278,12 +278,12 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     CLIP(i, 0, 6);
 
 //     // add 60 minutes
-//     config.day_start[i] -= 60;
+//     cfg->day_start[i] -= 60;
 
 //     // wrap around at 0 hours
-//     if (config.day_start[i] < 0)
+//     if (cfg->day_start[i] < 0)
 //     {
-//         config.day_start[i] += (24*60);
+//         cfg->day_start[i] += (24*60);
 //     }
 
 //     // Send the next page back to the user
@@ -322,8 +322,8 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     CLIP(i, 0, 6);
 
 //     // extract original hour and minute
-//     hour = config.day_start[i]/60;
-//     minute = config.day_start[i]%60;
+//     hour = cfg->day_start[i]/60;
+//     minute = cfg->day_start[i]%60;
 
 //     // add 1 minute
 //     minute++;
@@ -335,7 +335,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     }
 
 //     // set adjusted minute, while retaining original hour
-//     config.day_start[i] = hour*60 + minute;
+//     cfg->day_start[i] = hour*60 + minute;
 
 //     // Send the next page back to the user
 //     config_changed();
@@ -373,8 +373,8 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     CLIP(i, 0, 6);
 
 //     // extract original hour and minute
-//     hour = config.day_start[i]/60;
-//     minute = config.day_start[i]%60;
+//     hour = cfg->day_start[i]/60;
+//     minute = cfg->day_start[i]%60;
 
 //     // subtract 1 minute
 //     minute--;
@@ -386,7 +386,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     }
 
 //     // set adjusted minute, while retaining original hour
-//     config.day_start[i] = hour*60 + minute;
+//     cfg->day_start[i] = hour*60 + minute;
 
 //     // Send the next page back to the user
 //     config_changed();
@@ -416,7 +416,7 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
     //force daylight saving off -- I really hate that this is how it works!  We only get passed the parameter when checkbox is "on"
-    config.daylightsaving_enable = 0;
+    cfg->daylightsaving_enable = 0;
 
     i = 0;
     while (i < iNumParams)
@@ -449,50 +449,50 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
                         new_value = hour*60 - minute;
                     }
 
-                    config.timezone_offset = new_value;
+                    cfg->timezone_offset = new_value;
                 }
             }
 
             if (strcasecmp("dsstart", param) == 0)
             {
-                sanitize_daylight_saving_date(value, config.daylightsaving_start, sizeof(config.daylightsaving_start));
+                sanitize_daylight_saving_date(value, cfg->daylightsaving_start, sizeof(cfg->daylightsaving_start));
 
             }
 
             if (strcasecmp("dsend", param) == 0)
             {
-                sanitize_daylight_saving_date(value, config.daylightsaving_end, sizeof(config.daylightsaving_end));
+                sanitize_daylight_saving_date(value, cfg->daylightsaving_end, sizeof(cfg->daylightsaving_end));
             }
 
             if (strcasecmp("ts1", param) == 0)
             {
-                STRNCPY(config.time_server[0], value, sizeof(config.time_server[0]));
+                STRNCPY(cfg->time_server[0], value, sizeof(cfg->time_server[0]));
             }
 
             if (strcasecmp("ts2", param) == 0)
             {
-                STRNCPY(config.time_server[1], value, sizeof(config.time_server[1]));
+                STRNCPY(cfg->time_server[1], value, sizeof(cfg->time_server[1]));
             }
 
             if (strcasecmp("ts3", param) == 0)
             {
-                STRNCPY(config.time_server[2], value, sizeof(config.time_server[2]));
+                STRNCPY(cfg->time_server[2], value, sizeof(cfg->time_server[2]));
             }
 
             if (strcasecmp("ts4", param) == 0)
             {
-                STRNCPY(config.time_server[3], value, sizeof(config.time_server[3]));
+                STRNCPY(cfg->time_server[3], value, sizeof(cfg->time_server[3]));
             }  
 
             if (strcasecmp("dsenable", param) == 0)
             {
                 if (value[0])
                 {
-                    config.daylightsaving_enable = 1;
+                    cfg->daylightsaving_enable = 1;
                 } 
                 else
                 {
-                    config.daylightsaving_enable = 0;
+                    cfg->daylightsaving_enable = 0;
                 }                              
             }
         }
@@ -523,7 +523,7 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
 //     char *value = NULL; 
 
 //     // despicable but necessary as we only receive parameter when checked
-//     config.weather_station_enable = 0;
+//     cfg->weather_station_enable = 0;
        
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
@@ -541,42 +541,42 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
 //             {
 //                 if (value[0])
 //                 {
-//                     config.weather_station_enable = 1;
+//                     cfg->weather_station_enable = 1;
 //                 } 
 //                 else
 //                 {
-//                     config.weather_station_enable = 0;  // should never happen
+//                     cfg->weather_station_enable = 0;  // should never happen
 //                 }                             
 //             } 
 
 //             if (strcasecmp("ecoip", param) == 0)
 //             {
-//                 STRNCPY(config.weather_station_ip, value, sizeof(config.weather_station_ip));
+//                 STRNCPY(cfg->weather_station_ip, value, sizeof(cfg->weather_station_ip));
 //             }
 
 //             if (strcasecmp("wkrn", param) == 0)
 //             {
-//                 config.rain_week_threshold = get_int_with_tenths_from_string(value);  
+//                 cfg->rain_week_threshold = get_int_with_tenths_from_string(value);  
 //             }
 
 //             if (strcasecmp("dyrn", param) == 0)
 //             {
-//                 config.rain_day_threshold = get_int_with_tenths_from_string(value); 
+//                 cfg->rain_day_threshold = get_int_with_tenths_from_string(value); 
 //             }
 
 //             if (strcasecmp("soilt1", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.soil_moisture_threshold[0]); 
+//                 sscanf(value, "%d", &cfg->soil_moisture_threshold[0]); 
 //             }                                     
     
 //             if (strcasecmp("wndt", param) == 0)
 //             {
-//                 config.wind_threshold = get_int_with_tenths_from_string(value);                
+//                 cfg->wind_threshold = get_int_with_tenths_from_string(value);                
 //             }     
 
 //             if (strcasecmp("tempth", param) == 0)
 //             {
-//                 config.outside_temperature_threshold= get_int_with_tenths_from_string(value);                
+//                 cfg->outside_temperature_threshold= get_int_with_tenths_from_string(value);                
 //             }               
 //         }
 
@@ -611,7 +611,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
     //force dhcp_enable off -- I really hate that this is how it works!  We only get passed the parameter when checkbox is "on"
-    config.dhcp_enable = 0;
+    cfg->dhcp_enable = 0;
 
     i = 0;
     while (i < iNumParams)
@@ -626,29 +626,29 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             
             if (strcasecmp("ssid", param) == 0)
             {
-                STRNCPY(config.wifi_ssid, value, sizeof(config.wifi_ssid));
+                STRNCPY(cfg->wifi_ssid, value, sizeof(cfg->wifi_ssid));
             }
 
             if (strcasecmp("wpass", param) == 0)
             {
                 if (strcasecmp(value, "********") != 0)
                 {
-                    STRNCPY(config.wifi_password, value, sizeof(config.wifi_password));
+                    STRNCPY(cfg->wifi_password, value, sizeof(cfg->wifi_password));
                 }
             }   
 
             if (strcasecmp("hostn", param) == 0)
             {
-                STRNCPY(config.host_name, value, sizeof(config.host_name));
+                STRNCPY(cfg->host_name, value, sizeof(cfg->host_name));
             }
 
             if (strcasecmp("ipad", param) == 0)
             {
 
-                if (strncasecmp(value, "automatic+via+DHCP", sizeof(config.ip_address))!=0)
+                if (strncasecmp(value, "automatic+via+DHCP", sizeof(cfg->ip_address))!=0)
                 {
-                    STRNCPY(config.ip_address, value, sizeof(config.ip_address));
-                    if (!config.dhcp_enable)
+                    STRNCPY(cfg->ip_address, value, sizeof(cfg->ip_address));
+                    if (!cfg->dhcp_enable)
                     {
                         STRNCPY(web.ip_address_string, value, sizeof(web.ip_address_string));
                     }                    
@@ -659,10 +659,10 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             if (strcasecmp("nmsk", param) == 0)
             {
 
-                if (strncasecmp(value, "automatic+via+DHCP", sizeof(config.network_mask))!=0)
+                if (strncasecmp(value, "automatic+via+DHCP", sizeof(cfg->network_mask))!=0)
                 {
-                    STRNCPY(config.network_mask, value, sizeof(config.network_mask));
-                    if (!config.dhcp_enable)
+                    STRNCPY(cfg->network_mask, value, sizeof(cfg->network_mask));
+                    if (!cfg->dhcp_enable)
                     {
                         STRNCPY(web.network_mask_string, value, sizeof(web.network_mask_string));
                     }                     
@@ -673,10 +673,10 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             if (strcasecmp("gatewy", param) == 0)
             {
 
-                if (strncasecmp(value, "automatic+via+DHCP", sizeof(config.gateway))!=0)
+                if (strncasecmp(value, "automatic+via+DHCP", sizeof(cfg->gateway))!=0)
                 {
-                    STRNCPY(config.gateway, value, sizeof(config.gateway));
-                    if (!config.dhcp_enable)
+                    STRNCPY(cfg->gateway, value, sizeof(cfg->gateway));
+                    if (!cfg->dhcp_enable)
                     {
                         STRNCPY(web.gateway_string, value, sizeof(web.gateway_string));
                     }                     
@@ -688,11 +688,11 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             {
                 if (value[0])
                 {
-                    config.dhcp_enable = 1;
+                    cfg->dhcp_enable = 1;
                 } 
                 else
                 {
-                    config.dhcp_enable = 0;
+                    cfg->dhcp_enable = 0;
                 }                             
             }
 
@@ -725,8 +725,8 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
 //     char *param = NULL;
 //     char *value = NULL;
 
-//     config.use_led_strip_to_indicate_irrigation_status = 0;   
-//     config.led_rgbw = 0;   
+//     cfg->use_led_strip_to_indicate_irrigation_status = 0;   
+//     cfg->led_rgbw = 0;   
 
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
@@ -743,65 +743,65 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             
 //             if (strcasecmp("lpat", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_pattern);    
+//                 sscanf(value, "%d", &cfg->led_pattern);    
 
-//                 set_led_pattern_local(config.led_pattern);         
+//                 set_led_pattern_local(cfg->led_pattern);         
 //             }
 
 //             if (strcasecmp("lspd", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_speed);
+//                 sscanf(value, "%d", &cfg->led_speed);
 
-//                 set_led_speed_local(config.led_speed);              
+//                 set_led_speed_local(cfg->led_speed);              
 //             }  
 
 //             if (strcasecmp("lpin", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_pin);             
+//                 sscanf(value, "%d", &cfg->led_pin);             
 //             }
 
 //             if (strcasecmp("lrgbw", param) == 0)
 //             {
 //                 if (value[0])
 //                 {
-//                     config.led_rgbw = 1;
+//                     cfg->led_rgbw = 1;
 //                 } 
 //                 else
 //                 {
-//                     config.led_rgbw = 0;
+//                     cfg->led_rgbw = 0;
 //                 }                             
 //             }            
 
 //             if (strcasecmp("lnum", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_number);             
+//                 sscanf(value, "%d", &cfg->led_number);             
 //             }  
 
 //             if (strcasecmp("lie", param) == 0)
 //             {
 //                 if (value[0])
 //                 {
-//                     config.use_led_strip_to_indicate_irrigation_status = 1;
+//                     cfg->use_led_strip_to_indicate_irrigation_status = 1;
 //                 } 
 //                 else
 //                 {
-//                     config.use_led_strip_to_indicate_irrigation_status = 0;
+//                     cfg->use_led_strip_to_indicate_irrigation_status = 0;
 //                 }                             
 //             }
 
 //             if (strcasecmp("lia", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_pattern_when_irrigation_active);             
+//                 sscanf(value, "%d", &cfg->led_pattern_when_irrigation_active);             
 //             }  
 
 //             if (strcasecmp("liu", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_pattern_when_irrigation_terminated);             
+//                 sscanf(value, "%d", &cfg->led_pattern_when_irrigation_terminated);             
 //             }  
 
 //             if (strcasecmp("lis", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_sustain_duration);             
+//                 sscanf(value, "%d", &cfg->led_sustain_duration);             
 //             }                          
 
 //         }
@@ -868,32 +868,32 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
 //             if (strcasecmp("sunday", param) == 0)
 //             {
-//                 config.day_schedule_enable[0] = 1;             
+//                 cfg->day_schedule_enable[0] = 1;             
 //             }
             
 //             if (strcasecmp("strt1", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.day_start[0]);             
+//                 sscanf(value, "%d", &cfg->day_start[0]);             
 //             }
 
 //             if (strcasecmp("dur1", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.day_duration[0]);             
+//                 sscanf(value, "%d", &cfg->day_duration[0]);             
 //             } 
 
 //             if (strcasecmp("monday", param) == 0)
 //             {
-//                 config.day_schedule_enable[1] = 1;             
+//                 cfg->day_schedule_enable[1] = 1;             
 //             }
             
 //             if (strcasecmp("strt2", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.day_start[1]);             
+//                 sscanf(value, "%d", &cfg->day_start[1]);             
 //             }
 
 //             if (strcasecmp("dur2", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.day_duration[1]);             
+//                 sscanf(value, "%d", &cfg->day_duration[1]);             
 //             }              
 //         }
 
@@ -983,7 +983,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 //                 dur_zone--;
 //                 dur_day--;
 
-//                 sscanf(value, "%d", &config.zone_duration[dur_zone][dur_day]);  
+//                 sscanf(value, "%d", &cfg->zone_duration[dur_zone][dur_day]);  
 //             }             
 //         }
 
@@ -994,9 +994,9 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 //     {
 //         //printf("got valid day = %d storing new schedule parameters\n", day);
 
-//         config.day_schedule_enable[day] = checked;
-//         if ((start_hour != -1) && (start_minute != -1)) config.day_start[day] = start_hour*60 + start_minute;
-//         if (duration != -1) config.day_duration[day] = duration;
+//         cfg->day_schedule_enable[day] = checked;
+//         if ((start_hour != -1) && (start_minute != -1)) cfg->day_start[day] = start_hour*60 + start_minute;
+//         if (duration != -1) cfg->day_duration[day] = duration;
 //     }
 //     else
 //     {
@@ -1038,7 +1038,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
        
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-//     config.use_govee_to_indicate_irrigation_status = 0;
+//     cfg->use_govee_to_indicate_irrigation_status = 0;
 
 //     i = 0;
 //     while (i < iNumParams)
@@ -1053,18 +1053,18 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
             
 //             if (strcasecmp("gvea", param) == 0)
 //             {
-//                 STRNCPY(config.govee_light_ip, value, sizeof(config.govee_light_ip));
+//                 STRNCPY(cfg->govee_light_ip, value, sizeof(cfg->govee_light_ip));
 //             }  
 
 //             if (strcasecmp("gvee", param) == 0)
 //             {
 //                 if (value[0])
 //                 {
-//                     config.use_govee_to_indicate_irrigation_status = 1;
+//                     cfg->use_govee_to_indicate_irrigation_status = 1;
 //                 } 
 //                 else
 //                 {
-//                     config.use_govee_to_indicate_irrigation_status = 0;
+//                     cfg->use_govee_to_indicate_irrigation_status = 0;
 //                 }                             
 //             } 
 
@@ -1075,9 +1075,9 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
 //                 if ((red != -1) && (green != -1) && (blue != -1))
 //                 {
-//                     config.govee_irrigation_active_red = CLIP(red, 0, 255);
-//                     config.govee_irrigation_active_green = CLIP(green, 0, 255);
-//                     config.govee_irrigation_active_blue = CLIP(blue, 0, 255);                                         
+//                     cfg->govee_irrigation_active_red = CLIP(red, 0, 255);
+//                     cfg->govee_irrigation_active_green = CLIP(green, 0, 255);
+//                     cfg->govee_irrigation_active_blue = CLIP(blue, 0, 255);                                         
 //                 }          
 //             }
 
@@ -1088,15 +1088,15 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
 //                 if ((red != -1) && (green != -1) && (blue != -1))
 //                 {
-//                     config.govee_irrigation_usurped_red = CLIP(red, 0, 255);
-//                     config.govee_irrigation_usurped_green = CLIP(green, 0, 255);
-//                     config.govee_irrigation_usurped_blue = CLIP(blue, 0, 255);                                         
+//                     cfg->govee_irrigation_usurped_red = CLIP(red, 0, 255);
+//                     cfg->govee_irrigation_usurped_green = CLIP(green, 0, 255);
+//                     cfg->govee_irrigation_usurped_blue = CLIP(blue, 0, 255);                                         
 //                 }          
 //             }            
 
 //             if (strcasecmp("gves", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.govee_sustain_duration);             
+//                 sscanf(value, "%d", &cfg->govee_sustain_duration);             
 //             }   
 
 //         }
@@ -1128,7 +1128,7 @@ const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
        
     // vile design caused by web browser not sending unchecked parameters, they must be presumed unchecked
-    config.syslog_enable = 0;       
+    cfg->syslog_enable = 0;       
 
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
@@ -1145,17 +1145,17 @@ const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], cha
             {
                 if (value[0])
                 {
-                    config.syslog_enable = 1;
+                    cfg->syslog_enable = 1;
                 } 
                 else
                 {
-                    config.syslog_enable = 0; // unfortunately will never occur, hence unconditionally forced to zero at start of function 
+                    cfg->syslog_enable = 0; // unfortunately will never occur, hence unconditionally forced to zero at start of function 
                 }                              
             }
             
             if (strcasecmp("slog", param) == 0)
             {
-                STRNCPY(config.syslog_server_ip, value, sizeof(config.syslog_server_ip));
+                STRNCPY(cfg->syslog_server_ip, value, sizeof(cfg->syslog_server_ip));
             }  
         }
 
@@ -1186,8 +1186,8 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
     int new_use_archaic_units = 0;   
 
     // set off by default
-    config.use_simplified_english  = 0; 
-    config.use_monday_as_week_start = 0; 
+    cfg->use_simplified_english  = 0; 
+    cfg->use_monday_as_week_start = 0; 
 
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
@@ -1216,11 +1216,11 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
             {
                 if (value[0])
                 {
-                    config.use_simplified_english = 1;
+                    cfg->use_simplified_english = 1;
                 } 
                 else
                 {
-                    config.use_simplified_english  = 0;  // this should never happen, since the parameter is only passed if "on"
+                    cfg->use_simplified_english  = 0;  // this should never happen, since the parameter is only passed if "on"
                 }   
             }   
 
@@ -1228,11 +1228,11 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
             {
                 if (value[0])
                 {
-                    config.use_monday_as_week_start = 1;
+                    cfg->use_monday_as_week_start = 1;
                 } 
                 else
                 {
-                    config.use_monday_as_week_start = 0;  // this should never happen, since the parameter is only passed if "on"
+                    cfg->use_monday_as_week_start = 0;  // this should never happen, since the parameter is only passed if "on"
                 } 
             }                                                                   
         }
@@ -1244,9 +1244,9 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
     set_calendar_html_page();  
 
     // check for change in units
-    if (new_use_archaic_units != config.use_archaic_units)
+    if (new_use_archaic_units != cfg->use_archaic_units)
     {
-        config.use_archaic_units = new_use_archaic_units;
+        cfg->use_archaic_units = new_use_archaic_units;
 
         switch (new_use_archaic_units)
         {
@@ -1337,7 +1337,7 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
 //     // set off by default
-//     config.led_strip_remote_enable  = 0; 
+//     cfg->led_strip_remote_enable  = 0; 
 
 //     i = 0;
 //     while (i < iNumParams)
@@ -1351,38 +1351,38 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
 
 //             if (strcasecmp("rsadr1", param) == 0)
 //             {
-//                 STRNCPY(config.led_strip_remote_ip[0], value, sizeof(config.led_strip_remote_ip[0]));
+//                 STRNCPY(cfg->led_strip_remote_ip[0], value, sizeof(cfg->led_strip_remote_ip[0]));
 //             }
 //             if (strcasecmp("rsadr2", param) == 0)
 //             {
-//                 STRNCPY(config.led_strip_remote_ip[1], value, sizeof(config.led_strip_remote_ip[1]));
+//                 STRNCPY(cfg->led_strip_remote_ip[1], value, sizeof(cfg->led_strip_remote_ip[1]));
 //             }
 //             if (strcasecmp("rsadr3", param) == 0)
 //             {
-//                 STRNCPY(config.led_strip_remote_ip[2], value, sizeof(config.led_strip_remote_ip[2]));
+//                 STRNCPY(cfg->led_strip_remote_ip[2], value, sizeof(cfg->led_strip_remote_ip[2]));
 //             }
 //             if (strcasecmp("rsadr4", param) == 0)
 //             {
-//                 STRNCPY(config.led_strip_remote_ip[3], value, sizeof(config.led_strip_remote_ip[3]));
+//                 STRNCPY(cfg->led_strip_remote_ip[3], value, sizeof(cfg->led_strip_remote_ip[3]));
 //             }
 //             if (strcasecmp("rsadr5", param) == 0)
 //             {
-//                 STRNCPY(config.led_strip_remote_ip[4], value, sizeof(config.led_strip_remote_ip[4]));
+//                 STRNCPY(cfg->led_strip_remote_ip[4], value, sizeof(cfg->led_strip_remote_ip[4]));
 //             }
 //             if (strcasecmp("rsadr6", param) == 0)
 //             {
-//                 STRNCPY(config.led_strip_remote_ip[5], value, sizeof(config.led_strip_remote_ip[5]));
+//                 STRNCPY(cfg->led_strip_remote_ip[5], value, sizeof(cfg->led_strip_remote_ip[5]));
 //             }
             
 //             if (strcasecmp("rse", param) == 0)
 //             {
 //                 if (value[0])
 //                 {
-//                     config.led_strip_remote_enable = 1;
+//                     cfg->led_strip_remote_enable = 1;
 //                 } 
 //                 else
 //                 {
-//                     config.led_strip_remote_enable = 0;  // this should never happen, since the parameter is only passed if "on"
+//                     cfg->led_strip_remote_enable = 0;  // this should never happen, since the parameter is only passed if "on"
 //                 }   
 //             } 
 //         }
@@ -1431,7 +1431,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
                 switch(new_personality)
                 {
                     case REMOTE_SWITCH:
-                        config.personality = new_personality;
+                        cfg->personality = new_personality;
                         break;                                              
                     
                     default:
@@ -1499,8 +1499,8 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //                 new_gpio = atoi(value);
 //                 if (!initialize_relay_gpio(new_gpio))
 //                 {
-//                     gpio_put(new_gpio, config.relay_normally_open?0:1); 
-//                     config.gpio_number = new_gpio; 
+//                     gpio_put(new_gpio, cfg->relay_normally_open?0:1); 
+//                     cfg->gpio_number = new_gpio; 
 //                 }                                
 //             } 
 
@@ -1510,7 +1510,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //                 // adjust to zero base
 //                 gpio_zone--;
 
-//                 sscanf(value, "%d", &config.zone_gpio[gpio_zone]);  
+//                 sscanf(value, "%d", &cfg->zone_gpio[gpio_zone]);  
 //             }   
 
 //             if (strcasecmp("zmax", param) == 0)
@@ -1519,7 +1519,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
                 
 //                 if ((new_zone_max > 0) && (new_zone_max <= 8))
 //                 {
-//                     config.zone_max = new_zone_max;
+//                     cfg->zone_max = new_zone_max;
 //                 }                           
 //             }
 
@@ -1545,9 +1545,9 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //     }
 
 //     // handle normally open checkbox
-//     if (config.relay_normally_open != new_relay_normally_open)
+//     if (cfg->relay_normally_open != new_relay_normally_open)
 //     {
-//         config.relay_normally_open = new_relay_normally_open;
+//         cfg->relay_normally_open = new_relay_normally_open;
 //     }
 
 //     // handle irrigation test checkbox
@@ -1566,15 +1566,15 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //     }    
 
 //     // normally open must be used in controller mode
-//     if (config.personality == SPRINKLER_CONTROLLER)
+//     if (cfg->personality == SPRINKLER_CONTROLLER)
 //     {
-//         config.relay_normally_open = 1;
+//         cfg->relay_normally_open = 1;
 //     }
 
 //     config_changed();
 
 //     // Send the next page back to the user
-//     if (config.personality == SPRINKLER_CONTROLLER)
+//     if (cfg->personality == SPRINKLER_CONTROLLER)
 //     {
 //         if (!web.irrigation_test_enable)
 //         {    
@@ -1622,8 +1622,8 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 
             if (strcasecmp("wific", param) == 0)
             {
-                STRNCPY(config.wifi_country, value, sizeof(config.wifi_country));
-                deplus_string(config.wifi_country, sizeof(config.wifi_country));             
+                STRNCPY(cfg->wifi_country, value, sizeof(cfg->wifi_country));
+                deplus_string(cfg->wifi_country, sizeof(cfg->wifi_country));             
             }                                                         
         }
 
@@ -1656,7 +1656,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //     xTaskNotifyGiveIndexed(worker_tasks[0].task_handle, 0);
                
 //     // Send the next page back to the user
-//     if (config.personality == SPRINKLER_CONTROLLER)
+//     if (cfg->personality == SPRINKLER_CONTROLLER)
 //     {
 //         if (!web.irrigation_test_enable)
 //         {    
@@ -1698,12 +1698,12 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //             if (pcParam[0][0] == 'x')
 //             {
 //                 zone = pcValue[0][0] - '0';
-//                 CLIP(zone, 0, config.zone_max);
+//                 CLIP(zone, 0, cfg->zone_max);
 //             }
 //         }
 
 //         // check if we have a valid zone
-//         if ((zone >=0) && (zone <config.zone_max))
+//         if ((zone >=0) && (zone <cfg->zone_max))
 //         {
 //             // check if test in progress
 //             if (web.irrigation_test_enable)
@@ -1811,17 +1811,17 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //         {
 //         case 0:
 //             printf("acitve pattern = %d\n", new_pattern);
-//             config.led_pattern_when_irrigation_active = new_pattern;
+//             cfg->led_pattern_when_irrigation_active = new_pattern;
 //             pattern_set = true;
 //             break;
 //         case 1:
 //             printf("skipped pattern = %d\n", new_pattern);
-//             config.led_pattern_when_irrigation_terminated = new_pattern;
+//             cfg->led_pattern_when_irrigation_terminated = new_pattern;
 //             pattern_set = true;            
 //             break;
 //         case 2:
 //             printf("default pattern = %d\n", new_pattern);
-//             config.led_pattern = new_pattern;
+//             cfg->led_pattern = new_pattern;
 //             pattern_set = true;            
 //             break;
 //         default:
@@ -1859,7 +1859,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //     char *value = NULL;
 
 
-//     config.led_rgbw = 0;       
+//     cfg->led_rgbw = 0;       
 
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
@@ -1875,24 +1875,24 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 
 //             if (strcasecmp("lpin", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_pin);             
+//                 sscanf(value, "%d", &cfg->led_pin);             
 //             }
 
 //             if (strcasecmp("lrgbw", param) == 0)
 //             {
 //                 if (value[0])
 //                 {
-//                     config.led_rgbw = 1;
+//                     cfg->led_rgbw = 1;
 //                 } 
 //                 else
 //                 {
-//                     config.led_rgbw = 0;
+//                     cfg->led_rgbw = 0;
 //                 }                             
 //             }   
 
 //             if (strcasecmp("lnum", param) == 0)
 //             {
-//                 sscanf(value, "%d", &config.led_number);             
+//                 sscanf(value, "%d", &cfg->led_number);             
 //             }                         
 //         }
 
@@ -1950,8 +1950,8 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
             //         // adjust to zero base
             //         setpoint_number--;
 
-            //         sscanf(value, "%s", &(config.setpoint_name[setpoint_number]));  
-            //         printf("after scanf spn[%d] = %s\n", setpoint_number, config.setpoint_name[setpoint_number]);
+            //         sscanf(value, "%s", &(cfg->setpoint_name[setpoint_number]));  
+            //         printf("after scanf spn[%d] = %s\n", setpoint_number, cfg->setpoint_name[setpoint_number]);
             //     } 
             // }
 
@@ -1965,8 +1965,8 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
             //         // adjust to zero base
             //         setpoint_number--;
 
-            //         sscanf(value, "%d", &(config.setpoint_temperaturex10[setpoint_number]));  
-            //         printf("after scanf spt[%d] = %d\n", setpoint_number, config.setpoint_temperaturex10[setpoint_number]);
+            //         sscanf(value, "%d", &(cfg->setpoint_temperaturex10[setpoint_number]));  
+            //         printf("after scanf spt[%d] = %d\n", setpoint_number, cfg->setpoint_temperaturex10[setpoint_number]);
             //     }
             // }             
 
@@ -2026,8 +2026,8 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
 //                     // adjust to zero base
 //                     period_number--;
 
-//                     //sscanf(value, "%s", &config.setpoint_name[period_number]);
-//                     config.setpoint_start_mow[period_number] = string_to_mow(value, 32);
+//                     //sscanf(value, "%s", &cfg->setpoint_name[period_number]);
+//                     cfg->setpoint_start_mow[period_number] = string_to_mow(value, 32);
 
 //                 }
 //             } 
@@ -2042,8 +2042,8 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
 //                     // adjust to zero base
 //                     period_number--;
 
-//                     //sscanf(value, "%d", &config.setpoint_temperaturex10[period_number]); 
-//                     //config.thermostat_period_end_mow[period_number] = string_to_mow(value, 32); 
+//                     //sscanf(value, "%d", &cfg->setpoint_temperaturex10[period_number]); 
+//                     //cfg->thermostat_period_end_mow[period_number] = string_to_mow(value, 32); 
 //                     printf("CGI error - thermostat_period_end not longer supported\n");
 //                 } 
 //             } 
@@ -2057,7 +2057,7 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
 //                     // adjust to zero base
 //                     period_number--;
 
-//                     //sscanf(value, "%d", &(config.thermostat_period_setpoint_index[period_number])); 
+//                     //sscanf(value, "%d", &(cfg->thermostat_period_setpoint_index[period_number])); 
 //                     printf("CGI error - thermostat_period_setpoint_index not longer supported\n"); 
 //                 }
 //             }    
@@ -2066,13 +2066,13 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
 //             { 
 //                 period_number = -1;
 //                 sscanf(param, "ts%dtmp", &period_number);
-//                 if ((period_number >= 0) && (period_number < NUM_ROWS(config.setpoint_temperaturex10)))
+//                 if ((period_number >= 0) && (period_number < NUM_ROWS(cfg->setpoint_temperaturex10)))
 //                 {
 //                     // adjust to zero base
 //                     period_number--;
 
-//                     sscanf(value, "%d", &(config.setpoint_temperaturex10[period_number])); 
-//                     config.setpoint_temperaturex10[period_number] *=10; 
+//                     sscanf(value, "%d", &(cfg->setpoint_temperaturex10[period_number])); 
+//                     cfg->setpoint_temperaturex10[period_number] *=10; 
 //                 }
 //             }                               
 
@@ -2135,35 +2135,35 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
             if ((len >= 1) && (param[0] == 'x'))
             { 
                 sscanf(value, "%d", &(web.thermostat_period_row));
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));  
+                CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow));  
             } 
 
             len = strlen(param);
             if ((len >= 4) && (param[0] == 't') && (param[1] == 'p') && (param[2] == 's') && (param[3] == 't'))
             {
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow)); 
-                config.setpoint_start_mow[web.thermostat_period_row] = time_string_to_mow(value, 32, web.thermostat_day);
+                CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow)); 
+                cfg->setpoint_start_mow[web.thermostat_period_row] = time_string_to_mow(value, 32, web.thermostat_day);
             } 
 
             len = strlen(param);
             if ((len >= 5) && (param[0] == 't') && (param[1] == 'p') && (param[2] == 't') && (param[3] == 'm') && (param[4] == 'p'))
             {
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow)); 
+                CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow)); 
 
                 if(isdigit(value[0]))
                 {
-                    sscanf(value, "%d", &(config.setpoint_temperaturex10[web.thermostat_period_row]));
-                    config.setpoint_temperaturex10[web.thermostat_period_row] *= 10; 
+                    sscanf(value, "%d", &(cfg->setpoint_temperaturex10[web.thermostat_period_row]));
+                    cfg->setpoint_temperaturex10[web.thermostat_period_row] *= 10; 
                 }
 
-                if (config.setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
+                if (cfg->setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
                 {
-                    config.setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
+                    cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
                 }
 
-                if (config.setpoint_mode[web.thermostat_period_row] == HVAC_FAN_ONLY)
+                if (cfg->setpoint_mode[web.thermostat_period_row] == HVAC_FAN_ONLY)
                 {
-                    config.setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_FAN; 
+                    cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_FAN; 
                 }
 
             }   
@@ -2171,22 +2171,22 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
             len = strlen(param);
             if ((len >= 5) && (param[0] == 't') && (param[1] == 'p') && (param[2] == 'h') && (param[3] == 't') && (param[4] == 'm') && (param[5] == 'p'))
             {
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow)); 
+                CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow)); 
 
                 if(isdigit(value[0]))
                 {
-                    sscanf(value, "%d", &(config.setpoint_heating_temperaturex10[web.thermostat_period_row]));
-                    config.setpoint_heating_temperaturex10[web.thermostat_period_row] *= 10; 
+                    sscanf(value, "%d", &(cfg->setpoint_heating_temperaturex10[web.thermostat_period_row]));
+                    cfg->setpoint_heating_temperaturex10[web.thermostat_period_row] *= 10; 
                 }
 
-                if (config.setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
+                if (cfg->setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
                 {
-                    config.setpoint_heating_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
+                    cfg->setpoint_heating_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
                 }
 
-                if (config.setpoint_mode[web.thermostat_period_row] == HVAC_FAN_ONLY)
+                if (cfg->setpoint_mode[web.thermostat_period_row] == HVAC_FAN_ONLY)
                 {
-                    config.setpoint_heating_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_FAN; 
+                    cfg->setpoint_heating_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_FAN; 
                 }
 
             }  
@@ -2194,66 +2194,66 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
             len = strlen(param);
             if ((len >= 5) && (param[0] == 't') && (param[1] == 'p') && (param[2] == 'c') && (param[3] == 't') && (param[4] == 'm') && (param[5] == 'p'))
             {
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow)); 
+                CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow)); 
 
                 if(isdigit(value[0]))
                 {
-                    sscanf(value, "%d", &(config.setpoint_cooling_temperaturex10[web.thermostat_period_row]));
-                    config.setpoint_cooling_temperaturex10[web.thermostat_period_row] *= 10; 
+                    sscanf(value, "%d", &(cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row]));
+                    cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row] *= 10; 
                 }
 
-                if (config.setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
+                if (cfg->setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
                 {
-                    config.setpoint_cooling_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
+                    cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
                 }
 
-                if (config.setpoint_mode[web.thermostat_period_row] == HVAC_FAN_ONLY)
+                if (cfg->setpoint_mode[web.thermostat_period_row] == HVAC_FAN_ONLY)
                 {
-                    config.setpoint_cooling_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_FAN; 
+                    cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_FAN; 
                 }
             }              
 
             len = strlen(param);
             if ((len >= 4) && (param[0] == 't') && (param[1] == 'p') && (param[2] == 's') && (param[3] == 'm'))
             {
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_mode)); 
-                sscanf(value, "%d", &(config.setpoint_mode[web.thermostat_period_row]));
-                CLIP(config.setpoint_mode[web.thermostat_period_row], 0, NUM_HVAC_MODES-1);
+                CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_mode)); 
+                sscanf(value, "%d", &(cfg->setpoint_mode[web.thermostat_period_row]));
+                CLIP(cfg->setpoint_mode[web.thermostat_period_row], 0, NUM_HVAC_MODES-1);
 
-                if (config.setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
+                if (cfg->setpoint_mode[web.thermostat_period_row] == HVAC_OFF)
                 {
 
-                    config.setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
+                    cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_INVALID_OFF; 
                 }
                 else
                 {
-                    switch(config.setpoint_temperaturex10[web.thermostat_period_row])
+                    switch(cfg->setpoint_temperaturex10[web.thermostat_period_row])
                     {
                     case SETPOINT_TEMP_INVALID_FAN:
                     case SETPOINT_TEMP_INVALID_OFF:
                     case SETPOINT_TEMP_UNDEFINED:
-                        if (config.use_archaic_units)
+                        if (cfg->use_archaic_units)
                         {
-                            config.setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_F;
+                            cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_F;
                         }
                         else
                         {
-                            config.setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_C;
+                            cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_C;
                         }
                         break;
                     default:  // reject temps below absolute zero
-                        if (config.use_archaic_units)
+                        if (cfg->use_archaic_units)
                         {
-                            if (config.setpoint_temperaturex10[web.thermostat_period_row] < 4600)
+                            if (cfg->setpoint_temperaturex10[web.thermostat_period_row] < 4600)
                             {
-                                config.setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_F;
+                                cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_F;
                             }
                         }
                         else
                         {
-                            if (config.setpoint_temperaturex10[web.thermostat_period_row] < 2800)
+                            if (cfg->setpoint_temperaturex10[web.thermostat_period_row] < 2800)
                             {                            
-                                config.setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_C;
+                                cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_C;
                             }
                         }                                            
                         break;
@@ -2273,13 +2273,13 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
             { 
                 period_number = -1;
                 sscanf(param, "ts%dst", &period_number);
-                if ((period_number >= 1) && (period_number <= NUM_ROWS(config.setpoint_start_mow)))
+                if ((period_number >= 1) && (period_number <= NUM_ROWS(cfg->setpoint_start_mow)))
                 {
                     // adjust to zero base
                     period_number--;
 
-                    //sscanf(value, "%s", &config.setpoint_name[period_number]);
-                    config.setpoint_start_mow[period_number] = string_to_mow(value, 32);
+                    //sscanf(value, "%s", &cfg->setpoint_name[period_number]);
+                    cfg->setpoint_start_mow[period_number] = string_to_mow(value, 32);
 
                 }
             } 
@@ -2289,12 +2289,12 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
             // { 
             //     period_number = -1;
             //     sscanf(param, "ts%din", &period_number);
-            //     if ((period_number >= 1) && (period_number <= NUM_ROWS(config.thermostat_period_setpoint_index)))
+            //     if ((period_number >= 1) && (period_number <= NUM_ROWS(cfg->thermostat_period_setpoint_index)))
             //     {
             //         // adjust to zero base
             //         period_number--;
 
-            //         sscanf(value, "%d", &(config.thermostat_period_setpoint_index[period_number]));  
+            //         sscanf(value, "%d", &(cfg->thermostat_period_setpoint_index[period_number]));  
             //     }
             // } 
 
@@ -2303,9 +2303,9 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
             // { 
             //     period_number = -1;
             //     sscanf(param, "ts%dtmp", &period_number);
-            //     if ((period_number >= 0) && (period_number < NUM_ROWS(config.thermostat_period_setpoint_index)))
+            //     if ((period_number >= 0) && (period_number < NUM_ROWS(cfg->thermostat_period_setpoint_index)))
             //     {
-            //         sscanf(value, "%d", &(config.thermostat_period_setpoint_index[period_number]));  
+            //         sscanf(value, "%d", &(cfg->thermostat_period_setpoint_index[period_number]));  
             //     }
             // }             
 
@@ -2315,44 +2315,44 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
     }
 
     // check for duplicates and remove
-    CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));
-    for(i=0; i<NUM_ROWS(config.setpoint_start_mow); i++)
+    CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow));
+    for(i=0; i<NUM_ROWS(cfg->setpoint_start_mow); i++)
     {
         if ((i != web.thermostat_period_row) &&
-            (config.setpoint_start_mow[i] >= 0) &&
-            (config.setpoint_start_mow[i] == config.setpoint_start_mow[web.thermostat_period_row]))
+            (cfg->setpoint_start_mow[i] >= 0) &&
+            (cfg->setpoint_start_mow[i] == cfg->setpoint_start_mow[web.thermostat_period_row]))
         {
             printf("Duplicate thermostat period deleted\n");
-            config.setpoint_start_mow[i] = -1;
+            cfg->setpoint_start_mow[i] = -1;
         }
     }    
 
     // sort the schedule into ascending order by mow
-    for(i=1; i<NUM_ROWS(config.setpoint_start_mow); i++)
+    for(i=1; i<NUM_ROWS(cfg->setpoint_start_mow); i++)
     {
-        key_mow = config.setpoint_start_mow[i];
-        key_temp = config.setpoint_temperaturex10[i];  
-        key_heat_temp = config.setpoint_heating_temperaturex10[i]; 
-        key_cool_temp = config.setpoint_cooling_temperaturex10[i];                  
-        key_mode = config.setpoint_mode[i];
+        key_mow = cfg->setpoint_start_mow[i];
+        key_temp = cfg->setpoint_temperaturex10[i];  
+        key_heat_temp = cfg->setpoint_heating_temperaturex10[i]; 
+        key_cool_temp = cfg->setpoint_cooling_temperaturex10[i];                  
+        key_mode = cfg->setpoint_mode[i];
 
         j = i - 1;
 
-        while ((j >= 0) && (config.setpoint_start_mow[j] > key_mow))
+        while ((j >= 0) && (cfg->setpoint_start_mow[j] > key_mow))
         {
-            config.setpoint_start_mow[j+1] = config.setpoint_start_mow[j];
-            config.setpoint_temperaturex10[j+1] = config.setpoint_temperaturex10[j]; 
-            config.setpoint_heating_temperaturex10[j+1] = config.setpoint_heating_temperaturex10[j]; 
-            config.setpoint_cooling_temperaturex10[j+1] = config.setpoint_cooling_temperaturex10[j];                         
-            config.setpoint_mode[j+1] = config.setpoint_mode[j];            
+            cfg->setpoint_start_mow[j+1] = cfg->setpoint_start_mow[j];
+            cfg->setpoint_temperaturex10[j+1] = cfg->setpoint_temperaturex10[j]; 
+            cfg->setpoint_heating_temperaturex10[j+1] = cfg->setpoint_heating_temperaturex10[j]; 
+            cfg->setpoint_cooling_temperaturex10[j+1] = cfg->setpoint_cooling_temperaturex10[j];                         
+            cfg->setpoint_mode[j+1] = cfg->setpoint_mode[j];            
             j = j - 1;
         }
 
-        config.setpoint_start_mow[j+1] = key_mow;
-        config.setpoint_temperaturex10[j+1] = key_temp; 
-        config.setpoint_heating_temperaturex10[j+1] = key_heat_temp; 
-        config.setpoint_cooling_temperaturex10[j+1] = key_cool_temp;                 
-        config.setpoint_mode[j+1] = key_mode;             
+        cfg->setpoint_start_mow[j+1] = key_mow;
+        cfg->setpoint_temperaturex10[j+1] = key_temp; 
+        cfg->setpoint_heating_temperaturex10[j+1] = key_heat_temp; 
+        cfg->setpoint_cooling_temperaturex10[j+1] = key_cool_temp;                 
+        cfg->setpoint_mode[j+1] = key_mode;             
     }
 
     // update the schedule grid
@@ -2411,11 +2411,11 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
             { 
                 sscanf(value, "%d", &(web.thermostat_period_row));
                 //printf("Got request to delete thermostat period. row = %d\n", web.thermostat_period_row);
-                CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));  
-                if ((web.thermostat_period_row >=0) && (web.thermostat_period_row < NUM_ROWS(config.setpoint_start_mow)))
+                CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow));  
+                if ((web.thermostat_period_row >=0) && (web.thermostat_period_row < NUM_ROWS(cfg->setpoint_start_mow)))
                 {
                     //printf("Deleting row %d by setting mow to -1\n", web.thermostat_period_row);
-                    config.setpoint_start_mow[web.thermostat_period_row] = -1;
+                    cfg->setpoint_start_mow[web.thermostat_period_row] = -1;
 
                     // update the schedule grid
                     make_schedule_grid();
@@ -2463,25 +2463,25 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
 
 //     dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-//     for(i=0; i < NUM_ROWS(config.setpoint_start_mow); i++)
+//     for(i=0; i < NUM_ROWS(cfg->setpoint_start_mow); i++)
 //     {
-//         if (config.setpoint_start_mow[i] < 0)  // TODO: should we use the setpoint valid function? slower
+//         if (cfg->setpoint_start_mow[i] < 0)  // TODO: should we use the setpoint valid function? slower
 //         {
 //             web.thermostat_period_row = i;
-//             config.setpoint_start_mow[i] = web.thermostat_day*24*60;
-//             if (config.use_archaic_units)
+//             cfg->setpoint_start_mow[i] = web.thermostat_day*24*60;
+//             if (cfg->use_archaic_units)
 //             {
-//                 config.setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
-//                 config.setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
-//                 config.setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;                                
+//                 cfg->setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
+//                 cfg->setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
+//                 cfg->setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;                                
 //             }
 //             else
 //             {
-//                 config.setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
-//                 config.setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
-//                 config.setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;                                
+//                 cfg->setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
+//                 cfg->setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;
+//                 cfg->setpoint_cooling_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_C;                                
 //             }
-//             config.setpoint_mode[i] = HVAC_AUTO;
+//             cfg->setpoint_mode[i] = HVAC_AUTO;
 //             next_page = "/tp_edit.shtml";
 //             break;
 //         }
@@ -2536,7 +2536,7 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
 //             { 
 //                 sscanf(value, "%d", &(web.thermostat_period_row));
 //                 printf("Got request to edit thermostat period. row = %d\n", web.thermostat_period_row);
-//                 CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));                
+//                 CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow));                
 //             } 
 //         }
 //         i++;
@@ -2652,7 +2652,7 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
 //     char *value = NULL; 
 
 //     // despicable but necessary as we only receive parameter when checked
-//     config.weather_station_enable = 0;
+//     cfg->weather_station_enable = 0;
        
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
@@ -2669,51 +2669,51 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
 
 //             if (strcasecmp("pwip", param) == 0)
 //             {
-//                 STRNCPY(config.powerwall_ip, value, sizeof(config.powerwall_ip));
+//                 STRNCPY(cfg->powerwall_ip, value, sizeof(cfg->powerwall_ip));
 //             }
 
 //             if (strcasecmp("pwhost", param) == 0)
 //             {
-//                 STRNCPY(config.powerwall_hostname, value, sizeof(config.powerwall_hostname));
+//                 STRNCPY(cfg->powerwall_hostname, value, sizeof(cfg->powerwall_hostname));
 //             }      
             
 //             if (strcasecmp("pwpass", param) == 0)
 //             {
 //                 if (strcasecmp(value, "********") != 0)
 //                 {
-//                     STRNCPY(config.powerwall_password, value, sizeof(config.powerwall_password));
+//                     STRNCPY(cfg->powerwall_password, value, sizeof(cfg->powerwall_password));
 //                 }
 //             }              
             
 //             if (strcasecmp("pwgdhd", param) == 0)
 //             {
-//                 config.grid_down_heating_setpoint_decrease = get_int_with_tenths_from_string(value);  
-//                 printf("CGI setting grid down heating setpoint decrease to %d\n", config.grid_down_heating_setpoint_decrease);
+//                 cfg->grid_down_heating_setpoint_decrease = get_int_with_tenths_from_string(value);  
+//                 printf("CGI setting grid down heating setpoint decrease to %d\n", cfg->grid_down_heating_setpoint_decrease);
 //             }
 
 //             if (strcasecmp("pwgdci", param) == 0)
 //             {
-//                 config.grid_down_cooling_setpoint_increase = get_int_with_tenths_from_string(value);  
+//                 cfg->grid_down_cooling_setpoint_increase = get_int_with_tenths_from_string(value);  
 //             }
 
 //             if (strcasecmp("pwblhd", param) == 0)
 //             {
-//                 config.grid_down_heating_disable_battery_level = get_int_with_tenths_from_string(value);  
+//                 cfg->grid_down_heating_disable_battery_level = get_int_with_tenths_from_string(value);  
 //             }
 
 //             if (strcasecmp("pwblhe", param) == 0)
 //             {
-//                 config.grid_down_heating_enable_battery_level = get_int_with_tenths_from_string(value);  
+//                 cfg->grid_down_heating_enable_battery_level = get_int_with_tenths_from_string(value);  
 //             } 
             
 //             if (strcasecmp("pwblcd", param) == 0)
 //             {
-//                 config.grid_down_cooling_disable_battery_level = get_int_with_tenths_from_string(value);  
+//                 cfg->grid_down_cooling_disable_battery_level = get_int_with_tenths_from_string(value);  
 //             }     
 
 //             if (strcasecmp("pwblce", param) == 0)
 //             {
-//                 config.grid_down_cooling_enable_battery_level = get_int_with_tenths_from_string(value);  
+//                 cfg->grid_down_cooling_enable_battery_level = get_int_with_tenths_from_string(value);  
 //             }                                       
 //         }
 
@@ -2841,7 +2841,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.heating_gpio = temp;
+//                         cfg->heating_gpio = temp;
 //                     }
 //                 }                
 //             }     
@@ -2854,7 +2854,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.cooling_gpio = temp;
+//                         cfg->cooling_gpio = temp;
 //                     } 
 //                 }               
 //             }    
@@ -2867,7 +2867,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.fan_gpio = temp;
+//                         cfg->fan_gpio = temp;
 //                     }    
 //                 }            
 //             }  
@@ -2881,7 +2881,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.thermostat_temperature_sensor_clock_gpio = temp;
+//                         cfg->thermostat_temperature_sensor_clock_gpio = temp;
 //                     }    
 //                 }            
 //             } 
@@ -2894,7 +2894,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.thermostat_temperature_sensor_data_gpio = temp;
+//                         cfg->thermostat_temperature_sensor_data_gpio = temp;
 //                     }    
 //                 }            
 //             } 
@@ -2907,7 +2907,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.thermostat_seven_segment_display_clock_gpio = temp;
+//                         cfg->thermostat_seven_segment_display_clock_gpio = temp;
 //                     }    
 //                 }            
 //             } 
@@ -2920,7 +2920,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.thermostat_seven_segment_display_data_gpio = temp;
+//                         cfg->thermostat_seven_segment_display_data_gpio = temp;
 //                     }    
 //                 }            
 //             } 
@@ -2933,7 +2933,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.thermostat_increase_button_gpio = temp;
+//                         cfg->thermostat_increase_button_gpio = temp;
 //                     }    
 //                 }            
 //             } 
@@ -2946,7 +2946,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.thermostat_decrease_button_gpio = temp;
+//                         cfg->thermostat_decrease_button_gpio = temp;
 //                     }    
 //                 }            
 //             } 
@@ -2959,7 +2959,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 
 //                     if (gpio_valid(temp))
 //                     {
-//                         config.thermostat_mode_button_gpio = temp;
+//                         cfg->thermostat_mode_button_gpio = temp;
 //                     }    
 //                 }            
 //             }                       
@@ -3034,7 +3034,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
             case GP_INPUT_PULLED_LOW:
             case GP_OUTPUT_HIGH:
             case GP_OUTPUT_LOW:
-                config.gpio_default[gpio_number] = gpio_value;
+                cfg->gpio_default[gpio_number] = gpio_value;
                 break;
         }
     }
@@ -3065,7 +3065,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
 //     // set off by default
-//     config.led_strip_remote_enable  = 0; 
+//     cfg->led_strip_remote_enable  = 0; 
 
 //     i = 0;
 //     while (i < iNumParams)
@@ -3079,27 +3079,27 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 
 //             if (strcasecmp("tsadr1", param) == 0)
 //             {
-//                 STRNCPY(config.temperature_sensor_remote_ip[0], value, sizeof(config.temperature_sensor_remote_ip[0]));
+//                 STRNCPY(cfg->temperature_sensor_remote_ip[0], value, sizeof(cfg->temperature_sensor_remote_ip[0]));
 //             }
 //             if (strcasecmp("tsadr2", param) == 0)
 //             {
-//                 STRNCPY(config.temperature_sensor_remote_ip[1], value, sizeof(config.temperature_sensor_remote_ip[1]));
+//                 STRNCPY(cfg->temperature_sensor_remote_ip[1], value, sizeof(cfg->temperature_sensor_remote_ip[1]));
 //             }
 //             if (strcasecmp("tsadr3", param) == 0)
 //             {
-//                 STRNCPY(config.temperature_sensor_remote_ip[2], value, sizeof(config.temperature_sensor_remote_ip[2]));
+//                 STRNCPY(cfg->temperature_sensor_remote_ip[2], value, sizeof(cfg->temperature_sensor_remote_ip[2]));
 //             }
 //             if (strcasecmp("tsadr4", param) == 0)
 //             {
-//                 STRNCPY(config.temperature_sensor_remote_ip[3], value, sizeof(config.temperature_sensor_remote_ip[3]));
+//                 STRNCPY(cfg->temperature_sensor_remote_ip[3], value, sizeof(cfg->temperature_sensor_remote_ip[3]));
 //             }
 //             if (strcasecmp("tsadr5", param) == 0)
 //             {
-//                 STRNCPY(config.temperature_sensor_remote_ip[4], value, sizeof(config.temperature_sensor_remote_ip[4]));
+//                 STRNCPY(cfg->temperature_sensor_remote_ip[4], value, sizeof(cfg->temperature_sensor_remote_ip[4]));
 //             }
 //             if (strcasecmp("tsadr6", param) == 0)
 //             {
-//                 STRNCPY(config.temperature_sensor_remote_ip[5], value, sizeof(config.temperature_sensor_remote_ip[5]));
+//                 STRNCPY(cfg->temperature_sensor_remote_ip[5], value, sizeof(cfg->temperature_sensor_remote_ip[5]));
 //             }
 //         }
 
@@ -3144,49 +3144,49 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //             {
 //                 sscanf(value, "%d", &setting);
 //                 CLIP(setting, 1, 60);
-//                 config.heating_to_cooling_lockout_mins = setting;
+//                 cfg->heating_to_cooling_lockout_mins = setting;
 //             }
 //             if (strcasecmp("mhonm", param) == 0)
 //             {
 //                 sscanf(value, "%d", &setting);
 //                 CLIP(setting, 1, 60);
-//                 config.minimum_heating_on_mins = setting;
+//                 cfg->minimum_heating_on_mins = setting;
 //             }
 //             if (strcasecmp("mconm", param) == 0)
 //             {
 //                 sscanf(value, "%d", &setting);
 //                 CLIP(setting, 1, 60);
-//                 config.minimum_cooling_on_mins = setting;
+//                 cfg->minimum_cooling_on_mins = setting;
 //             }
 //             if (strcasecmp("mhoffm", param) == 0)
 //             {
 //                 sscanf(value, "%d", &setting);
 //                 CLIP(setting, 1, 60);
-//                 config.minimum_heating_off_mins = setting;
+//                 cfg->minimum_heating_off_mins = setting;
 //             }
 //             if (strcasecmp("mcoffm", param) == 0)
 //             {
 //                 sscanf(value, "%d", &setting);
 //                 CLIP(setting, 1, 60);
-//                 config.minimum_cooling_off_mins = setting;
+//                 cfg->minimum_cooling_off_mins = setting;
 //             }
 //             if (strcasecmp("hvachys", param) == 0)
 //             {
 //                 setting = get_int_with_tenths_from_string(value); 
 //                 CLIP(setting, 10, 100);
-//                 config.thermostat_hysteresis = setting; 
+//                 cfg->thermostat_hysteresis = setting; 
 //             }
 //             if (strcasecmp("disbri", param) == 0)
 //             {
 //                 sscanf(value, "%d", &setting);
 //                 CLIP(setting, 0, 7);
-//                 config.thermostat_display_brightness = setting; 
+//                 cfg->thermostat_display_brightness = setting; 
 //             }  
 //             if (strcasecmp("disdig", param) == 0)
 //             {
 //                 sscanf(value, "%d", &setting);
 //                 CLIP(setting, 0, 6);
-//                 config.thermostat_display_num_digits = setting; 
+//                 cfg->thermostat_display_num_digits = setting; 
 //             }                       
 //         }
 
@@ -3246,12 +3246,12 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 
 //                 if (strcasecmp("ON", value_string) == 0)
 //                 {
-//                     config.rmtsw_relay_default_state[relay_num] = true;
+//                     cfg->rmtsw_relay_default_state[relay_num] = true;
 //                     web.rmtsw_relay_desired_state[relay_num] = true;
 //                 }
 //                 else
 //                 {
-//                     config.rmtsw_relay_default_state[relay_num] = false;
+//                     cfg->rmtsw_relay_default_state[relay_num] = false;
 //                     web.rmtsw_relay_desired_state[relay_num] = false;
 //                 }
 //             }   
@@ -3307,7 +3307,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
                 
 //                 if ((new_zone_max > 0) && (new_zone_max <= 8))
 //                 {
-//                     config.rmtsw_relay_max = new_zone_max;
+//                     cfg->rmtsw_relay_max = new_zone_max;
 //                 }                           
 //             }              
 //         }
@@ -3364,7 +3364,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 
 //                 if (!strcasestr(value, "none"))
 //                 { 
-//                     sscanf(value, "%d", &config.rmtsw_relay_gpio[gpio_zone]);
+//                     sscanf(value, "%d", &cfg->rmtsw_relay_gpio[gpio_zone]);
 //                 }
 //             }   
 
@@ -3384,10 +3384,10 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     }   
 
 //     // copy new normally closed states to config
-//     for (i=0; i<config.rmtsw_relay_max; i++)
+//     for (i=0; i<cfg->rmtsw_relay_max; i++)
 //     {
-//         config.rmtsw_relay_normally_closed[i] = new_normally_closed[i];
-//         //printf("set relay[%d] normally closed to %d\n", i, config.rmtsw_relay_normally_closed[i]);
+//         cfg->rmtsw_relay_normally_closed[i] = new_normally_closed[i];
+//         //printf("set relay[%d] normally closed to %d\n", i, cfg->rmtsw_relay_normally_closed[i]);
 //     }
 
 //     config_changed();
@@ -3442,7 +3442,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //                 urldecode(decoded_string, decoded_string);
 
 //                 // copy decoded value to configuration
-//                 STRNCPY(config.rmtsw_relay_name[gpio_zone], decoded_string, sizeof(config.rmtsw_relay_name[gpio_zone]));
+//                 STRNCPY(cfg->rmtsw_relay_name[gpio_zone], decoded_string, sizeof(cfg->rmtsw_relay_name[gpio_zone]));
 //             }             
 //         }
 //         i++;
@@ -3501,7 +3501,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //             if ((len >= 1) && (param[0] == 'x'))
 //             { 
 //                 sscanf(value, "%d", &(web.rmtsw_relay_period_row));
-//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));  
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));  
 
 //                 //printf("Parameter x used to set web.rmtsw_relay_period_row = %d\n", web.rmtsw_relay_period_row);
 //             } 
@@ -3510,8 +3510,8 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //             len = strlen(param);
 //             if ((len >= 4) && (param[0] == 'r') && (param[1] == 's') && (param[2] == 's') && (param[3] == 't'))
 //             {
-//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow)); 
-//                 config.rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row] = time_string_to_mow(value, 32, web.rmtsw_relay_day);
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow)); 
+//                 cfg->rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row] = time_string_to_mow(value, 32, web.rmtsw_relay_day);
 //             } 
 
 //             //rsarx -- action for relay X 
@@ -3524,7 +3524,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //                 relay_number--;           // shift to zero based
 
 //                 // ensure row is valid
-//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
 
 //                 // get action number
 //                 sscanf(value, "%d", &action_number);
@@ -3535,19 +3535,19 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //                 {
 //                 default:
 //                 case RMSW_ACTION_DO_NOTHING:
-//                     config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] &= ~(1<<relay_number);
-//                     config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] &= ~(1<<relay_number); 
-//                     //printf("DO NOTHING ON=%08b OFF=%08b\n", config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row], config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row]);
+//                     cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] &= ~(1<<relay_number);
+//                     cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] &= ~(1<<relay_number); 
+//                     //printf("DO NOTHING ON=%08b OFF=%08b\n", cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row], cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row]);
 //                     break;
 //                 case RMSW_ACTION_OFF:
-//                     config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] |= (1<<relay_number);
-//                     config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] &= ~(1<<relay_number);
-//                     //printf("TURN OFF OFF=%08b\n", config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row]); 
+//                     cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] |= (1<<relay_number);
+//                     cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] &= ~(1<<relay_number);
+//                     //printf("TURN OFF OFF=%08b\n", cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row]); 
 //                     break;
 //                 case RMSW_ACTION_ON:
-//                     config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] |= (1<<relay_number);
-//                     config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] &= ~(1<<relay_number); 
-//                     //printf("TURN ON ON=%08b\n", config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row]);
+//                     cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] |= (1<<relay_number);
+//                     cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] &= ~(1<<relay_number); 
+//                     //printf("TURN ON ON=%08b\n", cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row]);
 //                     break;                                        
 //                 }
 
@@ -3566,38 +3566,38 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     }
 
 //     // check for duplicates and remove
-//     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));
-//     for(i=0; i<NUM_ROWS(config.rmtsw_relay_schedule_start_mow); i++)
+//     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
+//     for(i=0; i<NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow); i++)
 //     {
 //         if ((i != web.rmtsw_relay_period_row) &&
-//             (config.rmtsw_relay_schedule_start_mow[i] >= 0) &&
-//             (config.rmtsw_relay_schedule_start_mow[i] == config.rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row]))
+//             (cfg->rmtsw_relay_schedule_start_mow[i] >= 0) &&
+//             (cfg->rmtsw_relay_schedule_start_mow[i] == cfg->rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row]))
 //         {
 //             printf("Duplicate relay period deleted\n");
-//             config.rmtsw_relay_schedule_start_mow[i] = -1;
+//             cfg->rmtsw_relay_schedule_start_mow[i] = -1;
 //         }
 //     }    
 
 //     // sort the schedule into ascending order by mow
-//     for(i=1; i<NUM_ROWS(config.rmtsw_relay_schedule_start_mow); i++)
+//     for(i=1; i<NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow); i++)
 //     {
-//         key_mow = config.rmtsw_relay_schedule_start_mow[i];
-//         key_action_on = config.rmtsw_relay_schedule_action_on[i];  
-//         key_action_off = config.rmtsw_relay_schedule_action_off[i]; 
+//         key_mow = cfg->rmtsw_relay_schedule_start_mow[i];
+//         key_action_on = cfg->rmtsw_relay_schedule_action_on[i];  
+//         key_action_off = cfg->rmtsw_relay_schedule_action_off[i]; 
 
 //         j = i - 1;
 
-//         while ((j >= 0) && (config.rmtsw_relay_schedule_start_mow[j] > key_mow))
+//         while ((j >= 0) && (cfg->rmtsw_relay_schedule_start_mow[j] > key_mow))
 //         {
-//             config.rmtsw_relay_schedule_start_mow[j+1] = config.rmtsw_relay_schedule_start_mow[j];
-//             config.rmtsw_relay_schedule_action_on[j+1] = config.rmtsw_relay_schedule_action_on[j]; 
-//             config.rmtsw_relay_schedule_action_off[j+1] = config.rmtsw_relay_schedule_action_off[j];           
+//             cfg->rmtsw_relay_schedule_start_mow[j+1] = cfg->rmtsw_relay_schedule_start_mow[j];
+//             cfg->rmtsw_relay_schedule_action_on[j+1] = cfg->rmtsw_relay_schedule_action_on[j]; 
+//             cfg->rmtsw_relay_schedule_action_off[j+1] = cfg->rmtsw_relay_schedule_action_off[j];           
 //             j = j - 1;
 //         }
 
-//         config.rmtsw_relay_schedule_start_mow[j+1] = key_mow;
-//         config.rmtsw_relay_schedule_action_on[j+1] = key_action_on; 
-//         config.rmtsw_relay_schedule_action_off[j+1] = key_action_off; 
+//         cfg->rmtsw_relay_schedule_start_mow[j+1] = key_mow;
+//         cfg->rmtsw_relay_schedule_action_on[j+1] = key_action_on; 
+//         cfg->rmtsw_relay_schedule_action_off[j+1] = key_action_off; 
             
 //     }
 
@@ -3653,7 +3653,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //             { 
 //                 sscanf(value, "%d", &(web.rmtsw_relay_period_row));
 //                 //printf("Got request to edit relay period. row = %d\n", web.rmtsw_relay_period_row);
-//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));                
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));                
 //             } 
 //         }
 //         i++;
@@ -3708,11 +3708,11 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //             { 
 //                 sscanf(value, "%d", &(web.rmtsw_relay_period_row));
 //                 //printf("Got request to delete relay period. row = %d\n", web.rmtsw_relay_period_row);
-//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));  
-//                 if ((web.rmtsw_relay_period_row >=0) && (web.rmtsw_relay_period_row < NUM_ROWS(config.rmtsw_relay_schedule_start_mow)))
+//                 CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));  
+//                 if ((web.rmtsw_relay_period_row >=0) && (web.rmtsw_relay_period_row < NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow)))
 //                 {
 //                     //printf("Deleting row %d by setting mow to -1\n", web.rmtsw_relay_period_row);
-//                     config.rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row] = -1;
+//                     cfg->rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row] = -1;
 
 //                     // TEST TEST TEST
 //                     rmtsw_sort_schedule();
@@ -3763,14 +3763,14 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 
 //     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-//     for(i=0; i < NUM_ROWS(config.rmtsw_relay_schedule_start_mow); i++)
+//     for(i=0; i < NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow); i++)
 //     {
-//         if (config.rmtsw_relay_schedule_start_mow[i] < 0)
+//         if (cfg->rmtsw_relay_schedule_start_mow[i] < 0)
 //         {
 //             web.rmtsw_relay_period_row = i;
-//             config.rmtsw_relay_schedule_start_mow[i] = web.rmtsw_relay_day*24*60;
-//             config.rmtsw_relay_schedule_action_off[i] = 0;
-//             config.rmtsw_relay_schedule_action_on[i] = 0; 
+//             cfg->rmtsw_relay_schedule_start_mow[i] = web.rmtsw_relay_day*24*60;
+//             cfg->rmtsw_relay_schedule_action_off[i] = 0;
+//             cfg->rmtsw_relay_schedule_action_on[i] = 0; 
 
 //             //printf("Found empty row for add.  row = %d\n", web.rmtsw_relay_period_row);
 
@@ -3944,20 +3944,20 @@ const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char 
             
             if (strcasecmp("mquser", param) == 0)
             {
-                STRNCPY(config.mqtt_user, value, sizeof(config.mqtt_user));
+                STRNCPY(cfg->mqtt_user, value, sizeof(cfg->mqtt_user));
             }
 
             if (strcasecmp("mqpass", param) == 0)
             {
                 if (strcasecmp(value, "********") != 0)
                 {
-                    STRNCPY(config.mqtt_password, value, sizeof(config.mqtt_password));
+                    STRNCPY(cfg->mqtt_password, value, sizeof(cfg->mqtt_password));
                 }
             }   
 
             if (strcasecmp("mqaddr", param) == 0)
             {
-                STRNCPY(config.mqtt_broker_address, value, sizeof(config.mqtt_broker_address));
+                STRNCPY(cfg->mqtt_broker_address, value, sizeof(cfg->mqtt_broker_address));
             }            
         }
 

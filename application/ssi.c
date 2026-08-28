@@ -1229,42 +1229,42 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_tz:
         {
-            if (config.timezone_offset > 0)
+            if (cfg->timezone_offset > 0)
             {
                 // leading + sign added
-                if (config.timezone_offset%60 == 0)
+                if (cfg->timezone_offset%60 == 0)
                 {
                     // normal time zone with whole number of hours
-                    printed = snprintf(pcInsert, iInsertLen, "+%d", config.timezone_offset/60);                 
+                    printed = snprintf(pcInsert, iInsertLen, "+%d", cfg->timezone_offset/60);                 
                 }
                 else
                 {   // unusual time zone with hours and minutes
-                    printed = snprintf(pcInsert, iInsertLen, "+%d:%d", config.timezone_offset/60, abs(config.timezone_offset%60));    
+                    printed = snprintf(pcInsert, iInsertLen, "+%d:%d", cfg->timezone_offset/60, abs(cfg->timezone_offset%60));    
                 }                
             }
             else
             {
                 // leading - sign automatically added
-                if (config.timezone_offset%60 == 0)
+                if (cfg->timezone_offset%60 == 0)
                 {
                     // normal time zone with whole number of hours
-                    printed = snprintf(pcInsert, iInsertLen, "%d", config.timezone_offset/60);                 
+                    printed = snprintf(pcInsert, iInsertLen, "%d", cfg->timezone_offset/60);                 
                 }
                 else
                 {   // unusual time zone with hours and minutes
-                    printed = snprintf(pcInsert, iInsertLen, "%d:%d", config.timezone_offset/60, abs(config.timezone_offset%60));    
+                    printed = snprintf(pcInsert, iInsertLen, "%d:%d", cfg->timezone_offset/60, abs(cfg->timezone_offset%60));    
                 }
             }
         }
         break;
         case SSI_dss:
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.daylightsaving_start);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->daylightsaving_start);
         }
         break;
         case SSI_dse:
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.daylightsaving_end);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->daylightsaving_end);
         }
         break;   
         case SSI_ts1:    // ts1
@@ -1272,40 +1272,40 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_ts3:    // ts3
         case SSI_ts4:    // ts4
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.time_server[iIndex-SSI_ts1]); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->time_server[iIndex-SSI_ts1]); 
         }  
         break; 
         case SSI_dlse:    // dlse -- daylight saving enable
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.daylightsaving_enable?"checked":""); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->daylightsaving_enable?"checked":""); 
         }  
         break;    
        case SSI_ssid: //ssid
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.wifi_ssid);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->wifi_ssid);
         }               
         break;    
         case SSI_wpass: //wpass
         {
-            //printed = snprintf(pcInsert, iInsertLen, "%s", config.wifi_password);
+            //printed = snprintf(pcInsert, iInsertLen, "%s", cfg->wifi_password);
             printed = snprintf(pcInsert, iInsertLen, "********");
         }               
         break;    
         case SSI_dhcp: //dhcp
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.dhcp_enable?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->dhcp_enable?"checked":"");
         }               
         break;    
         case SSI_ipad: //ipad
         {
-            if (!config.dhcp_enable)
+            if (!cfg->dhcp_enable)
             {
-                if (strncasecmp(config.ip_address, "automatic+via+DHCP", sizeof(config.ip_address))==0)
+                if (strncasecmp(cfg->ip_address, "automatic+via+DHCP", sizeof(cfg->ip_address))==0)
                 {
-                    //config.ip_address[0] = 0;
-                    STRNCPY(config.ip_address, web.ip_address_string, sizeof(config.ip_address));   
+                    //cfg->ip_address[0] = 0;
+                    STRNCPY(cfg->ip_address, web.ip_address_string, sizeof(cfg->ip_address));   
                 }
-                printed = snprintf(pcInsert, iInsertLen, "%s", config.ip_address);
+                printed = snprintf(pcInsert, iInsertLen, "%s", cfg->ip_address);
             }
             else
             {
@@ -1315,14 +1315,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;    
         case SSI_nmsk: //nmsk
         {
-            if (!config.dhcp_enable)
+            if (!cfg->dhcp_enable)
             {
-                if (strncasecmp(config.network_mask, "automatic+via+DHCP", sizeof(config.network_mask))==0)
+                if (strncasecmp(cfg->network_mask, "automatic+via+DHCP", sizeof(cfg->network_mask))==0)
                 {
-                    //config.network_mask[0] = 0;
-                    STRNCPY(config.network_mask, web.network_mask_string, sizeof(config.network_mask));  
+                    //cfg->network_mask[0] = 0;
+                    STRNCPY(cfg->network_mask, web.network_mask_string, sizeof(cfg->network_mask));  
                 }                
-                printed = snprintf(pcInsert, iInsertLen, "%s", config.network_mask);
+                printed = snprintf(pcInsert, iInsertLen, "%s", cfg->network_mask);
             }
             else
             {
@@ -1337,7 +1337,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_slog: //slog
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.syslog_server_ip);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->syslog_server_ip);
         }
         break; 
         case SSI_ghsh: //ghsh
@@ -1351,22 +1351,22 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_dstu: //dstu
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.use_archaic_units?"inches":"mm"); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"inches":"mm"); 
         }                        
         break;  
         case SSI_spdu: //spdu
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.use_archaic_units?"ft/s":"m/s"); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"ft/s":"m/s"); 
         }                        
         break;  
         case SSI_tmpu: //tmpu
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.use_archaic_units?"F":"C"); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"F":"C"); 
         }                        
         break;
         case SSI_uau: //uau
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.use_archaic_units?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"checked":"");
         }               
         break; 
         case SSI_stck: //stck
@@ -1386,14 +1386,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;   
         case SSI_gatewy: //gatewy
         {
-            if (!config.dhcp_enable)
+            if (!cfg->dhcp_enable)
             {
-                if (strncasecmp(config.gateway, "automatic+via+DHCP", sizeof(config.gateway))==0)
+                if (strncasecmp(cfg->gateway, "automatic+via+DHCP", sizeof(cfg->gateway))==0)
                 {
-                    //config.gateway[0] = 0;
-                    STRNCPY(config.gateway, web.gateway_string, sizeof(config.gateway));                  
+                    //cfg->gateway[0] = 0;
+                    STRNCPY(cfg->gateway, web.gateway_string, sizeof(cfg->gateway));                  
                 }                
-                printed = snprintf(pcInsert, iInsertLen, "%s", config.gateway);
+                printed = snprintf(pcInsert, iInsertLen, "%s", cfg->gateway);
             }
             else
             {
@@ -1423,17 +1423,17 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;  
         case SSI_simpe: //simpe
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.use_simplified_english?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_simplified_english?"checked":"");
         }  
         break;         
         case SSI_mweek: //mweek
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.use_monday_as_week_start?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_monday_as_week_start?"checked":"");
         }  
         break;         
         case SSI_colour: //colour
         {
-            if (config.use_simplified_english)
+            if (cfg->use_simplified_english)
             {
                 printed = snprintf(pcInsert, iInsertLen, "color");
             }
@@ -1460,17 +1460,17 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;    
         case SSI_sloge: //sloge
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.syslog_enable?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->syslog_enable?"checked":"");
         } 
         break;
         case SSI_pertyp: //pertyp
         {
-            printed = snprintf(pcInsert, iInsertLen, "%d", config.personality);
+            printed = snprintf(pcInsert, iInsertLen, "%d", cfg->personality);
         } 
         break; 
         case SSI_wific: //wific
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.wifi_country);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->wifi_country);
         } 
         break;  
         case SSI_gway: //gway
@@ -1480,7 +1480,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_pernme: //pernme
         {
-            switch(config.personality)
+            switch(cfg->personality)
             {
             case SPRINKLER_USURPER:
                 printed = snprintf(pcInsert, iInsertLen, "Sprinkler Usurper");
@@ -1551,23 +1551,23 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break; 
         case SSI_hostn: // hostn
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.host_name);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->host_name);
         }               
         break; 
         case SSI_mquser: // mquser
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.mqtt_user);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->mqtt_user);
         }               
         break; 
         case SSI_mqpass: // mqpass
         {
-            //printed = snprintf(pcInsert, iInsertLen, "%s", config.mqtt_password);
+            //printed = snprintf(pcInsert, iInsertLen, "%s", cfg->mqtt_password);
             printed = snprintf(pcInsert, iInsertLen, "********");
         }               
         break; 
         case SSI_mqaddr: // mqaddr
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.mqtt_broker_address);
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->mqtt_broker_address);
         }               
         break;
         case SSI_uptme: // uptme
@@ -1594,7 +1594,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         
         case SSI_temp: // temp
         {
-            if (!config.use_archaic_units)
+            if (!cfg->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.outside_temperature<0?'-':' ', abs(web.outside_temperature/10), abs(web.outside_temperature%10)); 
             }
@@ -1607,7 +1607,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_wind: // wind
         {         
-            if (!config.use_archaic_units)
+            if (!cfg->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.wind_speed/10, web.wind_speed%10); 
             }
@@ -1620,7 +1620,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;  
         case SSI_rain: // rain
         {
-            if (!config.use_archaic_units)
+            if (!cfg->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.daily_rain/10, web.daily_rain%10); 
             }
@@ -1647,7 +1647,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
   
         case SSI_rainwk: // rainwk
         {          
-            if (!config.use_archaic_units)
+            if (!cfg->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.weekly_rain/10, web.weekly_rain%10); 
             }
@@ -1667,7 +1667,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_fri:    // fri
         // case SSI_sat:    // sat
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.day_schedule_enable[iIndex-SSI_sun]?"ON":"OFF"); 
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->day_schedule_enable[iIndex-SSI_sun]?"ON":"OFF"); 
         // }  
         // break;
         // case SSI_strt1:
@@ -1678,13 +1678,13 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_strt6:
         // case SSI_strt7:
         // {
-        //     if (config.day_schedule_enable[iIndex-SSI_strt1])
+        //     if (cfg->day_schedule_enable[iIndex-SSI_strt1])
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%02d : %02d", config.day_start[iIndex-SSI_strt1]/60, config.day_start[iIndex-SSI_strt1]%60);
+        //         printed = snprintf(pcInsert, iInsertLen, "%02d : %02d", cfg->day_start[iIndex-SSI_strt1]/60, cfg->day_start[iIndex-SSI_strt1]%60);
         //     }
         //     else
         //     {
-        //         if (true /*config.personality == SPRINKLER_USURPER*/)
+        //         if (true /*cfg->personality == SPRINKLER_USURPER*/)
         //         {
         //             printed = snprintf(pcInsert, iInsertLen, "-- : --"); 
         //         }
@@ -1703,9 +1703,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_ctrt6:
         // case SSI_ctrt7:
         // {
-        //     if (config.day_schedule_enable[iIndex-SSI_ctrt1])
+        //     if (cfg->day_schedule_enable[iIndex-SSI_ctrt1])
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%02d : %02d", config.day_start[iIndex-SSI_ctrt1]/60, config.day_start[iIndex-SSI_ctrt1]%60);
+        //         printed = snprintf(pcInsert, iInsertLen, "%02d : %02d", cfg->day_start[iIndex-SSI_ctrt1]/60, cfg->day_start[iIndex-SSI_ctrt1]%60);
         //     }
         //     else
         //     {
@@ -1722,13 +1722,13 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_dur6:
         // case SSI_dur7:
         // {
-        //     if (config.day_schedule_enable[iIndex-SSI_dur1])
+        //     if (cfg->day_schedule_enable[iIndex-SSI_dur1])
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", config.day_duration[iIndex-SSI_dur1]);    
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->day_duration[iIndex-SSI_dur1]);    
         //     }
         //     else
         //     {                 
-        //         if (true /*config.personality == SPRINKLER_USURPER*/)
+        //         if (true /*cfg->personality == SPRINKLER_USURPER*/)
         //         {
         //             printed = snprintf(pcInsert, iInsertLen, "--"); 
         //         }
@@ -1741,68 +1741,68 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;
         // case SSI_ecoip: //ecoip
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.weather_station_ip);
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->weather_station_ip);
         // }               
         // break;
         // case SSI_wkrn: //wkrn
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d", config.rain_week_threshold/10, config.rain_week_threshold%10);   
+        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d", cfg->rain_week_threshold/10, cfg->rain_week_threshold%10);   
         // }               
         // break;        
         // case SSI_dyrn: //dyrn
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d", config.rain_day_threshold/10, config.rain_day_threshold%10);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d", cfg->rain_day_threshold/10, cfg->rain_day_threshold%10);
         // }               
         // break; 
         // case SSI_wndt: //wndt
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d", config.wind_threshold/10, config.wind_threshold%10);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d", cfg->wind_threshold/10, cfg->wind_threshold%10);
         // }               
         // break;
          // case SSI_rly: //rly
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.relay_normally_open?"checked":"");
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->relay_normally_open?"checked":"");
         // }               
         // break; 
         // case SSI_gpio: //gpio
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.gpio_number);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->gpio_number);
         // }               
         // break;   
         // case SSI_lpat: //lpat
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", get_pattern_name(config.led_pattern)); 
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", get_pattern_name(cfg->led_pattern)); 
         // }               
         // break; 
         // case SSI_lspd: //lspd
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.led_speed);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->led_speed);
         // }               
         // break;     
         // case SSI_lpin: //lpin
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.led_pin);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->led_pin);
         // }               
         // break;                                      
         // case SSI_lrgbw: //lrgbw
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.led_rgbw);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->led_rgbw);
         // }               
         // break;  
         // case SSI_lnum: //lnum
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.led_number);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->led_number);
         // }               
         // break;  
     
         // case SSI_gvea: //gvea
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.govee_light_ip);
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->govee_light_ip);
         // } 
         // break;   
         // case SSI_wthr: //wthr
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.weather_station_ip);
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->weather_station_ip);
         // } 
         // break; 
         // case SSI_day1:    // day1 (sun)
@@ -1813,53 +1813,53 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_day6:    // day6 (fri)
         // case SSI_day7:    // day7 (sat)
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.day_schedule_enable[iIndex-SSI_day1]?"checked":""); 
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->day_schedule_enable[iIndex-SSI_day1]?"checked":""); 
         // }  
         // break;
         // case SSI_gvee: //gvee
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.use_govee_to_indicate_irrigation_status?"checked":""); 
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_govee_to_indicate_irrigation_status?"checked":""); 
         // }
         // break;
         // case SSI_gvei: //gvei
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d.%d", config.govee_irrigation_active_red, config.govee_irrigation_active_green, config.govee_irrigation_active_blue);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d.%d", cfg->govee_irrigation_active_red, cfg->govee_irrigation_active_green, cfg->govee_irrigation_active_blue);
         // }
         // break;
         // case SSI_gveu: //gveu
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d.%d", config.govee_irrigation_usurped_red, config.govee_irrigation_usurped_green, config.govee_irrigation_usurped_blue);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d.%d.%d", cfg->govee_irrigation_usurped_red, cfg->govee_irrigation_usurped_green, cfg->govee_irrigation_usurped_blue);
         // }
         // break;
         // case SSI_gves: //gves
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.govee_sustain_duration);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->govee_sustain_duration);
         // }
         // break;                        
         // case SSI_lie: //lie
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.use_led_strip_to_indicate_irrigation_status?"checked":""); 
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_led_strip_to_indicate_irrigation_status?"checked":""); 
         // }
         // break;
         // case SSI_lia: //lia
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", get_pattern_name(config.led_pattern_when_irrigation_active));           
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", get_pattern_name(cfg->led_pattern_when_irrigation_active));           
         // }
         // break; 
         // case SSI_liu: //liu
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", get_pattern_name(config.led_pattern_when_irrigation_terminated));            
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", get_pattern_name(cfg->led_pattern_when_irrigation_terminated));            
         // }
         // break; 
         // case SSI_lis: //lis
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.led_sustain_duration);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->led_sustain_duration);
         // }
         // break; 
 
         // case SSI_lstsvn: //lstsvn
         // {
-        //     if (!config.use_archaic_units)
+        //     if (!cfg->use_archaic_units)
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.trailing_seven_days_rain/10, web.trailing_seven_days_rain%10); 
         //     }
@@ -1889,15 +1889,15 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
             }
             else
             {
-                switch(config.personality)
+                switch(cfg->personality)
                 {
                 default:
                 case NO_PERSONALITY:
-                    //printf("redirecting to personality.shtml (%d)\n", config.personality);
+                    //printf("redirecting to personality.shtml (%d)\n", cfg->personality);
                     printed = snprintf(pcInsert, iInsertLen, "/personality.shtml");
                     break;
                 case SPRINKLER_USURPER:
-                    if (config.use_monday_as_week_start)
+                    if (cfg->use_monday_as_week_start)
                     {
                         //printf("redirecting to landscape_monday.shtml\n");
                         printed = snprintf(pcInsert, iInsertLen, "/landscape_monday.shtml");
@@ -1909,7 +1909,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     }
                     break;
                 case SPRINKLER_CONTROLLER:
-                    if (config.use_monday_as_week_start)
+                    if (cfg->use_monday_as_week_start)
                     {
                         //printf("redirecting to landscape_monday.shtml\n");
                         printed = snprintf(pcInsert, iInsertLen, "/zm_landscape.shtml");
@@ -1924,7 +1924,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     printed = snprintf(pcInsert, iInsertLen, "/led_controller.shtml");
                     break;
                 case HVAC_THERMOSTAT:
-                    if (config.use_monday_as_week_start)
+                    if (cfg->use_monday_as_week_start)
                     {
                         //printf("redirecting to landscape_monday.shtml\n");
                         printed = snprintf(pcInsert, iInsertLen, "/tm_thermostat.shtml");
@@ -1950,14 +1950,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
             }
             else
             {            
-                switch(config.personality)
+                switch(cfg->personality)
                 {
                 default:
                 case NO_PERSONALITY:
                     printed = snprintf(pcInsert, iInsertLen, "/personality.shtml");
                     break;
                 case SPRINKLER_USURPER:
-                    if (config.use_monday_as_week_start)
+                    if (cfg->use_monday_as_week_start)
                     {
                         printed = snprintf(pcInsert, iInsertLen, "/monday.shtml");
                     }
@@ -1967,7 +1967,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     }
                     break;
                 case SPRINKLER_CONTROLLER:
-                    if (config.use_monday_as_week_start)
+                    if (cfg->use_monday_as_week_start)
                     {
                         printed = snprintf(pcInsert, iInsertLen, "/monday.shtml");
                     }
@@ -1980,7 +1980,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     printed = snprintf(pcInsert, iInsertLen, "/led_controller.shtml");
                     break;
                 case HVAC_THERMOSTAT:
-                    if (config.use_monday_as_week_start)
+                    if (cfg->use_monday_as_week_start)
                     {
                         printed = snprintf(pcInsert, iInsertLen, "/t_schedule.cgi?day=1");
                     }
@@ -1998,7 +1998,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;        
         // case SSI_wse: //wse
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.weather_station_enable?"checked":"");
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->weather_station_enable?"checked":"");
         // }   
         // break;   
                                     
@@ -2009,12 +2009,12 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rsadr5: //rsdar5
         // case SSI_rsadr6: //rsdar6               
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.led_strip_remote_ip[iIndex-SSI_rsadr1]); 
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->led_strip_remote_ip[iIndex-SSI_rsadr1]); 
         // }                     
         // break; 
         // case SSI_rse: //rse
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.led_strip_remote_enable?"checked":"");
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->led_strip_remote_enable?"checked":"");
         // } 
         // break;
 
@@ -2025,7 +2025,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;    
         // case SSI_soilt1: //soilt1
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.soil_moisture_threshold[0]);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->soil_moisture_threshold[0]);
         // }                       
         // break;   
         // case SSI_z1d1d:
@@ -2085,13 +2085,13 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_z8d6d:
         // case SSI_z8d7d:
         // {  
-        //     if (config.day_schedule_enable[(iIndex-SSI_z1d1d)%7])
+        //     if (cfg->day_schedule_enable[(iIndex-SSI_z1d1d)%7])
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", config.zone_duration[(iIndex-SSI_z1d1d)/7][(iIndex-SSI_z1d1d)%7]);
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->zone_duration[(iIndex-SSI_z1d1d)/7][(iIndex-SSI_z1d1d)%7]);
         //     }
         //     else
         //     {
-        //         if (true /*config.personality == SPRINKLER_USURPER*/)
+        //         if (true /*cfg->personality == SPRINKLER_USURPER*/)
         //         {
         //             printed = snprintf(pcInsert, iInsertLen, "--");  
         //         }
@@ -2160,9 +2160,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_c8d6d:
         // case SSI_c8d7d:
         // {  
-        //     if (config.day_schedule_enable[(iIndex-SSI_c1d1d)%7])
+        //     if (cfg->day_schedule_enable[(iIndex-SSI_c1d1d)%7])
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d min", config.zone_duration[(iIndex-SSI_c1d1d)/7][(iIndex-SSI_c1d1d)%7]);
+        //         printed = snprintf(pcInsert, iInsertLen, "%d min", cfg->zone_duration[(iIndex-SSI_c1d1d)/7][(iIndex-SSI_c1d1d)%7]);
         //     }
         //     else
         //     {
@@ -2194,7 +2194,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_z7gpio:
         // case SSI_z8gpio:
         // {     
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.zone_gpio[(iIndex-SSI_z1gpio)%8]);             
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->zone_gpio[(iIndex-SSI_z1gpio)%8]);             
         // }
         // break;
         // case SSI_z1viz:
@@ -2206,7 +2206,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_z7viz:
         // case SSI_z8viz:
         // {
-        //     if ((iIndex-SSI_z1viz)%8 >= config.zone_max)
+        //     if ((iIndex-SSI_z1viz)%8 >= cfg->zone_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
         //     }
@@ -2218,12 +2218,12 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break; 
         // case SSI_zmax: //zmax
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.zone_max);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->zone_max);
         // }   
         // break;     
         // case SSI_rpage: //rpage
         // {
-        //     switch(config.personality)
+        //     switch(cfg->personality)
         //     {
         //     default:
         //     case NO_PERSONALITY:
@@ -2250,7 +2250,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_z7bviz:
         // case SSI_z8bviz:
         // {
-        //     if ((iIndex-SSI_z1bviz)%8 >= config.zone_max)
+        //     if ((iIndex-SSI_z1bviz)%8 >= cfg->zone_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
         //     }
@@ -2270,7 +2270,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_z7iviz:
         // case SSI_z8iviz:
         // {
-        //     if ((iIndex-SSI_z1iviz)%8 >= config.zone_max)
+        //     if ((iIndex-SSI_z1iviz)%8 >= cfg->zone_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
         //     }
@@ -2289,7 +2289,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_z7zviz:
         // case SSI_z8zviz:
         // {
-        //     if ((iIndex-SSI_z1zviz)%8 >= config.zone_max)
+        //     if ((iIndex-SSI_z1zviz)%8 >= cfg->zone_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
         //     }
@@ -2302,7 +2302,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;      
         // case SSI_z1dur:
         // {
-        //     if (config.personality == SPRINKLER_USURPER)
+        //     if (cfg->personality == SPRINKLER_USURPER)
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "Duration");
         //     }
@@ -2331,7 +2331,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_sp11viz:
         // case SSI_sp12viz:
         // {
-        //     if ((iIndex-SSI_sp1viz)%12 >= config.setpoint_number)
+        //     if ((iIndex-SSI_sp1viz)%12 >= cfg->setpoint_number)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
         //     }
@@ -2358,7 +2358,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_sp15nme: //sp15nme
         // case SSI_sp16nme: //sp16nme
         // {
-        //     //printed = snprintf(pcInsert, iInsertLen, "%s", config.setpoint_name[iIndex-SSI_sp1nme]); 
+        //     //printed = snprintf(pcInsert, iInsertLen, "%s", cfg->setpoint_name[iIndex-SSI_sp1nme]); 
         //     printf("error - setpoint_name is not longer supported\n");
         // }                     
         // break; 
@@ -2395,7 +2395,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_sp31tmp:
         case SSI_sp32tmp:                
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.automation_state[iIndex-SSI_sp1tmp]?"enabled":"disabled");
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->automation_state[iIndex-SSI_sp1tmp]?"enabled":"disabled");
         }                     
         break;
         case SSI_ts1st:  // ts1st = automation name
@@ -2431,7 +2431,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_ts31st:
         case SSI_ts32st:                        
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", config.automation_name[iIndex-SSI_ts1st]);            
+            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->automation_name[iIndex-SSI_ts1st]);            
         }
         break; 
         case SSI_sp1mde:  // sp1mde = automation last triggered timestamp
@@ -2467,7 +2467,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_sp31mde:
         case SSI_sp32mde:                        
         {
-            if (!get_timestamp_from_unix_time(config.automation_triggered[iIndex-SSI_sp1mde], timestamp, sizeof(timestamp), 0, 1))
+            if (!get_timestamp_from_unix_time(cfg->automation_triggered[iIndex-SSI_sp1mde], timestamp, sizeof(timestamp), 0, 1))
             {
                 printed = snprintf(pcInsert, iInsertLen, "%s", timestamp);
             }         
@@ -2490,8 +2490,8 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_ts15en:
         // case SSI_ts16en:
         // {
-        //     //printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_period_end_mow[iIndex-SSI_ts1en]); 
-        //     //printed = mow_to_string(pcInsert, iInsertLen, config.thermostat_period_end_mow[iIndex-SSI_ts1en]);
+        //     //printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_period_end_mow[iIndex-SSI_ts1en]); 
+        //     //printed = mow_to_string(pcInsert, iInsertLen, cfg->thermostat_period_end_mow[iIndex-SSI_ts1en]);
         //     printf("error - thermostat_period_end_mow is no longer supported\n");
         // }
         // break;                  
@@ -2528,8 +2528,8 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_ts31vz:
         case SSI_ts32vz:                        
         {
-            // if ((get_day_from_mow(config.setpoint_start_mow[iIndex-SSI_ts1vz]) != web.thermostat_day) ||
-            //     (config.setpoint_start_mow[iIndex-SSI_ts1vz] <0))
+            // if ((get_day_from_mow(cfg->setpoint_start_mow[iIndex-SSI_ts1vz]) != web.thermostat_day) ||
+            //     (cfg->setpoint_start_mow[iIndex-SSI_ts1vz] <0))
             // {     
             //     printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
             // }
@@ -2557,54 +2557,54 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_ts16in:
         // {
         //     //TODO RANGE CHECKING!!!
-        //     //printed = snprintf(pcInsert, iInsertLen, "%s", config.setpoint_name[config.thermostat_period_setpoint_index[iIndex-SSI_ts1in]]); 
+        //     //printed = snprintf(pcInsert, iInsertLen, "%s", cfg->setpoint_name[cfg->thermostat_period_setpoint_index[iIndex-SSI_ts1in]]); 
         //     printf("error - thermostat_period_setpoint_index is no longer supported\n");
         // }
         // break;                      
         // case SSI_pwip:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.powerwall_ip);
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->powerwall_ip);
         // }
         // break;
         // case SSI_pwhost:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", config.powerwall_hostname);
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", cfg->powerwall_hostname);
         // }
         // break; 
         // case SSI_pwpass:
         // {
-        //     //printed = snprintf(pcInsert, iInsertLen, "%s", config.powerwall_password);
+        //     //printed = snprintf(pcInsert, iInsertLen, "%s", cfg->powerwall_password);
         //     printed = snprintf(pcInsert, iInsertLen, "********");
         // }
         // break;
         // case SSI_pwgdhd:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", config.grid_down_heating_setpoint_decrease/10, config.grid_down_heating_setpoint_decrease%10);
+        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", cfg->grid_down_heating_setpoint_decrease/10, cfg->grid_down_heating_setpoint_decrease%10);
         // }
         // break;        
         // case SSI_pwgdci:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", config.grid_down_cooling_setpoint_increase/10, config.grid_down_cooling_setpoint_increase%10);            
+        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", cfg->grid_down_cooling_setpoint_increase/10, cfg->grid_down_cooling_setpoint_increase%10);            
         // }
         // break;
         // case SSI_pwblhd:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", config.grid_down_heating_disable_battery_level/10, config.grid_down_heating_disable_battery_level%10);            
+        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", cfg->grid_down_heating_disable_battery_level/10, cfg->grid_down_heating_disable_battery_level%10);            
         // }
         // break;        
         // case SSI_pwblhe:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", config.grid_down_heating_enable_battery_level/10, config.grid_down_heating_enable_battery_level%10);            
+        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", cfg->grid_down_heating_enable_battery_level/10, cfg->grid_down_heating_enable_battery_level%10);            
         // }
         // break;
         // case SSI_pwblcd:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", config.grid_down_cooling_disable_battery_level/10, config.grid_down_cooling_disable_battery_level%10);            
+        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", cfg->grid_down_cooling_disable_battery_level/10, cfg->grid_down_cooling_disable_battery_level%10);            
         // }
         // break;   
         // case SSI_pwblce:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", config.grid_down_cooling_enable_battery_level/10, config.grid_down_cooling_enable_battery_level%10);            
+        //     printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", cfg->grid_down_cooling_enable_battery_level/10, cfg->grid_down_cooling_enable_battery_level%10);            
         // }
         // break; 
         // case SSI_tday:
@@ -2614,18 +2614,18 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;   
         // case SSI_tpst:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_start_mow));
-        //     //printed = mow_to_string(pcInsert, iInsertLen, config.setpoint_start_mow[web.thermostat_period_row]);
-        //     printed = mow_to_time_string(pcInsert, iInsertLen, config.setpoint_start_mow[web.thermostat_period_row]);            
+        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow));
+        //     //printed = mow_to_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[web.thermostat_period_row]);
+        //     printed = mow_to_time_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[web.thermostat_period_row]);            
         // }
         // break; 
         // case SSI_tptmp:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_temperaturex10));
+        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_temperaturex10));
 
-        //     if (config.setpoint_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
+        //     if (cfg->setpoint_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", config.setpoint_temperaturex10[web.thermostat_period_row]/10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_temperaturex10[web.thermostat_period_row]/10); 
         //     }
         //     else
         //     {
@@ -2635,11 +2635,11 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;  
         // case SSI_tphtmp:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_heating_temperaturex10));
+        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_heating_temperaturex10));
 
-        //     if (config.setpoint_heating_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
+        //     if (cfg->setpoint_heating_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", config.setpoint_heating_temperaturex10[web.thermostat_period_row]/10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_heating_temperaturex10[web.thermostat_period_row]/10); 
         //     }
         //     else
         //     {
@@ -2649,11 +2649,11 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;  
         // case SSI_tpctmp:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_cooling_temperaturex10));
+        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_cooling_temperaturex10));
 
-        //     if (config.setpoint_cooling_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
+        //     if (cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", config.setpoint_cooling_temperaturex10[web.thermostat_period_row]/10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row]/10); 
         //     }
         //     else
         //     {
@@ -2668,9 +2668,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_tpsm5:
         // case SSI_tpsm6:        
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(config.setpoint_mode));
+        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_mode));
 
-        //     if (config.setpoint_mode[web.thermostat_period_row] == (iIndex-SSI_tpsm1))
+        //     if (cfg->setpoint_mode[web.thermostat_period_row] == (iIndex-SSI_tpsm1))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "selected"); 
         //     }
@@ -2682,9 +2682,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;         
         // case SSI_tsaddvz:
         // {
-        //     for(i=0; i < NUM_ROWS(config.setpoint_start_mow); i++)
+        //     for(i=0; i < NUM_ROWS(cfg->setpoint_start_mow); i++)
         //     {
-        //         if (config.setpoint_start_mow[i] < 0)
+        //         if (cfg->setpoint_start_mow[i] < 0)
         //         {
         //             new_thermostat_period_found = true;
         //             break;
@@ -2800,7 +2800,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         case SSI_tct:  // thermostat current temperature
 //         {
 //             printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.thermostat_temperature<0?'-':' ', abs(web.thermostat_temperature/10), abs(web.thermostat_temperature%10)); 
-//             // if (!config.use_archaic_units)
+//             // if (!cfg->use_archaic_units)
 //             // {
 //             //     printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.thermostat_temperature<0?'-':' ', abs(web.thermostat_temperature/10), abs(web.thermostat_temperature%10)); 
 //             // }
@@ -2823,9 +2823,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 // #endif
 //         case SSI_thgpio:
 //         {
-//             if (gpio_valid(config.heating_gpio))
+//             if (gpio_valid(cfg->heating_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.heating_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->heating_gpio);
 //             }
 //             else
 //             {
@@ -2835,9 +2835,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break;
 //         case SSI_tcgpio:
 //         {
-//             if (gpio_valid(config.cooling_gpio))
+//             if (gpio_valid(cfg->cooling_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.cooling_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->cooling_gpio);
 //             }
 //             else
 //             {
@@ -2847,9 +2847,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break; 
 //         case SSI_tfgpio:
 //         {
-//             if (gpio_valid(config.fan_gpio))
+//             if (gpio_valid(cfg->fan_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.fan_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->fan_gpio);
 //             }
 //             else
 //             {
@@ -2864,19 +2864,19 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         case SSI_tsadr5: //tsdar5
 //         case SSI_tsadr6: //tsdar6               
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%s", config.temperature_sensor_remote_ip[iIndex-SSI_tsadr1]); 
+//             printed = snprintf(pcInsert, iInsertLen, "%s", cfg->temperature_sensor_remote_ip[iIndex-SSI_tsadr1]); 
 //         }                     
 //         break;      
 //         case SSI_tempth: //SSI_tempth
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d.%d", config.outside_temperature_threshold/10, config.outside_temperature_threshold%10);   
+//             printed = snprintf(pcInsert, iInsertLen, "%d.%d", cfg->outside_temperature_threshold/10, cfg->outside_temperature_threshold%10);   
 //         }               
 //         break;          
 // #ifdef INCORPORATE_THERMOSTAT  
 //         case SSI_tint:  // thermostat indoor temperature
 //         {
 //             lower = web.thermostat_temperature;
-//             upper = web.thermostat_heating_set_point + config.thermostat_hysteresis;
+//             upper = web.thermostat_heating_set_point + cfg->thermostat_hysteresis;
 
 //             printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld", lower<0?'-':' ', abs(lower)/10, abs(lower%10));
 //         }
@@ -2888,10 +2888,10 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //             case HVAC_AUTO:
 //             case HVAC_HEATING_ONLY:
 //             case HVAC_HEAT_AND_COOL:
-//                 lower = web.thermostat_heating_set_point - config.thermostat_hysteresis;
-//                 upper = web.thermostat_heating_set_point + config.thermostat_hysteresis;
+//                 lower = web.thermostat_heating_set_point - cfg->thermostat_hysteresis;
+//                 upper = web.thermostat_heating_set_point + cfg->thermostat_hysteresis;
 
-//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", config.use_archaic_units?"F":"C");
+//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", cfg->use_archaic_units?"F":"C");
 //                 break;
 //             default:
 //             case HVAC_OFF:
@@ -2909,10 +2909,10 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //             case HVAC_AUTO:
 //             case HVAC_COOLING_ONLY:
 //             case HVAC_HEAT_AND_COOL:
-//                 lower = web.thermostat_cooling_set_point - config.thermostat_hysteresis;
-//                 upper = web.thermostat_cooling_set_point + config.thermostat_hysteresis;
+//                 lower = web.thermostat_cooling_set_point - cfg->thermostat_hysteresis;
+//                 upper = web.thermostat_cooling_set_point + cfg->thermostat_hysteresis;
 
-//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", config.use_archaic_units?"F":"C");
+//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", cfg->use_archaic_units?"F":"C");
 //                 break;
 //             default:
 //             case HVAC_OFF:            
@@ -2949,9 +2949,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break;         
 //         case SSI_tacgpio:  // temperature sensor clock
 //         {
-//             if (gpio_valid(config.thermostat_temperature_sensor_clock_gpio))
+//             if (gpio_valid(cfg->thermostat_temperature_sensor_clock_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_temperature_sensor_clock_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_temperature_sensor_clock_gpio);
 //             }
 //             else
 //             {
@@ -2961,9 +2961,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break;  
 //         case SSI_tadgpio: // temperature sensor data
 //         {
-//             if (gpio_valid(config.thermostat_temperature_sensor_data_gpio))
+//             if (gpio_valid(cfg->thermostat_temperature_sensor_data_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_temperature_sensor_data_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_temperature_sensor_data_gpio);
 //             }
 //             else
 //             {
@@ -2973,9 +2973,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break; 
 //         case SSI_tlcgpio: // display clock
 //         {
-//             if (gpio_valid(config.thermostat_seven_segment_display_clock_gpio))
+//             if (gpio_valid(cfg->thermostat_seven_segment_display_clock_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_seven_segment_display_clock_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_seven_segment_display_clock_gpio);
 //             }
 //             else
 //             {
@@ -2985,9 +2985,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break; 
 //         case SSI_tldgpio: // display data
 //         {
-//             if (gpio_valid(config.thermostat_seven_segment_display_data_gpio))
+//             if (gpio_valid(cfg->thermostat_seven_segment_display_data_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_seven_segment_display_data_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_seven_segment_display_data_gpio);
 //             }
 //             else
 //             {
@@ -2997,9 +2997,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break; 
 //         case SSI_tbugpio:  // button up
 //         {
-//             if (gpio_valid(config.thermostat_increase_button_gpio))
+//             if (gpio_valid(cfg->thermostat_increase_button_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_increase_button_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_increase_button_gpio);
 //             }
 //             else
 //             {
@@ -3009,9 +3009,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break; 
 //         case SSI_tbdgpio:   // button down
 //         {
-//             if (gpio_valid(config.thermostat_decrease_button_gpio))
+//             if (gpio_valid(cfg->thermostat_decrease_button_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_decrease_button_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_decrease_button_gpio);
 //             }
 //             else
 //             {
@@ -3021,9 +3021,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break; 
 //         case SSI_tbmgpio:   // button mode
 //         {
-//             if (gpio_valid(config.thermostat_mode_button_gpio))
+//             if (gpio_valid(cfg->thermostat_mode_button_gpio))
 //             {
-//                 printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_mode_button_gpio);
+//                 printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_mode_button_gpio);
 //             }
 //             else
 //             {
@@ -3033,32 +3033,32 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break; 
 //         case SSI_htclm:  // heating to cooling lockuout
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", config.heating_to_cooling_lockout_mins);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", cfg->heating_to_cooling_lockout_mins);                           
 //         }
 //         break;
 //         case SSI_mhonm:  // minimum heating on time
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", config.minimum_heating_on_mins);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", cfg->minimum_heating_on_mins);                           
 //         }
 //         break;
 //         case SSI_mconm:  // minimum cooling on time
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", config.minimum_cooling_on_mins);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", cfg->minimum_cooling_on_mins);                           
 //         }
 //         break;
 //         case SSI_mhoffm:  // minimum heating off time
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", config.minimum_heating_off_mins);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", cfg->minimum_heating_off_mins);                           
 //         }
 //         break;
 //         case SSI_mcoffm:  // minimum cooling off time
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", config.minimum_cooling_off_mins);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", cfg->minimum_cooling_off_mins);                           
 //         }
 //         break;              
 //         case SSI_hvachys:  // hysteresis
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d.%d", config.thermostat_hysteresis/10, config.thermostat_hysteresis%10);                    
+//             printed = snprintf(pcInsert, iInsertLen, "%d.%d", cfg->thermostat_hysteresis/10, cfg->thermostat_hysteresis%10);                    
 //         }
 //         break;
 //         case SSI_this1:
@@ -3168,7 +3168,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break;   
 //         case SSI_disbri: // display brightness
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_display_brightness);
+//             printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_display_brightness);
 //         }
 //         break;
 //         case SSI_ttma:  // thermostat temperature moving average
@@ -3188,7 +3188,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         break;    
 //         case SSI_disdig:  // display number of digits
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", config.thermostat_display_num_digits);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", cfg->thermostat_display_num_digits);                           
 //         }
 //         break;                   
 // #endif                   
@@ -3201,7 +3201,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rs7viz:
         // case SSI_rs8viz:
         // {
-        //     if ((iIndex-SSI_rs1viz)%8 >= config.rmtsw_relay_max)
+        //     if ((iIndex-SSI_rs1viz)%8 >= cfg->rmtsw_relay_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
         //     }
@@ -3220,14 +3220,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rsrly7:
         // case SSI_rsrly8:
         // {  
-        //     if ((iIndex-SSI_rsrly1)%8 >= config.rmtsw_relay_max)
+        //     if ((iIndex-SSI_rsrly1)%8 >= cfg->rmtsw_relay_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "");
         //     }
         //     else
         //     {
         //         // original shows config values                
-        //         // printed =  snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"ON\" %s></td>", (iIndex-SSI_rsrly1)%8+1, (iIndex-SSI_rsrly1)%8+1, config.rmtsw_relay_default_state[(iIndex-SSI_rsrly1)%8]?"checked":"");
+        //         // printed =  snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"ON\" %s></td>", (iIndex-SSI_rsrly1)%8+1, (iIndex-SSI_rsrly1)%8+1, cfg->rmtsw_relay_default_state[(iIndex-SSI_rsrly1)%8]?"checked":"");
         //         // printed += snprintf(pcInsert+printed, iInsertLen-printed, "<td><label for=\"inact\">ON</label></td>");
 
         //         // show live values -- conflating live state with configuration
@@ -3245,13 +3245,13 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rsoff7:
         // case SSI_rsoff8:
         // {  
-        //     if ((iIndex-SSI_rsoff1)%8 >= config.rmtsw_relay_max)
+        //     if ((iIndex-SSI_rsoff1)%8 >= cfg->rmtsw_relay_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "");
         //     }
         //     else
         //     {                
-        //         // printed += snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"OFF\" %s></td>", (iIndex-SSI_rsoff1)%8+1, (iIndex-SSI_rsoff1)%8+1, config.rmtsw_relay_default_state[(iIndex-SSI_rsoff1)%8]?"":"checked");                
+        //         // printed += snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"OFF\" %s></td>", (iIndex-SSI_rsoff1)%8+1, (iIndex-SSI_rsoff1)%8+1, cfg->rmtsw_relay_default_state[(iIndex-SSI_rsoff1)%8]?"":"checked");                
         //         // printed += snprintf(pcInsert+printed, iInsertLen-printed, "<td><label for=\"inact\">OFF</label></td>");
 
         //         // show live values -- conflating live state with configuration
@@ -3269,14 +3269,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rs7nme:
         // case SSI_rs8nme:
         // {  
-        //     if ((iIndex-SSI_rs1nme)%8 >= config.rmtsw_relay_max)
+        //     if ((iIndex-SSI_rs1nme)%8 >= cfg->rmtsw_relay_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "");
         //     }
         //     else
         //     {                
-        //         //printed = snprintf(pcInsert, iInsertLen, "<td><label for=\"rlynme\">&emsp;%s</label></td>", config.rmtsw_relay_name[(iIndex-SSI_rsrly1)%8]);
-        //         printed = snprintf(pcInsert, iInsertLen, "%s", config.rmtsw_relay_name[(iIndex-SSI_rs1nme)%8]);                
+        //         //printed = snprintf(pcInsert, iInsertLen, "<td><label for=\"rlynme\">&emsp;%s</label></td>", cfg->rmtsw_relay_name[(iIndex-SSI_rsrly1)%8]);
+        //         printed = snprintf(pcInsert, iInsertLen, "%s", cfg->rmtsw_relay_name[(iIndex-SSI_rs1nme)%8]);                
         //     }                       
         // }
         // break;  
@@ -3290,9 +3290,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rs8gpio:
         // {     
              
-        //     if (gpio_valid(config.rmtsw_relay_gpio[(iIndex-SSI_rs1gpio)%8]))
+        //     if (gpio_valid(cfg->rmtsw_relay_gpio[(iIndex-SSI_rs1gpio)%8]))
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", config.rmtsw_relay_gpio[(iIndex-SSI_rs1gpio)%8]);
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->rmtsw_relay_gpio[(iIndex-SSI_rs1gpio)%8]);
         //     }
         //     else
         //     {
@@ -3302,7 +3302,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;  
         // case SSI_rsmax: //rsmax
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", config.rmtsw_relay_max);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->rmtsw_relay_max);
         // }   
         // break;                              
         // case SSI_rs1actr1: 
@@ -3567,12 +3567,12 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 
         //     //printf("row = %d bit = %d", schedule_slot, schedule_relay);
 
-        //     if (config.rmtsw_relay_schedule_action_on[schedule_slot] & (1<<schedule_relay))
+        //     if (cfg->rmtsw_relay_schedule_action_on[schedule_slot] & (1<<schedule_relay))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "ON"); 
         //         //printf("ON\n");  
         //     }
-        //     else if (config.rmtsw_relay_schedule_action_off[schedule_slot] & (1<<schedule_relay))
+        //     else if (cfg->rmtsw_relay_schedule_action_off[schedule_slot] & (1<<schedule_relay))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "OFF");
         //         //printf("OFF\n"); 
@@ -3603,9 +3603,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;
         // case SSI_rsst:
         // {
-        //     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));
-        //     //printed = mow_to_string(pcInsert, iInsertLen, config.setpoint_start_mow[web.rmtsw_relay_period_row]);
-        //     printed = mow_to_time_string(pcInsert, iInsertLen, config.rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row]);            
+        //     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
+        //     //printed = mow_to_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[web.rmtsw_relay_period_row]);
+        //     printed = mow_to_time_string(pcInsert, iInsertLen, cfg->rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row]);            
         // }
         // break;   
         // case SSI_rs1st:
@@ -3641,7 +3641,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rs31st:
         // case SSI_rs32st:                        
         // {
-        //     printed = mow_to_time_string(pcInsert, iInsertLen, config.rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1st]);            
+        //     printed = mow_to_time_string(pcInsert, iInsertLen, cfg->rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1st]);            
         // }
         // break;         
         // case SSI_rs1vz:
@@ -3677,8 +3677,8 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rs31vz:
         // case SSI_rs32vz:                        
         // {
-        //     if ((get_day_from_mow(config.rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1vz]) != web.rmtsw_relay_day) ||
-        //         (config.rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1vz] <0))
+        //     if ((get_day_from_mow(cfg->rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1vz]) != web.rmtsw_relay_day) ||
+        //         (cfg->rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1vz] <0))
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
         //     }
@@ -3690,9 +3690,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break; 
         // case SSI_rsaddvz:
         // {
-        //     for(i=0; i < NUM_ROWS(config.rmtsw_relay_schedule_start_mow); i++)
+        //     for(i=0; i < NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow); i++)
         //     {
-        //         if (config.rmtsw_relay_schedule_start_mow[i] < 0)
+        //         if (cfg->rmtsw_relay_schedule_start_mow[i] < 0)
         //         {
         //             new_thermostat_period_found = true;
         //             break;
@@ -3733,19 +3733,19 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rsact81:
         // case SSI_rsact82:                                                      
         // {
-        //     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(config.rmtsw_relay_schedule_start_mow));
+        //     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
 
         //     schedule_relay = (iIndex-SSI_rsact10) / 3;   // relay number
         //     schedule_slot  = (iIndex-SSI_rsact10) % 3;   // action number
 
-        //     //printf("tag = %d row = %d relay = %d action = %d  OFF = %08b  ON = %08bn ", iIndex, web.rmtsw_relay_period_row, schedule_relay, schedule_slot, config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row], config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row]);
+        //     //printf("tag = %d row = %d relay = %d action = %d  OFF = %08b  ON = %08bn ", iIndex, web.rmtsw_relay_period_row, schedule_relay, schedule_slot, cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row], cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row]);
 
-        //     if ((config.rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_ON))
+        //     if ((cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_ON))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "selected");
         //         //printf("relay %d ON\n", schedule_relay);   
         //     }
-        //     else if ((config.rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_OFF))
+        //     else if ((cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_OFF))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "selected");
         //         //printf("relay %d OFF\n", schedule_relay);   
@@ -3775,7 +3775,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rscvz10: 
         // case SSI_rscvz11:                       
         // {
-        //     if ((iIndex-SSI_rscvz1) < (config.rmtsw_relay_max + 2))
+        //     if ((iIndex-SSI_rscvz1) < (cfg->rmtsw_relay_max + 2))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "");
         //     }
@@ -3807,9 +3807,9 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rs7nc:
         // case SSI_rs8nc:
         // {
-        //     if ((iIndex-SSI_rs1nc)%8 < config.rmtsw_relay_max)
+        //     if ((iIndex-SSI_rs1nc)%8 < cfg->rmtsw_relay_max)
         //     {     
-        //         printed = snprintf(pcInsert, iInsertLen, "%s", config.rmtsw_relay_normally_closed[iIndex-SSI_rs1nc]?"checked":""); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%s", cfg->rmtsw_relay_normally_closed[iIndex-SSI_rs1nc]?"checked":""); 
         //     }
         //     else
         //     {
@@ -3826,7 +3826,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // case SSI_rsbulb7:
         // case SSI_rsbulb8:
         // {
-        //     if ((iIndex-SSI_rsbulb1) < config.rmtsw_relay_max)
+        //     if ((iIndex-SSI_rsbulb1) < cfg->rmtsw_relay_max)
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "%d%s", (iIndex-SSI_rsbulb1+1), web.rmtsw_relay_desired_state[iIndex-SSI_rsbulb1]?"&#x1F7E2;":"&#x1F534;"); 
         //     }

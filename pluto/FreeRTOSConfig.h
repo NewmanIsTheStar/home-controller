@@ -139,7 +139,7 @@ to exclude the API function. */
 
 /* A header file that defines trace macro can be included here. */
 
-/* SMP Related config. */
+/* SMP Related cfg-> */
 #define configUSE_PASSIVE_IDLE_HOOK             0
 #define portSUPPORT_SMP                         1
 

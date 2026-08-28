@@ -31,7 +31,7 @@ int config_validate(void);
 void config_system_variable_initialize(void);
 void config_blank_to_v1(void *previous_config);
 
-
+NON_VOL_VARIABLES_T *cfg;
 NON_VOL_VARIABLES_T config;
 static int config_dirty_flag = 0;
 static NON_VOL_CONVERSION_T config_info[] =
@@ -52,41 +52,41 @@ void config_blank_to_v1(void *previous_config)
     printf("Initializing configuration version 1\n");
 
     // version
-    config.version = 1;
+    cfg->version = 1;
 
     // personality
-    config.personality = HOME_CONTROLLER;
+    cfg->personality = HOME_CONTROLLER;
     
     // home controller
-    config.hc_enable = 1;
+    cfg->hc_enable = 1;
 
-    for(i=0; i<NUM_ROWS(config.shelly_device_ip); i++)
+    for(i=0; i<NUM_ROWS(cfg->shelly_device_ip); i++)
     {
-        config.shelly_device_ip[i][0] = 0;
-        config.shelly_device_ip[i][1] = 0;
-        config.shelly_device_ip[i][2] = 0;
-        config.shelly_device_ip[i][3] = 0;                        
-        config.shelly_device_type[i] = 0;        
+        cfg->shelly_device_ip[i][0] = 0;
+        cfg->shelly_device_ip[i][1] = 0;
+        cfg->shelly_device_ip[i][2] = 0;
+        cfg->shelly_device_ip[i][3] = 0;                        
+        cfg->shelly_device_type[i] = 0;        
     }
 
-    for(i=0; i<NUM_ROWS(config.shelly_parameter_device_index); i++)
+    for(i=0; i<NUM_ROWS(cfg->shelly_parameter_device_index); i++)
     {    
-        config.shelly_parameter_device_index[i] = 255;
-        config.shelly_parameter_name_index[i] = 255;
+        cfg->shelly_parameter_device_index[i] = 255;
+        cfg->shelly_parameter_name_index[i] = 255;
     }
 
-    for(i=0; i<NUM_ROWS(config.shelly_parameter_value); i++)
+    for(i=0; i<NUM_ROWS(cfg->shelly_parameter_value); i++)
     {     
-        config.shelly_parameter_value[i][0] = 0;   
-        config.shelly_parameter_name[i][0] = 0;        
+        cfg->shelly_parameter_value[i][0] = 0;   
+        cfg->shelly_parameter_name[i][0] = 0;        
     }
     
-    for(i=0; i<NUM_ROWS(config.automation_name); i++)
+    for(i=0; i<NUM_ROWS(cfg->automation_name); i++)
     {
-        //config.automation_name[i][0] = 0;
-        sprintf(config.automation_name[i], "automation%02d", i);
-        config.automation_triggered[i] = 0;
-        config.automation_state[i] = 0;
+        //cfg->automation_name[i][0] = 0;
+        sprintf(cfg->automation_name[i], "automation%02d", i);
+        cfg->automation_triggered[i] = 0;
+        cfg->automation_state[i] = 0;
     }
 
 }
@@ -136,6 +136,9 @@ int config_read(void)
 {
     int err = 0;
 
+    // set config pointer
+    cfg = &config;
+
     // read configuration from flash
     flash_read_non_volatile_variables(CONFIG_STANDARD);
 
@@ -171,8 +174,8 @@ int config_write(void)
         } while (config_dirty(true));
 
         // update crc
-        config.system_crc = crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, system_crc));         
-        config.crc = crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, crc)); 
+        cfg->system_crc = crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, system_crc));         
+        cfg->crc = crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, crc)); 
          
         // compare ram and flash copies
         if (memcmp((char *)(XIP_BASE +  FLASH_TARGET_OFFSET), ((char *)&config), sizeof(config)))
@@ -194,7 +197,7 @@ int config_write(void)
         }
 
         // check for collision
-        if (config.crc != crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, crc)))
+        if (cfg->crc != crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, crc)))
         {
             // config was updated by another task after we computed the crc and possibly before we wrote to flash
             printf("Config update occured while writing to flash, will retry\n");
@@ -350,12 +353,12 @@ int config_validate(void)
 int config_timeserver_failsafe(void)
 {
     // failsafe - if no timeserver configured try pool.ntp.org
-    if ((config.time_server[0][0] == 0) &&
-        (config.time_server[1][0] == 0) &&
-        (config.time_server[2][0] == 0) &&
-        (config.time_server[3][0] == 0))
+    if ((cfg->time_server[0][0] == 0) &&
+        (cfg->time_server[1][0] == 0) &&
+        (cfg->time_server[2][0] == 0) &&
+        (cfg->time_server[3][0] == 0))
     {
-        STRNCPY(config.time_server[0], "pool.ntp.org", sizeof(config.time_server[0]));
+        STRNCPY(cfg->time_server[0], "pool.ntp.org", sizeof(cfg->time_server[0]));
     }
 
     return(0);
@@ -373,44 +376,44 @@ void config_system_variable_initialize(void)
     printf("Initializing configuration system variables in RAM\n");
 
     // personality
-    config.personality = NO_PERSONALITY;
+    cfg->personality = NO_PERSONALITY;
 
     // network
-    STRNCPY(config.wifi_country, "World Wide", sizeof(config.wifi_country));      
-    config.wifi_ssid[0] = 0;
-    config.wifi_password[0] = 0;
-    config.dhcp_enable = 1;
-    STRNCPY(config.host_name, APP_NAME, sizeof(config.host_name));
-    config.ip_address[0] = 0;
-    config.network_mask[0] = 0;
+    STRNCPY(cfg->wifi_country, "World Wide", sizeof(cfg->wifi_country));      
+    cfg->wifi_ssid[0] = 0;
+    cfg->wifi_password[0] = 0;
+    cfg->dhcp_enable = 1;
+    STRNCPY(cfg->host_name, APP_NAME, sizeof(cfg->host_name));
+    cfg->ip_address[0] = 0;
+    cfg->network_mask[0] = 0;
     
     // time
-    config.timezone_offset = -6*60;
-    config.daylightsaving_enable = 1;  
-    STRNCPY(config.daylightsaving_start, "Second Sunday in March", sizeof(config.daylightsaving_start));
-    STRNCPY(config.daylightsaving_end, "First Sunday in November", sizeof(config.daylightsaving_end));
-    STRNCPY(config.time_server[0], "pool.ntp.org", sizeof(config.time_server[0]));
-    STRNCPY(config.time_server[1], "time.google.com", sizeof(config.time_server[1]));
-    STRNCPY(config.time_server[2], "time.facebook.com", sizeof(config.time_server[2]));
-    STRNCPY(config.time_server[3], "time.windows.com", sizeof(config.time_server[3]));        
+    cfg->timezone_offset = -6*60;
+    cfg->daylightsaving_enable = 1;  
+    STRNCPY(cfg->daylightsaving_start, "Second Sunday in March", sizeof(cfg->daylightsaving_start));
+    STRNCPY(cfg->daylightsaving_end, "First Sunday in November", sizeof(cfg->daylightsaving_end));
+    STRNCPY(cfg->time_server[0], "pool.ntp.org", sizeof(cfg->time_server[0]));
+    STRNCPY(cfg->time_server[1], "time.google.com", sizeof(cfg->time_server[1]));
+    STRNCPY(cfg->time_server[2], "time.facebook.com", sizeof(cfg->time_server[2]));
+    STRNCPY(cfg->time_server[3], "time.windows.com", sizeof(cfg->time_server[3]));        
 
     // syslog
-    STRNCPY(config.syslog_server_ip, "spud.badnet", sizeof(config.syslog_server_ip));         
-    config.syslog_enable = 0;
+    STRNCPY(cfg->syslog_server_ip, "spud.badnet", sizeof(cfg->syslog_server_ip));         
+    cfg->syslog_enable = 0;
     
     // foibles
-    config.use_archaic_units = 1;
-    config.use_simplified_english = 1;
-    config.use_monday_as_week_start = 0;
+    cfg->use_archaic_units = 1;
+    cfg->use_simplified_english = 1;
+    cfg->use_monday_as_week_start = 0;
 
     // gpio
-    for(i=0; i<NUM_ROWS(config.gpio_default); i++)
+    for(i=0; i<NUM_ROWS(cfg->gpio_default); i++)
     {
-        config.gpio_default[i] = GP_UNINITIALIZED;
+        cfg->gpio_default[i] = GP_UNINITIALIZED;
     } 
     
     // mqtt
-    config.mqtt_user[0] = 0;
-    config.mqtt_password[0] = 0;
-    config.mqtt_broker_address[0] = 0;
+    cfg->mqtt_user[0] = 0;
+    cfg->mqtt_password[0] = 0;
+    cfg->mqtt_broker_address[0] = 0;
 }

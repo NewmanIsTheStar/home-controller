@@ -230,11 +230,11 @@ int set_daylight_saving_dates(void)
     {
       year = t.year;
 
-      err = get_daylight_saving_month_and_day(year, config.daylightsaving_start, &daylight_saving_start_month, &daylight_saving_start_day);
+      err = get_daylight_saving_month_and_day(year, cfg->daylightsaving_start, &daylight_saving_start_month, &daylight_saving_start_day);
 
       if (!err)
       {
-         err = get_daylight_saving_month_and_day(year, config.daylightsaving_end, &daylight_saving_end_month, &daylight_saving_end_day);
+         err = get_daylight_saving_month_and_day(year, cfg->daylightsaving_end, &daylight_saving_end_month, &daylight_saving_end_day);
       }
     }
     else
@@ -367,10 +367,10 @@ int get_dow_and_mod_local_tz(int *dow, int *mod)
     *dow = get_day_of_week(date.month, date.day, date.year);
 
     // standard time
-    *mod = date.hour*MINUTES_IN_HOUR + date.min + config.timezone_offset; 
+    *mod = date.hour*MINUTES_IN_HOUR + date.min + cfg->timezone_offset; 
 
     // check for daylight savings
-    if (config.daylightsaving_enable                                                             &&
+    if (cfg->daylightsaving_enable                                                             &&
         ((date.month*31+date.day) >= (daylight_saving_start_month*31+daylight_saving_start_day)) &&
         ((date.month*31+date.day) < (daylight_saving_end_month*31+daylight_saving_end_day)))
     {
@@ -409,7 +409,7 @@ int daylight_savings_active(datetime_t date)
 {
    bool daylight_savings = false;
 
-    if (config.daylightsaving_enable                                                             &&
+    if (cfg->daylightsaving_enable                                                             &&
         ((date.month*31+date.day) >= (daylight_saving_start_month*31+daylight_saving_start_day)) &&
         ((date.month*31+date.day) < (daylight_saving_end_month*31+daylight_saving_end_day)))
    {
@@ -460,7 +460,7 @@ int get_local_time_string(char *time_string, int len)
 
    //  rtc_get_datetime(&date);
 
-   //  min_now = date.hour*MINUTES_IN_HOUR + date.min + config.timezone_offset;
+   //  min_now = date.hour*MINUTES_IN_HOUR + date.min + cfg->timezone_offset;
 
    //  // check for daylight savings
    //  if (daylight_savings_active(date))
@@ -520,19 +520,19 @@ SCHEDULE_QUERY_STATUS_LT get_next_irrigation_period(int *start_mow, int *end_mow
     // search for next irrigation period
    for (day = 0; (day < DAYS_IN_WEEK) && (irrigate_now != SCHEDULE_NOW); day++)
    {
-      if (config.day_schedule_enable[day])
+      if (cfg->day_schedule_enable[day])
       {
          day_total_duration = 0;
 
-         for(potential_zone=0; potential_zone < config.zone_max; potential_zone++)
+         for(potential_zone=0; potential_zone < cfg->zone_max; potential_zone++)
          {
-            if (config.zone_enable[potential_zone])
+            if (cfg->zone_enable[potential_zone])
             {   
-               candidate_start_mow = (day*HOURS_IN_DAY*MINUTES_IN_HOUR + config.day_start[day] + day_total_duration)%MINUTES_IN_WEEK;
-               candidate_end_mow =   (candidate_start_mow + config.zone_duration[potential_zone][day])%MINUTES_IN_WEEK;
+               candidate_start_mow = (day*HOURS_IN_DAY*MINUTES_IN_HOUR + cfg->day_start[day] + day_total_duration)%MINUTES_IN_WEEK;
+               candidate_end_mow =   (candidate_start_mow + cfg->zone_duration[potential_zone][day])%MINUTES_IN_WEEK;
 
                // maintain running total of duration for the day
-               day_total_duration += config.zone_duration[potential_zone][day];
+               day_total_duration += cfg->zone_duration[potential_zone][day];
 
                // check if current time is within the candidate irrigation period
                if (mow_between(now_mow, candidate_start_mow, candidate_end_mow))
@@ -699,14 +699,14 @@ int get_mow_local_tz(int *mow)
  */
 int set_calendar_html_page(void)
 {
-   switch(config.personality)
+   switch(cfg->personality)
    {
    default:
    case NO_PERSONALITY:
          STRNCPY(current_calendar_web_page, "/personality.shtml", sizeof(current_calendar_web_page));    
          break;
    case SPRINKLER_USURPER:
-         if (config.use_monday_as_week_start)
+         if (cfg->use_monday_as_week_start)
          {
             STRNCPY(current_calendar_web_page, "/landscape_monday.shtml", sizeof(current_calendar_web_page));            
          }
@@ -716,7 +716,7 @@ int set_calendar_html_page(void)
          }
          break;
    case SPRINKLER_CONTROLLER:
-         if (config.use_monday_as_week_start)
+         if (cfg->use_monday_as_week_start)
          {
             STRNCPY(current_calendar_web_page, "/zm_landscape.shtml", sizeof(current_calendar_web_page)); 
          }
@@ -729,7 +729,7 @@ int set_calendar_html_page(void)
          STRNCPY(current_calendar_web_page, "/led_controller.shtml", sizeof(current_calendar_web_page)); 
          break;
    case HVAC_THERMOSTAT:
-         if (config.use_monday_as_week_start)
+         if (cfg->use_monday_as_week_start)
          {
             STRNCPY(current_calendar_web_page, "/tm_thermostat.shtml", sizeof(current_calendar_web_page));           
          }
@@ -1024,7 +1024,7 @@ int8_t get_datetime(datetime_t *date, int localtime)
    if (localtime)
    {
       // apply timezone offset
-      t += (config.timezone_offset * 60); 
+      t += (cfg->timezone_offset * 60); 
    }
 
 	timeinfo = gmtime(&t);
@@ -1062,7 +1062,7 @@ int8_t get_datetime_from_unix_time(uint32_t unixtime, datetime_t *date, int *eff
       if (localtime)
       {
          // apply timezone offset
-         *effective_offset = config.timezone_offset;
+         *effective_offset = cfg->timezone_offset;
          t += (*effective_offset * 60);
       }
 
@@ -1081,7 +1081,7 @@ int8_t get_datetime_from_unix_time(uint32_t unixtime, datetime_t *date, int *eff
       if (localtime)  // TODO: rather than compute if daylight savings is active use a global flag set by fake rtc
       {
          // check for daylight savings
-         if (config.daylightsaving_enable                                                             &&
+         if (cfg->daylightsaving_enable                                                             &&
             ((date->month*31+date->day) >= (daylight_saving_start_month*31+daylight_saving_start_day)) &&
             ((date->month*31+date->day) < (daylight_saving_end_month*31+daylight_saving_end_day)))
          {
@@ -1292,7 +1292,7 @@ int get_date_string_from_unix_time(uint32_t unixtime, char *date_string, int len
       {
          snprintf(date_string, len, "%04d-%02d-%02d", date.year, date.month, date.day);            
       }
-      else if (config.use_archaic_units)
+      else if (cfg->use_archaic_units)
       {
          snprintf(date_string, len, "%02d/%02d/%04d", date.month, date.day, date.year);         
       }

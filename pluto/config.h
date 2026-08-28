@@ -105,7 +105,7 @@ typedef struct
     
 } NON_VOL_VARIABLES_T;
 
-
+extern NON_VOL_VARIABLES_T *cfg;
 // previous non-volatile data stuctures -- used when upgrading
 
 

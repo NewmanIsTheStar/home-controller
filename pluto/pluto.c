@@ -232,7 +232,7 @@ void boss_task(__unused void *params)
     set_gpio_defaults();
     
     //initialise wifi
-    while (cyw43_arch_init_with_country(get_wifi_country_code(config.wifi_country)))
+    while (cyw43_arch_init_with_country(get_wifi_country_code(cfg->wifi_country)))
     {
          printf("***Failed to initialise wifi***\n");
          cyw43_arch_deinit();
@@ -248,7 +248,7 @@ void boss_task(__unused void *params)
 
     //connect to wifi network
     printf("Connecting to Wi-Fi...\n");
-    if (!cyw43_arch_wifi_connect_timeout_ms(config.wifi_ssid, config.wifi_password, CYW43_AUTH_WPA2_AES_PSK, 30000))
+    if (!cyw43_arch_wifi_connect_timeout_ms(cfg->wifi_ssid, cfg->wifi_password, CYW43_AUTH_WPA2_AES_PSK, 30000))
     {
         printf("Connected.\n");
     } 
@@ -261,12 +261,12 @@ void boss_task(__unused void *params)
     }
 
     // handle static ip config
-    if (!config.dhcp_enable)
+    if (!cfg->dhcp_enable)
     {
         printf("Using static IP settings\n");
-        inet_pton(AF_INET, config.ip_address, &ip);
-        inet_pton(AF_INET, config.network_mask, &nm);
-        inet_pton(AF_INET, config.gateway, &gw);
+        inet_pton(AF_INET, cfg->ip_address, &ip);
+        inet_pton(AF_INET, cfg->network_mask, &nm);
+        inet_pton(AF_INET, cfg->gateway, &gw);
         netif_set_addr(netif_default, &(ip), &(nm), &(gw));
     }
 #elif
@@ -524,12 +524,12 @@ int set_web_ip_network_info(void)
     STRNCPY(web.network_mask_string, ipaddr_ntoa(netif_ip4_netmask(&cyw43_state.netif[0])), sizeof(web.network_mask_string)); 
     STRNCPY(web.gateway_string, ipaddr_ntoa(netif_ip4_gw(&cyw43_state.netif[0])), sizeof(web.gateway_string)); 
 
-    if (config.dhcp_enable)
+    if (cfg->dhcp_enable)
     {
         // set the static network config to match current DHCP assignments
-        STRNCPY(config.ip_address, web.ip_address_string, sizeof(config.ip_address));
-        STRNCPY(config.network_mask, web.network_mask_string, sizeof(config.network_mask));        
-        STRNCPY(config.gateway, web.gateway_string, sizeof(config.gateway));    
+        STRNCPY(cfg->ip_address, web.ip_address_string, sizeof(cfg->ip_address));
+        STRNCPY(cfg->network_mask, web.network_mask_string, sizeof(cfg->network_mask));        
+        STRNCPY(cfg->gateway, web.gateway_string, sizeof(cfg->gateway));    
     }
 
     return(0);
@@ -557,10 +557,10 @@ int set_realtime_clock(void)
 
     // sntp timeservers
     config_timeserver_failsafe();
-    sntp_setservername(0, config.time_server[0]); 
-    sntp_setservername(1, config.time_server[1]); 
-    sntp_setservername(2, config.time_server[2]); 
-    sntp_setservername(3, config.time_server[3]); 
+    sntp_setservername(0, cfg->time_server[0]); 
+    sntp_setservername(1, cfg->time_server[1]); 
+    sntp_setservername(2, cfg->time_server[2]); 
+    sntp_setservername(3, cfg->time_server[3]); 
 
     // snpt start
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
@@ -797,9 +797,9 @@ int set_gpio_defaults(void)
 {
     int i;
 
-    for(i=0; i<NUM_ROWS(config.gpio_default); i++)
+    for(i=0; i<NUM_ROWS(cfg->gpio_default); i++)
     {
-        switch(config.gpio_default[i])
+        switch(cfg->gpio_default[i])
         {
         default:
         case GP_UNINITIALIZED:
@@ -857,9 +857,9 @@ int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_
     {
         buffer[0] = 0;
         first_item_printed = false;
-        for(i=0; i<NUM_ROWS(config.gpio_default) && printed < (len-8); i++)
+        for(i=0; i<NUM_ROWS(cfg->gpio_default) && printed < (len-8); i++)
         {
-            if (config.gpio_default[i] == gpio_default)
+            if (cfg->gpio_default[i] == gpio_default)
             {               
                 if (!first_item_printed)
                 {
@@ -870,7 +870,7 @@ int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_
                 }
                 else
                 {
-                    if ((first_in_run >= 0) && (i == next_in_run) && (i < (NUM_ROWS(config.gpio_default)-1))) // within in a run
+                    if ((first_in_run >= 0) && (i == next_in_run) && (i < (NUM_ROWS(cfg->gpio_default)-1))) // within in a run
                     {
                         next_in_run = i+1;
                     }
@@ -886,7 +886,7 @@ int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_
                         first_in_run = i;
                         next_in_run = i+1;
                     }
-                    else if ((first_in_run >= 0) && (i == next_in_run) && (i == (NUM_ROWS(config.gpio_default)-1))) // end of list and end of run
+                    else if ((first_in_run >= 0) && (i == next_in_run) && (i == (NUM_ROWS(cfg->gpio_default)-1))) // end of list and end of run
                     {
                         printed += snprintf(buffer+printed, len, " - %d", i);
                         first_in_run = -1;
