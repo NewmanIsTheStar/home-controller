@@ -70,6 +70,9 @@ extern SemaphoreHandle_t picofs_mutex;
 
 PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
+// Declare the real underlying write function provided by the toolchain/SDK
+extern int __real__write(int fd, const char *ptr, int len);
+extern int __real__read(int fd, char *ptr, int len);
 
 // Hook for fopen()
 int __wrap__open(const char *name, int flags, int mode) 
@@ -114,6 +117,19 @@ int __wrap__open(const char *name, int flags, int mode)
     return fd + 3; 
 }
 
+// Hook for open()  -- forwards to __wrap__open
+int __wrap_open(const char *name, int flags, ...) 
+{
+    int mode = 0;
+    if (flags & O_CREAT) {
+        va_list args;
+        va_start(args, flags);
+        mode = va_arg(args, int);
+        va_end(args);
+    }
+    return __wrap__open(name, flags, mode);
+}
+
 // Hook for fread()
 /*!
  * \brief direct, unbuffered read from a low-level file descriptor
@@ -131,8 +147,15 @@ int __wrap__read(int fd, char *ptr, int len)
 
     if (fd < 3) 
     {
-        // Handle standard input if necessary
-        return 0;
+        if (fd == 0) 
+        {
+            // Forward stdin directly to the original SDK handler (UART/USB CDC)
+            return __real__read(fd, ptr, len);
+        }
+        else
+        {                
+            return 0;
+        }
     }
     
     if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) 
@@ -147,6 +170,8 @@ int __wrap__read(int fd, char *ptr, int len)
 
     return(bytes_read); 
 }
+
+
 
 // Hook for fwrite()
 /*!
@@ -166,9 +191,8 @@ int __wrap__write(int fd, char *ptr, int len)
     // retain SDK standard output routing for printf via stdout/stderr (1 and 2)
     if (fd == 1 || fd == 2) 
     {
-        // Let Pico SDK handles default stdio output (UART/USB)
-        extern int __wrap__write(int fd, char *ptr, int len);
-        return __wrap__write(fd, ptr, len);
+        // forward directly to the original SDK/Newlib handler
+        return __real__write(fd, ptr, len);
     }
 
     if (target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) 
@@ -195,7 +219,8 @@ int __wrap__write(int fd, char *ptr, int len)
 int __wrap__lseek(int fd, int ptr, int dir) 
 {
     int target_fd = fd - 3;
-    if (fd < 3 || target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
+    if (fd < 3 || target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) 
+    {
         errno = EBADF;
         return -1;
     }
@@ -222,9 +247,12 @@ int __wrap__lseek(int fd, int ptr, int dir)
 }
 
 // Hook for fclose()
-int __wrap__close(int fd) {
+int __wrap__close(int fd) 
+{
     int target_fd = fd - 3;
-    if (fd < 3 || target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) {
+    
+    if (fd < 3 || target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) 
+    {
         errno = EBADF;
         return -1;
     }
@@ -241,17 +269,26 @@ int __wrap__close(int fd) {
     return 0;
 }
 
+// Hook for close()
+int __wrap_close(int fd) 
+{
+    return __wrap__close(fd); 
+}
+
 // Hook for fstat()
-int __wrap__fstat(int fd, struct stat *st) {
+int __wrap__fstat(int fd, struct stat *st) 
+{
     st->st_mode = S_IFREG; // Flag as a regular file
     return 0;
 }
 
-int _isatty(int fd) {
+int _isatty(int fd) 
+{
     if (fd < 3) return 1; // Stdin, stdout, stderr are tty devices
     return 0;
 }
 
+// Hook for unlink
 int __wrap__unlink(const char *name) 
 {
     int err = -1;
@@ -266,9 +303,7 @@ int __wrap__unlink(const char *name)
     return(err);
 }
 
-// Declaration of the original SDK rename function
-//extern int __real_rename(const char *old_path, const char *new_path);
-
+// Hook for rename
 int __wrap_rename(const char *old_path, const char *new_path) 
 {
 
@@ -277,9 +312,9 @@ int __wrap_rename(const char *old_path, const char *new_path)
     return 0;
 }
 
-int _stat(const char *filepath, struct stat *st) {
-    // Your hook logic here
-    
+// Hook for stat
+int _stat(const char *filepath, struct stat *st) 
+{    
     st->st_size = picofs_get_file_size((char *)filepath);
 
     return 0;
@@ -287,22 +322,24 @@ int _stat(const char *filepath, struct stat *st) {
 
 
 // Hook for ftruncate
-int _ftruncate(int fd, off_t length) 
+int __wrap_ftruncate(int fd, off_t length) 
 {
+    int target_fd = fd - 3; 
     int result = 0;
-    // // 1. Validate that the file descriptor belongs to your filesystem
-    // if (!myfs_is_valid_fd(fd)) {
-    //     errno = EBADF; // Bad file descriptor
-    //     return -1;
-    // }
 
-    // if (length < 0) {
-    //     errno = EINVAL; // Invalid argument
-    //     return -1;
-    // }
+    if (fd < 3 || target_fd >= FS_MAX_FILE_DESCRIPTORS || !custom_fds[target_fd].in_use) 
+    {
+        errno = EBADF;
+        return -1;
+    }
 
-    // 2. Call your actual backend filesystem logic
-    //int result = myfs_backend_truncate(fd, (size_t)length);
+    if (length < 0) 
+    {
+        errno = EINVAL; // Invalid argument
+        return -1;
+    }
+
+    result = picofs_ftruncate(target_fd, length);
     
     if (result != 0) 
     {
@@ -313,3 +350,37 @@ int _ftruncate(int fd, off_t length)
     return 0; // Success
 }
 
+// TODO --- support reentrant version too
+// #include <unistd.h>
+// #include <reent.h>
+// #include <errno.h>
+
+// /**
+//  * 1. The Internal Newlib Reentrant Wrapper
+//  * This gets hit by internal Newlib operations.
+//  */
+// int __wrap__ftruncate_r(struct _reent *r, int fd, off_t length) {
+//     // ⚠️ TODO: Map 'fd' to your specific file system handler (e.g., LittleFS, FatFS)
+//     // Example pseudocode:
+//     // if (!is_valid_fd(fd)) {
+//     //     r->_errno = EBADF;
+//     //     return -1;
+//     // }
+//     //
+//     // int result = your_fs_truncate(fd, length);
+//     // if (result != 0) {
+//     //     r->_errno = EINVAL; // Or appropriate error mapping
+//     //     return -1;
+//     // }
+
+//     return 0; // Return 0 on success
+// }
+
+// /**
+//  * 2. The Standard POSIX Wrapper
+//  * This gets hit if your application code calls ftruncate(fd, length) directly.
+//  */
+// int __wrap_ftruncate(int fd, off_t length) {
+//     // Forward the call directly to the reentrant wrapper using the current context
+//     return __wrap__ftruncate_r(_REENT, fd, length);
+// }

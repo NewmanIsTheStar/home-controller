@@ -225,6 +225,7 @@ void boss_task(__unused void *params)
     picofs_initialize();
     test_stat(); 
 
+
     // get configuration from flash
     config_read(); 
     

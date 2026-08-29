@@ -101,34 +101,35 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
 {
     int target_fd = fd - 3;
 
-    // handle RAM-only anonymous mappings
-    if (flags & MAP_ANONYMOUS) 
-    {
-        if (!(prot & (PROT_READ | PROT_WRITE))) 
-        {
-            //errno = EINVAL;
-            return(MAP_FAILED);
-        }
+    // // handle RAM-only anonymous mappings
+    // if (flags & MAP_ANONYMOUS) 
+    // {
+    //     if (!(prot & (PROT_READ | PROT_WRITE))) 
+    //     {
+    //         //errno = EINVAL;
+    //         return(MAP_FAILED);
+    //     }
         
-        void *ptr = malloc(len);
+    //     void *ptr = malloc(len);
         
-        if (!ptr) 
-        {
-            //errno = ENOMEM;
-            return(MAP_FAILED);
-        }
+    //     if (!ptr) 
+    //     {
+    //         //errno = ENOMEM;
+    //         return(MAP_FAILED);
+    //     }
         
-        return ptr;
-    }
+    //     return ptr;
+    // }
 
     // handle read-only file mappings
     if (flags & MAP_SHARED)
     {
-        if (prot & PROT_WRITE) 
-        {
-            //errno = EINVAL;
-            return(MAP_FAILED);
-        }
+        // TEST TEST TEST -- allow writes by mapping the file cache
+        // if (prot & PROT_WRITE) 
+        // {
+        //     //errno = EINVAL;
+        //     return(MAP_FAILED);
+        // }
 
         if ((fd < 3) || (target_fd >= FS_MAX_FILE_DESCRIPTORS) || !custom_fds[target_fd].in_use)
         {
@@ -136,11 +137,25 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
             return(MAP_FAILED);
         }
 
-        if (offset > (custom_fds[target_fd].file_trailer->file_size - sizeof(FILE_TRAILER_T)))
+        if (prot & PROT_WRITE) 
         {
-            return(MAP_FAILED);
+            if (offset > (custom_fds[target_fd].data_len))
+            {
+                return(MAP_FAILED);
+            }
+
+            printf("mmap: address = %p (%d)\n", custom_fds[target_fd].cache,  offset);
+            return((void *)(custom_fds[target_fd].cache + offset));    // TODO add mmap status to fd so that we know file is in use after close
         }
-        return((void *)(custom_fds[target_fd].file + offset));    // TODO add mmap status to fd so that we know file is in use after close
+        else if (prot & PROT_READ)
+        {
+            if (offset > (custom_fds[target_fd].file_trailer->file_size - sizeof(FILE_TRAILER_T)))
+            {
+                return(MAP_FAILED);
+            }
+
+            return((void *)(custom_fds[target_fd].file + offset));    // TODO add mmap status to fd so that we know file is in use after close
+        }        
     }
 
     // handle read-only direct flash mappings
@@ -179,12 +194,15 @@ int picofs_munmap(void *addr, size_t len)
 
     //TODO: release fd if it was held open by this mapping [flag in fd not implemented yet]
 
-    // if it is in RAM, free the malloc'd buffer
-    if (addr != NULL && addr != MAP_FAILED) 
-    {
-        free(addr);
-        return(0);
-    }
+    // // if it is in RAM, free the malloc'd buffer
+    // if (addr != NULL && addr != MAP_FAILED) 
+    // {
+    //     free(addr);
+    //     return(0);
+    // }
+
+    // TEST TEST TEST
+    if (addr) return(0);
 
     //errno = EINVAL;
     return(-1);

@@ -6,6 +6,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     calendar.c
     utility.c
     config.c
+    config_mmap.c
     dhcpserver.c
     dnsserver.c
     sdk_callback.c

@@ -70,7 +70,7 @@
 
 
 //prototypes
-
+int picofs_expand_cache(int fd);
 
 // external variables
 extern u32_t unix_time;
@@ -93,7 +93,8 @@ int picofs_write(int fd, char *ptr, int len)
     }
 
     for(i=0; i<len; i++)
-    {       
+    { 
+             
         if (custom_fds[fd].cache_len && (custom_fds[fd].data_offset + i) < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T)))
         {
             custom_fds[fd].data[custom_fds[fd].data_offset + i] = ptr[i];
@@ -144,7 +145,7 @@ int picofs_expand_cache(int fd)
 
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS) )
     {
-        // allocate one 4k block greater than currently used
+        // allocate one 4k sector greater than currently used
         cache_size = ((custom_fds[fd].cache_len + (4*1024))/(4*1024))*(4*1024);        
         expanded_cache = pvPortMalloc(cache_size);
 
@@ -165,12 +166,14 @@ int picofs_expand_cache(int fd)
             custom_fds[fd].cache_len = cache_size;
             custom_fds[fd].data = expanded_cache;
 
+            printf("expanded cache: @%p size %d\n", custom_fds[fd].cache , custom_fds[fd].cache_len);
             err = 0;
         }
     }
 
     return(err);
 }
+
 
 
 // TODO: zero-copy write buffer to file in one shot

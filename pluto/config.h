@@ -13,6 +13,7 @@ bool config_dirty(bool clear_flag);
 int config_timeserver_failsafe(void);
 int config_read(void);
 int config_write(void);
+int config_mmap_test();
 
 // device personality
 typedef enum

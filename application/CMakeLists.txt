@@ -30,7 +30,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         picofs_defrag.c 
         picofs_list.c 
         picofs_file.c 
-        picofs_crc.c              
+        picofs_crc.c 
+        picofs_ftruncate.c             
 )
 
 set(WEB_FILES)
@@ -41,10 +42,14 @@ pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${WEB_FILES})
 
 target_link_options(${PROJECT_NAME} PRIVATE
     "-Wl,--wrap=_open"
+    "-Wl,--wrap=open"
     "-Wl,--wrap=_read"
     "-Wl,--wrap=_write"
     "-Wl,--wrap=_lseek"
     "-Wl,--wrap=_close"
+    "-Wl,--wrap=close"    
     "-Wl,--wrap=_unlink"
-    "-Wl,--wrap=rename"    
+    "-Wl,--wrap=rename"  
+    "-Wl,--wrap=ftruncate"
+    "-Wl,--wrap=_ftruncate_r"     
 )
