@@ -14,6 +14,7 @@ int config_timeserver_failsafe(void);
 int config_read(void);
 int config_write(void);
 int config_mmap_test();
+int config_write_to_file(char *filename);
 
 // device personality
 typedef enum

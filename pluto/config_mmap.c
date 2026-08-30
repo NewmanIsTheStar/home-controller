@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-
+// be cautious what you include here lwip and fcntl have some important conflicts related to BSD / sockets
 #include <stdio.h>
 #include <stdlib.h>
 //#include <sys/mman.h>
@@ -13,6 +13,10 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
+#include "config.h"
+
+
+extern NON_VOL_VARIABLES_T config;
 
 int config_mmap_test() 
 {
@@ -69,5 +73,43 @@ int config_mmap_test()
     
     printf("mmap_test: calling close\n");
     close(fd);
+    return EXIT_SUCCESS;
+}
+
+
+/*!
+ * \brief write configuration to file
+ *
+ * \param message one byte message
+ * 
+ * \return nothing
+ */
+int config_write_to_file(char *filename) 
+{
+    FILE *file = NULL;
+    size_t written_struct = 0;
+
+    // open the file in binary write mode 
+    file = fopen(filename, "wb");
+    if (file == NULL) 
+    {
+        perror("Error opening file");
+        return 1;
+    }
+
+    // write config struct to file
+    written_struct = fwrite(&config, sizeof(NON_VOL_VARIABLES_T), 1, file);
+    if (written_struct != 1) 
+    {
+        perror("Error writing config");
+        fclose(file);
+        return 1;
+    }
+
+    // close the file stream
+    fclose(file);
+
+    printf("Binary data successfully written to %s\n", filename);
+
     return EXIT_SUCCESS;
 }

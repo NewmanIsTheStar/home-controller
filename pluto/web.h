@@ -67,6 +67,7 @@ typedef struct WEB_VARIABLES
   char edit_text_filename[16];
   char *basic_file_to_execute;
   char *file_to_cat;
+  char *file_to_hexdump;
   char *shelly_device_ip;
 } WEB_VARIABLES_T;                  //remember to add initialization code when adding to this structure !!!
 

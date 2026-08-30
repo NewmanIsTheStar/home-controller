@@ -372,9 +372,14 @@ static void execute_shell_command(const char* cmd)
         hc_queue_send(HC_CMD_CAT_FILE);  
     } 
     else if (strncmp(cmd, "hd ", 3) == 0) 
-    {        
-        if (strlen(cmd) > 5) shell_hex_dump((char *)cmd+3);   
-    } 
+    {
+        web.file_to_hexdump = ((char *)(cmd+3)); 
+        hc_queue_send(HC_CMD_HEXDUMP_FILE);  
+    }     
+    // else if (strncmp(cmd, "hd ", 3) == 0) 
+    // {        
+    //     if (strlen(cmd) > 5) shell_hex_dump((char *)cmd+3);   
+    // } 
     else if (strncmp(cmd, "mt ", 3) == 0) 
     {        
         if (strlen(cmd) > 5) shell_map_test((char *)cmd+3);   

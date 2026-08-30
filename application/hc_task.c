@@ -85,6 +85,7 @@ int hc_initialize_queue(void);
 int hc_initialize(void);
 int hc_save_text_file_from_ascii_buffer(void);
 int hc_cat(char *filename);
+int hc_hex_dump(char *filename);
 
 // external variables
 extern NON_VOL_VARIABLES_T config;
@@ -185,10 +186,14 @@ void hc_task(__unused void *params)
                     break; 
                 case HC_CMD_CAT_FILE:
                     hc_cat(web.file_to_cat);                
-                    break;                                                        
+                    break;      
+                case HC_CMD_HEXDUMP_FILE:
+                    hc_hex_dump(web.file_to_hexdump);                
+                    break;                                                                        
                 case HC_CMD_LIGHTS:
                     //shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
-                    config_mmap_test();
+                    //config_mmap_test();
+                    config_write_to_file("config.bin"); 
                     break; 
                 case HC_CMD_SHELLY_DEVICE_DUMP :
                     shelly_cache_device_dump(web.shelly_device_ip);
@@ -435,4 +440,76 @@ int hc_cat(char *filename)
     fclose(filePointer);
 
     return 0;
+}
+
+/*!
+ * \brief print hex dump of buffer
+ * 
+ * \param[in]  filename  file to dump to shell
+ * \return nothing
+ */
+int hc_hex_dump(char *filename)
+{
+    FILE *filePointer;
+    unsigned char buffer[16];
+    size_t bytes_read = 0;
+    char output_line[160];
+    char output_byte[8];
+    int i;
+
+    printf("hexdump %d\n", filename);
+
+    // 1. Open the file in read binary mode ("r")
+    filePointer = fopen(filename, "rb");
+
+    // 2. Check if the file exists and opened successfully
+    if (filePointer == NULL) 
+    {
+        shell_printf("hd: %s: No such file\n", filename);
+        return 1; 
+    }
+
+    // 3. Read and print the file 16 bytes at a time
+    while (bytes_read = fread(buffer, 1, sizeof(buffer), filePointer))
+    {
+        if(bytes_read)
+        {
+            output_line[0] = 0;
+
+            for (i = 0; i < bytes_read;i++) 
+            {
+                snprintf(output_byte, sizeof(output_byte), "%02x ", buffer[i]);
+                STRAPPEND(output_line, output_byte);
+            }            
+
+             // add extra padding if less than 16 bytes (i.e. last line)
+            for (; i<16; i++)
+            {
+                STRAPPEND(output_line, "   ");
+            }
+
+            STRAPPEND(output_line, " ");  
+            for (i = 0; i < bytes_read; i++) 
+            {
+                if (isprint(buffer[i]))
+                {
+                   snprintf(output_byte, sizeof(output_byte), "%c", buffer[i]);
+                   STRAPPEND(output_line, output_byte);
+                }
+                else
+                {
+                    snprintf(output_byte, sizeof(output_byte), "-");
+                    STRAPPEND(output_line, output_byte);
+                }
+            }
+
+            STRAPPEND(output_line, "\n");
+            shell_printf("%s", output_line);                //TODO: call shell_hex_dump() from another task and use blocking shell_printf to avoid data loss
+        }        
+    }
+
+    // 4. Close the file to free up system resources
+    fclose(filePointer);
+
+    return(0);
 }
