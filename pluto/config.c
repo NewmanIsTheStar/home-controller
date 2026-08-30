@@ -42,7 +42,7 @@
 //#define DISABLE_CONFIG_UPGRADE (1)
 //#define DISABLE_CONFIG_WRITE [1]
 
-bool config_compare_flash_ram(bool stop_at_first_difference);
+bool config_compare_flash_ram(CONFIG_TYPE_T config_type, bool stop_at_first_difference, bool print_differences);
 int config_validate(void);
 void config_system_variable_initialize(void);
 void config_blank_to_v1(void *previous_config);
@@ -148,7 +148,7 @@ bool config_dirty(bool clear_flag)
  * 
  * \return 0 on success, -1 on error
  */
-int config_read(void)
+int config_read(CONFIG_TYPE_T config_type)
 {
     int err = 0;
 
@@ -156,7 +156,7 @@ int config_read(void)
     cfg = &config;
 
     // read configuration from flash
-    flash_read_non_volatile_variables(CONFIG_STANDARD);
+    flash_read_non_volatile_variables(config_type);
 
 #ifdef DISABLE_CONFIG_VALIDATION
     printf("Configuration validation disabled!  Using whatever random garbage happens to be in flash...\n");
@@ -173,9 +173,10 @@ int config_read(void)
  * 
  * \return 0 on success, -1 on error
  */
-int config_write(void)
+int config_write(CONFIG_TYPE_T config_type)
 {
     int err = 0;
+
 
     #ifdef DISABLE_CONFIG_WRITE
     printf("Configuration Writes are disabled!\n");
@@ -190,21 +191,22 @@ int config_write(void)
         } while (config_dirty(true));
 
         // update crc
-        cfg->system_crc = crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, system_crc));         
-        cfg->crc = crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, crc)); 
+        cfg->system_crc = crc_buffer((uint8_t *)cfg, offsetof(NON_VOL_VARIABLES_T, system_crc));         
+        cfg->crc = crc_buffer((uint8_t *)cfg, offsetof(NON_VOL_VARIABLES_T, crc)); 
          
         // compare ram and flash copies
-        if (memcmp((char *)(XIP_BASE +  FLASH_TARGET_OFFSET), ((char *)&config), sizeof(config)))
+        if (config_compare_flash_ram(config_type, false, false))
         {
             printf("Writing configuration to flash\n");
 
-            if (err = flash_write_non_volatile_variables())
+            if (err = flash_write_non_volatile_variables(CONFIG_FILE))
             {
                 printf("Failed to write configuraiton to flash (%d)\n", err);                
             } 
-            else if (config_compare_flash_ram(false))
+            else if (config_compare_flash_ram(config_type, false, true))  // we just wrote the config so there shoud now be no differences
             {
-                flash_dump_config(CONFIG_STANDARD);
+                printf("DUMPING CONFIG because difference found after writing to flash!\n");
+                flash_dump_config(CONFIG_FILE);
             }          
         }           
         else
@@ -213,7 +215,7 @@ int config_write(void)
         }
 
         // check for collision
-        if (cfg->crc != crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, crc)))
+        if (cfg->crc != crc_buffer((uint8_t *)cfg, offsetof(NON_VOL_VARIABLES_T, crc)))
         {
             // config was updated by another task after we computed the crc and possibly before we wrote to flash
             printf("Config update occured while writing to flash, will retry\n");
@@ -233,35 +235,53 @@ int config_write(void)
  * 
  * \return 0 = no difference, 1 = difference
  */
-bool config_compare_flash_ram(bool stop_at_first_difference)
+bool config_compare_flash_ram(CONFIG_TYPE_T config_type, bool stop_at_first_difference, bool print_differences)
 {
-    NON_VOL_VARIABLES_T *non_vol;
     int i;
-    int len;
-    uint16_t ram_crc;
-    uint16_t flash_crc;    
     bool difference_found = false;
+    char *config_location_in_flash = NULL;
 
-    for (i=0; i<sizeof(config); i++)
+    config_location_in_flash = flash_get_config_location(config_type);
+
+    if (config_location_in_flash)
     {
-        if (((char *)(XIP_BASE +  FLASH_TARGET_OFFSET))[i] != ((char *)&config)[i])
+        if (print_differences)
         {
-            if (!difference_found)
+            for (i=0; i<sizeof(NON_VOL_VARIABLES_T); i++)
             {
-                // printf headings
-                printf("     offset\tflash\tram\n");
-            }
+                if (config_location_in_flash[i] != ((char *)cfg)[i])
+                {
+                    if (!difference_found)
+                    {
+                        // printf headings
+                        printf("     offset\tflash\tram\n");
+                    }
 
-            // print difference
-            printf("%08x:\t%02x \t%02x\n", i, ((char *)(XIP_BASE +  FLASH_TARGET_OFFSET))[i], ((char *)&config)[i]);
-            
-            difference_found = true;
+                    // print difference
+                    printf("%08x:\t%02x \t%02x\n", i, config_location_in_flash[i], ((char *)cfg)[i]);
+                    
+                    difference_found = true;
 
-            if (stop_at_first_difference)
-            {
-                break;
+                    if (stop_at_first_difference)
+                    {
+                        break;
+                    }
+                }
             }
         }
+        else
+        {
+            if (memcmp(config_location_in_flash, ((char *)cfg), sizeof(NON_VOL_VARIABLES_T)))
+            {
+                printf("config_compare_flash_ram: memcmp() found difference.  flash location = %p\n", config_location_in_flash);
+                difference_found = true;
+            }
+        }
+    }
+    else
+    {
+        printf("config_compare_flash_ram: DEFAULTING TO DIFFERENCE FOUND\n");
+        difference_found = true;
     }
     
     return(difference_found);
@@ -283,7 +303,7 @@ int config_validate(void)
     void *previous_config = NULL;
     CONFIG_TYPE_T config_type;
 
-    for(config_type=CONFIG_STANDARD; config_type < NUM_CONFIG_TYPES; config_type++)
+    for(config_type=CONFIG_FILE; config_type < NUM_CONFIG_TYPES; config_type++)
     {
 
         // read configuration into RAM
@@ -292,9 +312,9 @@ int config_validate(void)
         // check for valid configuration
         for(i=0; i < NUM_ROWS(config_info); i++)
         {
-            version_from_flash = *((int *)((uint8_t *)&config + config_info[i].version_offset));
-            crc_from_flash = *((uint16_t *)((uint8_t *)&config + config_info[i].crc_offset));
-            calculated_crc = crc_buffer((uint8_t *)&config, config_info[i].crc_offset);        
+            version_from_flash = *((int *)((uint8_t *)cfg + config_info[i].version_offset));
+            crc_from_flash = *((uint16_t *)((uint8_t *)cfg + config_info[i].crc_offset));
+            calculated_crc = crc_buffer((uint8_t *)cfg, config_info[i].crc_offset);        
 
             if ((version_from_flash == config_info[i].version) && (crc_from_flash == calculated_crc))
             {
@@ -312,8 +332,8 @@ int config_validate(void)
         else
         {
             // no valid config so try to fallback to system config only
-            crc_from_flash = *((uint16_t *)((uint8_t *)&config + offsetof(NON_VOL_VARIABLES_T, system_crc)));
-            calculated_crc = crc_buffer((uint8_t *)&config, offsetof(NON_VOL_VARIABLES_T, system_crc));
+            crc_from_flash = *((uint16_t *)((uint8_t *)cfg + offsetof(NON_VOL_VARIABLES_T, system_crc)));
+            calculated_crc = crc_buffer((uint8_t *)cfg, offsetof(NON_VOL_VARIABLES_T, system_crc));
 
             if(crc_from_flash == calculated_crc)
             {

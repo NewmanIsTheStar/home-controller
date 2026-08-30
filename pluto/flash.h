@@ -6,6 +6,8 @@
 #ifndef FLASH_H
 #define FLASH_H
 
+#include "config.h"
+
 /*Explanation
   The configuration was originally stored in the last sector of flash.
   The Pi Pico2 had a hardware bug that needed a work around.
@@ -17,16 +19,16 @@
 #define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE))
 #define FLASH_LEGACY_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
 
-typedef enum
-{
-    CONFIG_STANDARD     = 0,
-    CONFIG_LEGACY       = 1,
+/* Configuration Search Sequence
+   1. If a configuration file is present and valid then it will be used.
+   2. If no file is found then the peunultimate sector of flash is checked for a valid configuration.
+   3. Finally, the last sector of flash is checked for a valid configuration.
+   4. If no configuration was found then a new one will be created.
+*/
 
-    NUM_CONFIG_TYPES    = 2
-} CONFIG_TYPE_T;
 
 int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type);
-int flash_write_non_volatile_variables(void);
+int flash_write_non_volatile_variables(CONFIG_TYPE_T config_type);
 int flash_dump(void);
 void flash_get_program_size(void);
 void flash_get_config_size(void);

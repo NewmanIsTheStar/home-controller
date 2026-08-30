@@ -20,6 +20,7 @@
 #include "utility.h"
 #include "config.h"
 #include "flash.h"
+#include "picofs.h"
 
 #define BREAKPOINT_FLASH_WRTIE_FAIL (1)   // stop in gdb before cpu reset
 
@@ -36,12 +37,15 @@ int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
     switch(config_type)
     {
     default:
+    case CONFIG_FILE:
+        config_read_from_file("config.bin");
+        break;
     case CONFIG_STANDARD:
-        memcpy((char *)&config, (char *)(XIP_BASE +  FLASH_TARGET_OFFSET), sizeof(config));
+        memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_TARGET_OFFSET), sizeof(NON_VOL_VARIABLES_T));
         //flash_dump_config(config_type);
         break;        
     case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
-        memcpy((char *)&config, (char *)(XIP_BASE +  FLASH_LEGACY_OFFSET), sizeof(config));
+        memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_LEGACY_OFFSET), sizeof(NON_VOL_VARIABLES_T));
         //flash_dump_config(config_type);
         break;
     }
@@ -60,14 +64,14 @@ void __no_inline_not_in_flash_func(flash_write_shim)(void *ptr)
         // erase the last sector of the flash (4 KBytes)
         flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
 
-        if (sizeof(config) < FLASH_SECTOR_SIZE)
+        if (sizeof(NON_VOL_VARIABLES_T) < FLASH_SECTOR_SIZE)
         {
             // program the configuation in 256 Byte pages (range is rounded up to the nearest multiple of 256 Bytes)
-            flash_range_program(FLASH_TARGET_OFFSET, (uint8_t *)&config, ((sizeof(config)+255)/256)*256);
+            flash_range_program(FLASH_TARGET_OFFSET, (uint8_t *)cfg, ((sizeof(NON_VOL_VARIABLES_T)+255)/256)*256);
         }
         else
         {
-            printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(config));            
+            printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(NON_VOL_VARIABLES_T));            
         }
 }
 
@@ -76,34 +80,41 @@ void __no_inline_not_in_flash_func(flash_write_shim)(void *ptr)
  * 
  * \return 0 on success
  */
-int flash_write_non_volatile_variables(void)
+int flash_write_non_volatile_variables(CONFIG_TYPE_T config_type)
 {
     int err = 0;
 
-
-    if (sizeof(config) < FLASH_SECTOR_SIZE)
-    {    
-        //vTaskSuspendAll();
-
-        err = flash_safe_execute(flash_write_shim, NULL, 5000);
-
-        if (err)
-        {
-            printf("flash_safe_execute() returned error %d\n", err);
-
-             #ifdef BREAKPOINT_FLASH_WRTIE_FAIL        
-            // Hardcoded breakpoint instruction tells the SWD debugger to freeze right here
-            __asm volatile("bkpt #0"); 
-            while(1); // Infinite loop prevents the chip from executing further code/resetting
-             #endif
-        }
-
-        //xTaskResumeAll();
-    }
-    else
+    switch(config_type)
     {
-        printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(config));        
-        err = -2;
+    default:
+    case CONFIG_FILE:
+        config_write_to_file("config.bin");
+        break;
+    case CONFIG_STANDARD:
+        if (sizeof(NON_VOL_VARIABLES_T) < FLASH_SECTOR_SIZE)
+        {    
+            err = flash_safe_execute(flash_write_shim, NULL, 5000);
+
+            if (err)
+            {
+                printf("flash_safe_execute() returned error %d\n", err);
+
+                #ifdef BREAKPOINT_FLASH_WRTIE_FAIL        
+                // Hardcoded breakpoint instruction tells the SWD debugger to freeze right here
+                __asm volatile("bkpt #0"); 
+                while(1); // Infinite loop prevents the chip from executing further code/resetting
+                #endif
+            }
+        }
+        else
+        {
+            printf("Error: unable to save configuration because it is too large. flash sector size = %d config size = %d\n", FLASH_SECTOR_SIZE, sizeof(NON_VOL_VARIABLES_T));        
+            err = -2;
+        }
+        break;        
+    case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
+        printf("config: writing configuration to the legacy flash location is not supported\n");
+        break;
     }
 
     return(err);
@@ -153,23 +164,30 @@ void flash_get_config_size(void)
     uintptr_t start = (uintptr_t)(FLASH_TARGET_OFFSET);
     uintptr_t end = (uintptr_t)(FLASH_TARGET_OFFSET + FLASH_SECTOR_SIZE - 1);
 
-    if (sizeof(config) > FLASH_SECTOR_SIZE)
+    if (sizeof(NON_VOL_VARIABLES_T) > FLASH_SECTOR_SIZE)
     {
         // NB start and end here are with respect to the beginning of flash *not* the cpu address space
         printf("ERROR: Configuration is too large!\n\n");
         printf("Config area start: %08x\nConfig area end:   %08x\nConfig area size:  %08x\n\n", start, end, end-start);
-        printf("Config data size:  %d bytes\n", sizeof(config));
-        printf("Config data free:  %d bytes\n\n", FLASH_SECTOR_SIZE - sizeof(config));
+        printf("Config data size:  %d bytes\n", sizeof(NON_VOL_VARIABLES_T));
+        printf("Config data free:  %d bytes\n\n", FLASH_SECTOR_SIZE - sizeof(NON_VOL_VARIABLES_T));
     }
 }
 
 void *flash_get_config_location(CONFIG_TYPE_T config_type)
 {
-    void *location;
+    void *location = NULL;
+    FILE_TRAILER_T *config_trailer = NULL;
 
     switch(config_type)
     {
     default:
+    case CONFIG_FILE:
+        if (!picofs_find_file("config.bin", FS_INVALID_FID, &config_trailer))
+        {
+            location = (char *)config_trailer + sizeof(FILE_TRAILER_T) - config_trailer->file_size;
+        }
+        break;
     case CONFIG_STANDARD:
         location = (void *)(XIP_BASE +  FLASH_TARGET_OFFSET);
         break;        
@@ -178,6 +196,7 @@ void *flash_get_config_location(CONFIG_TYPE_T config_type)
         break;
     }
 
+    printf("flash_get_config_location: returning config location = %p\n", location);
     return(location);
 }
 
@@ -191,13 +210,28 @@ int flash_dump_config(CONFIG_TYPE_T config_type)
     int i,j;
     char *flash;
     char ascii_output[20];
+    char *description = NULL;
 
-    printf("Dump Config from Flash %s (%d)\n", config_type==CONFIG_STANDARD?"Standard":"Legacy", config_type);
+    switch(config_type)
+    {
+        default:
+        case CONFIG_FILE:
+            description = "Config File";
+            break;
+        case CONFIG_STANDARD:
+            description = "Config standard flash location";
+            break;
+        case CONFIG_LEGACY:
+            description = "Config legacy flash location";
+            break;
+    }
+
+    printf("Dump Config from Flash %s (%d)\n", description, config_type);
 
     flash = (char *)flash_get_config_location(config_type);
     ascii_output[0] = 0;
 
-    for(i=0; i<sizeof(config); i++)
+    for(i=0; i<sizeof(NON_VOL_VARIABLES_T); i++)
     {
         if ((i & 0x0f) == 0)
         {

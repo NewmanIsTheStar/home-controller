@@ -84,7 +84,7 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 extern FILE_STATUS_T picofs_files[FS_NUM_FID]; 
 
 // global variable
-int system_file_version = 1;  // used to track changes to filesystem for shell tab-completion
+int tab_completion_sequence = 1;  // used to track changes to filesystem for shell tab-completion
 SemaphoreHandle_t picofs_mutex = NULL;
 SemaphoreHandle_t crc_mutex = NULL;
 
@@ -214,39 +214,17 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     }
     else
     {
-        printf("picofs_open_file: file does not exist so creating new file name = %s\n", name);
+
         // file does not exist
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
             // create new file and do not allocate cache
             err = picofs_fd_new(fd, flags, (char *)name);
 
-            // ORIGINAL CODE ALLOCATES CACHE WHEN NEW FILE IS OPENED
-            // WE NOW DO NOT ALLOCATE CACHE UNTIL EITHER THE FIRST WRITE OR (better) TRUNCATE CALL
-
-            // // create empty file descriptor
-            // picofs_fd_initialize(fd, flags, NULL);
-
-            // // allocate cache for file descriptor
-            // err = picofs_allocate_cache(fd);
-
-            
-            // if(!err)  
-            // {
-            //     // create file trailer in cache
-            //     err = picofs_create_file_trailer(fd, name);
-
-            //     if (!err)
-            //     {
-            //         picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache));  // empty file only contains trailer
-            //     }
-            //     else
-            //     {
-            //         // failed to create trailer in the cache so free the cache memory
-            //         picofs_deallocate_cache(fd);
-            //     }
-                
-            // }
+            if (!err)
+            {
+                printf("picofs_open_file: file did not exist so created new file named: %s\n", name);
+            }
         }
     }
 
@@ -546,8 +524,8 @@ int picofs_initialize(void)
     int err = 0;
     static bool init_fds = true;
 
-    // track file system state for shell tab-completion
-    system_file_version = 1;
+    // track file system changes for shell tab-completion of file names
+    tab_completion_sequence = 1;
 
     // zero out all file descriptiors before using file system 
     if (init_fds)

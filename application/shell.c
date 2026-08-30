@@ -104,7 +104,7 @@ static char post_buffer[ITEM_BUF_LEN];
 static uint16_t post_len = 0;
 
 // tracker variable for the filesystem state
-extern int system_file_version; 
+extern int tab_completion_sequence; 
 static char last_client_etag[16] = {0};
 
 /*!

@@ -223,11 +223,9 @@ void boss_task(__unused void *params)
 
     // initialize file system
     picofs_initialize();
-    test_stat(); 
-
 
     // get configuration from flash
-    config_read(); 
+    config_read(CONFIG_FILE); 
     
     // default gpio settings  -- primarily for unused hardware connected to gpios
     set_gpio_defaults();
@@ -338,7 +336,7 @@ void boss_task(__unused void *params)
         led_on = !led_on;
 
         // copy configuration changes from RAM into flash
-        config_write();
+        config_write(CONFIG_FILE);
 
         // check stack high water mark for each worker task
         monitor_stacks();    
@@ -386,7 +384,7 @@ void boss_task(__unused void *params)
             if (reboot_reason == REBOOT_USER_REQUEST)
             {
                 // flush recent config changes to flash prior to reboot with one retry
-                if (config_write()) config_write();
+                if (config_write(CONFIG_FILE)) config_write(CONFIG_FILE);
             }
 
             printf("***REBOOT in 100 ms***\n");
@@ -466,7 +464,7 @@ int ap_mode(void)
 
         if (config_dirty(false))
         {
-            config_write();
+            config_write(CONFIG_FILE);
             
             //user is changing configuration
             ap_idle = 0;
@@ -493,7 +491,7 @@ int ap_mode(void)
 
         if (restart_requested)
         {
-            config_write();
+            config_write(CONFIG_FILE);
             
             printf("***REBOOT in 100 ms***\n");
             cyw43_arch_disable_ap_mode();

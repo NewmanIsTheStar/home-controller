@@ -8,13 +8,23 @@
 
 #include <limits.h>
 
+typedef enum
+{
+    CONFIG_FILE         = 0,
+    CONFIG_STANDARD     = 1,
+    CONFIG_LEGACY       = 2,
+
+    NUM_CONFIG_TYPES    = 3
+} CONFIG_TYPE_T;
+
 void config_changed(void);
 bool config_dirty(bool clear_flag);
 int config_timeserver_failsafe(void);
-int config_read(void);
-int config_write(void);
+int config_read(CONFIG_TYPE_T config_type);
+int config_write(CONFIG_TYPE_T config_type);
 int config_mmap_test();
 int config_write_to_file(char *filename);
+int config_read_from_file(char *filename);
 
 // device personality
 typedef enum

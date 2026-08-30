@@ -81,7 +81,7 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 #endif
-extern int system_file_version;
+extern int tab_completion_sequence;
 
 //static variables
 FILE_STATUS_T purge_list[FS_NUM_FID]; 
@@ -182,7 +182,7 @@ int picofs_close_file(int fd, bool disable_purge)
     // update global list of files
     picofs_refresh_files();
 
-    system_file_version++;
+    tab_completion_sequence++;
 
     return(err);
 }

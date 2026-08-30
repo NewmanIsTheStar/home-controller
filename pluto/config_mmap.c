@@ -15,7 +15,8 @@
 #include "picofs.h"
 #include "config.h"
 
-
+// external variables
+extern NON_VOL_VARIABLES_T *cfg;
 extern NON_VOL_VARIABLES_T config;
 
 int config_mmap_test() 
@@ -80,7 +81,7 @@ int config_mmap_test()
 /*!
  * \brief write configuration to file
  *
- * \param message one byte message
+ * \param filename file to store configuration
  * 
  * \return nothing
  */
@@ -94,22 +95,55 @@ int config_write_to_file(char *filename)
     if (file == NULL) 
     {
         perror("Error opening file");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     // write config struct to file
-    written_struct = fwrite(&config, sizeof(NON_VOL_VARIABLES_T), 1, file);
+    written_struct = fwrite(cfg, sizeof(NON_VOL_VARIABLES_T), 1, file);
     if (written_struct != 1) 
     {
         perror("Error writing config");
         fclose(file);
-        return 1;
+        return EXIT_FAILURE;
     }
 
     // close the file stream
     fclose(file);
 
     printf("Binary data successfully written to %s\n", filename);
+
+    return EXIT_SUCCESS;
+}
+
+/*!
+ * \brief read configuration from file
+ *
+ * \param filename file containing configuration
+ * 
+ * \return nothing
+ */
+int config_read_from_file(char *filename) 
+{
+    FILE *file;
+    size_t elements_read; 
+
+    // open the file in read binary mode
+    file = fopen(filename, "rb");
+    
+    // check if the file opened successfully
+    if (file == NULL) 
+    {
+        perror("Error opening file");
+        return EXIT_FAILURE;
+    }
+
+    // read the config struct into memory
+    elements_read = fread(cfg, sizeof(NON_VOL_VARIABLES_T), 1, file);
+
+    printf("Successfully read configuration from %s\n", filename);
+
+    // close the file stream
+    fclose(file);
 
     return EXIT_SUCCESS;
 }

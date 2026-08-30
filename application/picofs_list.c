@@ -82,7 +82,7 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 #endif
 extern FILE_STATUS_T picofs_files[FS_NUM_FID];
-extern int system_file_version;
+extern int tab_completion_sequence;
 
 //static variables
 FILE_STATUS_T list_files[FS_NUM_FID];
@@ -446,7 +446,7 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
     char version[16];
 
     STRNCAT(buffer, "{\"v\": ", len);
-    sprintf(version, "%d", system_file_version);
+    sprintf(version, "%d", tab_completion_sequence);
     STRNCAT(buffer, version, len);
     STRNCAT(buffer, ", \"words\": ", len);
     STRNCAT(buffer, "[", len);
