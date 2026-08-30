@@ -488,7 +488,7 @@ bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file)
     bool may_erase = false;
 
     // check if file is deleted
-    if (candidate_file && candidate_file->file_status == 1)
+    if (candidate_file && (candidate_file->file_status & STS_DELETED))
     {        
         may_erase = !picofs_deleted_file_has_remnants_in_other_sectors(candidate_file);
     }

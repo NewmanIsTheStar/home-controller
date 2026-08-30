@@ -144,7 +144,7 @@ int picofs_consolidate_all_files_in_flash(void)
 
         for (i=0; i<FS_NUM_FID; i++)
         {
-            if (consoldation_files[i].valid && !consoldation_files[i].trailer->file_status)
+            if (consoldation_files[i].valid && !(consoldation_files[i].trailer->file_status & STS_DELETED))
             {
                 picofs_printf("%08d\t%d\t%d\t%s\n", consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_id, consoldation_files[i].trailer->file_sequence, consoldation_files[i].trailer->name);
                 size_files += consoldation_files[i].trailer->file_size;
@@ -207,7 +207,7 @@ int picofs_consolidate_all_files_in_flash(void)
                             // create empty file indicating the deletion of old fid
                             modified_trailer.file_id = consoldation_files[i].trailer->file_id;
                             modified_trailer.file_sequence = FS_MAX_SEQ;
-                            modified_trailer.file_status = 1;
+                            modified_trailer.file_status |= STS_DELETED;    
                             modified_trailer.file_size = sizeof(FILE_TRAILER_T);
                             modified_trailer.crc = 0; //  CRC of an empty buffer is 0  NB crc covers data but not the trailer  
 
@@ -396,7 +396,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
 
     for (i=0; i<FS_NUM_FID; i++)
     {
-        if (consoldation_files[i].valid && !consoldation_files[i].trailer->file_status)
+        if (consoldation_files[i].valid && !(consoldation_files[i].trailer->file_status & STS_DELETED))
         {
             picofs_printf("%08d\t%d\t%d\t%s\n", consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_id, consoldation_files[i].trailer->file_sequence, consoldation_files[i].trailer->name);
             size_files += consoldation_files[i].trailer->file_size;
@@ -431,7 +431,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                      (consoldation_files[i].trailer->file_id != exclude_fid) &&
                      (consoldation_files[i].trailer->file_sequence == (FS_MAX_SEQ-1)))
             {
-                // special case: consolidation with FID rollover during consolidation, requires extra space for a trailer marking file deletion 
+                // special case: consolidation with FID rollover, requires extra space for a trailer marking file deletion 
                 printf("copying...\n");
                 hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
                 memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_size);
@@ -442,7 +442,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
 
                     // append empty file marking the deletion of the old FID that had run out of sequence numbers
                     memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer, sizeof(FILE_TRAILER_T));
-                    ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_status = 1;                     // mark for deletion
+                    ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_status |= STS_DELETED;          // mark for deletion
                     ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_size = sizeof(FILE_TRAILER_T);  // empty file
                     ((FILE_TRAILER_T *)(consolidation_area + total_written))->file_sequence = FS_MAX_SEQ;          // last sequence
                     ((FILE_TRAILER_T *)(consolidation_area + total_written))->crc = 0;                             // CRC of an empty file is zero

@@ -187,7 +187,7 @@ bool picofs_sector_in_use(u32_t sector)
             if ((sector >= start_sector) && (sector <= end_sector))
             {
                 // check if deleted file that is ready for erasure
-                if (!(picofs_files[i].trailer->file_status && picofs_deleted_file_ready_for_erasure(picofs_files[i].trailer)))
+                if (!((picofs_files[i].trailer->file_status & STS_DELETED) && picofs_deleted_file_ready_for_erasure(picofs_files[i].trailer)))
                 {
                     in_use= true;
                     break;

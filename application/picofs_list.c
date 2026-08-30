@@ -338,7 +338,7 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
 
         for (i=0; i<FS_NUM_FID; i++)
         {
-            if (list_files[i].valid && !list_files[i].trailer->file_status)
+            if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED))
             {
 
                 // calculate crc
@@ -410,7 +410,7 @@ int picofs_list_all_files_from_cache(void)
 
     for (i=0; i<FS_NUM_FID; i++)
     {
-        if (list_files[i].valid && !list_files[i].trailer->file_status)
+        if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED))
         {
 
             if (!heading)
@@ -468,7 +468,7 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
 
     for (i=0; i<FS_NUM_FID; i++)
     {
-        if (picofs_files[i].valid && !picofs_files[i].trailer->file_status)
+        if (picofs_files[i].valid && !(picofs_files[i].trailer->file_status & STS_DELETED))
         {
             STRNCAT(buffer, ", \"", len);
             STRNCAT(buffer, picofs_files[i].trailer->name, len);
@@ -500,7 +500,7 @@ int picofs_get_file_size(char *filename)
 
     for (i=0; i<FS_NUM_FID; i++)
     {
-        if (list_files[i].valid && !list_files[i].trailer->file_status && (strcasecmp(filename, list_files[i].trailer->name) == 0))
+        if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED) && (strcasecmp(filename, list_files[i].trailer->name) == 0))
         {
             size_files = list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T);
             break;

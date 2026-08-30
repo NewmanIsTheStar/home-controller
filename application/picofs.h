@@ -4,10 +4,8 @@
 #include <stddef.h>
 #include "shell.h"
 
-
-
+// set this to 1 to use a chunk of RAM to simulate flash for testing/development purposes
 #define FS_FAKE_FLASH (0)
-
 
 #if FS_FAKE_FLASH == 1
 #define FS_SECTOR_SIZE (1024)
@@ -33,6 +31,14 @@
 #define FS_MAX_SEQ (255)
 #define FS_MAX_FILE_DESCRIPTORS (8)
 
+#define BIT0 (0x01)
+#define BIT1 (0x02)
+#define BIT2 (0x04)
+#define BIT3 (0x08)
+#define BIT4 (0x10)
+#define BIT5 (0x20)
+#define BIT6 (0x40)
+#define BIT7 (0x80)
 
 #define FS_VERION (0)
 #define PROT_NONE  (0)
@@ -44,6 +50,16 @@
 #define MAP_ANONYMOUS (0x20)
 #define MAP_ANON    MAP_ANONYMOUS
 #define MAP_FAILED ((void *)-1)
+
+// file_status bit definitions
+#define STS_DELETED (BIT0)
+#define STS_UNUSED1 (BIT1)
+#define STS_UNUSED2 (BIT2)
+#define STS_UNUSED3 (BIT3)
+#define STS_UNUSED4 (BIT4)
+#define STS_UNUSED5 (BIT5)
+#define STS_UNUSED6 (BIT6)
+#define STS_UNUSED7 (BIT7)
 
 // REAL FLASH
 // #define FLASH_SCAN_START (0x10000000UL)
@@ -82,7 +98,8 @@ typedef struct
     FILE_TRAILER_T *file_trailer; // flash or RAM: file trailer
     char *data;                   // flash or RAM: data contained in the file 
     size_t data_len;              // flash or RAM: data length
-    size_t data_offset;           // flash or RAM: offset used by standard C library functions e.g. fread     
+    size_t data_offset;           // flash or RAM: offset used by standard C library functions e.g. fread
+    int mmap_ref_count;           // number of active mappings     
 } PICOFS_FD_T;
 
 typedef struct file_metrics

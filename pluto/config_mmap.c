@@ -16,7 +16,7 @@
 
 int config_mmap_test() 
 {
-    const char *filepath = "new_database.bin";
+    const char *filepath = "database.bin";
     size_t FILE_SIZE = 4096; // 4 KB (typically matches 1 memory page)
 
     // 1. Create and open the new file with Read/Write permissions

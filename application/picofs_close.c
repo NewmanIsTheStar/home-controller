@@ -257,7 +257,7 @@ int picofs_purge_duplicates(char *filename, u8_t keep_fid)
     {
         for (i=0; i<FS_NUM_FID; i++)
         {
-            if ((i != keep_fid) && purge_list[i].valid && !purge_list[i].trailer->file_status && (strcmp(purge_list[i].trailer->name, filename) == 0))
+            if ((i != keep_fid) && purge_list[i].valid && !(purge_list[i].trailer->file_status & STS_DELETED) && (strcmp(purge_list[i].trailer->name, filename) == 0))
             {
                 picofs_printf("%08d\t%d\t%d\t%s ***PURGED***\n", purge_list[i].trailer->file_size, purge_list[i].trailer->file_id, purge_list[i].trailer->file_sequence, purge_list[i].trailer->name);
                 picofs_unlink_by_fid(i); 

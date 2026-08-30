@@ -214,6 +214,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     }
     else
     {
+        printf("picofs_open_file: file does not exist so creating new file name = %s\n", name);
         // file does not exist
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
@@ -278,6 +279,7 @@ int picofs_fd_new(int fd, int flags, char *name)
         custom_fds[fd].data = NULL;
         custom_fds[fd].data_len = 0;
         custom_fds[fd].data_offset = 0;
+        custom_fds[fd].mmap_ref_count = 0;
         
         err = picofs_create_file_trailer(fd, name);
     }
@@ -321,6 +323,7 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
                 custom_fds[fd].data_len = 0;
             }
             custom_fds[fd].data_offset = 0;
+            custom_fds[fd].mmap_ref_count = 0;
         }
         else
         {
@@ -331,6 +334,7 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
             custom_fds[fd].data = NULL;
             custom_fds[fd].data_len = 0;
             custom_fds[fd].data_offset = 0;
+            custom_fds[fd].mmap_ref_count = 0;
 
             // NB we rely on the cache not being touched here during double initialization sequences
         }
@@ -428,21 +432,21 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
     //bool first_sequnce = true;
 
     // try ram
-    if ((fid != FS_INVALID_FID) && picofs_files[fid].valid && (fid == picofs_files[fid].trailer->file_id) && (!picofs_files[fid].trailer->file_status))
+    if ((fid != FS_INVALID_FID) && picofs_files[fid].valid && (fid == picofs_files[fid].trailer->file_id) && !(picofs_files[fid].trailer->file_status & STS_DELETED))
     {
         *trailer = picofs_files[fid].trailer;
         err = 0;
-        printf("picofs: found file by FID in RAM\n");
+        printf("picofs: found file by FID in RAM fid = %d name = %s\n", fid, picofs_files[fid].trailer->name);
     }
     else if ((fid == FS_INVALID_FID) && filename)
     {
         for(i=0; i < FS_NUM_FID; i++)
         {
-            if ((strcmp(filename, picofs_files[i].trailer->name) == 0) && (!picofs_files[i].trailer->file_status))
+            if ((strcmp(filename, picofs_files[i].trailer->name) == 0) && !(picofs_files[i].trailer->file_status & STS_DELETED))
             {
                 *trailer = picofs_files[i].trailer;
                 err = 0;
-                printf("picofs: found file by NAME in RAM\n");
+                printf("picofs: found file by NAME in RAM name = %s fid = %d\n", picofs_files[i].trailer->name, picofs_files[i].trailer->file_id);
                 break;
             }
         }
@@ -503,7 +507,7 @@ bool picofs_is_file_deleted_from_flash(u8_t file_id)
     {
         if (t)
         {
-            if ((t->file_id == file_id) && (t->file_status))
+            if ((t->file_id == file_id) && (t->file_status & STS_DELETED))
             {
                 deleted = true;
                 break;
@@ -529,7 +533,7 @@ bool picofs_is_file_deleted_from_cache(u8_t file_id)
 {
     bool deleted = false;
 
-    if (picofs_files[file_id].trailer->file_status)
+    if (picofs_files[file_id].trailer->file_status & STS_DELETED)
     {
         deleted = true;
     }
