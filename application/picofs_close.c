@@ -96,6 +96,35 @@ FILE_STATUS_T purge_list[FS_NUM_FID];
 int picofs_close_file(int fd, bool disable_purge)
 {
     int err = -1;
+
+    // flush file to flash
+    err = picofs_sync_file(fd, disable_purge);
+
+    // clear the cache
+    picofs_deallocate_cache(fd);   //TODO: should not delete cache if active mmap
+
+    // clear out the remainder of the file descriptor
+    custom_fds[fd].file = NULL;
+    custom_fds[fd].file_len = 0;
+    custom_fds[fd].file_trailer = NULL;
+    custom_fds[fd].data = NULL;
+    custom_fds[fd].data_len = 0;
+    custom_fds[fd].data_offset = 0;
+    custom_fds[fd].rollover_fid = FS_INVALID_FID;
+
+    return(err);
+}
+
+/*!
+ * \brief flush file cache to flash 
+ *
+ * \param fd              file descriptor
+ * \param disable_purge   do not purge duplicate filenames (only used when already executing a purge)
+ * \return 0 on success
+ */
+int picofs_sync_file(int fd, bool disable_purge)
+{
+    int err = -1;
     int i;
     u8_t *erased_area;
     size_t erased_area_size;
@@ -128,6 +157,7 @@ int picofs_close_file(int fd, bool disable_purge)
         }
         else
         {
+            //TODO: expand cache as needed
             shell_printf("picoFS: out of cache appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
             err = -2;            
         }
@@ -145,13 +175,8 @@ int picofs_close_file(int fd, bool disable_purge)
 
         if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size) && (err == 0))
         {
-            
             picofs_flash_program(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
-            
-            // // update global file list
-            // picofs_files[custom_fds[fd].cache_trailer.file_id].trailer = (FILE_TRAILER_T *)(erased_area + custom_fds[fd].cache_trailer.file_size - sizeof(FILE_TRAILER_T));
-            // picofs_files[custom_fds[fd].cache_trailer.file_id].valid = true;
-
+    
             err = 0;
         }
         else
@@ -164,21 +189,15 @@ int picofs_close_file(int fd, bool disable_purge)
         {
             picofs_purge_duplicates(custom_fds[fd].cache_trailer.name, custom_fds[fd].cache_trailer.file_id);
         }
-
-        // clear the cache
-        picofs_deallocate_cache(fd);
-
-        // clear out the remainder of the file descriptor
-        custom_fds[fd].file = NULL;
-        custom_fds[fd].file_len = 0;
-        custom_fds[fd].file_trailer = NULL;
-        custom_fds[fd].data = NULL;
-        custom_fds[fd].data_len = 0;
-        custom_fds[fd].data_offset = 0;
     }
     
-    //hex_dump((const char *)test_filesystem, sizeof(test_filesystem));
-     
+    // handle pending deletion of the fid used prior to rollover
+    if (custom_fds[fd].rollover_fid != FS_INVALID_FID)
+    {
+        picofs_unlink_by_fid(custom_fds[fd].rollover_fid);
+        custom_fds[fd].rollover_fid = FS_INVALID_FID;
+    }
+
     // update global list of files
     picofs_refresh_files();
 

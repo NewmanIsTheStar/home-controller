@@ -50,6 +50,9 @@
 #define MAP_ANONYMOUS (0x20)
 #define MAP_ANON    MAP_ANONYMOUS
 #define MAP_FAILED ((void *)-1)
+#define MS_ASYNC (1)
+#define MS_SYNC (2)
+#define MS_INVALIDATE (4)
 
 // file_status bit definitions
 #define STS_DELETED (BIT0)
@@ -99,7 +102,8 @@ typedef struct
     char *data;                   // flash or RAM: data contained in the file 
     size_t data_len;              // flash or RAM: data length
     size_t data_offset;           // flash or RAM: offset used by standard C library functions e.g. fread
-    int mmap_ref_count;           // number of active mappings     
+    int mmap_ref_count;           // number of active mappings   
+    u8_t rollover_fid;            // previous fid pending deletion  
 } PICOFS_FD_T;
 
 typedef struct file_metrics
@@ -187,5 +191,7 @@ uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t length);
 int picofs_ftruncate(int fd, off_t length);
 int picofs_generate_tab_completion_file_list(char *buffer, int len);
 int picofs_get_file_size(char *filename);
+int picofs_sync_file(int fd, bool disable_purge);
+int picofs_msync(void *addr, size_t length, int flags);
 
 #endif

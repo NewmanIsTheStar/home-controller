@@ -235,3 +235,30 @@ int picofs_get_fd_from_mmap_address(void *addr)
     
     return(fd);
 }
+
+int picofs_msync(void *addr, size_t length, int flags)
+{
+    int fd = -1;
+    int fid = FS_INVALID_FID;
+    
+    fd = picofs_get_fd_from_mmap_address(addr);
+
+    if ((fd >= 0) && (fd < FS_MAX_FILE_DESCRIPTORS))
+    {
+        if (!picofs_sync_file(fd, false))
+        {
+            // remember fid in case of rollover
+            fid = custom_fds[fd].cache_trailer.file_id;
+
+            // increment sequence number 
+            picofs_increment_sequence(&(custom_fds[fd].cache_trailer));
+
+            if (custom_fds[fd].cache_trailer.file_id != fid)
+            {
+                // rollover occured to a new fid so delete file with old fid
+                //picofs_unlink_by_fid(fid);
+                custom_fds[fd].rollover_fid = fid;
+            }
+        }
+    }
+}

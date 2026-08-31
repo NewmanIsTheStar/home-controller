@@ -124,6 +124,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     FILE_TRAILER_T *file_trailer = NULL;
     char *file_data = NULL;
     int open_mode = 0;
+    u8_t rollover_fid = FS_INVALID_FID;
 
     // hex_dump((char *)test_filesystem, 512);
 
@@ -154,7 +155,6 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
 
                         // increment sequence
                         ((FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)))->file_sequence++;
-                        //custom_fds[fd].cache_trailer.file_sequence++;  don't do this we are about to overwrite this 
 
                         // reinitialize the file descriptor using the cache
                         picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
@@ -164,19 +164,18 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
 
                         if (!disable_fid_rollover && (custom_fds[fd].file_trailer->file_sequence == FS_MAX_SEQ))
                         {
-                            // out of sequence numbers so change to new FID and delete old file
+                            // out of sequence numbers so change to new FID and schedule delete old file
+                            custom_fds[fd].rollover_fid = custom_fds[fd].file_trailer->file_id;
                             custom_fds[fd].file_trailer->file_id = picofs_get_new_file_id();
                             custom_fds[fd].file_trailer->file_sequence = 0;
 
                             if (custom_fds[fd].file_trailer->file_id == FS_INVALID_FID)
                             {
-                                printf("picoFS: out of file identifiers\n");
+                                // rollover to new fid failed
+                                printf("picoFS: out of file identifiers during rollover\n");
                                 picofs_deallocate_cache(fd);
+                                custom_fds[fd].rollover_fid = FS_INVALID_FID;  // cancel pending deletion
                                 err = -6;
-                            }
-                            else
-                            {
-                                picofs_unlink_by_name(custom_fds[fd].file_trailer->name);  //TODO probably better to use fid
                             }
                         }
                     }
@@ -522,6 +521,7 @@ bool picofs_is_file_deleted_from_cache(u8_t file_id)
 int picofs_initialize(void)
 {
     int err = 0;
+    int i;
     static bool init_fds = true;
 
     // track file system changes for shell tab-completion of file names
@@ -531,6 +531,12 @@ int picofs_initialize(void)
     if (init_fds)
     {
         memset((char *)custom_fds, 0, sizeof(custom_fds));
+
+        for(i=0; i < FS_MAX_FILE_DESCRIPTORS; i++)
+        {
+            custom_fds[i].rollover_fid = FS_INVALID_FID;   // TODO: add any other fields that require non-zero default values
+        }
+
         init_fds = false;        
     }
 

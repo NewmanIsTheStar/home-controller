@@ -25,6 +25,7 @@ int config_write(CONFIG_TYPE_T config_type);
 int config_mmap_test();
 int config_write_to_file(char *filename);
 int config_read_from_file(char *filename);
+int config_mmap(char *filename);
 
 // device personality
 typedef enum
