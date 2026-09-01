@@ -30,6 +30,7 @@
 #define FS_INVALID_FID (255)
 #define FS_MAX_SEQ (255)
 #define FS_MAX_FILE_DESCRIPTORS (8)
+#define FS_MAX_FILE_SIZE (FS_SIZE/2)
 
 #define BIT0 (0x01)
 #define BIT1 (0x02)

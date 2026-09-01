@@ -34,23 +34,32 @@ extern NON_VOL_VARIABLES_T config;
  */
 int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
 {
+    int err = 0;
+
     switch(config_type)
     {
     default:
     case CONFIG_FILE:
-        config_read_from_file("config.bin");
+        printf("Checking for configuration in config.bin\n");
+        err = config_read_from_file("config.bin");
+        if (err)
+        {
+            printf("Failed to open file: config.bin\n");
+        }
         break;
     case CONFIG_STANDARD:
+        printf("Checking for configuration in the penultimate sector of flash\n");
         memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_TARGET_OFFSET), sizeof(NON_VOL_VARIABLES_T));
         //flash_dump_config(config_type);
         break;        
     case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
+        printf("Checking for configuration in the last sector of flash\n");    
         memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_LEGACY_OFFSET), sizeof(NON_VOL_VARIABLES_T));
         //flash_dump_config(config_type);
         break;
     }
     
-    return(0);
+    return(err);
 }
 
 

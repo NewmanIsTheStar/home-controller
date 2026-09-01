@@ -391,20 +391,20 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
 
     if (num_files)
     {
-            picofs_printf("Size\t\tFID\tSEQ\tName\n");
+            //picofs_printf("Size\t\tFID\tSEQ\tName\n");
     }
 
     for (i=0; i<FS_NUM_FID; i++)
     {
         if (consoldation_files[i].valid && !(consoldation_files[i].trailer->file_status & STS_DELETED))
         {
-            picofs_printf("%08d\t%d\t%d\t%s\n", consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_id, consoldation_files[i].trailer->file_sequence, consoldation_files[i].trailer->name);
+            //picofs_printf("%08d\t%d\t%d\t%s\n", consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_id, consoldation_files[i].trailer->file_sequence, consoldation_files[i].trailer->name);
             size_files += consoldation_files[i].trailer->file_size;
         }
     }
 
-    picofs_printf("\nTotal size    %08d\n", size_files);
-    picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
+    //picofs_printf("\nTotal size    %08d\n", size_files);
+    //picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
 
     total_written = 0;
     consolidation_area = buffer;
@@ -419,12 +419,12 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                 (consoldation_files[i].trailer->file_sequence < (FS_MAX_SEQ-1)))
             {
                 // normal consolidation
-                printf("copying...\n");
-                hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
+                //printf("copying...\n");
+                //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
                 memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_size);
                 picofs_increment_sequence((FILE_TRAILER_T *)(consolidation_area + total_written + consoldation_files[i].trailer->file_size - sizeof(FILE_TRAILER_T)));
                 total_written += consoldation_files[i].trailer->file_size;
-                shell_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
+                //shell_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
             }
             else if ((consoldation_files[i].valid && consoldation_files[i].trailer) &&
                      ((consoldation_files[i].trailer->file_size + sizeof(FILE_TRAILER_T)) < (len - total_written)) &&
@@ -432,13 +432,13 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                      (consoldation_files[i].trailer->file_sequence == (FS_MAX_SEQ-1)))
             {
                 // special case: consolidation with FID rollover, requires extra space for a trailer marking file deletion 
-                printf("copying...\n");
-                hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
+                //printf("copying...\n");
+                //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
                 memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_size);
                 if (!picofs_increment_sequence((FILE_TRAILER_T *)(consolidation_area + total_written + consoldation_files[i].trailer->file_size - sizeof(FILE_TRAILER_T))))
                 {
                     total_written += consoldation_files[i].trailer->file_size;
-                    shell_printf("picofs: consolidated file with FID rollover: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
+                    //shell_printf("picofs: consolidated file with FID rollover: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
 
                     // append empty file marking the deletion of the old FID that had run out of sequence numbers
                     memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer, sizeof(FILE_TRAILER_T));
@@ -450,26 +450,26 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                 }
                 else
                 {
-                    printf("Skipped file for speculative consolidation because we ran out of FIDs to rollover a file with sequence 254\n");
+                    //printf("Skipped file for speculative consolidation because we ran out of FIDs to rollover a file with sequence 254\n");
                 }
             }            
             else
             {
                 if (consoldation_files[i].valid)
                 {
-                    printf("Skipped file for speculative consolidation because: size %d vs %d | fid %d vs %d | ptr %p | seq %d\n", consoldation_files[i].trailer->file_size, (len - total_written), consoldation_files[i].trailer->file_id, exclude_fid, consoldation_files[i].trailer,  consoldation_files[i].trailer->file_sequence);
+                    //printf("Skipped file for speculative consolidation because: size %d vs %d | fid %d vs %d | ptr %p | seq %d\n", consoldation_files[i].trailer->file_size, (len - total_written), consoldation_files[i].trailer->file_id, exclude_fid, consoldation_files[i].trailer,  consoldation_files[i].trailer->file_sequence);
                 }
             }
 
             if(total_written >= len)
             {
-                printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", len, consoldation_files[i].trailer->file_id);
+                //printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", len, consoldation_files[i].trailer->file_id);
                 break;
             }
         }
     }
 
-    shell_printf("picofs: consolidation completed total size is %d bytes\n", total_written);
+    //shell_printf("picofs: consolidation completed total size is %d bytes\n", total_written);
 
     return(0);
 }

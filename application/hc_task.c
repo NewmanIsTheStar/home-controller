@@ -460,7 +460,7 @@ int hc_hex_dump(char *filename)
     char output_byte[8];
     int i;
 
-    printf("hexdump %d\n", filename);
+    printf("hexdump %s\n", filename);
 
     // 1. Open the file in read binary mode ("r")
     filePointer = fopen(filename, "rb");

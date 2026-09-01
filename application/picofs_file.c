@@ -316,7 +316,7 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
         // move to new location
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
-            (t->file_size >= sizeof(FILE_TRAILER_T)) &&
+            ((t->file_size >= sizeof(FILE_TRAILER_T)) && (t->file_size < FS_MAX_FILE_SIZE)) &&
             (ignore_crc || (t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T)))))
         {
             p = p - t->file_size;  
@@ -330,7 +330,7 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
         t = (FILE_TRAILER_T *)p;
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
-            (t->file_size >= sizeof(FILE_TRAILER_T)) &&
+            ((t->file_size >= sizeof(FILE_TRAILER_T)) && (t->file_size < FS_MAX_FILE_SIZE)) &&
             (ignore_crc || (t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T)))))            
         {
             not_found = 0;

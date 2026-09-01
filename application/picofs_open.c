@@ -72,6 +72,7 @@
 
 //prototypes
 int picofs_fd_new(int fd, int flags, char *name);
+int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
 
 // external variables
 extern u32_t unix_time;
@@ -132,11 +133,11 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
         // we transform them into more sensible bit flags in the two least significant bits for easier processing
-        printf("Open called with flags = %d\n", flags);
+        //printf("Open called with flags = %d\n", flags);
         open_mode = (flags + 1) & (O_ACCMODE);
-        printf("open_mode = %d\n", open_mode);
+        //printf("open_mode = %d\n", open_mode);
         MASKED_WRITE(flags, open_mode, O_ACCMODE);
-        printf("updated flags = %d\n", flags);
+        //printf("updated flags = %d\n", flags);
         
         if (flags & FWRITE)
         {
@@ -222,7 +223,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
 
             if (!err)
             {
-                printf("picofs_open_file: file did not exist so created new file named: %s\n", name);
+                //printf("picofs_open_file: file did not exist so created new file named: %s\n", name);
             }
         }
     }
@@ -359,9 +360,6 @@ int picofs_allocate_cache(int fd)
 
 
 
-
-
-
 /*!
  * \brief check if a file is already open  
  *
@@ -402,18 +400,15 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     int i;
-    u8_t *p = NULL;
     FILE_TRAILER_T *t = NULL;
-    u8_t best_sequence = 0;
-    u8_t best_status = 0;
-    //bool first_sequnce = true;
+
 
     // try ram
     if ((fid != FS_INVALID_FID) && picofs_files[fid].valid && (fid == picofs_files[fid].trailer->file_id) && !(picofs_files[fid].trailer->file_status & STS_DELETED))
     {
         *trailer = picofs_files[fid].trailer;
         err = 0;
-        printf("picofs: found file by FID in RAM fid = %d name = %s\n", fid, picofs_files[fid].trailer->name);
+        //printf("picofs: found file by FID in RAM fid = %d name = %s\n", fid, picofs_files[fid].trailer->name);
     }
     else if ((fid == FS_INVALID_FID) && filename)
     {
@@ -423,11 +418,31 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
             {
                 *trailer = picofs_files[i].trailer;
                 err = 0;
-                printf("picofs: found file by NAME in RAM name = %s fid = %d\n", picofs_files[i].trailer->name, picofs_files[i].trailer->file_id);
+                //printf("picofs: found file by NAME in RAM name = %s fid = %d\n", picofs_files[i].trailer->name, picofs_files[i].trailer->file_id);
                 break;
             }
         }
     }
+
+    return(err);
+}
+
+
+/*!
+ * \brief Get pointer to file header matching either the passed filename or fid.  As fid is unique it preempts name if given.  NB This function may be very slow!
+ * 
+ * \param[in]   filename     name to find
+ * \param[in]   fid          fid to find or FS_INVALID_FID, if valid the fid is used instead of the name
+ * \param[out]  trailer      pointer to file trailer
+ * \return 0 on success
+ */
+int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
+{
+    int err = -1;
+    int i;
+    FILE_TRAILER_T *t = NULL;
+    u8_t best_sequence = 0;
+    u8_t best_status = 0;
 
     // try flash
     if (err)
@@ -458,15 +473,14 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
             }
         }
 
-        if (best_status) // file was deleted
+        if (best_status & STS_DELETED) // file was deleted
         {
             err = -1;
         }    
     }
 
     return(err);
-}
-
+}    
 
 /*!
  * \brief check if file has been deleted
@@ -542,12 +556,12 @@ int picofs_initialize(void)
 
     if (!err)
     {
-        printf("picofs_initialize creating file system semaphone...\n");
+        //printf("picofs_initialize creating file system semaphone...\n");
         picofs_mutex = xSemaphoreCreateMutex();
 
         if (picofs_mutex)
         {
-            printf("picofs: init: success creating file system mutex\n");
+            //printf("picofs: init: success creating file system mutex\n");
             err = 0;
         }
         else
@@ -559,12 +573,12 @@ int picofs_initialize(void)
 
     if (!err)
     {    
-        printf("picofs_initialize creating crc dma semaphone...\n");
+        //printf("picofs_initialize creating crc dma semaphone...\n");
         crc_mutex = xSemaphoreCreateMutex();
 
         if (crc_mutex)
         {
-            printf("picofs: init: success creating crc mutex\n");
+            //printf("picofs: init: success creating crc mutex\n");
             err = 0;
         }
         else
@@ -575,7 +589,7 @@ int picofs_initialize(void)
     }
 
     // scan flash and cache pointers to all files
-    printf("picofs_initialize refreshing file cache...\n");
+    //printf("picofs_initialize refreshing file cache...\n");
     picofs_refresh_files();
 
     return(err);

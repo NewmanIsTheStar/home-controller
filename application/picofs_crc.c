@@ -174,6 +174,9 @@ void __not_in_flash_func(dma_crc_irq_handler)() {
  */
 uint32_t picofs_calculate_crc32(const uint8_t *src, size_t len) 
 {
+    // TEST TEST TEST
+    web.num_crc_calculations++;
+
     if (xSemaphoreTake(crc_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
     {    
         // Save current task reference so the ISR knows who to wake up

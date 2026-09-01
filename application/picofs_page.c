@@ -271,7 +271,7 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
     start_tick = xTaskGetTickCount();
 
     contiguous_pages_required = requested_size/FS_PAGE_SIZE + (requested_size%FS_PAGE_SIZE?1:0);
-    printf("seeking %d contiguous pages\n", contiguous_pages_required);
+    //printf("seeking %d contiguous pages\n", contiguous_pages_required);
 
     for(cell = *start_of_area = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
@@ -303,7 +303,7 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
 
                 *actual_size = (size_t)(cell - (char *)*start_of_area);
 
-                printf("Contiguous area: request %d actual %d\n", requested_size, *actual_size);
+                //printf("Contiguous area: request %d actual %d\n", requested_size, *actual_size);
                 err = 0;
                 break;
             }

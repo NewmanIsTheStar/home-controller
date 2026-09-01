@@ -166,7 +166,7 @@ int picofs_expand_cache(int fd)
             custom_fds[fd].cache_len = cache_size;
             custom_fds[fd].data = expanded_cache;
 
-            printf("expanded cache: @%p size %d\n", custom_fds[fd].cache , custom_fds[fd].cache_len);
+            //printf("expanded cache: @%p size %d\n", custom_fds[fd].cache , custom_fds[fd].cache_len);
             err = 0;
         }
     }

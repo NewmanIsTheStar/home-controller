@@ -155,14 +155,13 @@ int config_read(CONFIG_TYPE_T config_type)
     // set config pointer
     cfg = &config;
 
-    // read configuration from flash
-    flash_read_non_volatile_variables(config_type);
-
 #ifdef DISABLE_CONFIG_VALIDATION
-    printf("Configuration validation disabled!  Using whatever random garbage happens to be in flash...\n");
+    // read configuration from flash
+    err = flash_read_non_volatile_variables(config_type);    
+    printf("Warning: Configuration validation disabled. Using whatever random garbage happens to be in flash...\n");    
 #else
     // check and correct configuration
-    config_validate();
+    err = config_validate();
 #endif
 
     return(err);
@@ -307,45 +306,47 @@ int config_validate(void)
     {
 
         // read configuration into RAM
-        flash_read_non_volatile_variables(config_type); 
+        err = flash_read_non_volatile_variables(config_type); 
 
-        // check for valid configuration
-        for(i=0; i < NUM_ROWS(config_info); i++)
+        if (!err)
         {
-            version_from_flash = *((int *)((uint8_t *)cfg + config_info[i].version_offset));
-            crc_from_flash = *((uint16_t *)((uint8_t *)cfg + config_info[i].crc_offset));
-            calculated_crc = crc_buffer((uint8_t *)cfg, config_info[i].crc_offset);        
-
-            if ((version_from_flash == config_info[i].version) && (crc_from_flash == calculated_crc))
+            // check for valid configuration
+            for(i=0; i < NUM_ROWS(config_info); i++)
             {
-                printf("Found valid configuration version %d\n", version_from_flash);
-                latest_valid_config_version = version_from_flash;
+                version_from_flash = *((int *)((uint8_t *)cfg + config_info[i].version_offset));
+                crc_from_flash = *((uint16_t *)((uint8_t *)cfg + config_info[i].crc_offset));
+                calculated_crc = crc_buffer((uint8_t *)cfg, config_info[i].crc_offset);        
+
+                if ((version_from_flash == config_info[i].version) && (crc_from_flash == calculated_crc))
+                {
+                    printf("Found valid configuration version %d\n", version_from_flash);
+                    latest_valid_config_version = version_from_flash;
+                }
             }
-        }
 
-        // check if we found a valid config version
-        if (latest_valid_config_version != 0)        
-        {
-            // we found a valid config so stop searching
-            break;
-        }
-        else
-        {
-            // no valid config so try to fallback to system config only
-            crc_from_flash = *((uint16_t *)((uint8_t *)cfg + offsetof(NON_VOL_VARIABLES_T, system_crc)));
-            calculated_crc = crc_buffer((uint8_t *)cfg, offsetof(NON_VOL_VARIABLES_T, system_crc));
-
-            if(crc_from_flash == calculated_crc)
+            // check if we found a valid config version
+            if (latest_valid_config_version != 0)        
             {
-                printf("Found valid system configuration variables (e.g. network config).  These will be preserved.\n");
+                // we found a valid config so stop searching
                 break;
             }
             else
             {
-                config_system_variable_initialize();
+                // no valid config so try to fallback to system config only
+                crc_from_flash = *((uint16_t *)((uint8_t *)cfg + offsetof(NON_VOL_VARIABLES_T, system_crc)));
+                calculated_crc = crc_buffer((uint8_t *)cfg, offsetof(NON_VOL_VARIABLES_T, system_crc));
+
+                if(crc_from_flash == calculated_crc)
+                {
+                    printf("Found valid system configuration variables (e.g. network config).  These will be preserved.\n");
+                    break;
+                }
+                else
+                {
+                    config_system_variable_initialize();
+                }
             }
         }
-
     }
 
 #ifndef DISABLE_CONFIG_UPGRADE
