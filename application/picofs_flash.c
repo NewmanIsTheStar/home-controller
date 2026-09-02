@@ -150,7 +150,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     shim_parameters.src = src;
     shim_parameters.len = len;
 
-    printf("FLASH PROGRAM: offset = %#0x len = %#0x plus FS_BASE = %#0x\n", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
+    //printf("FLASH PROGRAM: offset = %#0x len = %#0x plus FS_BASE = %#0x\n", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
    
     err = flash_safe_execute(picofs_flash_program_shim, &shim_parameters, 5000);
 

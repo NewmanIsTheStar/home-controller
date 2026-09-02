@@ -16,8 +16,8 @@
   Therefore the config has been moved to the penultimate flash sector.
   See "RP2350-E10 errata for the Raspberry Pi Pico 2" for more info.
 */
-#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE))
-#define FLASH_LEGACY_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
+#define FLASH_PENULTIMATE_SECTOR_OFFSET (PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE))
+#define FLASH_LAST_SECTOR_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
 
 /* Configuration Search Sequence
    1. If a configuration file is present and valid then it will be used.

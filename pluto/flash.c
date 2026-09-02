@@ -3,13 +3,16 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+
+
+#include <sys/stat.h>
+
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/flash.h"
 #include <hardware/flash.h>
 
 #include "lwip/sockets.h"
-
 
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
@@ -35,31 +38,43 @@ extern NON_VOL_VARIABLES_T config;
 int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
 {
     int err = 0;
+    int return_status = 0;
+    struct stat file_status;
 
     switch(config_type)
     {
     default:
     case CONFIG_FILE:
         printf("Checking for configuration in config.bin\n");
-        err = config_read_from_file("config.bin");
+
+        return_status = stat("config.bin", &file_status);
+
+        //err = config_read_from_file("config.bin");
+        err = config_mmap("config.bin");            
         if (err)
         {
             printf("Failed to open file: config.bin\n");
-        }
+        }        
         break;
-    case CONFIG_STANDARD:
-        printf("Checking for configuration in the penultimate sector of flash\n");
-        memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_TARGET_OFFSET), sizeof(NON_VOL_VARIABLES_T));
+    case CONFIG_PENULTIMATE_FLASH_SECTOR:        
+        if (cfg)
+        {
+            printf("Checking for configuration in the penultimate sector of flash\n");
+            memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_PENULTIMATE_SECTOR_OFFSET), sizeof(NON_VOL_VARIABLES_T));
+        }
         //flash_dump_config(config_type);
         break;        
-    case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
-        printf("Checking for configuration in the last sector of flash\n");    
-        memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_LEGACY_OFFSET), sizeof(NON_VOL_VARIABLES_T));
+    case CONFIG_LAST_FLASH_SECTOR:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2        
+        if (cfg)
+        {    
+            printf("Checking for configuration in the last sector of flash\n");
+            memcpy((char *)cfg, (char *)(XIP_BASE +  FLASH_LAST_SECTOR_OFFSET), sizeof(NON_VOL_VARIABLES_T));
+        }
         //flash_dump_config(config_type);
         break;
     }
     
-    return(err);
+    return(return_status);
 }
 
 
@@ -71,12 +86,12 @@ int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
 void __no_inline_not_in_flash_func(flash_write_shim)(void *ptr)
 {
         // erase the last sector of the flash (4 KBytes)
-        flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
+        flash_range_erase(FLASH_PENULTIMATE_SECTOR_OFFSET, FLASH_SECTOR_SIZE);
 
         if (sizeof(NON_VOL_VARIABLES_T) < FLASH_SECTOR_SIZE)
         {
             // program the configuation in 256 Byte pages (range is rounded up to the nearest multiple of 256 Bytes)
-            flash_range_program(FLASH_TARGET_OFFSET, (uint8_t *)cfg, ((sizeof(NON_VOL_VARIABLES_T)+255)/256)*256);
+            flash_range_program(FLASH_PENULTIMATE_SECTOR_OFFSET, (uint8_t *)cfg, ((sizeof(NON_VOL_VARIABLES_T)+255)/256)*256);
         }
         else
         {
@@ -97,9 +112,10 @@ int flash_write_non_volatile_variables(CONFIG_TYPE_T config_type)
     {
     default:
     case CONFIG_FILE:
-        config_write_to_file("config.bin");
+        //config_write_to_file("config.bin");
+        picofs_msync(cfg, sizeof(NON_VOL_VARIABLES_T), MS_SYNC);
         break;
-    case CONFIG_STANDARD:
+    case CONFIG_PENULTIMATE_FLASH_SECTOR:
         if (sizeof(NON_VOL_VARIABLES_T) < FLASH_SECTOR_SIZE)
         {    
             err = flash_safe_execute(flash_write_shim, NULL, 5000);
@@ -121,7 +137,7 @@ int flash_write_non_volatile_variables(CONFIG_TYPE_T config_type)
             err = -2;
         }
         break;        
-    case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
+    case CONFIG_LAST_FLASH_SECTOR:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
         printf("config: writing configuration to the legacy flash location is not supported\n");
         break;
     }
@@ -170,8 +186,8 @@ void flash_get_program_size(void)
 void flash_get_config_size(void)
 {
     int flash_percentage = 0;
-    uintptr_t start = (uintptr_t)(FLASH_TARGET_OFFSET);
-    uintptr_t end = (uintptr_t)(FLASH_TARGET_OFFSET + FLASH_SECTOR_SIZE - 1);
+    uintptr_t start = (uintptr_t)(FLASH_PENULTIMATE_SECTOR_OFFSET);
+    uintptr_t end = (uintptr_t)(FLASH_PENULTIMATE_SECTOR_OFFSET + FLASH_SECTOR_SIZE - 1);
 
     if (sizeof(NON_VOL_VARIABLES_T) > FLASH_SECTOR_SIZE)
     {
@@ -197,11 +213,11 @@ void *flash_get_config_location(CONFIG_TYPE_T config_type)
             location = (char *)config_trailer + sizeof(FILE_TRAILER_T) - config_trailer->file_size;
         }
         break;
-    case CONFIG_STANDARD:
-        location = (void *)(XIP_BASE +  FLASH_TARGET_OFFSET);
+    case CONFIG_PENULTIMATE_FLASH_SECTOR:
+        location = (void *)(XIP_BASE +  FLASH_PENULTIMATE_SECTOR_OFFSET);
         break;        
-    case CONFIG_LEGACY:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
-        location = (void *)(XIP_BASE +  FLASH_LEGACY_OFFSET);
+    case CONFIG_LAST_FLASH_SECTOR:  // config was originally stored in the last sector of flash -- this now gets overwritten due to RP2350-E10 errata for the Raspberry Pi Pico 2
+        location = (void *)(XIP_BASE +  FLASH_LAST_SECTOR_OFFSET);
         break;
     }
 
@@ -227,10 +243,10 @@ int flash_dump_config(CONFIG_TYPE_T config_type)
         case CONFIG_FILE:
             description = "Config File";
             break;
-        case CONFIG_STANDARD:
+        case CONFIG_PENULTIMATE_FLASH_SECTOR:
             description = "Config standard flash location";
             break;
-        case CONFIG_LEGACY:
+        case CONFIG_LAST_FLASH_SECTOR:
             description = "Config legacy flash location";
             break;
     }

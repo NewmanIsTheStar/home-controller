@@ -11,8 +11,8 @@
 typedef enum
 {
     CONFIG_FILE         = 0,
-    CONFIG_STANDARD     = 1,
-    CONFIG_LEGACY       = 2,
+    CONFIG_PENULTIMATE_FLASH_SECTOR     = 1,
+    CONFIG_LAST_FLASH_SECTOR       = 2,
 
     NUM_CONFIG_TYPES    = 3
 } CONFIG_TYPE_T;

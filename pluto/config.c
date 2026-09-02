@@ -153,7 +153,7 @@ int config_read(CONFIG_TYPE_T config_type)
     int err = 0;
 
     // set config pointer
-    cfg = &config;
+    //cfg = &config;
 
 #ifdef DISABLE_CONFIG_VALIDATION
     // read configuration from flash

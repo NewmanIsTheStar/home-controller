@@ -19,6 +19,9 @@
 extern NON_VOL_VARIABLES_T *cfg;
 extern NON_VOL_VARIABLES_T config;
 
+// gloabl variables
+int config_fd = -1;
+
 int config_mmap_test() 
 {
     const char *filepath = "database.bin";
@@ -161,61 +164,37 @@ int config_mmap(char *filename)
     size_t FILE_SIZE = 4096; // 4 KB (typically matches 1 memory page)
     char *map;
 
-    // 1. Create and open the new file with Read/Write permissions
-    // O_CREAT: Create file if it doesn't exist.
-    // O_TRUNC: Truncate file to 0 bytes if it already exists.
-    int fd = open(filename, O_RDWR /*| O_CREAT | O_TRUNC*/, 0644);
-    if (fd == -1) 
+    // open the file with for read/write (create if it doesn't exist)
+    config_fd = open(filename, O_RDWR | O_CREAT, 0644);
+    if (config_fd == -1) 
     {
         perror("config_mmap: Error opening/creating file");
         return EXIT_FAILURE;
     }
-    printf("config_mmap: fd = %d\n", fd);
+    //printf("config_mmap: config_fd = %d\n", config_fd);
 
-    // 2. STRETCH THE FILE: Set the storage space before calling mmap
-    // Memory mapping cannot dynamically increase the underlying file size.
-    if (ftruncate(fd, sizeof(NON_VOL_VARIABLES_T)) == -1) 
+    // adjust the file length to match the current configuration version TODO: make this the largest known config to support conversion to a smaller config
+    if (ftruncate(config_fd, sizeof(NON_VOL_VARIABLES_T)) == -1) 
     {
         perror("config_mmap: Error setting file size");
-        close(fd);
+        close(config_fd);
+        config_fd = -1;
         return EXIT_FAILURE;
     }
 
     // 3. Map the file into the process address space
-    // PROT_READ | PROT_WRITE: We want to read and write to this memory region.
-    // MAP_SHARED: Changes made to memory are automatically committed to the disk file.
-    map = picofs_mmap(NULL, FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    map = picofs_mmap(NULL, FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, config_fd, 0);
     if (map == MAP_FAILED) 
     {
         perror("config_mmap: Error mapping the file");
-        close(fd);
+        close(config_fd);
+        config_fd = -1;
         return EXIT_FAILURE;
     }
-    printf("config_mmap: @%p\n", map);
+    //printf("config_mmap: @%p\n", map);
     
     // point cfg at the mapped file
     cfg = (NON_VOL_VARIABLES_T *)map;
 
-    // // The file descriptor can technically be closed right after mmap(), 
-    // // but we will keep it standard and close it at the end.
-
-    // // 4. Write data directly to the file using memory pointers
-    // strcpy(map, "Hello, this is text written via mmap() memory manipulation!");
-    // printf("Data written to memory map successfully.\n");
-
-    // // 5. Optional: Synchronize memory changes back to disk immediately
-    // // Without msync, the OS manages flushing, but msync forces durability.
-    // // if (msync(map, FILE_SIZE, MS_SYNC) == -1) {
-    // //     perror("Could not sync file to disk");
-    // // }
-
-    // printf("mmap_test: calling unmap\n");
-    // // 6. Clean up: Unmap the memory and close the file descriptor
-    // if (picofs_munmap(map, FILE_SIZE) == -1) {
-    //     perror("Error unmapping the memory");
-    // }
-    
-    // printf("mmap_test: calling close\n");
-    // close(fd);
     return EXIT_SUCCESS;
 }

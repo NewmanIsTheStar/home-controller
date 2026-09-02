@@ -224,14 +224,20 @@ void boss_task(__unused void *params)
     // initialize file system
     picofs_initialize();
 
-    web.num_crc_calculations = 0;
-
     printf("Searching for configuration...\n");
     
     // get configuration from flash
     config_read(CONFIG_FILE); 
-    
-    printf("NUMER OF CRC CALCULATIONS = %d\n", web.num_crc_calculations);
+
+    // check configuration
+    if (!cfg)
+    {
+        printf("Guru Meditation: failed to allocate memory for the configuration.\n");
+        for(;;)
+        {
+            SLEEP_MS(60000); 
+        }
+    }
 
     // default gpio settings  -- primarily for unused hardware connected to gpios
     set_gpio_defaults();

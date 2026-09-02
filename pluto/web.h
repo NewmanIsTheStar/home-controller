@@ -69,7 +69,6 @@ typedef struct WEB_VARIABLES
   char *file_to_cat;
   char *file_to_hexdump;
   char *shelly_device_ip;
-  int num_crc_calculations;
 } WEB_VARIABLES_T;                  //remember to add initialization code when adding to this structure !!!
 
 typedef struct {

@@ -106,7 +106,7 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
     {
         if (!(prot & (PROT_READ | PROT_WRITE))) 
         {
-            //errno = EINVAL;
+            errno = EINVAL;
             return(MAP_FAILED);
         }
         
@@ -114,19 +114,19 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
         
         if (!ptr) 
         {
-            //errno = ENOMEM;
+            errno = ENOMEM;
             return(MAP_FAILED);
         }
         
         return ptr;
     }
 
-    // handle read-only file mappings
+    // handle file mappings
     if (flags & MAP_SHARED)
     {
         if ((fd < 3) || (target_fd >= FS_MAX_FILE_DESCRIPTORS) || !custom_fds[target_fd].in_use)
         {
-            //errno = EBADF;
+            errno = EBADF;
             return(MAP_FAILED);
         }
 
@@ -139,37 +139,36 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
 
             custom_fds[fd].mmap_ref_count++;
 
-            printf("mmap: address = %p (%d)\n", custom_fds[target_fd].cache,  offset);
-            return((void *)(custom_fds[target_fd].cache + offset));    // TODO add mmap status to fd so that we know file is in use after close
+            return((void *)(custom_fds[target_fd].cache + offset));
         }
         else if (prot & PROT_READ)
         {
-            if (offset > (custom_fds[target_fd].data_len) /*(custom_fds[target_fd].file_trailer->file_size - sizeof(FILE_TRAILER_T))*/)
+            if (offset > (custom_fds[target_fd].data_len))
             {
                 return(MAP_FAILED);
             }
 
             custom_fds[fd].mmap_ref_count++;
 
-            return((void *)(custom_fds[target_fd].file + offset));    // TODO add mmap status to fd so that we know file is in use after close
+            return((void *)(custom_fds[target_fd].file + offset));
         }        
     }
 
     // handle read-only direct flash mappings
     if (prot & PROT_WRITE) 
     {
-        // Microcontroller flash cannot be written directly via pointer like RAM
-        //errno = EACCES; 
+        // microcontroller flash cannot be written directly via pointer like RAM
+        errno = EACCES; 
         return(MAP_FAILED);
     }
 
     // calculate direct pointer in XIP address space
     uintptr_t xip_address = XIP_BASE + offset;
     
-    // Ensure bounds match standard flash boundaries
+    // ensure bounds match standard flash boundaries
     if (offset + len > PICO_FLASH_SIZE_BYTES) 
     {
-        //errno = ENXIO;
+        errno = ENXIO;
         return(MAP_FAILED);
     }
 
