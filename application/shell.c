@@ -497,6 +497,20 @@ int fs_open_custom(struct fs_file *file, const char *name)
         return 1;
     }
 
+    if (strcmp(name, "/get_text") == 0) 
+    {
+        size_t len = strlen(ascii_ram_buffer);
+        file->data = ascii_ram_buffer;  // TODO: No idea how this is working, as we are not leaving room for the header, yet below setting the flag for header included
+        file->len = len;
+        file->index = len;
+        //file->pextension = NULL;
+        file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+
+        // Cache file pointer structure ahead of loop test parsing
+        pending_get_text = file;        
+        return 1;
+    }
+
     if (strncmp(name, "/get_automation", 15) == 0) 
     {
         sscanf(name+15, "%d", &automation_number);
@@ -505,7 +519,7 @@ int fs_open_custom(struct fs_file *file, const char *name)
         automation_file = fopen(automation_filename, "rb");
         if (automation_file)
         {
-            automaton_file_size = fread(ascii_ram_buffer, 1, MAX_PROGRAM_SIZE, automation_file);
+            automaton_file_size = fread(ascii_ram_buffer, 1, MAX_PROGRAM_SIZE, automation_file);   // TODO: No idea how this is working, as we are not leaving room for the header, yet below setting the flag for header included
             ascii_ram_buffer[automaton_file_size] = 0;
             fclose(automation_file);
         }
@@ -957,34 +971,35 @@ void dump_text_buffer(void)
  */
 int shell_edit(char *filename)
 {
-    FILE *filePointer;
+    FILE *filePointer = NULL;
+    int file_size = 0;
     char buffer[256];
 
-    // remember name of file under edit NB: if we fail to open an existing file then it will be created 
-    STRNCPY(web.edit_text_filename, filename, sizeof(web.edit_text_filename));
-
-    // open the file in read mode ("r")
-    filePointer = fopen(filename, "r");
-
-    // check if the file exists and opened successfully
-    if (filePointer == NULL) 
-    {
-        //shell_printf_nb("edit: %s: No such file\n", filename);
-        shell_printf_nb("edit: creating new file: %s\n", filename);
-        return 1; 
-    }
 
     // initialize ascii buffer
     memset(ASCII_HEADER_SIZE + ascii_ram_buffer, 0, sizeof(ascii_ram_buffer) - ASCII_HEADER_SIZE);
     strcpy(ascii_ram_buffer, http_ascii_buffer_header_tmpl);  // prepend http header to ascii ram buffer
     
-    // empty the ascii buffer
+    // remember name of file under edit
+    STRNCPY(web.edit_text_filename, filename, sizeof(web.edit_text_filename));
+
+    // empty the ascii buffer data section
     ascii_ram_buffer[ASCII_HEADER_SIZE] = 0;
 
-    // read and print the file line-by-line
-    while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
+    filePointer = fopen(filename, "rb");
+    if (filePointer)
     {
-        strcat(&ascii_ram_buffer[ASCII_HEADER_SIZE], buffer);  //TODO: enforce limits
+        file_size = fread(ascii_ram_buffer + ASCII_HEADER_SIZE, 1, MAX_PROGRAM_SIZE, filePointer);
+        ascii_ram_buffer[ASCII_HEADER_SIZE + file_size] = 0;
+
+        printf("file_size = %d\n", file_size);
+        printf("file = %s\n", ascii_ram_buffer + ASCII_HEADER_SIZE);        
+        fclose(filePointer);
+    }
+    else
+    {
+        shell_printf_nb("edit: creating new file: %s\n", filename);
+        ascii_ram_buffer[ASCII_HEADER_SIZE] = 0;
     }
 
     // close the file to free up system resources

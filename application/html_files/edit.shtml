@@ -188,13 +188,43 @@
     editor.addEventListener('keyup', updateMetricsAndEnforce);
     editor.addEventListener('click', updateMetricsAndEnforce);
 
-    // Optimized light POST submission function for LWIP stack
+    // // Optimized light POST submission function for LWIP stack
+    // function sendDataToServer() {
+    //     status.textContent = 'Saving...';
+    //     status.className = '';
+
+    //     // Form URL Encoding uses minimal RAM on embedded parsing components
+    //     const payload = 'text=' + encodeURIComponent(editor.value);
+
+    //     fetch(SERVER_ENDPOINT, {
+    //         method: 'POST',
+    //         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    //         body: payload
+    //     })
+    //     .then(response => {
+    //         if (!response.ok) throw new Error();
+    //         status.textContent = 'Saved (' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) + ')';
+    //     })
+    //     .catch(() => {
+    //         status.textContent = 'Save Failed';
+    //         status.className = 'error';
+    //     });
+    // }
+
     function sendDataToServer() {
         status.textContent = 'Saving...';
         status.className = '';
 
-        // Form URL Encoding uses minimal RAM on embedded parsing components
-        const payload = 'text=' + encodeURIComponent(editor.value);
+        const tfnmeVal = '<!--#tfnme-->';
+        
+        // 1. Strip raw carriage returns/newlines injected by the SSI handler string
+        const cleanTfnme = tfnmeVal.replace(/[\r\n]+/g, '');
+        
+        // 2. Normalize textarea newlines to Unix LF only, removing the problematic \r
+        const cleanEditorContent = editor.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        
+        // 3. Assemble the payload using a single standard LF (\n) separator
+        const payload = 'text=' + encodeURIComponent(cleanTfnme + '\n' + cleanEditorContent);
 
         fetch(SERVER_ENDPOINT, {
             method: 'POST',
@@ -209,7 +239,7 @@
             status.textContent = 'Save Failed';
             status.className = 'error';
         });
-    }
+    }    
 </script>
 
 </body>

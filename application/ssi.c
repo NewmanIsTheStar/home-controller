@@ -1165,7 +1165,8 @@ extern NON_VOL_VARIABLES_T config;
     x(rsbulb6) \
     x(rsbulb7) \
     x(rsbulb8) \
-    x(eanme)
+    x(eanme) \
+    x(tfnme)
 
 
     
@@ -1583,9 +1584,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 
         // *** application  SSI start ***
 
-        
+        case SSI_tfnme:  // edit automation name
+        {
+            printed = snprintf(pcInsert, iInsertLen, "%s", web.edit_text_filename);    
+        }
+        break;          
         case SSI_eanme:  // edit automation name
         {
+            CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
             printed = snprintf(pcInsert, iInsertLen, "%s", cfg->automation_name[((WEB_SESSION_STATE_T *)connection_state)->automation_file_number]);    
         }
         break;        
