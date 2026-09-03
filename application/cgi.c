@@ -34,7 +34,7 @@
 #include "pluto.h"
 #include "hc_task.h"
 
-typedef const char *(*tMYCGIHandler)(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
+typedef const char *(*tMYCGIHandler)(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state);
 typedef struct
 {
     const char *pcCGIName;
@@ -91,7 +91,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     // Check if a request for SCHEDULE has been made (/schedule.cgi?schedule=x)
 //     if (strcmp(pcParam[0] , "schedule") == 0)
@@ -118,7 +118,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_weekday_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_weekday_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {   
 //     CLIP(iIndex, 1, 7);
 
@@ -142,7 +142,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_inc_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_inc_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
     
@@ -177,7 +177,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_dec_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_dec_duration_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
     
@@ -217,7 +217,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_inc_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_inc_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
     
@@ -259,7 +259,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_dec_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_dec_hour_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
     
@@ -291,17 +291,17 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     return(current_calendar_web_page);
 // }
 
-/*!
- * \brief cgi handler
- *
- * \param[in]  iIndex       index of cgi handler in cgi_handlers table
- * \param[in]  iNumParams   number of parameters
- * \param[in]  pcParam      parameter name
- * \param[in]  pcValue      parameter value 
- * 
- * \return nothing
- */
-// const char * cgi_inc_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// /*!
+//  * \brief cgi handler
+//  *
+//  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+//  * \param[in]  iNumParams   number of parameters
+//  * \param[in]  pcParam      parameter name
+//  * \param[in]  pcValue      parameter value 
+//  * 
+//  * \return nothing
+//  */
+// const char * cgi_inc_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     int hour;
@@ -352,7 +352,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_dec_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_dec_minute_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     int hour;
@@ -404,7 +404,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
  * 
  * \return nothing
  */
-const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     int hour = 0;
@@ -516,7 +516,7 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_ecowitt_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_ecowitt_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -599,7 +599,7 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
  * 
  * \return nothing
  */
-const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     //int whole_part = 0;
@@ -719,7 +719,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_led_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_led_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -825,7 +825,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
  * 
  * \return nothing
  */
-const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     printf("REBOOT requested\n");
     
@@ -845,7 +845,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_portrait_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_portrait_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     //int whole_part = 0;
@@ -916,7 +916,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_day_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_day_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     //int whole_part = 0;
@@ -1024,7 +1024,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_mood_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_mood_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     //int whole_part = 0;
@@ -1120,7 +1120,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
  * 
  * \return nothing
  */
-const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -1178,7 +1178,7 @@ const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], cha
  * 
  * \return nothing
  */
-const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -1276,7 +1276,7 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
  * 
  * \return nothing
  */
-const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -1328,7 +1328,7 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_remote_led_strips(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_remote_led_strips(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -1405,7 +1405,7 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
  * 
  * \return nothing
  */
-const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -1459,7 +1459,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -1602,7 +1602,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
  * 
  * \return nothing
  */
-const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -1646,7 +1646,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_test_stop_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_test_stop_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     //TODO: proper intertask communication
 //     snprintf(web.status_message, sizeof(web.status_message), "Irrigation test terminated");  
@@ -1683,7 +1683,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_test_start_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_test_start_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int zone = -1;
 //     bool start_test = false;
@@ -1766,7 +1766,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_led_pattern_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_led_pattern_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -1852,7 +1852,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_led_strip_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_led_strip_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -1915,7 +1915,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
  * 
  * \return nothing
  */
-const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -1991,7 +1991,7 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_periods_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_periods_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -2097,7 +2097,7 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
  * 
  * \return nothing
  */
-const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
 #ifdef INCORPORATE_THERMOSTAT
     int i = 0;
@@ -2376,7 +2376,7 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
  * 
  * \return nothing
  */
-const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
 #ifdef INCORPORATE_THERMOSTAT
     int i = 0;
@@ -2443,7 +2443,7 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_thermostat_period_add_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_thermostat_period_add_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -2502,7 +2502,7 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_thermostat_period_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_thermostat_period_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -2557,7 +2557,7 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
  * 
  * \return nothing
  */
-const char * cgi_thermostat_period_cancel_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_thermostat_period_cancel_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -2591,7 +2591,7 @@ const char * cgi_thermostat_period_cancel_handler(int iIndex, int iNumParams, ch
  * 
  * \return nothing
  */
-const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -2645,7 +2645,7 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_powerwall_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_powerwall_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -2737,7 +2737,7 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
  * 
  * \return nothing
  */
-const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
 #ifdef INCORPORATE_THERMOSTAT
     int i = 0;
@@ -2810,7 +2810,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_thermostat_gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_thermostat_gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -2984,7 +2984,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
  * 
  * \return nothing
  */
-const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     char *param = NULL;
@@ -3056,7 +3056,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_temperature_sensors(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_temperature_sensors(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3121,7 +3121,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_advanced_settings(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_advanced_settings(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3209,7 +3209,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_remote_switch_relay_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_remote_switch_relay_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3282,7 +3282,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_rs_gpio_max_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_rs_gpio_max_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3331,7 +3331,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_rs_gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_rs_gpio_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3406,7 +3406,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_rs_names_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_rs_names_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3464,7 +3464,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_schedule_change_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_schedule_change_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     int j = 0;
@@ -3619,7 +3619,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_period_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_period_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3674,7 +3674,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_period_delete_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_period_delete_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3743,7 +3743,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_period_add_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_period_add_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3794,7 +3794,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_schedule_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3848,7 +3848,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //  * 
 //  * \return nothing
 //  */
-// const char * cgi_relay_copy_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+// const char * cgi_relay_copy_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 // {
 //     int i = 0;
 //     char *param = NULL;
@@ -3921,7 +3921,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
  * 
  * \return nothing
  */
-const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     //int whole_part = 0;
@@ -3980,7 +3980,7 @@ const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char 
  * 
  * \return nothing
  */
-const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     //int whole_part = 0;
@@ -4017,7 +4017,7 @@ const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], 
 }
 
 /*!
- * \brief cgi handler
+ * \brief cgi handler   
  *
  * \param[in]  iIndex       index of cgi handler in cgi_handlers table
  * \param[in]  iNumParams   number of parameters
@@ -4026,7 +4026,7 @@ const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], 
  * 
  * \return nothing
  */
-const char * cgi_save_text_file_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
+const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
 {
     int i = 0;
     //int whole_part = 0;
@@ -4048,14 +4048,18 @@ const char * cgi_save_text_file_handler(int iIndex, int iNumParams, char *pcPara
         if (param && value)
         {
             //printf("Parameter: %s has Value: %s\n", param, value);
-                       
+            if (strcasecmp("x", param) == 0)
+            {
+                sscanf(value, "%d", &(connection_state->automation_file_number));
+            }                       
         }
 
         i++;
     }
 
-    // tell hc_task to save the file
-    hc_queue_send(HC_CMD_SAVE_TEXT_FILE);
+    // NO NO No!  This is triggered by Javascript pushing the file
+    // // tell hc_task to save the file
+    // hc_queue_send(HC_CMD_SAVE_TEXT_FILE);
 
 
     // Send the next page back to the user
@@ -4063,83 +4067,6 @@ const char * cgi_save_text_file_handler(int iIndex, int iNumParams, char *pcPara
     return "/edit.shtml";
 }
 
-#if LWIP_HTTPD_CGI == 1
-// CGI requests and their respective handlers  --Add new entires at bottom--
-static const tCGI cgi_handlers[] = {
-    // ** shell uri to ignore
-    {"/listen.shtml",                   NULL}, 
-    {"/commands.json",                  NULL}, 
-    
-    // *** system handlers start ***
-    {"/gpio_default.cgi",               cgi_gpio_default_handler}, 
-    {"/wificountry.cgi",                cgi_wificountry_handler},      
-    {"/network.cgi",                    cgi_network_handler}, 
-    {"/reboot.cgi",                     cgi_reboot_handler},              
-    {"/time.cgi",                       cgi_time_handler},
-    {"/syslog.cgi",                     cgi_syslog_handler}, 
-    {"/mqtt.cgi",                       cgi_mqtt_handler},    
-    {"/units.cgi",                      cgi_units_handler},   
-    {"/swload.cgi",                     cgi_software_load_handler},
-    {"/personality.cgi",                cgi_personality_handler},                 
-    // *** system handlers end ***
-
-
-
-    // {"/rs_default.cgi",                 cgi_remote_switch_relay_handler},     
-    // {"/rs_gpio_max.cgi",                cgi_rs_gpio_max_handler},   
-    // {"/rs_gpio.cgi",                    cgi_rs_gpio_handler},      
-    // {"/rs_names.cgi",                   cgi_rs_names_handler}, 
-    // {"/rs_change.cgi",                  cgi_relay_schedule_change_handler}, 
-    // {"/rs_edit.cgi",                    cgi_relay_period_edit_handler}, 
-    // {"/rs_delete.cgi",                  cgi_relay_period_delete_handler}, 
-    // {"/rs_add.cgi",                     cgi_relay_period_add_handler},   
-    // {"/rs_schedule.cgi",                cgi_relay_schedule_handler}, 
-    // {"/rs_copy.cgi",                    cgi_relay_copy_handler},  
-       
-    // *** application handlers end ***  
-
-    // TODO:  For removal -- useful context for partitioning other applications
-
-    // {"/schedule.cgi",                   cgi_schedule_handler},
-    // {"/sunday.cgi",                     cgi_weekday_handler},   //-START- days of week must be consecutive AND start at index 1
-    // {"/monday.cgi",                     cgi_weekday_handler},
-    // {"/tuesday.cgi",                    cgi_weekday_handler},
-    // {"/wednesday.cgi",                  cgi_weekday_handler},
-    // {"/thursday.cgi",                   cgi_weekday_handler},
-    // {"/friday.cgi",                     cgi_weekday_handler},
-    // {"/saturday.cgi",                   cgi_weekday_handler},   //-END- days of week must be consecutive 
-    // {"/durinc.cgi",                     cgi_inc_duration_handler}, 
-    // {"/durdec.cgi",                     cgi_dec_duration_handler},    
-    // {"/hrinc.cgi",                      cgi_inc_hour_handler}, 
-    // {"/mininc.cgi",                     cgi_inc_minute_handler},  
-    // {"/hrdec.cgi",                      cgi_dec_hour_handler}, 
-    // {"/mindec.cgi",                     cgi_dec_minute_handler},  
-    // {"/ecowitt.cgi",                    cgi_ecowitt_handler},   
-    // {"/aled.cgi",                       cgi_led_handler},   
-    // {"/psched.cgi",                     cgi_portrait_schedule_handler},     
-    // {"/dsched.cgi",                     cgi_day_schedule_handler},   
-    // {"/mood.cgi",                       cgi_mood_handler},       
-    // {"/remote_led_strips.cgi",          cgi_remote_led_strips},  
-    // {"/relay.cgi",                      cgi_relay_handler}, 
-    // {"/relay_test_stop.cgi",            cgi_relay_test_stop_handler}, 
-    // {"/relay_test_start.cgi",           cgi_relay_test_start_handler},     
-    // {"/led_pattern.cgi",                cgi_led_pattern_handler},   
-    // {"/led_strip.cgi",                  cgi_led_strip_handler},  
-    // {"/setpoints.cgi",                  cgi_setpoints_handler},      
-    // {"/periods.cgi",                    cgi_periods_handler},      
-    // {"/ts_change.cgi",                  cgi_thermostat_schedule_change_handler},   
-    // {"/tp_delete.cgi",                  cgi_thermostat_period_delete_handler},    
-    // {"/tp_add.cgi",                     cgi_thermostat_period_add_handler}, 
-    // {"/tp_edit.cgi",                    cgi_thermostat_period_edit_handler},   
-    // {"/tp_cancel.cgi",                  cgi_thermostat_period_cancel_handler},    
-    // {"/t_schedule.cgi",                 cgi_thermostat_schedule_handler}, 
-    // {"/powerwall.cgi",                  cgi_powerwall_handler},   
-    // {"/t_copy.cgi",                     cgi_thermostat_copy_handler},
-    // {"/t_gpio.cgi",                     cgi_thermostat_gpio_handler},    
-    // {"/t_sensors.cgi",                  cgi_temperature_sensors},
-    // {"/t_advanced.cgi",                 cgi_advanced_settings},                            
-};
-#endif
 
 /*!
  * \brief initialize cgi handlers when LWIP_HTTPD_CGI == 1 (old style)
@@ -4170,6 +4097,8 @@ static const MY_CGI_T system_cgi_handlers[] = {
     {"/cgi_units.shtml",                      cgi_units_handler},   
     {"/cgi_swload.shtml",                     cgi_software_load_handler},
     {"/cgi_personality.shtml",                cgi_personality_handler}, 
+
+    {"/cgi_hc_automation_edit.shtml",         cgi_hc_automation_edit_handler},     
 };
 
 /**
@@ -4192,14 +4121,13 @@ void httpd_cgi_handler(struct fs_file *file, const char* uri, int iNumParams,
     {        
         for(i=0; i<NUM_ROWS(system_cgi_handlers); i++)
         {
-            printf("checking CGI URI: %s vs %s\n", system_cgi_handlers[i].pcCGIName, uri);
+            //printf("checking CGI URI: %s vs %s\n", system_cgi_handlers[i].pcCGIName, uri);
             if (strcasecmp(system_cgi_handlers[i].pcCGIName, uri) == 0) 
             {
                 if (system_cgi_handlers[i].pfnCGIHandler)
-                {
-                    //>>> TODO: all cgi handlers need to take the connection_state as a parameter and insert selected parameters into it as they are parsed <<<
+                {                
                     printf("calling handler for %s\n", system_cgi_handlers[i].pcCGIName);
-                    system_cgi_handlers[i].pfnCGIHandler(0, iNumParams, pcParam, pcValue);
+                    system_cgi_handlers[i].pfnCGIHandler(0, iNumParams, pcParam, pcValue, (WEB_SESSION_STATE_T *)connection_state);
                 }
                 break;
             }
@@ -4228,7 +4156,8 @@ void *fs_state_init(struct fs_file *file, const char *name)
                 session->thermostat_day = 0;
                 session->thermostat_period_row = 0;
                 session->rmtsw_relay_day = 0;
-                session->rmtsw_relay_period_row = 0; 
+                session->rmtsw_relay_period_row = 0;
+                session->automation_file_number = 0; 
 
                 // bind custom tracking struct directly to the file instance
                 file->state = session;             

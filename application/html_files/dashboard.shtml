@@ -49,6 +49,7 @@ body {
 <body>
 
   <div class="sidenav">
+    <a href="/hc_automation_list.shtml">Automation</a>
     <a href="/rs_relay_default.shtml">Control</a>
     <a href="/rs_gpio.shtml">GPIO</a>
     <a href="/rs_names.shtml">Names</a>      

@@ -76,26 +76,26 @@ void config_blank_to_v1(void *previous_config)
     // home controller
     cfg->hc_enable = 1;
 
-    for(i=0; i<NUM_ROWS(cfg->shelly_device_ip); i++)
-    {
-        cfg->shelly_device_ip[i][0] = 0;
-        cfg->shelly_device_ip[i][1] = 0;
-        cfg->shelly_device_ip[i][2] = 0;
-        cfg->shelly_device_ip[i][3] = 0;                        
-        cfg->shelly_device_type[i] = 0;        
-    }
+    // for(i=0; i<NUM_ROWS(cfg->shelly_device_ip); i++)
+    // {
+    //     cfg->shelly_device_ip[i][0] = 0;
+    //     cfg->shelly_device_ip[i][1] = 0;
+    //     cfg->shelly_device_ip[i][2] = 0;
+    //     cfg->shelly_device_ip[i][3] = 0;                        
+    //     cfg->shelly_device_type[i] = 0;        
+    // }
 
-    for(i=0; i<NUM_ROWS(cfg->shelly_parameter_device_index); i++)
-    {    
-        cfg->shelly_parameter_device_index[i] = 255;
-        cfg->shelly_parameter_name_index[i] = 255;
-    }
+    // for(i=0; i<NUM_ROWS(cfg->shelly_parameter_device_index); i++)
+    // {    
+    //     cfg->shelly_parameter_device_index[i] = 255;
+    //     cfg->shelly_parameter_name_index[i] = 255;
+    // }
 
-    for(i=0; i<NUM_ROWS(cfg->shelly_parameter_value); i++)
-    {     
-        cfg->shelly_parameter_value[i][0] = 0;   
-        cfg->shelly_parameter_name[i][0] = 0;        
-    }
+    // for(i=0; i<NUM_ROWS(cfg->shelly_parameter_value); i++)
+    // {     
+    //     cfg->shelly_parameter_value[i][0] = 0;   
+    //     cfg->shelly_parameter_name[i][0] = 0;        
+    // }
     
     for(i=0; i<NUM_ROWS(cfg->automation_name); i++)
     {

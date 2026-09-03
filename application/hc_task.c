@@ -86,6 +86,7 @@ int hc_initialize(void);
 int hc_save_text_file_from_ascii_buffer(void);
 int hc_cat(char *filename);
 int hc_hex_dump(char *filename);
+void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_size);
 
 // external variables
 extern NON_VOL_VARIABLES_T config;
@@ -382,28 +383,40 @@ void hc_load_basic_program(char *program, int len)
 int hc_save_text_file_from_ascii_buffer(void)
 {
     FILE *file_ptr = NULL;
+    char filename[16];
+    char *body;
    
-    //printf("Saving file: %s\n", web.edit_text_filename);
+    // extract filename from first line of the buffer
+    copy_first_line(filename, editor_text, sizeof(filename)); 
 
-    file_ptr = fopen(web.edit_text_filename, "w");
-
-    if (file_ptr == NULL) 
+    if (filename[0] == 0)
     {
-        printf("ERROR opening file\n");
-        perror("Error opening file");
-        return EXIT_FAILURE;
+        strncpy(filename, "unnamed", sizeof(filename));
     }
 
-    if (fputs(editor_text, file_ptr) == EOF) 
+    body = strchr(editor_text, '\n') + 1;
+
+    if ((body - editor_text) < MAX_PROGRAM_SIZE)
     {
-        printf("ERRO writing file\n");
-        perror("Error writing to file");
+        file_ptr = fopen(filename, "w");
+
+        if (file_ptr == NULL) 
+        {
+            printf("ERROR opening file\n");
+            perror("Error opening file");
+            return EXIT_FAILURE;
+        }
+
+        if (fputs(body, file_ptr) == EOF) 
+        {
+            printf("ERRO writing file\n");
+            perror("Error writing to file");
+            fclose(file_ptr);
+            return EXIT_FAILURE;
+        }
+
         fclose(file_ptr);
-        return EXIT_FAILURE;
     }
-
-        fclose(file_ptr);
-
     //printf("Data successfully saved to output.txt\n");
 
     return EXIT_SUCCESS;
@@ -515,4 +528,31 @@ int hc_hex_dump(char *filename)
     fclose(filePointer);
 
     return(0);
+}
+
+void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_size) 
+{
+    // find the first occurrence of the newline character
+    const char *newline = strchr(source_buffer, '\n');
+    size_t line_length;
+
+    if (newline != NULL) 
+    {
+        // calculate the length up to (but excluding) the newline
+        line_length = newline - source_buffer;
+    } else 
+    {
+        // if there is no newline, the first line is the entire string
+        line_length = strlen(source_buffer);
+    }
+
+    // prevent buffer overflow by fitting inside the destination
+    if (line_length >= dest_size) 
+    {
+        line_length = dest_size - 1; 
+    }
+
+    // copy the line and manually null-terminate it
+    strncpy(dest_buffer, source_buffer, line_length);
+    dest_buffer[line_length] = '\0';
 }

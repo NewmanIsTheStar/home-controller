@@ -19,7 +19,7 @@
 #define ITEM_BUF_LEN (128)
 #define QUEUE_DEPTH  (50)   
 #define BULK_SEND_BUF_LEN (QUEUE_DEPTH * ITEM_BUF_LEN)           
-#define MAX_PROGRAM_SIZE (4096) 
+
 
 // typedefs
 typedef enum
@@ -432,6 +432,10 @@ static void execute_shell_command(const char* cmd)
 int fs_open_custom(struct fs_file *file, const char *name) 
 {
     static int filesystem_change_counter = 0;
+    FILE *automation_file;
+    int automation_number = 0;
+    char automation_filename[16];
+    size_t automaton_file_size = 0;
 
     if (strcmp(name, "/listen.shtml") == 0) 
     {
@@ -493,13 +497,23 @@ int fs_open_custom(struct fs_file *file, const char *name)
         return 1;
     }
 
-    if (strcmp(name, "/get_text") == 0) 
+    if (strncmp(name, "/get_automation", 15) == 0) 
     {
-        // if (strlen(ascii_ram_buffer) == sizeof(http_ascii_buffer_header_tmpl))
-        // {
-        //     printf("Inserting Empty File placeholder into ASCII buffer\n");
-        //     strcat(ascii_ram_buffer, "Empty File");
-        // }
+        sscanf(name+15, "%d", &automation_number);
+        sprintf(automation_filename, "automation%02d", automation_number);
+
+        automation_file = fopen(automation_filename, "rb");
+        if (automation_file)
+        {
+            automaton_file_size = fread(ascii_ram_buffer, 1, MAX_PROGRAM_SIZE, automation_file);
+            ascii_ram_buffer[automaton_file_size] = 0;
+            fclose(automation_file);
+        }
+        else
+        {
+            printf("failed to open file %s\n", automation_filename);
+            ascii_ram_buffer[0] = 0;
+        }
 
         size_t len = strlen(ascii_ram_buffer);
         file->data = ascii_ram_buffer;
@@ -787,10 +801,14 @@ void httpd_post_finished(void *connection, char *response_uri, uint16_t response
         // 3. Select virtual response path based on validation results
         if (post_validation_success) {
             snprintf(response_uri, response_uri_len, "/post_ok.json");
-            //hc_queue_send(HC_CMD_BASIC_SCRIPT);    // run basic script after file downloaded  
+            //hc_queue_send(HC_CMD_BASIC_SCRIPT);    // run basic script after file downloaded
+            
+            sprintf(web.edit_text_filename, "automation%02d", ((WEB_SESSION_STATE_T *)connection)->automation_file_number);
+            
             hc_queue_send(HC_CMD_SAVE_TEXT_FILE);    // save text file adfter file downloaded
         } else {
             snprintf(response_uri, response_uri_len, "/post_fail.json");
+            printf("Rejected response\n");
         }    
         break;
     }
@@ -1328,3 +1346,4 @@ int shell_map_test(char *filename)
 
     return(0);
 }
+
