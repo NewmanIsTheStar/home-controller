@@ -384,6 +384,8 @@ int hc_save_text_file_from_ascii_buffer(void)
 {
     FILE *file_ptr = NULL;
     char filename[16];
+    int automation_number = 0;
+    char *automation_name;
     char *body;
    
     // extract filename from first line of the buffer
@@ -394,7 +396,21 @@ int hc_save_text_file_from_ascii_buffer(void)
         strncpy(filename, "unnamed", sizeof(filename));
     }
 
-    body = strchr(editor_text, '\n') + 1;
+    // special case: automations contain the user defined descriptive name on the second buffer line
+    if (strncmp(filename, "automation", 10) == 0)
+    {
+        sscanf(filename+10, "%d", &automation_number);
+        CLIP(automation_number, 0, 31);
+        automation_name = strchr(editor_text, '\n') + 1;
+
+        copy_first_line(cfg->automation_name[automation_number], automation_name, sizeof(cfg->automation_name[automation_number])); 
+
+        body = strchr(automation_name, '\n') + 1;        
+    }
+    else
+    {
+        body = strchr(editor_text, '\n') + 1;
+    }
 
     if ((body - editor_text) < MAX_PROGRAM_SIZE)
     {

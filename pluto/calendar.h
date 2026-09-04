@@ -32,6 +32,7 @@ int get_local_date_string(char *date_string, int len);
 int get_local_day_string(char *day_string, int len);
 int8_t get_datetime_from_unix_time(uint32_t unixtime, datetime_t *date, int *effective_offset, int localtime);
 int get_timestamp_from_unix_time(uint32_t unixtime, char *timestamp, int len, int isoformat, int localtime);
+int get_local_timestamp_from_unix_time(uint32_t unixtime, char *timestamp, int len);
 int get_time_string_from_unix_time(uint32_t unixtime, char *time_string, int len, int isoformat, int localtime);
 int get_date_string_from_unix_time(uint32_t unixtime, char *date_string, int len, int isoformat, int localtime);
 int get_day_string_from_unix_time(uint32_t unixtime, char *day_string, int len, int isoformat, int localtime);

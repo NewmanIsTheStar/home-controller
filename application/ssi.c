@@ -1166,7 +1166,8 @@ extern NON_VOL_VARIABLES_T config;
     x(rsbulb7) \
     x(rsbulb8) \
     x(eanme) \
-    x(tfnme)
+    x(tfnme) \
+    x(afnme)
 
 
     
@@ -1584,12 +1585,18 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 
         // *** application  SSI start ***
 
-        case SSI_tfnme:  // edit automation name
+        case SSI_tfnme:  // text file name
         {
             printed = snprintf(pcInsert, iInsertLen, "%s", web.edit_text_filename);    
         }
-        break;          
-        case SSI_eanme:  // edit automation name
+        break;       
+        case SSI_afnme:  // automation file name
+        {
+            CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
+            printed = snprintf(pcInsert, iInsertLen, "automation%02d", ((WEB_SESSION_STATE_T *)connection_state)->automation_file_number); 
+        }
+        break;             
+        case SSI_eanme:  // automation descriptive name
         {
             CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
             printed = snprintf(pcInsert, iInsertLen, "%s", cfg->automation_name[((WEB_SESSION_STATE_T *)connection_state)->automation_file_number]);    
@@ -2481,7 +2488,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_sp31mde:
         case SSI_sp32mde:                        
         {
-            if (!get_timestamp_from_unix_time(cfg->automation_triggered[iIndex-SSI_sp1mde], timestamp, sizeof(timestamp), 0, 1))
+            if (!get_local_timestamp_from_unix_time(cfg->automation_triggered[iIndex-SSI_sp1mde], timestamp, sizeof(timestamp)))
             {
                 printed = snprintf(pcInsert, iInsertLen, "%s", timestamp);
             }         

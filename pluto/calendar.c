@@ -1172,6 +1172,40 @@ int get_timestamp_from_unix_time(uint32_t unixtime, char *timestamp, int len, in
 }
 
 /*!
+ * \brief Generate string containing time stamp from unix time
+ *
+ * \param[in]   unixtime    unix time  
+ * \param[out]  timestamp   pointer to string to store the timestamp 
+ * \param[in]   len         max length of timestamp string  
+ * \param[in]   isoformat   use iso format
+ * \param[in]   localtime   use local time
+ * 
+ * \return 0 on success, non-zero on error
+ */
+int get_local_timestamp_from_unix_time(uint32_t unixtime, char *timestamp, int len)
+{
+   int err = 0;
+   datetime_t date;
+   int effective_offset = 0;
+
+
+   err = get_datetime_from_unix_time(unixtime, &date, &effective_offset, 1);      
+
+   if (!err)
+   {
+      // human readable format
+      snprintf(timestamp, len, "%04d-%02d-%02d %02d:%02d:%02d", date.year, date.month, date.day, date.hour, date.min, date.sec);
+      
+    }
+    else
+    {
+        snprintf(timestamp, len, "1970-01-01T00:00:000.000Z");  //default to unix epoch
+    }
+
+    return(err);
+}
+
+/*!
  * \brief Generate string containing time delta in human readable format from integer delta in seconds
  *
  * \param[in]   string        output buffer  

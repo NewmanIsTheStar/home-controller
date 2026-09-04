@@ -991,9 +991,7 @@ int shell_edit(char *filename)
     {
         file_size = fread(ascii_ram_buffer + ASCII_HEADER_SIZE, 1, MAX_PROGRAM_SIZE, filePointer);
         ascii_ram_buffer[ASCII_HEADER_SIZE + file_size] = 0;
-
-        printf("file_size = %d\n", file_size);
-        printf("file = %s\n", ascii_ram_buffer + ASCII_HEADER_SIZE);        
+      
         fclose(filePointer);
     }
     else

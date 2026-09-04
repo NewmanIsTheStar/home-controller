@@ -77,7 +77,7 @@ body {
             margin: 0 auto;
         }
         h2 {
-            font-size: 1.2rem;
+            font-size: 2.0rem;
             margin: 0 0 10px 0;
             letter-spacing: 1px;
         }
@@ -159,10 +159,12 @@ body {
 <div class="main">
  <div class="container">
     <h2 class="flex-heading">
-        <span>Automation Editor</span>
+        <span>Automation</span>
         <a id="saveTrigger" href="/cgi_save_automation.shtml" class="reverse-video-link">SAVE</a>        
     </h2> 
-    <p>File: <!--#eanme--> </p>   
+    <input type="text" id="automationname" name="automationname" size="32" maxlength="64" value="<!--#eanme-->">
+    <br>
+    <br>
     <textarea id="editor" autocomplete="off" spellcheck="false" placeholder="Enter text here..."></textarea>
     <div class="footer">
         <span id="counter">Line: 1 | Col: 0</span>
@@ -171,6 +173,7 @@ body {
 </div>
 
 <script>
+    const automationname = document.getElementById('automationname');
     const editor = document.getElementById('editor');
     const status = document.getElementById('status');
     const counter = document.getElementById('counter');
@@ -181,7 +184,7 @@ body {
 
     // Fetch initial RAM buffer content on load
     window.addEventListener('DOMContentLoaded', () => {
-        fetch('/get_<!--#eanme-->')
+        fetch('/get_<!--#afnme-->')
             .then(res => res.text())
             .then(data => { editor.value = data; })
             .catch(() => { status.innerText = "Status: Failed to load initial text"; });
@@ -272,16 +275,17 @@ function sendDataToServer() {
     status.textContent = 'Saving...';
     status.className = '';
 
-    const eanmeVal = '<!--#eanme-->';
+    const afnmeVal = '<!--#afnme-->';
     
-    // 1. Strip raw carriage returns/newlines injected by the SSI handler string
-    const cleanEanme = eanmeVal.replace(/[\r\n]+/g, '');
+    // strip raw carriage returns/newlines injected by the SSI handler string
+    const cleanAfnme = afnmeVal.replace(/[\r\n]+/g, '');
+    const cleanAutomationName = automationname.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');   
     
-    // 2. Normalize textarea newlines to Unix LF only, removing the problematic \r
+    // normalize textarea newlines to Unix LF only, removing the problematic \r
     const cleanEditorContent = editor.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     
-    // 3. Assemble the payload using a single standard LF (\n) separator
-    const payload = 'text=' + encodeURIComponent(cleanEanme + '\n' + cleanEditorContent);
+    // assemble the payload using a single standard LF (\n) separator
+    const payload = 'text=' + encodeURIComponent(cleanAfnme + '\n' + cleanAutomationName + '\n' + cleanEditorContent);
 
     fetch(SERVER_ENDPOINT, {
         method: 'POST',
