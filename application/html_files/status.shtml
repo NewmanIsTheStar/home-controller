@@ -56,16 +56,13 @@ body {
 <body>
 
   <div class="sidenav">
+    <a href="/hc_automation_list.shtml">Automation</a>
     <a href="/network.shtml">Network</a>   
-    <a href="/time.shtml">Time</a>
-    <a href="/t_gpio.shtml">GPIO</a>
-    <a href="/powerwall.shtml">Powerwall</a>
-    <a href="/t_advanced.shtml">Advanced</a>     
-    <a href="/syslog.shtml">Syslog</a>    
+    <a href="/time.shtml">Time</a>     
+    <a href="/syslog.shtml">Syslog</a>  
+    <a href="/mqtt.shtml">MQTT</a>   
     <a href="/units.shtml">Foibles</a>     
-    <a href="/status.shtml">Status</a>
-    <a href="/t_history.shtml">History</a>     
-    <p><a href="/index.shtml">&#8629</a></p>    
+    <a href="/status.shtml">Status</a>    
   </div>
 
 <div class="main">
@@ -76,41 +73,7 @@ body {
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td> 
-    </tr>      
-    <tr>
-      <td>Local Time</td>
-      <td><!--#ltme--></td>
-    </tr>
-    <tr>
-      <td>Temperature</td>
-      <td><!--#tct--> &deg;<!--#tmpu--></td>      
-    </tr>
-    <tr>
-      <td>Set point</td>
-      <td><!--#tcs--> &deg;<!--#tmpu--></td>
-    </tr>
-    <tr>
-      <td>Heating target</td>
-      <td><!--#tchs--></td>
-    </tr>    
-    <tr>
-      <td>Cooling target</td>
-      <td><!--#tccs--></td>
-    </tr>  
-    <tr>
-      <td colspan="2">&nbsp;</td> 
-    </tr>     
-    <tr>
-      <td>Grid Status</td>
-      <td><!--#grids--></td>
-    </tr> 
-    <tr>
-      <td>Battery</td>
-      <td><!--#batp--> %</td>
-    </tr> 
-    <tr>
-      <td colspan="2">&nbsp;</td> 
-    </tr>     
+    </tr>          
     <tr>
       <td>Network Time</td>
       <td><!--#time--></td>

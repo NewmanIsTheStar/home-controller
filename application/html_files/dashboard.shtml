@@ -50,10 +50,6 @@ body {
 
   <div class="sidenav">
     <a href="/hc_automation_list.shtml">Automation</a>
-    <a href="/rs_relay_default.shtml">Control</a>
-    <a href="/rs_gpio.shtml">GPIO</a>
-    <a href="/rs_names.shtml">Names</a>      
-    <a href="/rs_schedule.shtml">Schedule</a> 
     <a href="/network.shtml">Network</a>   
     <a href="/time.shtml">Time</a>     
     <a href="/syslog.shtml">Syslog</a>  
@@ -67,52 +63,7 @@ body {
 <div class="main">
 
   <h2>Home Controller Dashboard</h2>
-  <label for="dsstart">WiFi Country is <!--#wific--></label><br>
-  <a href="/wifi_country.shtml" style="text-decoration:none"><small>Change WiFi Country &#8594</small></a><br><br>
-  <table>
-      <form action="/network.cgi">
-          <tr>
-              <td><label for="ssid">WiFi SSID</label></td>
-              <td><input type="text" id="ssid" name="ssid" value="<!--#ssid-->"></td>
-          </tr>
-          <tr>
-              <td><label for="dsstart">WiFi Password</label></td>
-              <td><input type="password" onfocus=this.value='' id="wpass" name="wpass" value="<!--#wpass-->"></td>
-          </tr>
-          <tr>
-              <td><label for="hostn">Host Name</label></td>
-              <td><input type="text" id="hostn" name="hostn" value="<!--#hostn-->"></td>
-          </tr>                   
-          <tr>
-              <td><label for="dsenable">Use DHCP</label></td>
-              <td><input type="checkbox" id="dhcp" name="dhcp" value="on" style="height:20px; width:20px; vertical-align: middle;" onclick="this.form.submit()" <!--#dhcp-->></td>
-          </tr>      
-          <tr>
-              <td><label for="dsend">IP Address</label></td>
-              <td><input type="text" id="ipad" name="ipad" value="<!--#ipad-->"></td>
-          </tr>               
-          <tr>           
-          <tr>
-              <td><label for="netmask">Network Mask</label></td>
-              <td><input type="text" id="nmsk" name="nmsk" value="<!--#nmsk-->"></td>
-          </tr>      
-          <tr>
-              <td><label for="gatewy">Gateway</label></td>
-              <td><input type="text" id="gatewy" name="gatewy" value="<!--#gatewy-->"></td>
-          </tr>                                           
-          <tr>            
-              <td>
-                  <button type="submit" style="font-size: 25px;">Save</button>
-              </td>
-          </tr>
-      </form>
-  </table>
-  <br>
-  <label>WiFi changes will be applied after reboot</label>
-  <form action="/reboot.cgi" method="get">
-      <input type="submit" value="Reboot" name="reboot" id="reboot" style="font-size: 25px;">
-  </form> 
-    <br><p style="font-size: x-small;">MAC <!--#macadr--></p><br>  
+
 </div>
    
 </body>

@@ -49,10 +49,7 @@ body {
 <body>
 
   <div class="sidenav">
-    <a href="/rs_relay_default.shtml">Control</a>
-    <a href="/rs_gpio.shtml">GPIO</a>
-    <a href="/rs_names.shtml">Names</a>      
-    <a href="/rs_schedule.shtml">Schedule</a> 
+    <a href="/hc_automation_list.shtml">Automation</a>
     <a href="/network.shtml">Network</a>   
     <a href="/time.shtml">Time</a>     
     <a href="/syslog.shtml">Syslog</a>  
@@ -69,7 +66,7 @@ body {
   <label for="dsstart">WiFi Country is <!--#wific--></label><br>
   <a href="/wifi_country.shtml" style="text-decoration:none"><small>Change WiFi Country &#8594</small></a><br><br>
   <table>
-      <form action="/network.cgi">
+      <form action="/cgi_network.shtml">
           <tr>
               <td><label for="ssid">WiFi SSID</label></td>
               <td><input type="text" id="ssid" name="ssid" value="<!--#ssid-->"></td>
@@ -108,7 +105,7 @@ body {
   </table>
   <br>
   <label>WiFi changes will be applied after reboot</label>
-  <form action="/reboot.cgi" method="get">
+  <form action="/cgi_reboot.shtml" method="get">
       <input type="submit" value="Reboot" name="reboot" id="reboot" style="font-size: 25px;">
   </form> 
     <br><p style="font-size: x-small;">MAC <!--#macadr--></p><br>  

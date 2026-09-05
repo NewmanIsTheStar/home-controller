@@ -48,16 +48,13 @@ body {
 <body>
 
   <div class="sidenav">
+    <a href="/hc_automation_list.shtml">Automation</a>
     <a href="/network.shtml">Network</a>   
-    <a href="/time.shtml">Time</a>
-    <a href="/t_gpio.shtml">GPIO</a>
-    <a href="/powerwall.shtml">Powerwall</a>
-    <a href="/t_advanced.shtml">Advanced</a>     
-    <a href="/syslog.shtml">Syslog</a>    
+    <a href="/time.shtml">Time</a>     
+    <a href="/syslog.shtml">Syslog</a>  
+    <a href="/mqtt.shtml">MQTT</a>   
     <a href="/units.shtml">Foibles</a>     
-    <a href="/status.shtml">Status</a>
-    <a href="/t_history.shtml">History</a>     
-    <p><a href="/index.shtml">&#8629</a></p>    
+    <a href="/status.shtml">Status</a>    
   </div>
 
 <div class="main">

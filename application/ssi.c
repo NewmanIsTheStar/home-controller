@@ -2549,6 +2549,10 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_ts31vz:
         case SSI_ts32vz:                        
         {
+            CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
+
+           // TODO add variable for state of automation: exists_enabled, exists_disabled, undefined.
+
             // if ((get_day_from_mow(cfg->setpoint_start_mow[iIndex-SSI_ts1vz]) != web.thermostat_day) ||
             //     (cfg->setpoint_start_mow[iIndex-SSI_ts1vz] <0))
             // {     

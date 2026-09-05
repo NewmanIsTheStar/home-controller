@@ -10,11 +10,11 @@
 
 typedef enum
 {
-    CONFIG_FILE         = 0,
+    CONFIG_FILE                         = 0,
     CONFIG_PENULTIMATE_FLASH_SECTOR     = 1,
-    CONFIG_LAST_FLASH_SECTOR       = 2,
+    CONFIG_LAST_FLASH_SECTOR            = 2,
 
-    NUM_CONFIG_TYPES    = 3
+    NUM_CONFIG_TYPES                    = 3
 } CONFIG_TYPE_T;
 
 void config_changed(void);
@@ -39,6 +39,16 @@ typedef enum
     
     NO_PERSONALITY             =   4294967295     // force enum to be 4 bytes long 
 } PERSONALITY_E;
+
+// device personality
+typedef enum
+{
+    AUTOMATION_UNDEFINED          =   0,            
+    AUTOMATION_ENABLED            =   1,           
+    AUTOMATION_DISABLED           =   2,          
+    
+    NO_AUTOMATION                 =   4294967295     // force enum to be 4 bytes long 
+} AUTOMATION_STATUS_E;
 
 // non-vol structure conversion info
 typedef struct
@@ -109,7 +119,8 @@ typedef struct
     // uint8_t shelly_parameter_device_index[128];
     // uint8_t shelly_parameter_name_index[128];
     // char shelly_parameter_value[128][32];
-    // char shelly_parameter_name[64][32];    
+    // char shelly_parameter_name[64][32]; 
+    AUTOMATION_STATUS_E automation_status[64];   
     char automation_name[64][64];
     uint32_t automation_triggered[64];
     char automation_state[64];

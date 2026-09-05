@@ -413,6 +413,8 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
     char *value = NULL;
     int new_value = 0;
        
+    printf("Entering time cgi handler\n");
+    
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
     //force daylight saving off -- I really hate that this is how it works!  We only get passed the parameter when checkbox is "on"
