@@ -232,7 +232,7 @@ body {
       <td><a href="/cgi_hc_automation_edit.shtml?x=31">   <button>Edit</button></a></td>
     </tr> 
     <tr  <!--#tsaddvz-->>
-      <td><a href="/tp_add.cgi?x=99">   <button>Add</button></a></td>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=99">   <button>Add</button></a></td>
     </tr>  
   </table>
 </div>

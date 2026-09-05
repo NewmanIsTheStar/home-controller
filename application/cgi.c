@@ -4053,6 +4053,14 @@ const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pc
             if (strcasecmp("x", param) == 0)
             {
                 sscanf(value, "%d", &(connection_state->automation_file_number));
+
+                if ((((WEB_SESSION_STATE_T *)connection_state)->automation_file_number < 0) || (((WEB_SESSION_STATE_T *)connection_state)->automation_file_number > 31))
+                {
+                    ((WEB_SESSION_STATE_T *)connection_state)->automation_file_number = hc_get_new_automation_number();
+                    
+                    //TODO: handle table full more gracefully
+                    CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
+                }                
             }                       
         }
 

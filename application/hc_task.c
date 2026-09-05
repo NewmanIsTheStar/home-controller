@@ -432,6 +432,9 @@ int hc_save_text_file_from_ascii_buffer(void)
         }
 
         fclose(file_ptr);
+
+        cfg->automation_status[automation_number] = AUTOMATION_ENABLED;
+        printf("setting status for automation number %d to Enabled\n", automation_number);
     }
     //printf("Data successfully saved to output.txt\n");
 
@@ -571,4 +574,27 @@ void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_s
     // copy the line and manually null-terminate it
     strncpy(dest_buffer, source_buffer, line_length);
     dest_buffer[line_length] = '\0';
+}
+
+int hc_get_new_automation_number(void)
+{
+    int err = -1;
+    int i;
+
+    for(i=0; i < NUM_ROWS(cfg->automation_status); i++)
+    {
+        if (cfg->automation_status[i] == AUTOMATION_UNDEFINED)
+        {
+            cfg->automation_status[i] = AUTOMATION_DISABLED;
+            err = 0;
+            break;
+        }
+    }
+
+    if (!err)
+    {
+        err = i;
+    }
+
+    return(err);    
 }

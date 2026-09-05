@@ -99,12 +99,11 @@ void config_blank_to_v1(void *previous_config)
     
     for(i=0; i<NUM_ROWS(cfg->automation_name); i++)
     {
-        //cfg->automation_name[i][0] = 0;
+        cfg->automation_status[i] = AUTOMATION_UNDEFINED;
         sprintf(cfg->automation_name[i], "automation%02d", i);
         cfg->automation_triggered[i] = 0;
         cfg->automation_state[i] = 0;
     }
-
 }
 
 

@@ -24,6 +24,7 @@
 #include "pluto.h"
 // #include "powerwall.h"
 // #include "led_strip.h"
+#include "hc_task.h"
 
 #ifdef USE_GIT_HASH_AS_VERSION
 #include "githash.h"
@@ -1592,14 +1593,42 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;       
         case SSI_afnme:  // automation file name
         {
-            CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
-            printed = snprintf(pcInsert, iInsertLen, "automation%02d", ((WEB_SESSION_STATE_T *)connection_state)->automation_file_number); 
+            if (connection_state)
+            {
+                if ((((WEB_SESSION_STATE_T *)connection_state)->automation_file_number < 0) || (((WEB_SESSION_STATE_T *)connection_state)->automation_file_number > 31))
+                {
+                    ((WEB_SESSION_STATE_T *)connection_state)->automation_file_number = hc_get_new_automation_number();
+                    
+                    //TODO: handle table full more gracefully
+                    CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
+                }
+            
+                printed = snprintf(pcInsert, iInsertLen, "automation%02d", ((WEB_SESSION_STATE_T *)connection_state)->automation_file_number); 
+            }
+            else
+            {
+                printed = 0;
+            }
         }
         break;             
         case SSI_eanme:  // automation descriptive name
         {
-            CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->automation_name[((WEB_SESSION_STATE_T *)connection_state)->automation_file_number]);    
+            if (connection_state)
+            {            
+                if ((((WEB_SESSION_STATE_T *)connection_state)->automation_file_number < 0) || (((WEB_SESSION_STATE_T *)connection_state)->automation_file_number > 31))
+                {
+                    ((WEB_SESSION_STATE_T *)connection_state)->automation_file_number = hc_get_new_automation_number();
+                    
+                    //TODO: handle table full more gracefully
+                    CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
+                }
+
+                printed = snprintf(pcInsert, iInsertLen, "%s", cfg->automation_name[((WEB_SESSION_STATE_T *)connection_state)->automation_file_number]);    
+            }
+            else
+            {
+                 printed = snprintf(pcInsert, iInsertLen, "unknown automation name\n");
+            }
         }
         break;        
         case SSI_usurped:  // usurped
@@ -2549,16 +2578,11 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_ts31vz:
         case SSI_ts32vz:                        
         {
-            CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
-
-           // TODO add variable for state of automation: exists_enabled, exists_disabled, undefined.
-
-            // if ((get_day_from_mow(cfg->setpoint_start_mow[iIndex-SSI_ts1vz]) != web.thermostat_day) ||
-            //     (cfg->setpoint_start_mow[iIndex-SSI_ts1vz] <0))
-            // {     
-            //     printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
-            // }
-            // else
+            if (cfg->automation_status[iIndex-SSI_ts1vz] == AUTOMATION_UNDEFINED)
+            {
+                printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
+            }
+            else
             {
                 printed = 0;
             }             
