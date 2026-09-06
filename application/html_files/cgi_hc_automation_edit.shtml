@@ -190,7 +190,22 @@ body {
     saveTrigger.addEventListener('click', (e) => {
         e.preventDefault(); // Stop default browser anchor routing action
         sendDataToServer();
-        window.location.href = "/hc_automation_list.shtml";
+
+        // get the value of the input field
+        const inputValue = document.getElementById('automationname').value;
+        
+
+        // parse the existing URL parameters from the current page
+        const params = new URLSearchParams(window.location.search);
+    
+        // append or overwrite your new parameter (change 'new_param' to your preferred key)
+        params.set('aname', inputValue);
+    
+        // 5. Build the final destination URL with the combined parameters
+        const destination = '/cgi_hc_automation_save.shtml?' + params.toString();
+    
+        // navigate to the new page
+        window.location.href = destination;       
     });
 
     // Track cursor and line limits

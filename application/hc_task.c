@@ -87,6 +87,7 @@ int hc_save_text_file_from_ascii_buffer(void);
 int hc_cat(char *filename);
 int hc_hex_dump(char *filename);
 void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_size);
+int hc_delete_file(void);
 
 // external variables
 extern NON_VOL_VARIABLES_T config;
@@ -229,6 +230,9 @@ void hc_task(__unused void *params)
                 case HC_CMD_DEFRAGMENT:
                     //picofs_consolidate_all_files();
                     picofs_consolidate_all_files_in_flash();
+                    break;
+                case HC_CMD_DELETE_FILE:                    
+                    hc_delete_file();
                     break;
                 default:
                     printf("HC task received unrecognized message (%d)\n", hc_message);
@@ -405,7 +409,10 @@ int hc_save_text_file_from_ascii_buffer(void)
 
         copy_first_line(cfg->automation_name[automation_number], automation_name, sizeof(cfg->automation_name[automation_number])); 
 
-        body = strchr(automation_name, '\n') + 1;        
+        body = strchr(automation_name, '\n') + 1;  
+        
+        cfg->automation_status[automation_number] = AUTOMATION_ENABLED;
+        printf("setting status for automation number %d to Enabled\n", automation_number);        
     }
     else
     {
@@ -433,8 +440,7 @@ int hc_save_text_file_from_ascii_buffer(void)
 
         fclose(file_ptr);
 
-        cfg->automation_status[automation_number] = AUTOMATION_ENABLED;
-        printf("setting status for automation number %d to Enabled\n", automation_number);
+
     }
     //printf("Data successfully saved to output.txt\n");
 
@@ -597,4 +603,16 @@ int hc_get_new_automation_number(void)
     }
 
     return(err);    
+}
+
+int hc_delete_file(void)
+{
+    int err = -1;
+
+    if (web.delete_filename[0])
+    {
+        err = remove(web.delete_filename);
+    }
+
+    return(err);
 }

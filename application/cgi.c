@@ -4157,10 +4157,11 @@ const char * cgi_hc_automation_delete_handler(int iIndex, int iNumParams, char *
     char *param = NULL;
     char *value = NULL;
     int automation_number = -1;
+    char automation_file_name[16];
        
-    printf("cgi_hc_automation_delete_handler\n");
+    // printf("cgi_hc_automation_delete_handler\n");
     
-    dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+    // dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
     i = 0;
     while (i < iNumParams)
@@ -4172,9 +4173,17 @@ const char * cgi_hc_automation_delete_handler(int iIndex, int iNumParams, char *
         {
             //printf("Parameter: %s has Value: %s\n", param, value);
             if (strcasecmp("x", param) == 0)
-            {
+            {                
                 sscanf(value, "%d", &automation_number); 
-                printf("TODO: delete automation number %d\n", automation_number);
+                
+                if (cfg && automation_number>= 0 && automation_number <=31)
+                {
+                    cfg->automation_status[automation_number] = AUTOMATION_UNDEFINED;
+                    sprintf(cfg->automation_name[automation_number], "automation%02d", automation_number); 
+
+                    sprintf(web.delete_filename, "automation%02d", automation_number);
+                    hc_queue_send(HC_CMD_DELETE_FILE);
+                }
             }                       
         }
 
@@ -4185,6 +4194,59 @@ const char * cgi_hc_automation_delete_handler(int iIndex, int iNumParams, char *
     // Send the next page back to the user
     //config_changed();
     return "/delete.shtml";
+}
+
+/*!
+ * \brief cgi handler   
+ *
+ * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+ * \param[in]  iNumParams   number of parameters
+ * \param[in]  pcParam      parameter name
+ * \param[in]  pcValue      parameter value 
+ * 
+ * \return nothing
+ */
+const char * cgi_hc_automation_save_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
+{
+    int i = 0;
+
+    char *param = NULL;
+    char *value = NULL;
+    int automation_number = -1;
+       
+    printf("cgi_hc_save_automation_handler\n");
+    
+    dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+    i = 0;
+    while (i < iNumParams)
+    {
+        param = pcParam[i];
+        value = pcValue[i];
+
+        if (param && value)
+        {
+            if (strcasecmp("x", param) == 0)
+            {                
+                sscanf(value, "%d", &automation_number);                 
+            }   
+
+            if (strcasecmp("aname", param) == 0)
+            {                              
+                if (cfg && automation_number>= 0 && automation_number <=31)
+                {
+                    urldecode(cfg->automation_name[automation_number], value);
+                }
+            }                       
+        }
+
+        i++;
+    }
+
+
+    // Send the next page back to the user
+    //config_changed();
+    return "/hc_automation_list.shtml";
 }
 
 /*!
@@ -4219,7 +4281,9 @@ static const MY_CGI_T system_cgi_handlers[] = {
 
     {"/cgi_hc_automation_edit.shtml",         cgi_hc_automation_edit_handler},  
     {"/cgi_hc_automation_enable.shtml",       cgi_hc_automation_enable_handler},      
-    {"/cgi_hc_automation_delete.shtml",       cgi_hc_automation_delete_handler},         
+    {"/cgi_hc_automation_delete.shtml",       cgi_hc_automation_delete_handler}, 
+    {"/cgi_hc_automation_save.shtml",         cgi_hc_automation_save_handler},     
+          
 };
 
 /**
