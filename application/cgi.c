@@ -4039,8 +4039,6 @@ const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pc
        
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
-    printf("cgi_save_text_file_handler\n");
-
     i = 0;
     while (i < iNumParams)
     {
@@ -4077,6 +4075,117 @@ const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pc
     return "/edit.shtml";
 }
 
+/*!
+ * \brief cgi handler   
+ *
+ * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+ * \param[in]  iNumParams   number of parameters
+ * \param[in]  pcParam      parameter name
+ * \param[in]  pcValue      parameter value 
+ * 
+ * \return nothing
+ */
+const char * cgi_hc_automation_enable_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
+{
+    int i = 0;
+    //int whole_part = 0;
+    //int tenths_part = 0;
+    char *param = NULL;
+    char *value = NULL;
+    int automation_number = -1;
+    int automation_enable = -1;
+
+    // printf("cgi_automation_enable_handler\n");
+    // dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+    i = 0;
+    while (i < iNumParams)
+    {
+        param = pcParam[i];
+        value = pcValue[i];
+
+        if (param && value)
+        {
+            //printf("Parameter: %s has Value: %s\n", param, value);
+            if (strcasecmp("row", param) == 0)
+            {
+                sscanf(value, "%d", &automation_number);              
+            }
+            
+            if (strcasecmp("status", param) == 0)
+            {
+                 sscanf(value, "%d", &automation_enable);
+            }            
+        }
+
+        i++;
+    }
+
+    if ((automation_number >= 0) && (automation_number <= 31))
+    {
+        if (automation_enable == 0)
+        {
+            //printf("automation %d disabled\n", automation_number);
+            cfg->automation_state[automation_number] = AUTOMATION_DISABLED;
+        }
+        else if (automation_enable == 1)
+        {
+            //printf("automation %d enabled\n", automation_number);
+            cfg->automation_state[automation_number] = AUTOMATION_ENABLED;
+        }
+    }      
+
+    // Send the next page back to the user
+    //config_changed();
+    return "/placeholder";   // the return value is ignored
+}
+
+/*!
+ * \brief cgi handler   
+ *
+ * \param[in]  iIndex       index of cgi handler in cgi_handlers table
+ * \param[in]  iNumParams   number of parameters
+ * \param[in]  pcParam      parameter name
+ * \param[in]  pcValue      parameter value 
+ * 
+ * \return nothing
+ */
+const char * cgi_hc_automation_delete_handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state)
+{
+    int i = 0;
+
+    char *param = NULL;
+    char *value = NULL;
+    int automation_number = -1;
+       
+    printf("cgi_hc_automation_delete_handler\n");
+    
+    dump_parameters(iIndex, iNumParams, pcParam, pcValue);
+
+    i = 0;
+    while (i < iNumParams)
+    {
+        param = pcParam[i];
+        value = pcValue[i];
+
+        if (param && value)
+        {
+            //printf("Parameter: %s has Value: %s\n", param, value);
+            if (strcasecmp("x", param) == 0)
+            {
+                sscanf(value, "%d", &automation_number); 
+                printf("TODO: delete automation number %d\n", automation_number);
+            }                       
+        }
+
+        i++;
+    }
+
+
+    // Send the next page back to the user
+    //config_changed();
+    return "/delete.shtml";
+}
 
 /*!
  * \brief initialize cgi handlers when LWIP_HTTPD_CGI == 1 (old style)
@@ -4108,7 +4217,9 @@ static const MY_CGI_T system_cgi_handlers[] = {
     {"/cgi_swload.shtml",                     cgi_software_load_handler},
     {"/cgi_personality.shtml",                cgi_personality_handler}, 
 
-    {"/cgi_hc_automation_edit.shtml",         cgi_hc_automation_edit_handler},     
+    {"/cgi_hc_automation_edit.shtml",         cgi_hc_automation_edit_handler},  
+    {"/cgi_hc_automation_enable.shtml",       cgi_hc_automation_enable_handler},      
+    {"/cgi_hc_automation_delete.shtml",       cgi_hc_automation_delete_handler},         
 };
 
 /**
@@ -4171,7 +4282,7 @@ void *fs_state_init(struct fs_file *file, const char *name)
 
                 // bind custom tracking struct directly to the file instance
                 file->state = session;             
-                printf("allocated memory for web context @%p\n", session);
+                //printf("allocated memory for web context @%p\n", session);
             }
         }
         else
@@ -4191,7 +4302,7 @@ void fs_state_free(struct fs_file *file, void *state)
 {
     if (state != NULL) 
     {
-        printf("RELEASING web context memory @%p\n", file->state);    
+        //printf("RELEASING web context memory @%p\n", file->state);    
         mem_free(state);
         file->state = NULL;
     }    

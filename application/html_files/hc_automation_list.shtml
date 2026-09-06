@@ -41,6 +41,96 @@ body {
    td {
     padding: 0 15px;
   }
+
+    /* Container for the switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+
+    /* Hide the default HTML checkbox */
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    /* The visible slider track */
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 26px;
+    }
+
+    /* The moving circular knob */
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    /* Track background color when checked */
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+
+    /* Knob position when checked */
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+
+    /* Base modern button styles */
+    .btn-modern {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.5;
+      color: #ffffff;
+      background-color: #2563eb; /* Modern Royal Blue */
+      border: none;
+      border-radius: 6px; /* Soft rounded corners */
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Hover state: gets slightly darker */
+    .btn-modern:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* Active state: subtle tactile "click" press down effect */
+    .btn-modern:active {
+      transform: scale(0.98);
+    }
+
+    /* Focus state: accessibility ring for keyboard users */
+    .btn-modern:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    .btn-modern.btn-danger {
+      background-color: #dc2626; /* Crimson Red */
+    }
+    .btn-modern.btn-danger:hover {
+      background-color: #b91c1c; /* Darker Red on Hover */
+    }
 }
 
 @media screen and (max-height: 450px) {
@@ -65,177 +155,390 @@ body {
 <div class="main">
   <h2>Automation List</h2> 
   
-  <table>
+  <table id="automation-table">
     <tr>
       <td><b>Name</b></td>
       <td><b>Last triggered</b></td>
+      <td><b>Enabled</b></td>      
     </tr>
     <tr <!--#ts1vz-->>
       <td><!--#ts1st--></td>
       <td><!--#sp1mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=0">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="0">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=0">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=0"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>
     <tr <!--#ts2vz-->>
       <td><!--#ts2st--></td>
       <td><!--#sp2mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=1">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="1">
+          <span class="slider"></span>
+        </label>
+      </td>      
+      <td><a href="/cgi_hc_automation_edit.shtml?x=1">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=1"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>    
     <tr <!--#ts3vz-->>
       <td><!--#ts3st--></td>
       <td><!--#sp3mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=2">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="2">
+          <span class="slider"></span>
+        </label>
+      </td>      
+      <td><a href="/cgi_hc_automation_edit.shtml?x=2">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=2"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts4vz-->>
       <td><!--#ts4st--></td>
       <td><!--#sp4mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=3">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="3">
+          <span class="slider"></span>
+        </label>
+      </td>       
+      <td><a href="/cgi_hc_automation_edit.shtml?x=3">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=3"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts5vz-->>
       <td><!--#ts5st--></td>
       <td><!--#sp5mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=4">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="4">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=4">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=4"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>   
     <tr <!--#ts6vz-->>
       <td><!--#ts6st--></td>
       <td><!--#sp6mde--></td>
-
-      <td><a href="/cgi_hc_automation_edit.shtml?x=5">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="5">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=5">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=5"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>
     <tr <!--#ts7vz-->>
       <td><!--#ts7st--></td>
       <td><!--#sp7mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=6">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="6">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=6">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=6"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>    
     <tr <!--#ts8vz-->>
       <td><!--#ts8st--></td>
       <td><!--#sp8mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=7">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="7">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=7">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=7"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts9vz-->>
       <td><!--#ts9st--></td>
       <td><!--#sp9mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=8">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="8">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=8">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=8"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts10vz-->>
       <td><!--#ts10st--></td>
       <td><!--#sp10mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=9">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="9">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=9">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=9"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts11vz-->>
       <td><!--#ts11st--></td>
       <td><!--#sp11mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=10">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="10">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=10">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=10"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>
     <tr <!--#ts12vz-->>
       <td><!--#ts12st--></td>
       <td><!--#sp12mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=11">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="11">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=11">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=11"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>    
     <tr <!--#ts13vz-->>
       <td><!--#ts13st--></td>
       <td><!--#sp13mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=12">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="12">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=12">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=12"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts14vz-->>
       <td><!--#ts14st--></td>
       <td><!--#sp14mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=13">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="13">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=13">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=13"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts15vz-->>
       <td><!--#ts15st--></td>
       <td><!--#sp15mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=14">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="14">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=14">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=14"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>   
     <tr <!--#ts16vz-->>
       <td><!--#ts16st--></td>
       <td><!--#sp16mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=15">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="15">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=15">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=15"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>
     <tr <!--#ts17vz-->>
       <td><!--#ts17st--></td>
       <td><!--#sp17mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=16">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="16">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=16">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=16"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>    
     <tr <!--#ts18vz-->>
       <td><!--#ts18st--></td>
       <td><!--#sp18mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=17">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="17">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=17">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=17"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts19vz-->>
       <td><!--#ts19st--></td>
       <td><!--#sp19mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=18">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="18">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=18">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=18"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>   
     <tr <!--#ts20vz-->>
       <td><!--#ts20st--></td>
       <td><!--#sp20mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=19">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="19">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=19">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=19"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts21vz-->>
       <td><!--#ts21st--></td>
       <td><!--#sp21mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=20">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="20">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=20">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=20"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>
     <tr <!--#ts22vz-->>
       <td><!--#ts22st--></td>
       <td><!--#sp22mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=21">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="21">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=21">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=21"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>    
     <tr <!--#ts23vz-->>
       <td><!--#ts23st--></td>
       <td><!--#sp23mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=22">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="22">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=22">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=22"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts24vz-->>
       <td><!--#ts24st--></td>
       <td><!--#sp24mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=23">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="23">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=23">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=23"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts25vz-->>
       <td><!--#ts25st--></td>
       <td><!--#sp25mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=24">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="24">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=24">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=24"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>   
     <tr <!--#ts26vz-->>
       <td><!--#ts26st--></td>
       <td><!--#sp26mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=25">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="25">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=25">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=25"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>
     <tr <!--#ts27vz-->>
       <td><!--#ts27st--></td>
       <td><!--#sp27mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=26">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="26">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=26">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=26"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>    
     <tr <!--#ts28vz-->>
       <td><!--#ts28st--></td>
       <td><!--#sp28mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=27">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="27">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=27">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=27"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr> 
     <tr <!--#ts29vz-->>
       <td><!--#ts29st--></td>
       <td><!--#sp29mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=28">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="28">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=28">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=28"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>                  
    <tr <!--#ts30vz-->>
       <td><!--#ts30st--></td>
       <td><!--#sp30mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=29">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="29">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=29">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=29"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>  
     <tr <!--#ts31vz-->>
       <td><!--#ts31st--></td>
       <td><!--#sp31mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=30">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="30">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=30">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=30"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr>
     <tr <!--#ts32vz-->>
       <td><!--#ts32st--></td>
       <td><!--#sp32mde--></td>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=31">   <button>Edit</button></a></td>
+      <td>
+        <label class="switch">
+          <input type="checkbox" class="row-toggle" data-row="31">
+          <span class="slider"></span>
+        </label>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=31">   <button class="btn-modern">Edit</button></a></td>
+      <td><a href="/cgi_hc_automation_delete.shtml?x=31"> <button class="btn-modern btn-danger">Delete</button></a></td>
     </tr> 
     <tr  <!--#tsaddvz-->>
-      <td><a href="/cgi_hc_automation_edit.shtml?x=99">   <button>Add</button></a></td>
+      <td><a href="/cgi_hc_automation_edit.shtml?x=99">    <button class="btn-modern">Add</button></a></td>
     </tr>  
   </table>
 </div>
+
+<script>
+document.getElementById('automation-table').addEventListener('change', function(event) {
+  if (event.target.classList.contains('row-toggle')) {
+    const checkbox = event.target;
+    
+    // Extract the exact index from the data-row attribute
+    const rowNum = checkbox.dataset.row; 
+    const state = checkbox.checked ? '1' : '0';
+
+    fetch(`cgi_hc_automation_enable.shtml?row=${rowNum}&status=${state}`)
+      .then(response => { if (!response.ok) checkbox.checked = !checkbox.checked; });
+  }
+});
+
+</script>
+  
 </body>
 </html> 
 
