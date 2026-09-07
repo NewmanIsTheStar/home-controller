@@ -358,41 +358,53 @@ int get_dow_and_mod_local_tz(int *dow, int *mod)
 {
     int err = 0;
     datetime_t date;
+    int day_of_week = 0;
+    int minute_of_day = 0;
 
     // determine daylight savings dates for the current year
     set_daylight_saving_dates();  
 
     // determine current weekday in UTC
     rtc_get_datetime(&date);
-    *dow = get_day_of_week(date.month, date.day, date.year);
+    day_of_week = get_day_of_week(date.month, date.day, date.year);
 
     // standard time
-    *mod = date.hour*MINUTES_IN_HOUR + date.min + cfg->timezone_offset; 
+    minute_of_day = date.hour*MINUTES_IN_HOUR + date.min + cfg->timezone_offset; 
 
     // check for daylight savings
-    if (cfg->daylightsaving_enable                                                             &&
+    if (cfg->daylightsaving_enable                                                               &&
         ((date.month*31+date.day) >= (daylight_saving_start_month*31+daylight_saving_start_day)) &&
         ((date.month*31+date.day) < (daylight_saving_end_month*31+daylight_saving_end_day)))
     {
         // daylight savings time
-        *mod += MINUTES_IN_HOUR; 
+        minute_of_day += MINUTES_IN_HOUR; 
     }
     
     // time zone offset means it is the previous day in local time
-    if (*mod < 0)
+    if (minute_of_day < 0)
     {
-        *mod += HOURS_IN_DAY*MINUTES_IN_HOUR;
+        minute_of_day+= HOURS_IN_DAY*MINUTES_IN_HOUR;
 
-        if (--*dow < 0) *dow +=DAYS_IN_WEEK;
+        if (--day_of_week< 0) day_of_week +=DAYS_IN_WEEK;
     }
 
     // time zone offset means it is the next day in local time
-    if (*mod > HOURS_IN_DAY*MINUTES_IN_HOUR)
+    if (minute_of_day > HOURS_IN_DAY*MINUTES_IN_HOUR)
     {
-        *mod -= HOURS_IN_DAY*MINUTES_IN_HOUR;
+        minute_of_day -= HOURS_IN_DAY*MINUTES_IN_HOUR;
 
-        if (++*dow > 6) *dow -=DAYS_IN_WEEK;        
+        if (++day_of_week> 6) day_of_week -=DAYS_IN_WEEK;        
     } 
+
+    if (dow)
+    {
+      *dow = day_of_week;
+    }
+
+    if (mod)
+    {
+      *mod = minute_of_day;
+    }
 
     return(err);
 }

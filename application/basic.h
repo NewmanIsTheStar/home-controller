@@ -113,7 +113,7 @@ typedef enum
 
     AND,            OR,             NOT,
 
-    SHELLY_GET,     SHELLY_SWITCH,
+    SHELLY_GET,     SHELLY_SWITCH, TIME_AFTER,
     
     NO_MORE_TOKENS
 } teToken;
@@ -263,7 +263,8 @@ void basic_ItoAHex(void),       basic_Cls(void),        basic_InterCharDelay(voi
 void basic_CursorXY(void),      basic_TrapLog(void),    basic_While(void);
 void basic_Wend(void),          basic_Chain(void),      basic_Function(void);
 void basic_Sleep(void),         basic_SaveScreen(void), basic_RestoreScreen(void);
-void basic_Com(void),           basic_ShellyGet(void),  basic_ShellySwitch(void);;
+void basic_Com(void),           basic_ShellyGet(void),  basic_ShellySwitch(void);
+void basic_TimeAfter(void);
 
 /*Other prototypes*/
 void update_SnmpVariables(void),dump_Variables(void);

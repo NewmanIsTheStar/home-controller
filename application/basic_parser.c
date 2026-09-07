@@ -53,11 +53,11 @@ tsFunction asFunctionTable[] =
     "sqrt",             SQRT,
     "tan",              TAN,
     "tanh",             TANH,
-
     "chr$",             CHR$,
     "len$",             LEN$,
     "asc",              ASC,
     "shelly_get",       SHELLY_GET,
+    "time_after",       TIME_AFTER,
     
     /*Insert new functions above this line*/
     "",                 END, 
@@ -973,6 +973,15 @@ void eval_function(int *piAnswer, double *pfAnswer)
         
         get_token();
     }
+    else if (iFunction == TIME_AFTER)
+    {
+        basic_TimeAfter();
+
+        *piAnswer = get_IntegerVariable("returnvalue%");
+        *pfAnswer = get_FloatVariable("returnvalue");        
+        
+        get_token();
+    }      
 	else
 	{
 		if(*psContext->acToken == '(')

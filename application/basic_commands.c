@@ -347,9 +347,10 @@ void basic_If(void)
 
     nMatch = 0;
 
-    if ((nNextToken != STRINGVARIABLE) &&           //might need to add ( here
+    if ((nNextToken != STRINGVARIABLE) &&      
         (nNextToken != FLOATVARIABLE) &&
         (nNextToken != INTEGERVARIABLE) &&
+        (nNextToken != FUNCTION) &&           // TODO: for now we presume it is a numeric expression, could track function return values and include user functions
         *psContext->acToken != '(')
     {
         syntax_error(NOT_VAR);
@@ -367,7 +368,7 @@ void basic_If(void)
         eval_NumericExpression(&nNumLeft, &fNumLeft);
         nMatch = nNumLeft;
     }
-    else if ((nNextToken == FLOATVARIABLE) || (nNextToken == INTEGERVARIABLE) || (*psContext->acToken == '('))
+    else if ((nNextToken == FLOATVARIABLE) || (nNextToken == INTEGERVARIABLE) || (nNextToken == FUNCTION) || (*psContext->acToken == '('))
     {
         /* Get variable */
         eval_NumericExpression(&nNumLeft, &fNumLeft);
@@ -441,100 +442,6 @@ void basic_If(void)
         }
     }
 }
-
-#ifdef OLD_AND_BUGGY
-/***************************************************************************
-Function    :  find_endiforelse
-Description :  Finds the end of an IF block
-Returns     :  Nothing
-***************************************************************************/
-void find_endiforelse()
-{
-    int num_begin = 0;
-    int num_else = 0;
-
-    do
-    {
-        // Get the next token
-        get_token();
-
-        if ( psContext->eToken == REM )
-        {
-            basic_Rem();
-            //if ( num_else > 0 )    removed 28 August 2004 becuase I have not idea what it is for
-            //    num_else--;
-            continue;              // added 28 August 2004
-        }
-
-        if ( psContext->eToken == EOL )
-        {
-            //if ( num_else > 0 )    removed 28 August 2004 becuase I have not idea what it is for
-            //    num_else--;
-            continue;              // added 28 August 2004
-        }
-
-        // if it's a then with no remaining tokens, then increment the count
-        if (psContext->eToken == THEN)
-        {
-            get_token();
-            if ( ( psContext->eToken == REM ) || ( psContext->eToken == EOL ) )
-                num_begin++;
-            else
-                num_else++;
-
-            putback();
-            continue;              // added 28 August 2004. Since whave done a putback we MUST get_token() again!
-        }
-
-        // if it's an end, with a following if, then decrement the count
-        if (psContext->eToken == END)
-        {
-            get_token();
-            if ( psContext->eToken == IF )
-                num_begin--;
-			else
-				putback();  // in case we have a conditional END !
-
-            continue;              // added 28 August 2004. Since whave done a putback we MUST get_token() again!
-        }
-
-        // if else encountered, then stop if count is zero
-        if (psContext->eToken == ELSE)
-        {
-            if ( num_else > 0 )
-                num_else--;
-            else if ( num_else < 0 )
-                basic_error( TOO_MNY_ELSE );
-            else if ( num_begin == 0 )
-                break;
-        }
-
-        // if elseif encountered, then stop if count is zero
-        if (psContext->eToken == ELSEIF)
-        {
-            if ( num_else > 0 )
-            {
-                num_else--;
-                //num_begin--;                      //<------------new stuff 2 July 2004, assume elseif always follows block                
-            }  
-            else if ( num_else < 0 )
-                basic_error( TOO_MNY_ELSE );
-            else if ( num_begin == 1 )             // added 28 August 2004. As we did not decrement num_begin is 1 when we find elseif we want to execute
-            {
-                /* execute if statement */
-                basic_If();
-                break;
-            }
-        }
-
-        // if end-of-file then error
-        if (psContext->eToken == FINISHED)
-        {
-            basic_error( NO_ENDIF );
-        }
-    } while (num_begin > -1);
-}
-#endif
 
 
 /***************************************************************************
@@ -1940,137 +1847,7 @@ void basic_PrintToFile(void)
 }
 
 
-#ifdef OLD_PRINT
-/***************************************************************************
-Function    :  basic_PrintToFile
-Description :  Execute a simple version of the BASIC PRINT# statement.
-               This function does not require the use of a large buffer!
-               OK, so I'm lazy.  Most of the code here is a duplicate of the
-               ordinary basic_Print function.
-Returns     :  Nothing
-NOTE        :  This function is now out of date.  It needs to be realigned
-               with the normal print function (use get_variable functions).
-***************************************************************************/
-void basic_PrintToFile(void)
-{
-	int iAnswer;
-	double fAnswer;
-	int len=0, spaces;
-	char last_delim;
-	int var = 0;
-    char *pcMode = "rt";
-    int iFileNumber;
-    char *pcTemp;
 
-	/*Update date and time in case we are printing them out*/
-	update_DateAndTime();
-
-    /*Get File Number*/
-    get_token();
-
-	if ((psContext->eTokenType == INTEGERVARIABLE) || (psContext->eTokenType == FLOATVARIABLE))
-    {
-        putback();
-        eval_IntegerExpression(&iFileNumber);
-    }
-    else
-    {
-        iFileNumber = *psContext->acToken - '0';
-    }
-
-    if ((iFileNumber < 0) || (iFileNumber > 10))
-    {
-        basic_printf("Error in basic_Print#: File Number out of range\n");
-        basic_error(SYNTAX);
-    }
-
-    /*Check if that file number is already in use*/
-    if (psContext->apFileHandles[iFileNumber] == NULL)
-    {
-        basic_printf("Error in basic_Print#: File not open\n");
-        basic_error(SYNTAX);
-    }
-
-    /*Get the comma*/
-    get_token();
-	if (psContext->eToken==EOL) putback();  //This allows for printing a blank line
-
-    do
-	{
-		last_delim = *psContext->acToken;
-		get_token(); /* Get Next list item */
-
-		if(psContext->eToken==EOL || psContext->eToken==FINISHED || psContext->eToken==ELSE || psContext->eToken==REM) break;
-
-		if(psContext->eTokenType==QUOTE)
-		{
-			/*is string*/
-			fprintf(psContext->apFileHandles[iFileNumber], psContext->acToken);
-			len += strlen(psContext->acToken);
-			last_delim = *psContext->acToken;
-			get_token();
-		}
-		else if(psContext->eTokenType==STRINGVARIABLE)
-		{
-
-			/*is string*/
-            pcTemp = get_StringVariable(psContext->acToken);
-            fprintf(psContext->apFileHandles[iFileNumber], "%s", pcTemp);
-		
-            len += strlen(pcTemp);
-			last_delim = *psContext->acToken;
-			get_token();
-		}
-		else
-		{
-			/*is expression*/
-			putback();
-			eval_NumericExpression(&iAnswer, &fAnswer);
-			last_delim = *psContext->acToken;
-			get_token();
-
-            /*avoid printing decimal point if whole number*/
-            if ((fAnswer - (double)iAnswer) == 0)
-            {
-                len += fprintf(psContext->apFileHandles[iFileNumber],"%d", iAnswer);
-            }
-            else
-            {
-                len += fprintf(psContext->apFileHandles[iFileNumber],"%g", fAnswer);
-            }
-
-		}
-
-		/*if comma, move to next tab stop*/
-		if(*psContext->acToken==',')
-		{
-			/*compute number of spaces to move to next tab*/
-			spaces = 8 - (len % 8);
-			len += spaces;           /*add in the tabbing position*/
-			while(spaces)
-			{
-				fprintf(psContext->apFileHandles[iFileNumber], " ");
-				spaces--;
-			}
-		}
-		else if(*psContext->acToken==';') fprintf(psContext->apFileHandles[iFileNumber], "");
-		else if(*psContext->acToken=='+') fprintf(psContext->apFileHandles[iFileNumber], "");
-		else if(psContext->eToken!=EOL && psContext->eToken!=FINISHED && psContext->eToken!=ELSE && psContext->eToken!=REM)
-            basic_error(SYNTAX);
-
-	} while (*psContext->acToken==';' || *psContext->acToken==',' || *psContext->acToken=='+');
-
-	if(psContext->eToken==EOL || psContext->eToken==FINISHED || psContext->eToken==ELSE || psContext->eToken==REM)
-	{
-		if((last_delim != ';') && (last_delim!=',')) fprintf(psContext->apFileHandles[iFileNumber], "\n");
-        putback();
-	}
-	else
-	{
-		basic_error(SYNTAX); /* error is not , or ; */
-	}
-}
-#endif
 
 /***************************************************************************
 Function    :  basic_InputFromFile
