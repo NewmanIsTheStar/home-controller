@@ -113,7 +113,8 @@ typedef enum
 
     AND,            OR,             NOT,
 
-    SHELLY_GET,     SHELLY_SWITCH, TIME_AFTER,
+    SHELLY_GET,     SHELLY_SWITCH, TIME_BEFORE, TIME_AFTER,
+    TIME_EQUALS,    TIME_BETWEEN,
     
     NO_MORE_TOKENS
 } teToken;
@@ -197,7 +198,7 @@ typedef struct
     int iTopOfForStack;                         //index to top of FOR stack
     int iTopOfWhileStack;                       //index to top of WHILE stack
     int iTopOfGosubStack;                       //index to top of GOSUB stack
-    int iThenElseLine;                          //counter used to find blockto execute
+    int iThenElseLine;                          //counter used to find block to execute
     FILE *apFileHandles[11];                    //handles to files opened by user
     tsLabel sLabelTable[NUM_LAB];               //all labels found in script
     tsUserFunction sUserFunctionTable[NUM_FUNC];//all user functions found in script
@@ -264,7 +265,8 @@ void basic_CursorXY(void),      basic_TrapLog(void),    basic_While(void);
 void basic_Wend(void),          basic_Chain(void),      basic_Function(void);
 void basic_Sleep(void),         basic_SaveScreen(void), basic_RestoreScreen(void);
 void basic_Com(void),           basic_ShellyGet(void),  basic_ShellySwitch(void);
-void basic_TimeAfter(void);
+void basic_TimeEquals(void),    basic_TimeBefore(void), basic_TimeAfter(void); 
+void basic_TimeBetween(void);
 
 /*Other prototypes*/
 void update_SnmpVariables(void),dump_Variables(void);

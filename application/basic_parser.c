@@ -57,8 +57,11 @@ tsFunction asFunctionTable[] =
     "len$",             LEN$,
     "asc",              ASC,
     "shelly_get",       SHELLY_GET,
-    "time_after",       TIME_AFTER,
-    
+    "time_equals",      TIME_EQUALS,
+    "time_before",      TIME_BEFORE,
+    "time_after",       TIME_AFTER,    
+    "time_between",     TIME_BETWEEN,    
+      
     /*Insert new functions above this line*/
     "",                 END, 
 };
@@ -697,8 +700,6 @@ void eval_relational(int *piAnswer, double *pfAnswer)
               (strcmp(psContext->acToken, "<=") == 0))
         {
             /*Remember first character of operator.  This is sufficient ID.*/
-            // TEST TEST try get operator up here ---------------
-            //get_token();
             op = *psContext->acToken;
 
 		    /*Change relational operator to a token with unique first character*/
@@ -709,7 +710,7 @@ void eval_relational(int *piAnswer, double *pfAnswer)
 		    if ( strcmp( psContext->acToken, "<=" ) == 0 )
 			    op = '[';
 		            
-            get_token();  //WHY down here?????  --------------------
+            get_token();  
             eval_AdditionAndSubtraction(&iTemp, &fTemp);
 
 		    fCompare = *pfAnswer - fTemp;  //left minus right
@@ -973,6 +974,24 @@ void eval_function(int *piAnswer, double *pfAnswer)
         
         get_token();
     }
+    else if (iFunction == TIME_EQUALS)
+    {
+        basic_TimeEquals();
+
+        *piAnswer = get_IntegerVariable("returnvalue%");
+        *pfAnswer = get_FloatVariable("returnvalue");        
+        
+        get_token();
+    }    
+    else if (iFunction == TIME_BEFORE)
+    {
+        basic_TimeBefore();
+
+        *piAnswer = get_IntegerVariable("returnvalue%");
+        *pfAnswer = get_FloatVariable("returnvalue");        
+        
+        get_token();
+    }   
     else if (iFunction == TIME_AFTER)
     {
         basic_TimeAfter();
@@ -981,9 +1000,19 @@ void eval_function(int *piAnswer, double *pfAnswer)
         *pfAnswer = get_FloatVariable("returnvalue");        
         
         get_token();
-    }      
+    }   
+    else if (iFunction == TIME_BETWEEN)
+    {
+        basic_TimeBetween();
+
+        *piAnswer = get_IntegerVariable("returnvalue%");
+        *pfAnswer = get_FloatVariable("returnvalue");        
+        
+        get_token();
+    }                 
 	else
 	{
+        // built-in functions that take a single paramter
 		if(*psContext->acToken == '(')
 		{
 			get_token();
