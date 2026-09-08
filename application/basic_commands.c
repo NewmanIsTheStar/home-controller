@@ -409,6 +409,12 @@ void basic_If(void)
 
     psContext->pcProgramCounter = pvProgPtrTemp;
 
+    if (hc_automation_condition(nMatch != 0?true:false))
+    {
+        // the automation was already processed so abort program
+        syntax_error(ABORT_AUTOMATION);
+    }
+    
     if ( nMatch != 0 )
     {
         /* condition is true, proceed executing tokens as discovered */

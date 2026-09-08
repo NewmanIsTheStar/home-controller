@@ -230,13 +230,13 @@ typedef struct
 /* Used to call basic_error() when a syntax error occurs.*/
 enum error_msg
 {
-    SYNTAX,         UNBAL_PARENS,   NO_EXP,         EQUALS_EXP,
-    NOT_VAR,        LAB_TAB_FULL,   DUP_LAB,        UNDEF_LAB,
-    FUNC_TAB_FULL,  DUP_FUNC,       UNDEF_FUNC,
-    THEN_EXP,       TO_EXP,         TOO_MNY_FOR,    NEXT_WO_FOR,
-    TOO_MNY_WHILE,  WEND_WO_WHILE,  TOO_MNY_GOSUB,  RET_WO_GOSUB,
-    MISS_QUOTE,     MISS_PARENS,    OUT_OF_MEM,     NO_ENDIF,
-    TOO_MNY_ELSE,   UNIMPLEMENTED
+    SYNTAX,         UNBAL_PARENS,     NO_EXP,         EQUALS_EXP,
+    NOT_VAR,        LAB_TAB_FULL,     DUP_LAB,        UNDEF_LAB,
+    FUNC_TAB_FULL,  DUP_FUNC,         UNDEF_FUNC,
+    THEN_EXP,       TO_EXP,           TOO_MNY_FOR,    NEXT_WO_FOR,
+    TOO_MNY_WHILE,  WEND_WO_WHILE,    TOO_MNY_GOSUB,  RET_WO_GOSUB,
+    MISS_QUOTE,     MISS_PARENS,      OUT_OF_MEM,     NO_ENDIF,
+    TOO_MNY_ELSE,   ABORT_AUTOMATION, UNIMPLEMENTED
 };
 
 /*BASIC command prototypes*/
@@ -296,7 +296,6 @@ void update_DateAndTime(void);
 //int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context);
 int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileName, char *program_in_memory, int len_program_in_memory);
 int basic_ResetInteractiveContext(void);
-
 int get_token(void);
 int next_token(void);
 void syntax_error(int error);

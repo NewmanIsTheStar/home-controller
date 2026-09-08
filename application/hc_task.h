@@ -81,5 +81,6 @@ void hc_pat_watchdog(void);
 void hc_queue_send(uint8_t message);
 void hc_load_basic_program(char *program, int len);
 int hc_get_new_automation_number(void);
+bool hc_automation_condition(bool condition);
 
 #endif

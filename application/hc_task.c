@@ -616,3 +616,26 @@ int hc_delete_file(void)
 
     return(err);
 }
+
+bool hc_automation_condition(bool condition)
+{
+    static bool automation_condition[64];
+    int automation_running = 0;
+    bool automation_abort = false;
+
+    if (condition == automation_condition[automation_running])
+    {
+        // no change in condition so abort BASIC program
+        automation_abort = true;
+    }
+    else
+    {
+        // condition change so proceed with BASIC THEN statement
+        automation_abort = false;
+
+        // store the new condition
+        automation_condition[automation_running] = condition;
+    }
+
+    return(automation_abort);
+}

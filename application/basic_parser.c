@@ -1224,6 +1224,7 @@ void syntax_error(int error)
     "Out of memory",                                           /* OUT_OF_MEM */
     "END IF expected",                                           /* NO_ENDIF */
     "Too many ELSE in IF block",                             /* TOO_MNY_ELSE */
+    "Aborting automation due to unchanged IF condition", /* ABORT_AUTOMATION */    
     "Unimplemented command",                                /* UNIMPLEMENTED */
     };
     

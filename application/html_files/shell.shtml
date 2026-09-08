@@ -201,11 +201,12 @@
             }
 
             if (matchingCommands.length > 0) {
-                if (matchingCommands.length > 1 && !lastTabPrintedList) {
-                    output.textContent += `\n${matchingCommands.join('    ')}\n`;
-                    lastTabPrintedList = true;
-                    window.scrollTo(0, document.body.scrollHeight);
-                }
+                // THIS PRINTS A LIST OF POSSIBLE COMPLETIONS THE FIRST TIME TAB IS PRESSED
+                // if (matchingCommands.length > 1 && !lastTabPrintedList) {
+                //     output.textContent += `\n${matchingCommands.join('    ')}\n`;
+                //     lastTabPrintedList = true;
+                //     window.scrollTo(0, document.body.scrollHeight);
+                // }
 
                 this.value = commandPrefixStr + matchingCommands[completionIndex];
                 completionIndex = (completionIndex + 1) % matchingCommands.length;
