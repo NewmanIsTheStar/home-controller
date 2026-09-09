@@ -224,7 +224,7 @@
         const cleanEditorContent = editor.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         
         // 3. Assemble the payload using a single standard LF (\n) separator
-        const payload = 'text=' + encodeURIComponent(/*cleanTfnme + '\n' +*/ cleanEditorContent);
+        const payload = 'text=' + encodeURIComponent(cleanEditorContent);
 
         fetch(SERVER_ENDPOINT, {
             method: 'POST',

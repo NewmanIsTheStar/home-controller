@@ -1168,8 +1168,39 @@ extern NON_VOL_VARIABLES_T config;
     x(rsbulb8) \
     x(eanme) \
     x(tfnme) \
-    x(afnme)
-
+    x(afnme) \
+    x(autoe1) \
+    x(autoe2) \
+    x(autoe3) \
+    x(autoe4) \
+    x(autoe5) \
+    x(autoe6) \
+    x(autoe7) \
+    x(autoe8) \
+    x(autoe9) \
+    x(autoe10) \
+    x(autoe11) \
+    x(autoe12) \
+    x(autoe13) \
+    x(autoe14) \
+    x(autoe15) \
+    x(autoe16) \
+    x(autoe17) \
+    x(autoe18) \
+    x(autoe19) \
+    x(autoe20) \
+    x(autoe21) \
+    x(autoe22) \
+    x(autoe23) \
+    x(autoe24) \
+    x(autoe25) \
+    x(autoe26) \
+    x(autoe27) \
+    x(autoe28) \
+    x(autoe29) \
+    x(autoe30) \
+    x(autoe31) \
+    x(autoe32)
 
     
 //enum used to index array of pointers to SSI string constants  e.g. index 0 is SSI_usurped
@@ -2522,7 +2553,52 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                 printed = snprintf(pcInsert, iInsertLen, "%s", timestamp);
             }         
         }
-        break;         
+        break;        
+        case SSI_autoe1:    // automation enabled
+        case SSI_autoe2:
+        case SSI_autoe3:
+        case SSI_autoe4:
+        case SSI_autoe5:
+        case SSI_autoe6:
+        case SSI_autoe7:
+        case SSI_autoe8:
+        case SSI_autoe9:
+        case SSI_autoe10:
+        case SSI_autoe11:
+        case SSI_autoe12:
+        case SSI_autoe13:
+        case SSI_autoe14:
+        case SSI_autoe15:
+        case SSI_autoe16:
+        case SSI_autoe17:
+        case SSI_autoe18:
+        case SSI_autoe19:
+        case SSI_autoe20:
+        case SSI_autoe21:
+        case SSI_autoe22:
+        case SSI_autoe23:
+        case SSI_autoe24:
+        case SSI_autoe25:
+        case SSI_autoe26:
+        case SSI_autoe27:
+        case SSI_autoe28:
+        case SSI_autoe29:
+        case SSI_autoe30:
+        case SSI_autoe31:
+        case SSI_autoe32:                        
+        {
+            if (cfg->automation_state[iIndex-SSI_autoe1] == AUTOMATION_ENABLED)
+            {
+                printed = snprintf(pcInsert, iInsertLen, "checked");
+                printf("auto%02d checked\n", iIndex-SSI_autoe1);
+            }   
+            else
+            {
+                printed = 0;
+                printf("auto%02d NOT checked\n", iIndex-SSI_autoe1);
+            }      
+        }
+        break;            
         // case SSI_ts1en:
         // case SSI_ts2en:
         // case SSI_ts3en:

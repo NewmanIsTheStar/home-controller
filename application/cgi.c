@@ -4036,6 +4036,7 @@ const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pc
     char *param = NULL;
     char *value = NULL;
     //int new_value = 0;
+
        
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
@@ -4059,7 +4060,7 @@ const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pc
                     //TODO: handle table full more gracefully
                     CLIP(((WEB_SESSION_STATE_T *)connection_state)->automation_file_number, 0, 31);
                 }                
-            }                       
+            }                 
         }
 
         i++;
@@ -4213,6 +4214,7 @@ const char * cgi_hc_automation_save_handler(int iIndex, int iNumParams, char *pc
     char *param = NULL;
     char *value = NULL;
     int automation_number = -1;
+    int extracted_automation_number = 0;
        
     printf("cgi_hc_save_automation_handler\n");
     
@@ -4232,8 +4234,22 @@ const char * cgi_hc_automation_save_handler(int iIndex, int iNumParams, char *pc
             }   
 
             if (strcasecmp("afname", param) == 0)
+            {
+                sscanf(value, "automation%02d", &extracted_automation_number);          
+            }              
+
+            if (strcasecmp("afname", param) == 0)
             {                              
                 STRNCPY(web.edit_text_filename, value, sizeof(web.edit_text_filename));
+
+                 sscanf(value, "automation%02d", &extracted_automation_number);
+
+                 if (((automation_number < 0) || (automation_number >31)) &&
+                     ((extracted_automation_number >= 0) && (extracted_automation_number <= 31)))
+                 {
+                    // use number extracted from file name since x parameter is invalid (this occurs on the first edit)
+                    automation_number = extracted_automation_number;
+                 }
             }  
 
             if (strcasecmp("aname", param) == 0)

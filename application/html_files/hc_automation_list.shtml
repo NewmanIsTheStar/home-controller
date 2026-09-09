@@ -166,7 +166,7 @@ body {
       <td><!--#sp1mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="0">
+          <input type="checkbox" class="row-toggle" data-row="0" <!--#autoe1--> >
           <span class="slider"></span>
         </label>
       </td>
@@ -178,7 +178,7 @@ body {
       <td><!--#sp2mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="1">
+          <input type="checkbox" class="row-toggle" data-row="1" <!--#autoe2-->>
           <span class="slider"></span>
         </label>
       </td>      
@@ -190,7 +190,7 @@ body {
       <td><!--#sp3mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="2">
+          <input type="checkbox" class="row-toggle" data-row="2" <!--#autoe3-->>
           <span class="slider"></span>
         </label>
       </td>      
@@ -202,7 +202,7 @@ body {
       <td><!--#sp4mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="3">
+          <input type="checkbox" class="row-toggle" data-row="3" <!--#autoe4-->>
           <span class="slider"></span>
         </label>
       </td>       
@@ -214,7 +214,7 @@ body {
       <td><!--#sp5mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="4">
+          <input type="checkbox" class="row-toggle" data-row="4" <!--#autoe5-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=4">   <button class="btn-modern">Edit</button></a></td>
@@ -225,7 +225,7 @@ body {
       <td><!--#sp6mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="5">
+          <input type="checkbox" class="row-toggle" data-row="5" <!--#autoe6-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=5">   <button class="btn-modern">Edit</button></a></td>
@@ -236,7 +236,7 @@ body {
       <td><!--#sp7mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="6">
+          <input type="checkbox" class="row-toggle" data-row="6" <!--#autoe7-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=6">   <button class="btn-modern">Edit</button></a></td>
@@ -247,7 +247,7 @@ body {
       <td><!--#sp8mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="7">
+          <input type="checkbox" class="row-toggle" data-row="7" <!--#autoe8-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=7">   <button class="btn-modern">Edit</button></a></td>
@@ -258,7 +258,7 @@ body {
       <td><!--#sp9mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="8">
+          <input type="checkbox" class="row-toggle" data-row="8" <!--#autoe9-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=8">   <button class="btn-modern">Edit</button></a></td>
@@ -269,7 +269,7 @@ body {
       <td><!--#sp10mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="9">
+          <input type="checkbox" class="row-toggle" data-row="9" <!--#autoe10-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=9">   <button class="btn-modern">Edit</button></a></td>
@@ -280,7 +280,7 @@ body {
       <td><!--#sp11mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="10">
+          <input type="checkbox" class="row-toggle" data-row="10" <!--#autoe11-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=10">   <button class="btn-modern">Edit</button></a></td>
@@ -291,7 +291,7 @@ body {
       <td><!--#sp12mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="11">
+          <input type="checkbox" class="row-toggle" data-row="11" <!--#autoe12-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=11">   <button class="btn-modern">Edit</button></a></td>
@@ -302,7 +302,7 @@ body {
       <td><!--#sp13mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="12">
+          <input type="checkbox" class="row-toggle" data-row="12" <!--#autoe13-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=12">   <button class="btn-modern">Edit</button></a></td>
@@ -313,7 +313,7 @@ body {
       <td><!--#sp14mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="13">
+          <input type="checkbox" class="row-toggle" data-row="13" <!--#autoe14-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=13">   <button class="btn-modern">Edit</button></a></td>
@@ -324,7 +324,7 @@ body {
       <td><!--#sp15mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="14">
+          <input type="checkbox" class="row-toggle" data-row="14" <!--#autoe15-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=14">   <button class="btn-modern">Edit</button></a></td>
@@ -335,7 +335,7 @@ body {
       <td><!--#sp16mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="15">
+          <input type="checkbox" class="row-toggle" data-row="15" <!--#autoe16-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=15">   <button class="btn-modern">Edit</button></a></td>
@@ -346,7 +346,7 @@ body {
       <td><!--#sp17mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="16">
+          <input type="checkbox" class="row-toggle" data-row="16" <!--#autoe17-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=16">   <button class="btn-modern">Edit</button></a></td>
@@ -357,7 +357,7 @@ body {
       <td><!--#sp18mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="17">
+          <input type="checkbox" class="row-toggle" data-row="17" <!--#autoe18-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=17">   <button class="btn-modern">Edit</button></a></td>
@@ -368,7 +368,7 @@ body {
       <td><!--#sp19mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="18">
+          <input type="checkbox" class="row-toggle" data-row="18" <!--#autoe19-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=18">   <button class="btn-modern">Edit</button></a></td>
@@ -379,7 +379,7 @@ body {
       <td><!--#sp20mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="19">
+          <input type="checkbox" class="row-toggle" data-row="19" <!--#autoe20-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=19">   <button class="btn-modern">Edit</button></a></td>
@@ -390,7 +390,7 @@ body {
       <td><!--#sp21mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="20">
+          <input type="checkbox" class="row-toggle" data-row="20" <!--#autoe21-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=20">   <button class="btn-modern">Edit</button></a></td>
@@ -401,7 +401,7 @@ body {
       <td><!--#sp22mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="21">
+          <input type="checkbox" class="row-toggle" data-row="21" <!--#autoe22-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=21">   <button class="btn-modern">Edit</button></a></td>
@@ -412,7 +412,7 @@ body {
       <td><!--#sp23mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="22">
+          <input type="checkbox" class="row-toggle" data-row="22" <!--#autoe23-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=22">   <button class="btn-modern">Edit</button></a></td>
@@ -423,7 +423,7 @@ body {
       <td><!--#sp24mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="23">
+          <input type="checkbox" class="row-toggle" data-row="23" <!--#autoe24-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=23">   <button class="btn-modern">Edit</button></a></td>
@@ -434,7 +434,7 @@ body {
       <td><!--#sp25mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="24">
+          <input type="checkbox" class="row-toggle" data-row="24" <!--#autoe25-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=24">   <button class="btn-modern">Edit</button></a></td>
@@ -445,7 +445,7 @@ body {
       <td><!--#sp26mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="25">
+          <input type="checkbox" class="row-toggle" data-row="25" <!--#autoe26-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=25">   <button class="btn-modern">Edit</button></a></td>
@@ -456,7 +456,7 @@ body {
       <td><!--#sp27mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="26">
+          <input type="checkbox" class="row-toggle" data-row="26" <!--#autoe27-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=26">   <button class="btn-modern">Edit</button></a></td>
@@ -467,7 +467,7 @@ body {
       <td><!--#sp28mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="27">
+          <input type="checkbox" class="row-toggle" data-row="27" <!--#autoe28-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=27">   <button class="btn-modern">Edit</button></a></td>
@@ -478,7 +478,7 @@ body {
       <td><!--#sp29mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="28">
+          <input type="checkbox" class="row-toggle" data-row="28" <!--#autoe29-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=28">   <button class="btn-modern">Edit</button></a></td>
@@ -489,7 +489,7 @@ body {
       <td><!--#sp30mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="29">
+          <input type="checkbox" class="row-toggle" data-row="29" <!--#autoe30-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=29">   <button class="btn-modern">Edit</button></a></td>
@@ -500,7 +500,7 @@ body {
       <td><!--#sp31mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="30">
+          <input type="checkbox" class="row-toggle" data-row="30" <!--#autoe31-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=30">   <button class="btn-modern">Edit</button></a></td>
@@ -511,7 +511,7 @@ body {
       <td><!--#sp32mde--></td>
       <td>
         <label class="switch">
-          <input type="checkbox" class="row-toggle" data-row="31">
+          <input type="checkbox" class="row-toggle" data-row="31" <!--#autoe32-->>
           <span class="slider"></span>
         </label>
       <td><a href="/cgi_hc_automation_edit.shtml?x=31">   <button class="btn-modern">Edit</button></a></td>

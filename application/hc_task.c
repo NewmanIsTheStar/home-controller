@@ -595,7 +595,7 @@ int hc_get_new_automation_number(void)
     {
         if (cfg->automation_status[i] == AUTOMATION_UNDEFINED)
         {
-            cfg->automation_status[i] = AUTOMATION_DISABLED;
+            cfg->automation_status[i] = AUTOMATION_ENABLED;
             err = 0;
             break;
         }

@@ -290,17 +290,17 @@ function sendDataToServer() {
     status.textContent = 'Saving...';
     status.className = '';
 
-    const afnmeVal = '<!--#afnme-->';
+    // const afnmeVal = '<!--#afnme-->';
     
     // strip raw carriage returns/newlines injected by the SSI handler string
-    const cleanAfnme = afnmeVal.replace(/[\r\n]+/g, '');
-    const cleanAutomationName = automationname.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');   
+    // const cleanAfnme = afnmeVal.replace(/[\r\n]+/g, '');
+    // const cleanAutomationName = automationname.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');   
     
     // normalize textarea newlines to Unix LF only, removing the problematic \r
     const cleanEditorContent = editor.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     
     // assemble the payload using a single standard LF (\n) separator
-    const payload = 'text=' + encodeURIComponent(cleanAfnme + '\n' /*+ cleanAutomationName + '\n'*/ + cleanEditorContent);
+    const payload = 'text=' + encodeURIComponent(cleanEditorContent);
 
     fetch(SERVER_ENDPOINT, {
         method: 'POST',
