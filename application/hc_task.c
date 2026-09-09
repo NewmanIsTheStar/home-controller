@@ -393,31 +393,35 @@ int hc_save_text_file_from_ascii_buffer(void)
     char *body;
    
     // extract filename from first line of the buffer
-    copy_first_line(filename, editor_text, sizeof(filename)); 
+    // copy_first_line(filename, editor_text, sizeof(filename)); 
 
-    if (filename[0] == 0)
-    {
-        strncpy(filename, "unnamed", sizeof(filename));
-    }
+    // if (filename[0] == 0)
+    // {
+    //     strncpy(filename, "unnamed", sizeof(filename));
+    // }
 
     // special case: automations contain the user defined descriptive name on the second buffer line
-    if (strncmp(filename, "automation", 10) == 0)
-    {
-        sscanf(filename+10, "%d", &automation_number);
-        CLIP(automation_number, 0, 31);
-        automation_name = strchr(editor_text, '\n') + 1;
+    // if (strncmp(filename, "automation", 10) == 0)
+    // {
+    //     sscanf(filename+10, "%d", &automation_number);
+    //     CLIP(automation_number, 0, 31);
+    //     automation_name = strchr(editor_text, '\n') + 1;
 
-        copy_first_line(cfg->automation_name[automation_number], automation_name, sizeof(cfg->automation_name[automation_number])); 
+    //     copy_first_line(cfg->automation_name[automation_number], automation_name, sizeof(cfg->automation_name[automation_number])); 
 
-        body = strchr(automation_name, '\n') + 1;  
+    //     body = strchr(automation_name, '\n') + 1;  
         
-        cfg->automation_status[automation_number] = AUTOMATION_ENABLED;
-        printf("setting status for automation number %d to Enabled\n", automation_number);        
-    }
-    else
-    {
-        body = strchr(editor_text, '\n') + 1;
-    }
+    //     cfg->automation_status[automation_number] = AUTOMATION_ENABLED;
+    //     printf("setting status for automation number %d to Enabled\n", automation_number);        
+    // }
+    // else
+    // {
+    //     body = strchr(editor_text, '\n') + 1;
+    // }
+
+    // nothing prepended to the file
+    body = (char *)editor_text;
+    STRNCPY(filename, web.edit_text_filename, sizeof(filename));
 
     if ((body - editor_text) < MAX_PROGRAM_SIZE)
     {

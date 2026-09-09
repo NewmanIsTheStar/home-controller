@@ -4231,6 +4231,11 @@ const char * cgi_hc_automation_save_handler(int iIndex, int iNumParams, char *pc
                 sscanf(value, "%d", &automation_number);                 
             }   
 
+            if (strcasecmp("afname", param) == 0)
+            {                              
+                STRNCPY(web.edit_text_filename, value, sizeof(web.edit_text_filename));
+            }  
+
             if (strcasecmp("aname", param) == 0)
             {                              
                 if (cfg && automation_number>= 0 && automation_number <=31)

@@ -215,16 +215,16 @@
         status.textContent = 'Saving...';
         status.className = '';
 
-        const tfnmeVal = '<!--#tfnme-->';
+        // const tfnmeVal = '<!--#tfnme-->';
         
         // 1. Strip raw carriage returns/newlines injected by the SSI handler string
-        const cleanTfnme = tfnmeVal.replace(/[\r\n]+/g, '');
+        // const cleanTfnme = tfnmeVal.replace(/[\r\n]+/g, '');
         
         // 2. Normalize textarea newlines to Unix LF only, removing the problematic \r
         const cleanEditorContent = editor.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         
         // 3. Assemble the payload using a single standard LF (\n) separator
-        const payload = 'text=' + encodeURIComponent(cleanTfnme + '\n' + cleanEditorContent);
+        const payload = 'text=' + encodeURIComponent(/*cleanTfnme + '\n' +*/ cleanEditorContent);
 
         fetch(SERVER_ENDPOINT, {
             method: 'POST',

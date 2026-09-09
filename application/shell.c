@@ -817,7 +817,7 @@ void httpd_post_finished(void *connection, char *response_uri, uint16_t response
             snprintf(response_uri, response_uri_len, "/post_ok.json");
             //hc_queue_send(HC_CMD_BASIC_SCRIPT);    // run basic script after file downloaded
             
-            sprintf(web.edit_text_filename, "automation%02d", ((WEB_SESSION_STATE_T *)connection)->automation_file_number);
+            //sprintf(web.edit_text_filename, "automation%02d", ((WEB_SESSION_STATE_T *)connection)->automation_file_number);
             
             hc_queue_send(HC_CMD_SAVE_TEXT_FILE);    // save text file adfter file downloaded
         } else {
