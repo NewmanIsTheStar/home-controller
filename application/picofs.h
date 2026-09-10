@@ -140,6 +140,7 @@ typedef enum
 #define picofs_unlink_by_name(name) (picofs_unlink((name), (FS_INVALID_FID)))
 #define picofs_unlink_by_fid(fid) (picofs_unlink((NULL), (fid)))
 
+int picofs_access(const char *filename);
 int picofs_unlink(const char *name, u8_t fid);
 int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
 int picofs_list_all_files_from_flash(bool ignore_crc);

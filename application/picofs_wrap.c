@@ -350,6 +350,15 @@ int __wrap_ftruncate(int fd, off_t length)
     return 0; // Success
 }
 
+//extern int access(const char *pathname, int mode);
+
+// Hook for access
+int __wrap_access(const char *path, int amode) 
+{
+    // we ignore amode
+    return(picofs_access(path)); 
+}
+
 // TODO --- support reentrant version too
 // #include <unistd.h>
 // #include <reent.h>

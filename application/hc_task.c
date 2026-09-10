@@ -4,6 +4,9 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+#define _GNU_SOURCE 
+
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -65,6 +68,7 @@
 #include "ping_core.h"
 
 
+
 //#define DEBUG_UDP_MESSAGES
 #define HC_TASK_LOOP_DELAY (60*1000)
 
@@ -88,8 +92,10 @@ int hc_cat(char *filename);
 int hc_hex_dump(char *filename);
 void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_size);
 int hc_delete_file(void);
+int hc_automation_run(int automation_number);
 
 // external variables
+extern u32_t unix_time;
 extern NON_VOL_VARIABLES_T config;
 extern WEB_VARIABLES_T web;
 extern char *basic_program;
@@ -174,70 +180,79 @@ void hc_task(__unused void *params)
 
             if (hc_request)
             {
-                switch(hc_message)
+                do
                 {
-                case HC_CMD_BASIC_INTERACTIVE:
-                    basic_Interpreter(IM_INTERACTIVE, NULL, NULL, basic_program_buffer, strlen(basic_program_buffer));
-                    break;
-                case HC_CMD_BASIC_SCRIPT:
-                    basic_program[current_buffer_index++] = 0;
-                    basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index);                
-                    break;
-                case HC_CMD_BASIC_FILE:
-                    basic_Interpreter(IM_MMAP_FILE, NULL, web.basic_file_to_execute, NULL, 0);                
-                    break; 
-                case HC_CMD_CAT_FILE:
-                    hc_cat(web.file_to_cat);                
-                    break;      
-                case HC_CMD_HEXDUMP_FILE:
-                    hc_hex_dump(web.file_to_hexdump);                
-                    break;                                                                        
-                case HC_CMD_LIGHTS:
-                    //shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
-                    //config_mmap_test();
-                    //config_write_to_file("config.bin"); 
-                    config_mmap("config.bin");
-                    strcpy(cfg->automation_name[31], "A31 set via mmap");
-                    picofs_msync(cfg, sizeof(NON_VOL_VARIABLES_T), MS_SYNC);
-                    break; 
-                case HC_CMD_SHELLY_DEVICE_DUMP :
-                    shelly_cache_device_dump(web.shelly_device_ip);
-                    break;
-                case HC_CMD_DUMP_PROGRAM:
-                    dump_text_buffer();
-                    break;   
-                case HC_CMD_LIST:
-                    picofs_list_all_files_from_cache();  // valid files in cache
-                    break;
-                case HC_CMD_LIST_CORRUPT:
-                    picofs_list_all_files_from_flash(true);  // all files in flash including corrupted ones
-                    break;                    
-                case HC_CMD_PING:
-                    shell_ping(web.ping_target);
-                    break;
-                case HC_CMD_PAGE_MAP:    
-                    picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_MAP);
-                    break;
-                case HC_CMD_PAGE_NUMBERS:
-                    picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_NUMBERS);
-                    break;
-                case HC_CMD_SAVE_TEXT_FILE:
-                    hc_save_text_file_from_ascii_buffer();
-                    break;  
-                case HC_CMD_DISK_CLEANUP:
-                    picofs_erase_obsolete_sectors(false);
-                    break;                
-                case HC_CMD_DEFRAGMENT:
-                    //picofs_consolidate_all_files();
-                    picofs_consolidate_all_files_in_flash();
-                    break;
-                case HC_CMD_DELETE_FILE:                    
-                    hc_delete_file();
-                    break;
-                default:
-                    printf("HC task received unrecognized message (%d)\n", hc_message);
-                    break;
-                }                
+                    switch(hc_message)
+                    {
+                    case HC_CMD_BASIC_INTERACTIVE:
+                        basic_Interpreter(IM_INTERACTIVE, NULL, NULL, basic_program_buffer, strlen(basic_program_buffer), false);
+                        break;
+                    case HC_CMD_BASIC_SCRIPT:
+                        basic_program[current_buffer_index++] = 0;
+                        basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index, false);                
+                        break;
+                    case HC_CMD_BASIC_FILE:
+                        basic_Interpreter(IM_MMAP_FILE, NULL, web.basic_file_to_execute, NULL, 0, false);                
+                        break; 
+                    case HC_CMD_CAT_FILE:
+                        hc_cat(web.file_to_cat);                
+                        break;      
+                    case HC_CMD_HEXDUMP_FILE:
+                        hc_hex_dump(web.file_to_hexdump);                
+                        break;                                                                        
+                    case HC_CMD_LIGHTS:
+                        //shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
+                        //config_mmap_test();
+                        //config_write_to_file("config.bin"); 
+                        config_mmap("config.bin");
+                        strcpy(cfg->automation_name[31], "A31 set via mmap");
+                        picofs_msync(cfg, sizeof(NON_VOL_VARIABLES_T), MS_SYNC);
+                        break; 
+                    case HC_CMD_SHELLY_DEVICE_DUMP :
+                        shelly_cache_device_dump(web.shelly_device_ip);
+                        break;
+                    case HC_CMD_DUMP_PROGRAM:
+                        dump_text_buffer();
+                        break;   
+                    case HC_CMD_LIST:
+                        picofs_list_all_files_from_cache();  // valid files in cache
+                        break;
+                    case HC_CMD_LIST_CORRUPT:
+                        picofs_list_all_files_from_flash(true);  // all files in flash including corrupted ones
+                        break;                    
+                    case HC_CMD_PING:
+                        shell_ping(web.ping_target);
+                        break;
+                    case HC_CMD_PAGE_MAP:    
+                        picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_MAP);
+                        break;
+                    case HC_CMD_PAGE_NUMBERS:
+                        picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_NUMBERS);
+                        break;
+                    case HC_CMD_SAVE_TEXT_FILE:
+                        hc_save_text_file_from_ascii_buffer();
+                        break;  
+                    case HC_CMD_DISK_CLEANUP:
+                        picofs_erase_obsolete_sectors(false);
+                        break;                
+                    case HC_CMD_DEFRAGMENT:
+                        //picofs_consolidate_all_files();
+                        picofs_consolidate_all_files_in_flash();
+                        break;
+                    case HC_CMD_DELETE_FILE:                    
+                        hc_delete_file();
+                        break;
+                    default:
+                        printf("HC task received unrecognized message (%d)\n", hc_message);
+                        break;
+                    }                
+                } while (hc_request = hc_wait(0));
+            } 
+
+            // run all automations once per minute
+            for(i=0; i <=31; i++)
+            {
+                hc_automation_run(i);
             }
         }
         else
@@ -591,11 +606,12 @@ int hc_get_new_automation_number(void)
     int err = -1;
     int i;
 
-    for(i=0; i < NUM_ROWS(cfg->automation_status); i++)
+    for(i=0; i < NUM_ROWS(cfg->automation_state); i++)
     {
-        if (cfg->automation_status[i] == AUTOMATION_UNDEFINED)
+        if (cfg->automation_state[i] == AUTOMATION_UNDEFINED)
         {
-            cfg->automation_status[i] = AUTOMATION_ENABLED;
+            printf("hc_get_new_automation_number: setting automation %d to ENABLED\n", i);
+            cfg->automation_state[i] = AUTOMATION_ENABLED;
             err = 0;
             break;
         }
@@ -624,22 +640,45 @@ int hc_delete_file(void)
 bool hc_automation_condition(bool condition)
 {
     static bool automation_condition[64];
-    int automation_running = 0;
     bool automation_abort = false;
 
-    if (condition == automation_condition[automation_running])
+    if (condition == automation_condition[web.automation_running])
     {
         // no change in condition so abort BASIC program
         automation_abort = true;
     }
     else
     {
-        // condition change so proceed with BASIC THEN statement
+        // condition change 
         automation_abort = false;
 
         // store the new condition
-        automation_condition[automation_running] = condition;
+        automation_condition[web.automation_running] = condition;
+
+        if (condition)
+        {
+            // condition is true so BASIC THEN statement is executed (i.e. automation is run)
+            cfg->automation_triggered[web.automation_running] = unix_time;
+        }
     }
 
     return(automation_abort);
+}
+
+int hc_automation_run(int automation_number)
+{
+    int err = -1;
+    char automation_filename[16];
+
+    CLIP(automation_number, 0, 31);
+
+    sprintf(automation_filename, "automation%02d", automation_number);
+
+    if (access(automation_filename, F_OK))   //TODO: Move this check into the basic_Interpreter
+    {
+        web.automation_running = automation_number;
+        basic_Interpreter(IM_MMAP_FILE, NULL, automation_filename, NULL, 0, true);
+    }
+
+    return(err);
 }

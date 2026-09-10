@@ -40,6 +40,7 @@ char bSteppingActive = 0;                   //script file is executed one line a
 char bTraceActive = 0;                      //script file is executed one line at a time
 int bTerminateWithExtremePrejudice = 0;     //script has been terminated by user pressing ESCAPE
 bool syntax_error_occured = false;
+bool syntax_error_silent = false;
 
 /*Private Variables*/
 int iContextIndex = -1;
@@ -166,13 +167,16 @@ Description :  Launchs a new instance of the BASIC interpreter and executes
 Returns     :  0 - OK
                1 - error initialising BASIC interpreter
 ***************************************************************************/
-int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileName, char *program_in_memory, int len_program_in_memory)
+int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileName, char *program_in_memory, int len_program_in_memory, bool silence_errors)
 {
 	int x;
 	int iKey;
     int iInkeyIndex;
     int load_ok = 0;
     struct stat file_status;
+    int context_creation_error = -1;
+
+    syntax_error_silent = silence_errors;
 
     switch(mode)
     {
@@ -180,44 +184,63 @@ int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileNam
     case IM_INTERACTIVE:
         if (!interactive_context_initialized)
         {
-            basic_CreateContext(pcFileName, pcArguments, false);
-            interactive_context_initialized = true;
+            context_creation_error = basic_CreateContext(pcFileName, pcArguments, false);
+
+            if(!context_creation_error)
+            {
+                interactive_context_initialized = true;
+            }
         }
 
-        load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
-        apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;        
+        if (interactive_context_initialized && (iContextIndex >= 0))
+        {
+            load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
+            apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;        
+        }
         break;
     
     case IM_EXECUTE_IN_PASSED_RAM_BUFFER:
-        basic_CreateContext(pcFileName, pcArguments, false);  
-        load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
-        apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;     
+        context_creation_error = basic_CreateContext(pcFileName, pcArguments, false); 
+        if(!context_creation_error && (iContextIndex >= 0))
+        { 
+            load_ok = load_program_in_place(program_in_memory, apsContextStack[iContextIndex]);
+            apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;     
+        }
     break;        
 
     case IM_COPY_FILE_FROM_PASSED_BUFFER:
-        basic_CreateContext(pcFileName, pcArguments, true);  
-        load_ok = load_program_from_ram(psContext->pcProgram, program_in_memory, len_program_in_memory);
-        apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;       
+        context_creation_error = basic_CreateContext(pcFileName, pcArguments, true);  
+        if(!context_creation_error)
+        {         
+            load_ok = load_program_from_ram(psContext->pcProgram, program_in_memory, len_program_in_memory);
+            apsContextStack[iContextIndex]->iProgramLength = len_program_in_memory;       
+        }
         break;
 
     case IM_LOAD_FILE_INTO_RAM:
-        basic_CreateContext(pcFileName, pcArguments, true); 
-        load_ok = load_program(psContext->pcProgramCounter, pcFileName); 
+        context_creation_error = basic_CreateContext(pcFileName, pcArguments, true); 
+        if(!context_creation_error)
+        {         
+            load_ok = load_program(psContext->pcProgramCounter, pcFileName); 
 
-         if (stat(pcFileName, &file_status) == 0)
-         { 
-            apsContextStack[iContextIndex]->iProgramLength = file_status.st_size;
-         }
+            if (stat(pcFileName, &file_status) == 0)
+            { 
+                apsContextStack[iContextIndex]->iProgramLength = file_status.st_size;
+            }
+        }
         break;
 
     case IM_MMAP_FILE:                           
-        basic_CreateContext(pcFileName, pcArguments, false);
-        load_ok = load_program_using_mmap(psContext->pcProgramCounter, pcFileName, apsContextStack[iContextIndex]);
+        context_creation_error = basic_CreateContext(pcFileName, pcArguments, false);
+        if(!context_creation_error)
+        {         
+            load_ok = load_program_using_mmap(psContext->pcProgramCounter, pcFileName, apsContextStack[iContextIndex]);
 
-         if (stat(pcFileName, &file_status) == 0)
-         { 
-            apsContextStack[iContextIndex]->iProgramLength = file_status.st_size;
-         }
+            if (stat(pcFileName, &file_status) == 0)
+            { 
+                apsContextStack[iContextIndex]->iProgramLength = file_status.st_size;
+            }
+        }
         break;           
     }
 

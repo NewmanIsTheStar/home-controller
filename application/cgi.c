@@ -4179,7 +4179,8 @@ const char * cgi_hc_automation_delete_handler(int iIndex, int iNumParams, char *
                 
                 if (cfg && automation_number>= 0 && automation_number <=31)
                 {
-                    cfg->automation_status[automation_number] = AUTOMATION_UNDEFINED;
+                    printf("cgi_hc_automation_delete_handler: setting %d to undefined\n", automation_number);
+                    cfg->automation_state[automation_number] = AUTOMATION_UNDEFINED;
                     sprintf(cfg->automation_name[automation_number], "automation%02d", automation_number); 
 
                     sprintf(web.delete_filename, "automation%02d", automation_number);

@@ -211,6 +211,7 @@ typedef struct
     char acFileName[256];
     bool allocate_program_memory;               // manage program memory automatically (not used when passed a buffer to execute in-place or using mmap)
     int iProgramLength;
+    int iSilentSyntaxErrors; // save time by not printing error messages (used for automation scripts)
 } tsBasicContext;
 
 
@@ -294,7 +295,7 @@ void wpush(tsWhileStack i);
 tsWhileStack wpop(void);
 void update_DateAndTime(void);
 //int basic_Interpreter(char *pcFileName, char *pcArguments, char *program_in_memory, int len_program_in_memory, bool reset_context);
-int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileName, char *program_in_memory, int len_program_in_memory);
+int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileName, char *program_in_memory, int len_program_in_memory, bool silence_errors);
 int basic_ResetInteractiveContext(void);
 int get_token(void);
 int next_token(void);

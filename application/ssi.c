@@ -2654,7 +2654,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_ts31vz:
         case SSI_ts32vz:                        
         {
-            if (cfg->automation_status[iIndex-SSI_ts1vz] == AUTOMATION_UNDEFINED)
+            if (cfg->automation_state[iIndex-SSI_ts1vz] == AUTOMATION_UNDEFINED)
             {
                 printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
             }

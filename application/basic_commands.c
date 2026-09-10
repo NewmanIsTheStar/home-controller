@@ -333,12 +333,9 @@ void basic_If(void)
 {
     int nNextToken;
     int iLeftSideTokenType;
-
-
     int nNumLeft;
     double fNumLeft;
     int nMatch;                        /* 0 if no match, 1 if condition true */
-
     void *pvProgPtrTemp;
 
     /*Take a peek at the next token*/

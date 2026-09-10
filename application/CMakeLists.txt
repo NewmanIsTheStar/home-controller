@@ -51,5 +51,6 @@ target_link_options(${PROJECT_NAME} PRIVATE
     "-Wl,--wrap=_unlink"
     "-Wl,--wrap=rename"  
     "-Wl,--wrap=ftruncate"
-    "-Wl,--wrap=_ftruncate_r"     
+    "-Wl,--wrap=_ftruncate_r"  
+    "-Wl,--wrap=access"   
 )

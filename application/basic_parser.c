@@ -19,6 +19,7 @@ extern char bScriptFileActive;                 //indicates a script is running
 extern tsCommand asCommandTable[];             //table that defines all BASIC commands
 extern int bClearInkey;                        //flag used to indicate script has read keystroke
 extern bool syntax_error_occured;
+extern bool syntax_error_silent;
 
 /*Private Prototypes*/
 extern tsBasicContext *psContext;
@@ -1231,52 +1232,55 @@ void syntax_error(int error)
     // only process the syntax error if the program has not already been terminated
     if (!syntax_error_occured)
     {
-        /*Print the error message. A * is used to mark the last cursor position*/
-        basic_printf("*\n\n%s", e[error]);
+        if (!syntax_error_silent)
+        {
+            /*Print the error message. A * is used to mark the last cursor position*/
+            basic_printf("*\n\n%s", e[error]);
 
-        /*Find line number of error*/
-        p = psContext->pcProgram;
-        while(p != psContext->pcProgramCounter)
-        {        
-            p++;
-            //if(*p == '\r')  // original for DOS EOL
-            if(*p == '\n')    // should work for both DOS and UNIX EOL        
-            {
-                linecount++;
+            /*Find line number of error*/
+            p = psContext->pcProgram;
+            while(p != psContext->pcProgramCounter)
+            {        
+                p++;
+                //if(*p == '\r')  // original for DOS EOL
+                if(*p == '\n')    // should work for both DOS and UNIX EOL        
+                {
+                    linecount++;
+                }
             }
-        }
-      
-        /*Print file name and line number where error occured*/
-        basic_printf(" in %s at line %d\n", psContext->acFileName, linecount);
+        
+            /*Print file name and line number where error occured*/
+            basic_printf(" in %s at line %d\n", psContext->acFileName, linecount);
 
-        /*Display lines with error*/
-        temp = p;
+            /*Display lines with error*/
+            temp = p;
 
-        /*Go back one line*/
-        for(i=0; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
-        {
-        }
-
-        /*Go back two lines if possible*/
-        if (p>psContext->pcProgram)
-        {
-            p--;
-
-            for(; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
+            /*Go back one line*/
+            for(i=0; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
             {
             }
-            //if (*p!='\n') p++;  // Newman removed as it truncated the first character of the line -- I guess it had something to do with DOS EOL \r\n
-        }
 
-        /*Print out the lines*/
-        for(; p<=temp; p++)
-        {
-            if (*p != '\r')  // avoid carriage returns that mess up output
+            /*Go back two lines if possible*/
+            if (p>psContext->pcProgram)
             {
-                basic_printf("%c", *p);
+                p--;
+
+                for(; (i<160) && (p>psContext->pcProgram) && (*p!='\n'); i++, p--)
+                {
+                }
+                //if (*p!='\n') p++;  // Newman removed as it truncated the first character of the line -- I guess it had something to do with DOS EOL \r\n
             }
-        } 
-        basic_printf("\n\n");
+
+            /*Print out the lines*/
+            for(; p<=temp; p++)
+            {
+                if (*p != '\r')  // avoid carriage returns that mess up output
+                {
+                    basic_printf("%c", *p);
+                }
+            } 
+            basic_printf("\n\n");
+        }
 
         /*Terminate Script File*/
         bScriptFileActive = 0;

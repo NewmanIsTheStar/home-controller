@@ -48,7 +48,7 @@ typedef enum
     AUTOMATION_DISABLED           =   2,          
     
     NO_AUTOMATION                 =   4294967295     // force enum to be 4 bytes long 
-} AUTOMATION_STATUS_E;
+} AUTOMATION_STATE_E;
 
 // non-vol structure conversion info
 typedef struct
@@ -120,10 +120,10 @@ typedef struct
     // uint8_t shelly_parameter_name_index[128];
     // char shelly_parameter_value[128][32];
     // char shelly_parameter_name[64][32]; 
-    AUTOMATION_STATUS_E automation_status[64];   
+    AUTOMATION_STATE_E automation_state[64];   
     char automation_name[64][64];
     uint32_t automation_triggered[64];
-    char automation_state[64];
+
     // ***application config end***    
     uint16_t crc;
     

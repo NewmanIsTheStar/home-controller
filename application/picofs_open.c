@@ -594,3 +594,27 @@ int picofs_initialize(void)
 
     return(err);
 }
+
+/*!
+ * \brief Returns true if file exists
+ * 
+ * \param[in]   filename     name to find
+ * \return 0 on success
+ */
+int picofs_access(const char *filename)
+{
+    int exists = 0;
+    int i;
+
+    for(i=0; i < FS_NUM_FID; i++)
+    {
+        if ((strcmp(filename, picofs_files[i].trailer->name) == 0) && !(picofs_files[i].trailer->file_status & STS_DELETED))
+        {
+            exists = 1;
+            break;
+        }
+    }
+    
+
+    return(exists);
+}
