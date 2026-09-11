@@ -1610,6 +1610,7 @@ void basic_ShellySwitch(void)
     get_Bracket(')');
 
     // construct shelly command
+    to_lowercase(state_string);
     snprintf(command_string, sizeof(command_string), "/relay/%s?turn=%s", relay_string, state_string);
     printf("CMD = %s IP = %s\n", command_string, device_ip_string);
 

@@ -1223,4 +1223,11 @@ int ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array)
     return(err);
 }
 
-
+void to_lowercase(char *str) 
+{
+    for (int i = 0; str[i] != '\0'; i++) 
+    {
+        // Cast to unsigned char to prevent undefined behavior with non-ASCII chars
+        str[i] = (char)tolower((unsigned char)str[i]);
+    }
+}

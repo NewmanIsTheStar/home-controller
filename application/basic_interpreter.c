@@ -410,13 +410,17 @@ int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileNam
     switch(mode)
     {
     default:
-    case IM_INTERACTIVE: 
-        if (syntax_error_occured)
-        {
-            // basic_DestroyContext();                            // TODO: is it really necesary to destroy the context
-            // interactive_context_initialized = false;           // TODO: is it really necesary to destroy the context
-            syntax_error_occured = false;
-        }     
+    case IM_INTERACTIVE:
+        // unfortunately this is needed because when automaitons run they destroy the entire context stack
+        basic_DestroyContext();                           
+        interactive_context_initialized = false; 
+        syntax_error_occured = false;     
+        // if (syntax_error_occured)
+        // {
+        //     // basic_DestroyContext();                            // TODO: is it really necesary to destroy the context
+        //     // interactive_context_initialized = false;           // TODO: is it really necesary to destroy the context
+        //     syntax_error_occured = false;
+        // }     
         break;
     
     case IM_EXECUTE_IN_PASSED_RAM_BUFFER:

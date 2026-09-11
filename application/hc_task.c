@@ -250,10 +250,12 @@ void hc_task(__unused void *params)
             } 
 
             // run all automations once per minute
+            printf("Running Automations\n");
             for(i=0; i <=31; i++)
             {
                 hc_automation_run(i);
             }
+            printf("Completed Automaitons\n");
         }
         else
         {
