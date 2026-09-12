@@ -1674,34 +1674,12 @@ void basic_TimeEquals(void)
 
     // ip time
     get_token();
-    
-    switch(psContext->eTokenType)
-    {
-    case STRINGVARIABLE:
-        strncpy(time_query, get_StringVariable(psContext->acToken), sizeof(time_query));
-        break;
-    case DELIMITER:
-    case INTEGERVARIABLE:        
-    case COMMAND:
-    case LABEL:
-    case FLOATVARIABLE:        
-    case FUNCTION:
-    case LOGIC:
-    case USERFUNCTION:
-        syntax_error(SYNTAX);
-        break;
-    default:
-    case QUOTE:    
-    case NUMBER:
-    case STRING:
-        strncpy(time_query, psContext->acToken, sizeof(time_query));
-        break;
-    }
+
+    time_query_mod = get_time_parameter();    
 
     /*Get the closing bracket*/
     get_Bracket(')');
 
-    time_query_mod = time_string_to_mow(time_query, sizeof(time_query), 0);
     get_dow_and_mod_local_tz(NULL, &time_current_mod);   
 
     // find return variables
@@ -1754,33 +1732,11 @@ void basic_TimeAfter(void)
     // ip time
     get_token();
     
-    switch(psContext->eTokenType)
-    {
-    case STRINGVARIABLE:
-        strncpy(time_query, get_StringVariable(psContext->acToken), sizeof(time_query));
-        break;
-    case DELIMITER:
-    case INTEGERVARIABLE:        
-    case COMMAND:
-    case LABEL:
-    case FLOATVARIABLE:        
-    case FUNCTION:
-    case LOGIC:
-    case USERFUNCTION:
-        syntax_error(SYNTAX);
-        break;
-    default:
-    case QUOTE:    
-    case NUMBER:
-    case STRING:
-        strncpy(time_query, psContext->acToken, sizeof(time_query));
-        break;
-    }
+    time_query_mod = get_time_parameter();    
 
     /*Get the closing bracket*/
     get_Bracket(')');
 
-    time_query_mod = time_string_to_mow(time_query, sizeof(time_query), 0);
     get_dow_and_mod_local_tz(NULL, &time_current_mod);   
 
     // find return variables
@@ -1820,7 +1776,7 @@ void basic_TimeBefore(void)
     char command_string[32];       
     int relay = 0;
     int iIndex = -1;
-    char time_query[16];
+    // char time_query[16];
     int time_query_mod;
     int time_current_mod;
     int iIntIndex;
@@ -1832,34 +1788,12 @@ void basic_TimeBefore(void)
 
     // ip time
     get_token();
-    
-    switch(psContext->eTokenType)
-    {
-    case STRINGVARIABLE:
-        strncpy(time_query, get_StringVariable(psContext->acToken), sizeof(time_query));
-        break;
-    case DELIMITER:
-    case INTEGERVARIABLE:        
-    case COMMAND:
-    case LABEL:
-    case FLOATVARIABLE:        
-    case FUNCTION:
-    case LOGIC:
-    case USERFUNCTION:
-        syntax_error(SYNTAX);
-        break;
-    default:
-    case QUOTE:    
-    case NUMBER:
-    case STRING:
-        strncpy(time_query, psContext->acToken, sizeof(time_query));
-        break;
-    }
 
+    time_query_mod = get_time_parameter();
+    
     /*Get the closing bracket*/
     get_Bracket(')');
 
-    time_query_mod = time_string_to_mow(time_query, sizeof(time_query), 0);
     get_dow_and_mod_local_tz(NULL, &time_current_mod);   
 
     // find return variables
@@ -1886,7 +1820,7 @@ void basic_TimeBefore(void)
  
 /***************************************************************************
 Function    :  basic_TimeBetween
-Description :  Determine if current time of day is before specified time  template: Time_Between("9:00", "10:00")
+Description :  Determine if current time of day is between specified times  template: Time_Between("9:00", "10:00")
 Returns     :  Nothing
 ***************************************************************************/
 void basic_TimeBetween(void)
@@ -1906,7 +1840,9 @@ void basic_TimeBetween(void)
     int time_current_mod;
     int iIntIndex;
     int iFltIndex;
-    char *return_string;    
+    char *return_string; 
+    int iQueryDeltaMinutes;   
+    int iCurrentDeltaMinutes;   
 
     /*Get the opening bracket*/
     get_Bracket('(');
@@ -1930,7 +1866,11 @@ void basic_TimeBetween(void)
     iFltIndex = find_Variable("returnvalue",  FLOATVARIABLE);
     return_string = get_StringVariable("returnvalue$");
 
-    if ((time_current_mod >= start_time_query_mod) && (time_current_mod <= end_time_query_mod))  // TODO: Fix this for midnight rollover  i.e. end time lower than start time
+    // use deltas to handle periods that include the midnight rollover
+    iQueryDeltaMinutes = (end_time_query_mod + 1440 - start_time_query_mod)%1440;
+    iCurrentDeltaMinutes = (end_time_query_mod + 1440 - time_current_mod)%1440;
+
+    if (iCurrentDeltaMinutes < iQueryDeltaMinutes)  
     {
         // set return variables true
         sprintf(return_string, "true");

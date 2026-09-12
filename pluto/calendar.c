@@ -1628,9 +1628,6 @@ int get_sunrise_mod(void)
 {
    // Inputs
    char inputDate[32]; 
-   double latitude = 29.7604;
-   double longitude = -95.3698; 
-   double timeZoneOffset = -5.0; // CDT (UTC -5)
    int validDate = 0;
    int dayOfYear;
    SolarTimes times;
@@ -1642,29 +1639,19 @@ int get_sunrise_mod(void)
 
    if (!validDate) 
    {
-      printf("Error: Invalid date format or values provided. Use YYYY-MM-DD.\n");
+      printf("get_sunrise_mod: Error: Invalid date format or values provided. Use YYYY-MM-DD.\n");
       return 1;
    }
    
-   times = calculateSolarTimes(dayOfYear, latitude, longitude);
+   times = calculateSolarTimes(dayOfYear, cfg->latitude, cfg->longitude);
    
    if (times.success) 
    {
-      mod = (int)(times.sunrise + (timeZoneOffset * 60.0));
-      // char sunriseStr[6];
-      // char sunsetStr[6];
-      
-      // formatTime(times.sunrise, timeZoneOffset, sunriseStr);
-      // formatTime(times.sunset, timeZoneOffset, sunsetStr);
-      
-      // printf("Input Date: %s (Day of Year: %d)\n", inputDate, dayOfYear);
-      // printf("Latitude: %.4f, Longitude: %.4f\n", latitude, longitude);
-      // printf("Sunrise: %s\n", sunriseStr);
-      // printf("Sunset:  %s\n", sunsetStr);
+      mod = (int)(times.sunrise + cfg->timezone_offset);
    } 
    else 
    {
-      printf("The location experiences polar day or polar night on this date.\n");
+      printf("get_sunrise_mod: The location experiences polar day or polar night on this date.\n");
    }
       
    
@@ -1675,9 +1662,6 @@ int get_sunset_mod(void)
 {
    // Inputs
    char inputDate[32]; 
-   double latitude = 29.7604;
-   double longitude = -95.3698; 
-   double timeZoneOffset = -5.0; // CDT (UTC -5)
    int validDate = 0;
    int dayOfYear;
    SolarTimes times;
@@ -1689,29 +1673,19 @@ int get_sunset_mod(void)
 
    if (!validDate) 
    {
-      printf("Error: Invalid date format or values provided. Use YYYY-MM-DD.\n");
+      printf("get_sunset_mod: Error: Invalid date format or values provided. Use YYYY-MM-DD.\n");
       return 1;
    }
    
-   times = calculateSolarTimes(dayOfYear, latitude, longitude);
+   times = calculateSolarTimes(dayOfYear, cfg->latitude, cfg->longitude);
    
    if (times.success) 
    {
-      mod = (int)(times.sunset + (timeZoneOffset * 60.0));
-      // char sunriseStr[6];
-      // char sunsetStr[6];
-      
-      // formatTime(times.sunrise, timeZoneOffset, sunriseStr);
-      // formatTime(times.sunset, timeZoneOffset, sunsetStr);
-      
-      // printf("Input Date: %s (Day of Year: %d)\n", inputDate, dayOfYear);
-      // printf("Latitude: %.4f, Longitude: %.4f\n", latitude, longitude);
-      // printf("Sunrise: %s\n", sunriseStr);
-      // printf("Sunset:  %s\n", sunsetStr);
+      mod = (int)(times.sunset + cfg->timezone_offset);
    } 
    else 
    {
-      printf("The location experiences polar day or polar night on this date.\n");
+      printf("get_sunset_mod: The location experiences polar day or polar night on this date.\n");
    }
       
    

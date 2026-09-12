@@ -497,6 +497,16 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
                     cfg->daylightsaving_enable = 0;
                 }                              
             }
+
+            if (strcasecmp("glat", param) == 0)
+            {
+                sscanf(value, "%lf", &(cfg->latitude));
+            }   
+            
+            if (strcasecmp("glng", param) == 0)
+            {
+                sscanf(value, "%lf", &(cfg->longitude));
+            }              
         }
 
         i++;

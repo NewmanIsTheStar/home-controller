@@ -109,6 +109,8 @@ typedef struct
     char mqtt_user[32];
     char mqtt_password[32];
     char mqtt_broker_address[32];
+    double latitude;
+    double longitude; 
     // ***system config end*** 
     uint16_t system_crc;
 

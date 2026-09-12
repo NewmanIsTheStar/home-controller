@@ -91,7 +91,9 @@ extern NON_VOL_VARIABLES_T config;
     x(mquser) \
     x(mqpass) \
     x(mqaddr) \
-    x(uptme)
+    x(uptme) \
+    x(glat) \
+    x(glng)
 
 
 /*List of SSI tags used in html files
@@ -1611,6 +1613,16 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
             //printed = snprintf(pcInsert, iInsertLen, "%d", unix_time - web.boot_time);
         }               
         break;
+        case SSI_glat: // lattitude
+        {
+            printed = snprintf(pcInsert, iInsertLen, "%f", cfg->latitude); 
+        }                        
+        break; 
+        case SSI_glng: // longitude
+        {
+            printed = snprintf(pcInsert, iInsertLen, "%f", cfg->longitude); 
+        }                        
+        break; 
 
         // *** system SSI end ***
         /************************************************************************************************************************* */

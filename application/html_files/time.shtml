@@ -94,21 +94,35 @@ body {
             </td>
           </tr>          
           <tr>
-            <td><labelTime>Server 1</label></td>
+            <td><label>Server 1</label></td>
             <td><input type="text" id="ts1" name="ts1" value="<!--#ts1-->"></td>
           </tr>
           <tr>
-            <td><labelTime>Server 2</label></td>
+            <td><label>Server 2</label></td>
             <td><input type="text" id="ts2" name="ts2" value="<!--#ts2-->"></td>
           </tr>
           <tr>
-            <td><labelTime>Server 3</label></td>
+            <td><label>Server 3</label></td>
             <td><input type="text" id="ts3" name="ts3" value="<!--#ts3-->"></td>
           </tr>
           <tr>
-            <td><labelTime>Server 4</label></td>
+            <td><label>Server 4</label></td>
             <td><input type="text" id="ts4" name="ts4" value="<!--#ts4-->"></td>
-          </tr>                                        
+          </tr> 
+          <tr>            
+            <td style="text-align: left;font-weight: bold;">
+              <label title="Used for sunrise/sunset determination">Geographic Coordinates</label>
+            </td>
+          </tr>          
+          <tr>
+            <td><label>Lattitude</label></td>
+            <td><input type="text" id="glat" name="glat" value="<!--#glat-->"></td>
+          </tr>
+          <tr>
+            <td><label>Longitude</label></td>
+            <td><input type="text" id="glng" name="glng" value="<!--#glng-->"></td>
+          </tr>
+          <tr>                                                 
           <tr>            
               <td>
                   <button type="submit" style="font-size: 25px;">Save</button>

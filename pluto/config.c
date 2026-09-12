@@ -453,102 +453,10 @@ void config_system_variable_initialize(void)
     cfg->mqtt_user[0] = 0;
     cfg->mqtt_password[0] = 0;
     cfg->mqtt_broker_address[0] = 0;
+
+    // geolocation
+    cfg->latitude = 29.7604;
+    cfg->longitude = -95.3698; 
 }
 
 
-// #define _GNU_SOURCE // Required for O_DIRECT on Linux
-// #include <fcntl.h>
-// #include <unistd.h>
-// #include <stdlib.h>
-// #include <stdio.h>
-
-// int write_buffer_direct(const char* filename, size_t total_bytes) {
-//     // 1. Allocate memory aligned to 4KB page boundaries
-//     void* buffer = NULL;
-//     if (posix_memalign(&buffer, 4096, total_bytes) != 0) {
-//         perror("Failed to allocate aligned memory");
-//         return -1;
-//     }
-
-//     // Fill your buffer with data here...
-
-//     // 2. Open file with O_DIRECT to bypass OS page cache duplication
-//     int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC /*| O_DIRECT*/, 0644);
-//     if (fd < 0) {
-//         perror("Failed to open file with O_DIRECT");
-//         free(buffer);
-//         return -1;
-//     }
-
-//     // 3. Write directly to disk (Zero-copy to page cache)
-//     ssize_t bytes_written = write(fd, buffer, total_bytes);
-//     if (bytes_written < 0) {
-//         perror("Direct write failed");
-//     }
-
-//     close(fd);
-//     free(buffer);
-//     return (bytes_written == (ssize_t)total_bytes) ? 0 : -1;
-// }
-
-
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <sys/mman.h>
-// #include <fcntl.h>
-// #include <unistd.h>
-// #include <string.h>
-
-// int mmap_test() 
-// {
-//     const char *filepath = "new_database.bin";
-//     size_t FILE_SIZE = 4096; // 4 KB (typically matches 1 memory page)
-
-//     // 1. Create and open the new file with Read/Write permissions
-//     // O_CREAT: Create file if it doesn't exist.
-//     // O_TRUNC: Truncate file to 0 bytes if it already exists.
-//     int fd = open(filepath, O_RDWR | O_CREAT | O_TRUNC, 0644);
-//     if (fd == -1) {
-//         perror("Error opening/creating file");
-//         return EXIT_FAILURE;
-//     }
-
-//     // 2. STRETCH THE FILE: Set the storage space before calling mmap
-//     // Memory mapping cannot dynamically increase the underlying file size.
-//     if (ftruncate(fd, FILE_SIZE) == -1) {
-//         perror("Error setting file size");
-//         close(fd);
-//         return EXIT_FAILURE;
-//     }
-
-//     // 3. Map the file into the process address space
-//     // PROT_READ | PROT_WRITE: We want to read and write to this memory region.
-//     // MAP_SHARED: Changes made to memory are automatically committed to the disk file.
-//     char *map = picofs_mmap(NULL, FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-//     if (map == MAP_FAILED) {
-//         perror("Error mapping the file");
-//         close(fd);
-//         return EXIT_FAILURE;
-//     }
-
-//     // The file descriptor can technically be closed right after mmap(), 
-//     // but we will keep it standard and close it at the end.
-
-//     // 4. Write data directly to the file using memory pointers
-//     strcpy(map, "Hello, this is text written via mmap() memory manipulation!");
-//     printf("Data written to memory map successfully.\n");
-
-//     // 5. Optional: Synchronize memory changes back to disk immediately
-//     // Without msync, the OS manages flushing, but msync forces durability.
-//     // if (msync(map, FILE_SIZE, MS_SYNC) == -1) {
-//     //     perror("Could not sync file to disk");
-//     // }
-
-//     // 6. Clean up: Unmap the memory and close the file descriptor
-//     if (picofs_munmap(map, FILE_SIZE) == -1) {
-//         perror("Error unmapping the memory");
-//     }
-    
-//     close(fd);
-//     return EXIT_SUCCESS;
-// }
