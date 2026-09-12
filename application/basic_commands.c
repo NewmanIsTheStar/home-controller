@@ -397,12 +397,12 @@ void basic_If(void)
     do
     {
         get_token();
-    } while ( ( psContext->eToken != EOL ) && ( psContext->eToken != ELSE ) );
+    } while ((psContext->eToken != EOL) && (psContext->eToken != ELSE) && (psContext->eToken != FINISHED));
 
-    if ( psContext->eToken == ELSE )
-        psContext->iThenElseLine = 1;
+    if (psContext->eToken == ELSE)
+        psContext->iThenElseLine = 1;  // else on the IF line
     else
-        psContext->iThenElseLine = 0;
+        psContext->iThenElseLine = 0;  
 
     psContext->pcProgramCounter = pvProgPtrTemp;
 
@@ -417,15 +417,15 @@ void basic_If(void)
         /* condition is true, proceed executing tokens as discovered */
         return;
     }
-    else
+    else /* condition is false, skip to ELSE, end-of-line or ENDIF */
     {
-        /* condition is false, skip to ELSE, end-of-line or ENDIF */
+        // skip to the ELSE that we previously discovered appended to the IF line
         if ( psContext->iThenElseLine == 1 )
         {
             do
             {
                 get_token();
-            } while ( psContext->eToken != ELSE );                  /* skip to end of line */
+            } while ((psContext->eToken != ELSE)  && (psContext->eToken != FINISHED));    
 
             psContext->iThenElseLine = 0;
             return;

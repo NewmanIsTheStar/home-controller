@@ -51,6 +51,8 @@ int string_to_mow(char *string, int length);
 int time_string_to_mow(char *string, int length, int day);
 bool sntp_alive(void);
 int get_delta_string_from_delta_seconds(char *string, int len, uint32_t delta_seconds);
+int get_sunrise_mod(void);
+int get_sunset_mod(void);
 
 #ifdef FAKE_RTC
 uint32_t rtc_update(void);

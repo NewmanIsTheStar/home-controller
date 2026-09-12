@@ -146,6 +146,8 @@ void hc_task(__unused void *params)
     // picofs_initialize();
 
     printf("home controller task started\n");
+    web.automation_running = -1;
+    
     while (true)
     {
         // initialize all subsystems that are not already up
@@ -250,12 +252,13 @@ void hc_task(__unused void *params)
             } 
 
             // run all automations once per minute
-            printf("Running Automations\n");
-            for(i=0; i <=31; i++)
-            {
-                hc_automation_run(i);
-            }
-            printf("Completed Automaitons\n");
+            // printf("Running Automations\n");
+            // for(i=0; i <=31; i++)
+            // {
+            //     hc_automation_run(i);
+            // }
+            // printf("Completed Automaitons\n");
+            web.automation_running = -1;
         }
         else
         {
@@ -644,26 +647,28 @@ bool hc_automation_condition(bool condition)
     static bool automation_condition[64];
     bool automation_abort = false;
 
-    if (condition == automation_condition[web.automation_running])
+    if ((web.automation_running >=0) && (web.automation_running <=31))
     {
-        // no change in condition so abort BASIC program
-        automation_abort = true;
-    }
-    else
-    {
-        // condition change 
-        automation_abort = false;
-
-        // store the new condition
-        automation_condition[web.automation_running] = condition;
-
-        if (condition)
+        if (condition == automation_condition[web.automation_running])
         {
-            // condition is true so BASIC THEN statement is executed (i.e. automation is run)
-            cfg->automation_triggered[web.automation_running] = unix_time;
+            // no change in condition so abort BASIC program
+            automation_abort = true;
+        }
+        else
+        {
+            // condition change 
+            automation_abort = false;
+
+            // store the new condition
+            automation_condition[web.automation_running] = condition;
+
+            if (condition)
+            {
+                // condition is true so BASIC THEN statement is executed (i.e. automation is run)
+                cfg->automation_triggered[web.automation_running] = unix_time;
+            }
         }
     }
-
     return(automation_abort);
 }
 
@@ -680,6 +685,7 @@ int hc_automation_run(int automation_number)
     {
         web.automation_running = automation_number;
         basic_Interpreter(IM_MMAP_FILE, NULL, automation_filename, NULL, 0, true);
+        web.automation_running = -1;
     }
 
     return(err);

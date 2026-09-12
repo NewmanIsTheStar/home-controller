@@ -980,16 +980,35 @@ int time_string_to_mow(char *string, int length, int day)
    int hour = 0;
    int minute = 0; 
    
-   sscanf(string,"%d:%d", &hour, &minute);
-   sscanf(string,"%d%%3A%d", &hour, &minute);   
 
-   //printf(">>>>>AFTER SCANF %d %d\n", hour, minute);
+   if (isalpha(string[0]))
+   {
+      if (strcasecmp("sunrise", string) == 0)
+      {
+         mow = get_sunrise_mod();
 
-   CLIP(day, 0, 6);
-   CLIP(hour, 0, 23);
-   CLIP(minute, 0, 59);
+      } else if (strcasecmp("sunset", string) == 0)
+      {
+          mow = get_sunset_mod();
+      }
+      else
+      {
+         mow = 0;
+      }
+   }
+   else
+   {
+      sscanf(string,"%d:%d", &hour, &minute);
+      sscanf(string,"%d%%3A%d", &hour, &minute);   
 
-   mow = day*24*60 + hour*60 + minute;
+      //printf(">>>>>AFTER SCANF %d %d\n", hour, minute);
+
+      CLIP(day, 0, 6);
+      CLIP(hour, 0, 23);
+      CLIP(minute, 0, 59);
+
+      mow = day*24*60 + hour*60 + minute;
+   }
 
    return(mow);
 }
@@ -1603,4 +1622,98 @@ int sunrise_test()
     }
     
     return 0;
+}
+
+int get_sunrise_mod(void) 
+{
+   // Inputs
+   char inputDate[32]; 
+   double latitude = 29.7604;
+   double longitude = -95.3698; 
+   double timeZoneOffset = -5.0; // CDT (UTC -5)
+   int validDate = 0;
+   int dayOfYear;
+   SolarTimes times;
+   int mod = 0;
+   
+   get_date_string_from_unix_time(unix_time, inputDate, sizeof(inputDate), 1, 1);   
+
+   dayOfYear = calculateDayOfYear(inputDate, &validDate);
+
+   if (!validDate) 
+   {
+      printf("Error: Invalid date format or values provided. Use YYYY-MM-DD.\n");
+      return 1;
+   }
+   
+   times = calculateSolarTimes(dayOfYear, latitude, longitude);
+   
+   if (times.success) 
+   {
+      mod = (int)(times.sunrise + (timeZoneOffset * 60.0));
+      // char sunriseStr[6];
+      // char sunsetStr[6];
+      
+      // formatTime(times.sunrise, timeZoneOffset, sunriseStr);
+      // formatTime(times.sunset, timeZoneOffset, sunsetStr);
+      
+      // printf("Input Date: %s (Day of Year: %d)\n", inputDate, dayOfYear);
+      // printf("Latitude: %.4f, Longitude: %.4f\n", latitude, longitude);
+      // printf("Sunrise: %s\n", sunriseStr);
+      // printf("Sunset:  %s\n", sunsetStr);
+   } 
+   else 
+   {
+      printf("The location experiences polar day or polar night on this date.\n");
+   }
+      
+   
+   return(mod);
+}
+
+int get_sunset_mod(void) 
+{
+   // Inputs
+   char inputDate[32]; 
+   double latitude = 29.7604;
+   double longitude = -95.3698; 
+   double timeZoneOffset = -5.0; // CDT (UTC -5)
+   int validDate = 0;
+   int dayOfYear;
+   SolarTimes times;
+   int mod = 0;
+   
+   get_date_string_from_unix_time(unix_time, inputDate, sizeof(inputDate), 1, 1);   
+
+   dayOfYear = calculateDayOfYear(inputDate, &validDate);
+
+   if (!validDate) 
+   {
+      printf("Error: Invalid date format or values provided. Use YYYY-MM-DD.\n");
+      return 1;
+   }
+   
+   times = calculateSolarTimes(dayOfYear, latitude, longitude);
+   
+   if (times.success) 
+   {
+      mod = (int)(times.sunset + (timeZoneOffset * 60.0));
+      // char sunriseStr[6];
+      // char sunsetStr[6];
+      
+      // formatTime(times.sunrise, timeZoneOffset, sunriseStr);
+      // formatTime(times.sunset, timeZoneOffset, sunsetStr);
+      
+      // printf("Input Date: %s (Day of Year: %d)\n", inputDate, dayOfYear);
+      // printf("Latitude: %.4f, Longitude: %.4f\n", latitude, longitude);
+      // printf("Sunrise: %s\n", sunriseStr);
+      // printf("Sunset:  %s\n", sunsetStr);
+   } 
+   else 
+   {
+      printf("The location experiences polar day or polar night on this date.\n");
+   }
+      
+   
+   return(mod);
 }

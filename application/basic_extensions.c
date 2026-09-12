@@ -57,6 +57,7 @@ char bSuperSlowMode = 0;
 void get_Parameter(char *pcCommandLine);
 void basic_SetFocus(void);
 void basic_ShellyReturn(char *return_value);
+int get_time_parameter(void);
 
 
 int processCommand(char *pcString)
@@ -1292,7 +1293,7 @@ void get_Parameter(char *pcCommandLine)
     do
     {
         get_token();        
-    } while(*psContext->acToken == ',');
+    } while ((*psContext->acToken == ',') && (psContext->eToken != FINISHED));
 
         
     putback();
@@ -1898,9 +1899,9 @@ void basic_TimeBetween(void)
     char command_string[32];       
     int relay = 0;
     int iIndex = -1;
-    char start_time_query[16];
+    // char start_time_query[16];
     int start_time_query_mod;
-    char end_time_query[16];
+    // char end_time_query[16];
     int end_time_query_mod;    
     int time_current_mod;
     int iIntIndex;
@@ -1911,65 +1912,17 @@ void basic_TimeBetween(void)
     get_Bracket('(');
 
     // start time
-    get_token();
-    
-    switch(psContext->eTokenType)
-    {
-    case STRINGVARIABLE:
-        strncpy(start_time_query, get_StringVariable(psContext->acToken), sizeof(start_time_query));
-        break;
-    case DELIMITER:
-    case INTEGERVARIABLE:        
-    case COMMAND:
-    case LABEL:
-    case FLOATVARIABLE:        
-    case FUNCTION:
-    case LOGIC:
-    case USERFUNCTION:
-        syntax_error(SYNTAX);
-        break;
-    default:
-    case QUOTE:    
-    case NUMBER:
-    case STRING:
-        strncpy(start_time_query, psContext->acToken, sizeof(start_time_query));
-        break;
-    }
+    start_time_query_mod = get_time_parameter();
 
     // comma
     get_token();
 
     // end time
-    get_token();
-    
-    switch(psContext->eTokenType)
-    {
-    case STRINGVARIABLE:
-        strncpy(end_time_query, get_StringVariable(psContext->acToken), sizeof(end_time_query));
-        break;
-    case DELIMITER:
-    case INTEGERVARIABLE:        
-    case COMMAND:
-    case LABEL:
-    case FLOATVARIABLE:        
-    case FUNCTION:
-    case LOGIC:
-    case USERFUNCTION:
-        syntax_error(SYNTAX);
-        break;
-    default:
-    case QUOTE:    
-    case NUMBER:
-    case STRING:
-        strncpy(end_time_query, psContext->acToken, sizeof(end_time_query));
-        break;
-    }
+    end_time_query_mod = get_time_parameter();
 
     /*Get the closing bracket*/
     get_Bracket(')');
 
-    start_time_query_mod = time_string_to_mow(start_time_query, sizeof(start_time_query), 0);
-    end_time_query_mod   = time_string_to_mow(end_time_query,   sizeof(end_time_query),   0);
     get_dow_and_mod_local_tz(NULL, &time_current_mod);   
 
     // find return variables
@@ -1977,7 +1930,7 @@ void basic_TimeBetween(void)
     iFltIndex = find_Variable("returnvalue",  FLOATVARIABLE);
     return_string = get_StringVariable("returnvalue$");
 
-    if ((time_current_mod >= start_time_query_mod) && (time_current_mod <= end_time_query_mod))
+    if ((time_current_mod >= start_time_query_mod) && (time_current_mod <= end_time_query_mod))  // TODO: Fix this for midnight rollover  i.e. end time lower than start time
     {
         // set return variables true
         sprintf(return_string, "true");
@@ -1993,3 +1946,102 @@ void basic_TimeBetween(void)
     }  
       
 } /*End basic_TimeBetween*/
+
+
+int get_time_parameter(void)
+{
+    char time_a[32];
+    char time_op = '!';
+    char time_b[32];
+    int mod_a = 0;
+    int mod_b = 0;
+    int mod = 0;
+
+    get_token();
+    
+    switch(psContext->eTokenType)
+    {
+    case STRINGVARIABLE:
+        strncpy(time_a, get_StringVariable(psContext->acToken), sizeof(time_a));
+        break;
+    case DELIMITER:
+    case INTEGERVARIABLE:        
+    case COMMAND:
+    case LABEL:     
+    case FUNCTION:
+    case LOGIC:
+    case USERFUNCTION:
+        syntax_error(SYNTAX);
+        break;
+    default:
+    case QUOTE:    
+    case NUMBER:
+    case STRING:
+    case FLOATVARIABLE:   // sunset is seen as a float by the interpreter  [yes, this is a nasty hack]   
+        strncpy(time_a, psContext->acToken, sizeof(time_a));
+        break;
+    }
+    
+    mod_a = time_string_to_mow(time_a, sizeof(time_a), 0);
+
+    get_token();
+    switch(psContext->acToken[0])
+    {
+    case ')':
+    case ',':
+        putback();
+        break;
+    case '+':
+    case '-':
+        time_op = psContext->acToken[0];
+        break;
+    default:
+        syntax_error(SYNTAX);
+        break;
+    }
+
+    if (time_op != '!')
+    {
+        get_token();
+    
+        switch(psContext->eTokenType)
+        {
+        case STRINGVARIABLE:
+            strncpy(time_b, get_StringVariable(psContext->acToken), sizeof(time_b));
+            break;
+        case DELIMITER:
+        case INTEGERVARIABLE:        
+        case COMMAND:
+        case LABEL:    
+        case FUNCTION:
+        case LOGIC:
+        case USERFUNCTION:
+            syntax_error(SYNTAX);
+            break;
+        default:
+        case QUOTE:    
+        case NUMBER:
+        case STRING:
+        case FLOATVARIABLE:   // sunset is seen as a float by the interpreter  [yes, this is a nasty hack]         
+            strncpy(time_b, psContext->acToken, sizeof(time_b));
+            break;
+        }
+
+        mod_b = time_string_to_mow(time_b, sizeof(time_b), 0);
+    }
+
+    switch(time_op)
+    {
+    case '+':
+        mod = (mod_a + mod_b)%1440;
+        break;
+    case '-':
+        mod = (1440 + mod_a - mod_b)%1440;
+        break;
+    default:
+        mod = mod_a;
+        break;
+    }
+
+    return(mod);
+}
