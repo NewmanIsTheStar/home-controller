@@ -31,7 +31,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         picofs_list.c 
         picofs_file.c 
         picofs_crc.c 
-        picofs_ftruncate.c             
+        picofs_ftruncate.c     
+        kasa_discovery.c        
 )
 
 set(WEB_FILES)

@@ -37,7 +37,7 @@ void setTimeSec(uint32_t sec);
 #endif
 #define MEM_ALIGNMENT               4
 #define MEM_SIZE                    12288 //4000  // Newman set to 4000
-#define MEMP_NUM_TCP_SEG            32
+#define MEMP_NUM_TCP_SEG            192  // Newman increased from 32 to support 6 TCP connections
 #define MEMP_NUM_ARP_QUEUE          10
 #define MEMP_NUM_UDP_PCB            (16)  // Newman added
 #define PBUF_POOL_SIZE              48    // original 24 - Newman set to 48
