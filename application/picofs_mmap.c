@@ -237,6 +237,7 @@ int picofs_get_fd_from_mmap_address(void *addr)
 
 int picofs_msync(void *addr, size_t length, int flags)
 {
+    int err = -1;
     int fd = -1;
     int fid = FS_INVALID_FID;
     
@@ -246,6 +247,8 @@ int picofs_msync(void *addr, size_t length, int flags)
     {
         if (!picofs_sync_file(fd, false))
         {
+            err = 0;
+
             // remember fid in case of rollover
             fid = custom_fds[fd].cache_trailer.file_id;
 
@@ -256,8 +259,10 @@ int picofs_msync(void *addr, size_t length, int flags)
             {
                 // rollover occured to a new fid so delete file with old fid
                 //picofs_unlink_by_fid(fid);
-                custom_fds[fd].rollover_fid = fid;
+                custom_fds[fd].rollover_fid = fid;  //TODO: what if we wrap twice?!! need to unlink before scheduling another to occur on close
             }
         }
     }
+
+    return(err);
 }

@@ -7,6 +7,7 @@
 #define CONFIG_H
 
 #include <limits.h>
+#include "syscfg.h"
 
 typedef enum
 {
@@ -28,17 +29,17 @@ int config_read_from_file(char *filename);
 int config_mmap(char *filename);
 
 // device personality
-typedef enum
-{
-    SPRINKLER_USURPER          =   0,             // add wifi control to exising "dumb" sprinkler controller
-    SPRINKLER_CONTROLLER       =   1,             // multizone sprinkler control 
-    LED_STRIP_CONTROLLER       =   2,             // allows remote control of an led strip
-    HVAC_THERMOSTAT            =   3,             // wifi confrolled thermostat
-    HOME_CONTROLLER            =   4,             // home controller
-    REMOTE_SWITCH              =   5,             // wifi controlled relays
+// typedef enum
+// {
+//     SPRINKLER_USURPER          =   0,             // add wifi control to exising "dumb" sprinkler controller
+//     SPRINKLER_CONTROLLER       =   1,             // multizone sprinkler control 
+//     LED_STRIP_CONTROLLER       =   2,             // allows remote control of an led strip
+//     HVAC_THERMOSTAT            =   3,             // wifi confrolled thermostat
+//     HOME_CONTROLLER            =   4,             // home controller
+//     REMOTE_SWITCH              =   5,             // wifi controlled relays
     
-    NO_PERSONALITY             =   4294967295     // force enum to be 4 bytes long 
-} PERSONALITY_E;
+//     NO_PERSONALITY             =   4294967295     // force enum to be 4 bytes long 
+// } PERSONALITY_E;
 
 // device personality
 typedef enum
@@ -60,17 +61,17 @@ typedef struct
 } NON_VOL_CONVERSION_T;
 
 // gpio defaults
-typedef enum
-{
-    GP_UNINITIALIZED          =   0,         
-    GP_INPUT_FLOATING         =   1,              
-    GP_INPUT_PULLED_HIGH      =   2,             
-    GP_INPUT_PULLED_LOW       =   3,
-    GP_OUTPUT_HIGH            =   4,
-    GP_OUTPUT_LOW             =   5,
+// typedef enum
+// {
+//     GP_UNINITIALIZED          =   0,         
+//     GP_INPUT_FLOATING         =   1,              
+//     GP_INPUT_PULLED_HIGH      =   2,             
+//     GP_INPUT_PULLED_LOW       =   3,
+//     GP_OUTPUT_HIGH            =   4,
+//     GP_OUTPUT_LOW             =   5,
     
-    GP_LAST                   =   4294967295     // force enum to be 4 bytes long 
-} GPIO_DEFAULT_T;
+//     GP_LAST                   =   4294967295     // force enum to be 4 bytes long 
+// } GPIO_DEFAULT_T;
 
 /*
 * current non-volatile memory structure

@@ -189,6 +189,12 @@ void hex_dump(const uint8_t *bptr, uint32_t len)
     int i = 0;
     int line = 0;
 
+    // ignore requests to dump NULL pointers
+    if (!bptr)
+    {
+        return;
+    }
+
     printf("hexdump address = %08p length = %08x\n", bptr, len);
 
     for(line = 0; line < ((len+(HEX_DUMP_BYTE_PER_LINE-1))/HEX_DUMP_BYTE_PER_LINE); line++)

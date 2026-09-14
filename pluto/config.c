@@ -117,6 +117,8 @@ void config_blank_to_v1(void *previous_config)
 void config_changed(void)
 {
     config_dirty_flag = 1;
+
+    syscfg_changed();  //TODO: make this more selective rather than invoking for all changes (especially in cgi.c)
 }
 
 /*!
@@ -153,7 +155,7 @@ int config_read(CONFIG_TYPE_T config_type)
     int err = 0;
 
     // set config pointer
-    //cfg = &config;
+    cfg = &config;
 
 #ifdef DISABLE_CONFIG_VALIDATION
     // read configuration from flash

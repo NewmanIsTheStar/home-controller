@@ -41,6 +41,7 @@
 #include "cgi.h"
 #include "flash.h"
 #include "utility.h"
+#include "syscfg.h"
 #include "config.h"
 #include "watchdog.h"
 #include "worker_tasks.h"
@@ -226,13 +227,26 @@ void boss_task(__unused void *params)
 
     printf("Searching for configuration...\n");
     
-    // get configuration from flash
+    // get system configuration from flash
+    syscfg_read(); 
+
+    // check system configuration
+    if (!sys)
+    {
+        printf("Guru Meditation: failed to allocate memory for the system configuration.\n");
+        for(;;)
+        {
+            SLEEP_MS(60000); 
+        }
+    }
+
+    // get application configuration from flash
     config_read(CONFIG_FILE); 
 
-    // check configuration
+    // check application configuration
     if (!cfg)
     {
-        printf("Guru Meditation: failed to allocate memory for the configuration.\n");
+        printf("Guru Meditation: failed to allocate memory for the applciation configuration.\n");
         for(;;)
         {
             SLEEP_MS(60000); 
@@ -348,6 +362,7 @@ void boss_task(__unused void *params)
         led_on = !led_on;
 
         // copy configuration changes from RAM into flash
+        syscfg_write();
         config_write(CONFIG_FILE);
 
         // check stack high water mark for each worker task
