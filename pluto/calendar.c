@@ -230,11 +230,11 @@ int set_daylight_saving_dates(void)
     {
       year = t.year;
 
-      err = get_daylight_saving_month_and_day(year, cfg->daylightsaving_start, &daylight_saving_start_month, &daylight_saving_start_day);
+      err = get_daylight_saving_month_and_day(year, sys->daylightsaving_start, &daylight_saving_start_month, &daylight_saving_start_day);
 
       if (!err)
       {
-         err = get_daylight_saving_month_and_day(year, cfg->daylightsaving_end, &daylight_saving_end_month, &daylight_saving_end_day);
+         err = get_daylight_saving_month_and_day(year, sys->daylightsaving_end, &daylight_saving_end_month, &daylight_saving_end_day);
       }
     }
     else
@@ -369,10 +369,10 @@ int get_dow_and_mod_local_tz(int *dow, int *mod)
     day_of_week = get_day_of_week(date.month, date.day, date.year);
 
     // standard time
-    minute_of_day = date.hour*MINUTES_IN_HOUR + date.min + cfg->timezone_offset; 
+    minute_of_day = date.hour*MINUTES_IN_HOUR + date.min + sys->timezone_offset; 
 
     // check for daylight savings
-    if (cfg->daylightsaving_enable                                                               &&
+    if (sys->daylightsaving_enable                                                               &&
         ((date.month*31+date.day) >= (daylight_saving_start_month*31+daylight_saving_start_day)) &&
         ((date.month*31+date.day) < (daylight_saving_end_month*31+daylight_saving_end_day)))
     {
@@ -421,7 +421,7 @@ int daylight_savings_active(datetime_t date)
 {
    bool daylight_savings = false;
 
-    if (cfg->daylightsaving_enable                                                             &&
+    if (sys->daylightsaving_enable                                                             &&
         ((date.month*31+date.day) >= (daylight_saving_start_month*31+daylight_saving_start_day)) &&
         ((date.month*31+date.day) < (daylight_saving_end_month*31+daylight_saving_end_day)))
    {
@@ -472,7 +472,7 @@ int get_local_time_string(char *time_string, int len)
 
    //  rtc_get_datetime(&date);
 
-   //  min_now = date.hour*MINUTES_IN_HOUR + date.min + cfg->timezone_offset;
+   //  min_now = date.hour*MINUTES_IN_HOUR + date.min + sys->timezone_offset;
 
    //  // check for daylight savings
    //  if (daylight_savings_active(date))
@@ -711,14 +711,14 @@ int get_mow_local_tz(int *mow)
  */
 int set_calendar_html_page(void)
 {
-   switch(cfg->personality)
+   switch(sys->personality)
    {
    default:
    case NO_PERSONALITY:
          STRNCPY(current_calendar_web_page, "/personality.shtml", sizeof(current_calendar_web_page));    
          break;
    case SPRINKLER_USURPER:
-         if (cfg->use_monday_as_week_start)
+         if (sys->use_monday_as_week_start)
          {
             STRNCPY(current_calendar_web_page, "/landscape_monday.shtml", sizeof(current_calendar_web_page));            
          }
@@ -728,7 +728,7 @@ int set_calendar_html_page(void)
          }
          break;
    case SPRINKLER_CONTROLLER:
-         if (cfg->use_monday_as_week_start)
+         if (sys->use_monday_as_week_start)
          {
             STRNCPY(current_calendar_web_page, "/zm_landscape.shtml", sizeof(current_calendar_web_page)); 
          }
@@ -741,7 +741,7 @@ int set_calendar_html_page(void)
          STRNCPY(current_calendar_web_page, "/led_controller.shtml", sizeof(current_calendar_web_page)); 
          break;
    case HVAC_THERMOSTAT:
-         if (cfg->use_monday_as_week_start)
+         if (sys->use_monday_as_week_start)
          {
             STRNCPY(current_calendar_web_page, "/tm_thermostat.shtml", sizeof(current_calendar_web_page));           
          }
@@ -1055,7 +1055,7 @@ int8_t get_datetime(datetime_t *date, int localtime)
    if (localtime)
    {
       // apply timezone offset
-      t += (cfg->timezone_offset * 60); 
+      t += (sys->timezone_offset * 60); 
    }
 
 	timeinfo = gmtime(&t);
@@ -1093,7 +1093,7 @@ int8_t get_datetime_from_unix_time(uint32_t unixtime, datetime_t *date, int *eff
       if (localtime)
       {
          // apply timezone offset
-         *effective_offset = cfg->timezone_offset;
+         *effective_offset = sys->timezone_offset;
          t += (*effective_offset * 60);
       }
 
@@ -1112,7 +1112,7 @@ int8_t get_datetime_from_unix_time(uint32_t unixtime, datetime_t *date, int *eff
       if (localtime)  // TODO: rather than compute if daylight savings is active use a global flag set by fake rtc
       {
          // check for daylight savings
-         if (cfg->daylightsaving_enable                                                             &&
+         if (sys->daylightsaving_enable                                                             &&
             ((date->month*31+date->day) >= (daylight_saving_start_month*31+daylight_saving_start_day)) &&
             ((date->month*31+date->day) < (daylight_saving_end_month*31+daylight_saving_end_day)))
          {
@@ -1357,7 +1357,7 @@ int get_date_string_from_unix_time(uint32_t unixtime, char *date_string, int len
       {
          snprintf(date_string, len, "%04d-%02d-%02d", date.year, date.month, date.day);            
       }
-      else if (cfg->use_archaic_units)
+      else if (sys->use_archaic_units)
       {
          snprintf(date_string, len, "%02d/%02d/%04d", date.month, date.day, date.year);         
       }
@@ -1643,11 +1643,11 @@ int get_sunrise_mod(void)
       return 1;
    }
    
-   times = calculateSolarTimes(dayOfYear, cfg->latitude, cfg->longitude);
+   times = calculateSolarTimes(dayOfYear, sys->latitude, sys->longitude);
    
    if (times.success) 
    {
-      mod = (int)(times.sunrise + cfg->timezone_offset);
+      mod = (int)(times.sunrise + sys->timezone_offset);
    } 
    else 
    {
@@ -1677,11 +1677,11 @@ int get_sunset_mod(void)
       return 1;
    }
    
-   times = calculateSolarTimes(dayOfYear, cfg->latitude, cfg->longitude);
+   times = calculateSolarTimes(dayOfYear, sys->latitude, sys->longitude);
    
    if (times.success) 
    {
-      mod = (int)(times.sunset + cfg->timezone_offset);
+      mod = (int)(times.sunset + sys->timezone_offset);
    } 
    else 
    {

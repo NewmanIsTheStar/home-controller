@@ -49,7 +49,7 @@ void syscfg_system_variable_initialize(void);
 void syscfg_blank_to_v1(void *previous_config);
 
 int syscfg_fd = -1;
-SYSTEM_VARIABLES_T *sys;
+SYSTEM_VARIABLES_T *sys = NULL;
 SYSTEM_VARIABLES_T system_config;
 static int syscfg_dirty_flag = 0;
 static SYSTEM_CONVERSION_T syscfg_info[] =

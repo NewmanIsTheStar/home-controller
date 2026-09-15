@@ -71,10 +71,10 @@ void config_blank_to_v1(void *previous_config)
     cfg->version = 1;
 
     // personality
-    cfg->personality = HOME_CONTROLLER;
+    //cfg->personality = HOME_CONTROLLER;
     
     // home controller
-    cfg->hc_enable = 1;
+    // cfg->hc_enable = 1;
 
     // for(i=0; i<NUM_ROWS(cfg->shelly_device_ip); i++)
     // {
@@ -97,14 +97,14 @@ void config_blank_to_v1(void *previous_config)
     //     cfg->shelly_parameter_name[i][0] = 0;        
     // }
     
-    printf("config_blank_to_v1: setting all automations to undefined\n");
-    for(i=0; i<NUM_ROWS(cfg->automation_name); i++)
-    {
-        cfg->automation_state[i] = AUTOMATION_UNDEFINED;
-        sprintf(cfg->automation_name[i], "automation%02d", i);
-        cfg->automation_triggered[i] = 0;
-        //cfg->automation_state[i] = 0;
-    }
+    // printf("config_blank_to_v1: setting all automations to undefined\n");
+    // for(i=0; i<NUM_ROWS(cfg->automation_name); i++)
+    // {
+    //     cfg->automation_state[i] = AUTOMATION_UNDEFINED;
+    //     sprintf(cfg->automation_name[i], "automation%02d", i);
+    //     cfg->automation_triggered[i] = 0;
+    //     //cfg->automation_state[i] = 0;
+    // }
 }
 
 
@@ -392,12 +392,12 @@ int config_validate(void)
 int config_timeserver_failsafe(void)
 {
     // failsafe - if no timeserver configured try pool.ntp.org
-    if ((cfg->time_server[0][0] == 0) &&
-        (cfg->time_server[1][0] == 0) &&
-        (cfg->time_server[2][0] == 0) &&
-        (cfg->time_server[3][0] == 0))
+    if ((sys->time_server[0][0] == 0) &&
+        (sys->time_server[1][0] == 0) &&
+        (sys->time_server[2][0] == 0) &&
+        (sys->time_server[3][0] == 0))
     {
-        STRNCPY(cfg->time_server[0], "pool.ntp.org", sizeof(cfg->time_server[0]));
+        STRNCPY(sys->time_server[0], "pool.ntp.org", sizeof(sys->time_server[0]));
     }
 
     return(0);
@@ -415,50 +415,50 @@ void config_system_variable_initialize(void)
     printf("Initializing configuration system variables in RAM\n");
 
     // personality
-    cfg->personality = NO_PERSONALITY;
+    sys->personality = NO_PERSONALITY;
 
     // network
-    STRNCPY(cfg->wifi_country, "World Wide", sizeof(cfg->wifi_country));      
-    cfg->wifi_ssid[0] = 0;
-    cfg->wifi_password[0] = 0;
-    cfg->dhcp_enable = 1;
-    STRNCPY(cfg->host_name, APP_NAME, sizeof(cfg->host_name));
-    cfg->ip_address[0] = 0;
-    cfg->network_mask[0] = 0;
+    STRNCPY(sys->wifi_country, "World Wide", sizeof(sys->wifi_country));      
+    sys->wifi_ssid[0] = 0;
+    sys->wifi_password[0] = 0;
+    sys->dhcp_enable = 1;
+    STRNCPY(sys->host_name, APP_NAME, sizeof(sys->host_name));
+    sys->ip_address[0] = 0;
+    sys->network_mask[0] = 0;
     
     // time
-    cfg->timezone_offset = -6*60;
-    cfg->daylightsaving_enable = 1;  
-    STRNCPY(cfg->daylightsaving_start, "Second Sunday in March", sizeof(cfg->daylightsaving_start));
-    STRNCPY(cfg->daylightsaving_end, "First Sunday in November", sizeof(cfg->daylightsaving_end));
-    STRNCPY(cfg->time_server[0], "pool.ntp.org", sizeof(cfg->time_server[0]));
-    STRNCPY(cfg->time_server[1], "time.google.com", sizeof(cfg->time_server[1]));
-    STRNCPY(cfg->time_server[2], "time.facebook.com", sizeof(cfg->time_server[2]));
-    STRNCPY(cfg->time_server[3], "time.windows.com", sizeof(cfg->time_server[3]));        
+    sys->timezone_offset = -6*60;
+    sys->daylightsaving_enable = 1;  
+    STRNCPY(sys->daylightsaving_start, "Second Sunday in March", sizeof(sys->daylightsaving_start));
+    STRNCPY(sys->daylightsaving_end, "First Sunday in November", sizeof(sys->daylightsaving_end));
+    STRNCPY(sys->time_server[0], "pool.ntp.org", sizeof(sys->time_server[0]));
+    STRNCPY(sys->time_server[1], "time.google.com", sizeof(sys->time_server[1]));
+    STRNCPY(sys->time_server[2], "time.facebook.com", sizeof(sys->time_server[2]));
+    STRNCPY(sys->time_server[3], "time.windows.com", sizeof(sys->time_server[3]));        
 
     // syslog
-    STRNCPY(cfg->syslog_server_ip, "spud.badnet", sizeof(cfg->syslog_server_ip));         
-    cfg->syslog_enable = 0;
+    STRNCPY(sys->syslog_server_ip, "spud.badnet", sizeof(sys->syslog_server_ip));         
+    sys->syslog_enable = 0;
     
     // foibles
-    cfg->use_archaic_units = 1;
-    cfg->use_simplified_english = 1;
-    cfg->use_monday_as_week_start = 0;
+    sys->use_archaic_units = 1;
+    sys->use_simplified_english = 1;
+    sys->use_monday_as_week_start = 0;
 
     // gpio
-    for(i=0; i<NUM_ROWS(cfg->gpio_default); i++)
+    for(i=0; i<NUM_ROWS(sys->gpio_default); i++)
     {
-        cfg->gpio_default[i] = GP_UNINITIALIZED;
+        sys->gpio_default[i] = GP_UNINITIALIZED;
     } 
     
     // mqtt
-    cfg->mqtt_user[0] = 0;
-    cfg->mqtt_password[0] = 0;
-    cfg->mqtt_broker_address[0] = 0;
+    sys->mqtt_user[0] = 0;
+    sys->mqtt_password[0] = 0;
+    sys->mqtt_broker_address[0] = 0;
 
     // geolocation
-    cfg->latitude = 29.7604;
-    cfg->longitude = -95.3698; 
+    sys->latitude = 29.7604;
+    sys->longitude = -95.3698; 
 }
 
 

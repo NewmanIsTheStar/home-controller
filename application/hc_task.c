@@ -139,7 +139,7 @@ void hc_task(__unused void *params)
     if (strcasecmp(APP_NAME, "home-controller") == 0)
     {
         // force personality to match single purpose application
-        cfg->personality = HOME_CONTROLLER;
+        sys->personality = HOME_CONTROLLER;
     }    
     
     // printf("home controller task initializing file system...\n");
@@ -157,7 +157,7 @@ void hc_task(__unused void *params)
 
         //dump_text_buffer();
 
-        if ((cfg->personality == HOME_CONTROLLER))
+        if ((sys->personality == HOME_CONTROLLER))
         {
             //TEST TEST TEST
             // printf("Begin shelly test\n");
@@ -636,7 +636,14 @@ int hc_delete_file(void)
 
     if (web.delete_filename[0])
     {
-        err = remove(web.delete_filename);
+        if (err = remove(web.delete_filename))
+        {
+            shell_printf("rm: failed to delete %s\n", web.delete_filename);
+        }
+    }
+    else
+    {
+        shell_printf("rm: error: no filename provided\n");
     }
 
     return(err);

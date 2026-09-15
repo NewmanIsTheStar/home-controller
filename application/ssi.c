@@ -1266,42 +1266,42 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_tz:
         {
-            if (cfg->timezone_offset > 0)
+            if (sys->timezone_offset > 0)
             {
                 // leading + sign added
-                if (cfg->timezone_offset%60 == 0)
+                if (sys->timezone_offset%60 == 0)
                 {
                     // normal time zone with whole number of hours
-                    printed = snprintf(pcInsert, iInsertLen, "+%d", cfg->timezone_offset/60);                 
+                    printed = snprintf(pcInsert, iInsertLen, "+%d", sys->timezone_offset/60);                 
                 }
                 else
                 {   // unusual time zone with hours and minutes
-                    printed = snprintf(pcInsert, iInsertLen, "+%d:%d", cfg->timezone_offset/60, abs(cfg->timezone_offset%60));    
+                    printed = snprintf(pcInsert, iInsertLen, "+%d:%d", sys->timezone_offset/60, abs(sys->timezone_offset%60));    
                 }                
             }
             else
             {
                 // leading - sign automatically added
-                if (cfg->timezone_offset%60 == 0)
+                if (sys->timezone_offset%60 == 0)
                 {
                     // normal time zone with whole number of hours
-                    printed = snprintf(pcInsert, iInsertLen, "%d", cfg->timezone_offset/60);                 
+                    printed = snprintf(pcInsert, iInsertLen, "%d", sys->timezone_offset/60);                 
                 }
                 else
                 {   // unusual time zone with hours and minutes
-                    printed = snprintf(pcInsert, iInsertLen, "%d:%d", cfg->timezone_offset/60, abs(cfg->timezone_offset%60));    
+                    printed = snprintf(pcInsert, iInsertLen, "%d:%d", sys->timezone_offset/60, abs(sys->timezone_offset%60));    
                 }
             }
         }
         break;
         case SSI_dss:
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->daylightsaving_start);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->daylightsaving_start);
         }
         break;
         case SSI_dse:
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->daylightsaving_end);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->daylightsaving_end);
         }
         break;   
         case SSI_ts1:    // ts1
@@ -1309,17 +1309,17 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         case SSI_ts3:    // ts3
         case SSI_ts4:    // ts4
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->time_server[iIndex-SSI_ts1]); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->time_server[iIndex-SSI_ts1]); 
         }  
         break; 
         case SSI_dlse:    // dlse -- daylight saving enable
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->daylightsaving_enable?"checked":""); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->daylightsaving_enable?"checked":""); 
         }  
         break;    
        case SSI_ssid: //ssid
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->wifi_ssid);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->wifi_ssid);
         }               
         break;    
         case SSI_wpass: //wpass
@@ -1330,19 +1330,19 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;    
         case SSI_dhcp: //dhcp
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->dhcp_enable?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->dhcp_enable?"checked":"");
         }               
         break;    
         case SSI_ipad: //ipad
         {
-            if (!cfg->dhcp_enable)
+            if (!sys->dhcp_enable)
             {
-                if (strncasecmp(cfg->ip_address, "automatic+via+DHCP", sizeof(cfg->ip_address))==0)
+                if (strncasecmp(sys->ip_address, "automatic+via+DHCP", sizeof(sys->ip_address))==0)
                 {
-                    //cfg->ip_address[0] = 0;
-                    STRNCPY(cfg->ip_address, web.ip_address_string, sizeof(cfg->ip_address));   
+                    //sys->ip_address[0] = 0;
+                    STRNCPY(sys->ip_address, web.ip_address_string, sizeof(sys->ip_address));   
                 }
-                printed = snprintf(pcInsert, iInsertLen, "%s", cfg->ip_address);
+                printed = snprintf(pcInsert, iInsertLen, "%s", sys->ip_address);
             }
             else
             {
@@ -1352,14 +1352,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;    
         case SSI_nmsk: //nmsk
         {
-            if (!cfg->dhcp_enable)
+            if (!sys->dhcp_enable)
             {
-                if (strncasecmp(cfg->network_mask, "automatic+via+DHCP", sizeof(cfg->network_mask))==0)
+                if (strncasecmp(sys->network_mask, "automatic+via+DHCP", sizeof(sys->network_mask))==0)
                 {
-                    //cfg->network_mask[0] = 0;
-                    STRNCPY(cfg->network_mask, web.network_mask_string, sizeof(cfg->network_mask));  
+                    //sys->network_mask[0] = 0;
+                    STRNCPY(sys->network_mask, web.network_mask_string, sizeof(sys->network_mask));  
                 }                
-                printed = snprintf(pcInsert, iInsertLen, "%s", cfg->network_mask);
+                printed = snprintf(pcInsert, iInsertLen, "%s", sys->network_mask);
             }
             else
             {
@@ -1374,7 +1374,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_slog: //slog
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->syslog_server_ip);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->syslog_server_ip);
         }
         break; 
         case SSI_ghsh: //ghsh
@@ -1388,22 +1388,22 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_dstu: //dstu
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"inches":"mm"); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->use_archaic_units?"inches":"mm"); 
         }                        
         break;  
         case SSI_spdu: //spdu
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"ft/s":"m/s"); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->use_archaic_units?"ft/s":"m/s"); 
         }                        
         break;  
         case SSI_tmpu: //tmpu
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"F":"C"); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->use_archaic_units?"F":"C"); 
         }                        
         break;
         case SSI_uau: //uau
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_archaic_units?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->use_archaic_units?"checked":"");
         }               
         break; 
         case SSI_stck: //stck
@@ -1423,14 +1423,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;   
         case SSI_gatewy: //gatewy
         {
-            if (!cfg->dhcp_enable)
+            if (!sys->dhcp_enable)
             {
-                if (strncasecmp(cfg->gateway, "automatic+via+DHCP", sizeof(cfg->gateway))==0)
+                if (strncasecmp(sys->gateway, "automatic+via+DHCP", sizeof(sys->gateway))==0)
                 {
-                    //cfg->gateway[0] = 0;
-                    STRNCPY(cfg->gateway, web.gateway_string, sizeof(cfg->gateway));                  
+                    //sys->gateway[0] = 0;
+                    STRNCPY(sys->gateway, web.gateway_string, sizeof(sys->gateway));                  
                 }                
-                printed = snprintf(pcInsert, iInsertLen, "%s", cfg->gateway);
+                printed = snprintf(pcInsert, iInsertLen, "%s", sys->gateway);
             }
             else
             {
@@ -1460,17 +1460,17 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;  
         case SSI_simpe: //simpe
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_simplified_english?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->use_simplified_english?"checked":"");
         }  
         break;         
         case SSI_mweek: //mweek
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->use_monday_as_week_start?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->use_monday_as_week_start?"checked":"");
         }  
         break;         
         case SSI_colour: //colour
         {
-            if (cfg->use_simplified_english)
+            if (sys->use_simplified_english)
             {
                 printed = snprintf(pcInsert, iInsertLen, "color");
             }
@@ -1497,17 +1497,17 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;    
         case SSI_sloge: //sloge
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->syslog_enable?"checked":"");
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->syslog_enable?"checked":"");
         } 
         break;
         case SSI_pertyp: //pertyp
         {
-            printed = snprintf(pcInsert, iInsertLen, "%d", cfg->personality);
+            printed = snprintf(pcInsert, iInsertLen, "%d", sys->personality);
         } 
         break; 
         case SSI_wific: //wific
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->wifi_country);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->wifi_country);
         } 
         break;  
         case SSI_gway: //gway
@@ -1517,7 +1517,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_pernme: //pernme
         {
-            switch(cfg->personality)
+            switch(sys->personality)
             {
             case SPRINKLER_USURPER:
                 printed = snprintf(pcInsert, iInsertLen, "Sprinkler Usurper");
@@ -1588,12 +1588,12 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break; 
         case SSI_hostn: // hostn
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->host_name);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->host_name);
         }               
         break; 
         case SSI_mquser: // mquser
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->mqtt_user);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->mqtt_user);
         }               
         break; 
         case SSI_mqpass: // mqpass
@@ -1604,7 +1604,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break; 
         case SSI_mqaddr: // mqaddr
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", cfg->mqtt_broker_address);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys->mqtt_broker_address);
         }               
         break;
         case SSI_uptme: // uptme
@@ -1615,12 +1615,12 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_glat: // lattitude
         {
-            printed = snprintf(pcInsert, iInsertLen, "%f", cfg->latitude); 
+            printed = snprintf(pcInsert, iInsertLen, "%f", sys->latitude); 
         }                        
         break; 
         case SSI_glng: // longitude
         {
-            printed = snprintf(pcInsert, iInsertLen, "%f", cfg->longitude); 
+            printed = snprintf(pcInsert, iInsertLen, "%f", sys->longitude); 
         }                        
         break; 
 
@@ -1687,7 +1687,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         
         case SSI_temp: // temp
         {
-            if (!cfg->use_archaic_units)
+            if (!sys->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.outside_temperature<0?'-':' ', abs(web.outside_temperature/10), abs(web.outside_temperature%10)); 
             }
@@ -1700,7 +1700,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_wind: // wind
         {         
-            if (!cfg->use_archaic_units)
+            if (!sys->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.wind_speed/10, web.wind_speed%10); 
             }
@@ -1713,7 +1713,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;  
         case SSI_rain: // rain
         {
-            if (!cfg->use_archaic_units)
+            if (!sys->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.daily_rain/10, web.daily_rain%10); 
             }
@@ -1740,7 +1740,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
   
         case SSI_rainwk: // rainwk
         {          
-            if (!cfg->use_archaic_units)
+            if (!sys->use_archaic_units)
             {
                 printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.weekly_rain/10, web.weekly_rain%10); 
             }
@@ -1777,7 +1777,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         //     }
         //     else
         //     {
-        //         if (true /*cfg->personality == SPRINKLER_USURPER*/)
+        //         if (true /*sys->personality == SPRINKLER_USURPER*/)
         //         {
         //             printed = snprintf(pcInsert, iInsertLen, "-- : --"); 
         //         }
@@ -1821,7 +1821,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         //     }
         //     else
         //     {                 
-        //         if (true /*cfg->personality == SPRINKLER_USURPER*/)
+        //         if (true /*sys->personality == SPRINKLER_USURPER*/)
         //         {
         //             printed = snprintf(pcInsert, iInsertLen, "--"); 
         //         }
@@ -1952,7 +1952,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 
         // case SSI_lstsvn: //lstsvn
         // {
-        //     if (!cfg->use_archaic_units)
+        //     if (!sys->use_archaic_units)
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.trailing_seven_days_rain/10, web.trailing_seven_days_rain%10); 
         //     }
@@ -1982,15 +1982,15 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
             }
             else
             {
-                switch(cfg->personality)
+                switch(sys->personality)
                 {
                 default:
                 case NO_PERSONALITY:
-                    //printf("redirecting to personality.shtml (%d)\n", cfg->personality);
+                    //printf("redirecting to personality.shtml (%d)\n", sys->personality);
                     printed = snprintf(pcInsert, iInsertLen, "/personality.shtml");
                     break;
                 case SPRINKLER_USURPER:
-                    if (cfg->use_monday_as_week_start)
+                    if (sys->use_monday_as_week_start)
                     {
                         //printf("redirecting to landscape_monday.shtml\n");
                         printed = snprintf(pcInsert, iInsertLen, "/landscape_monday.shtml");
@@ -2002,7 +2002,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     }
                     break;
                 case SPRINKLER_CONTROLLER:
-                    if (cfg->use_monday_as_week_start)
+                    if (sys->use_monday_as_week_start)
                     {
                         //printf("redirecting to landscape_monday.shtml\n");
                         printed = snprintf(pcInsert, iInsertLen, "/zm_landscape.shtml");
@@ -2017,7 +2017,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     printed = snprintf(pcInsert, iInsertLen, "/led_controller.shtml");
                     break;
                 case HVAC_THERMOSTAT:
-                    if (cfg->use_monday_as_week_start)
+                    if (sys->use_monday_as_week_start)
                     {
                         //printf("redirecting to landscape_monday.shtml\n");
                         printed = snprintf(pcInsert, iInsertLen, "/tm_thermostat.shtml");
@@ -2043,14 +2043,14 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
             }
             else
             {            
-                switch(cfg->personality)
+                switch(sys->personality)
                 {
                 default:
                 case NO_PERSONALITY:
                     printed = snprintf(pcInsert, iInsertLen, "/personality.shtml");
                     break;
                 case SPRINKLER_USURPER:
-                    if (cfg->use_monday_as_week_start)
+                    if (sys->use_monday_as_week_start)
                     {
                         printed = snprintf(pcInsert, iInsertLen, "/monday.shtml");
                     }
@@ -2060,7 +2060,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     }
                     break;
                 case SPRINKLER_CONTROLLER:
-                    if (cfg->use_monday_as_week_start)
+                    if (sys->use_monday_as_week_start)
                     {
                         printed = snprintf(pcInsert, iInsertLen, "/monday.shtml");
                     }
@@ -2073,7 +2073,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                     printed = snprintf(pcInsert, iInsertLen, "/led_controller.shtml");
                     break;
                 case HVAC_THERMOSTAT:
-                    if (cfg->use_monday_as_week_start)
+                    if (sys->use_monday_as_week_start)
                     {
                         printed = snprintf(pcInsert, iInsertLen, "/t_schedule.cgi?day=1");
                     }
@@ -2184,7 +2184,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         //     }
         //     else
         //     {
-        //         if (true /*cfg->personality == SPRINKLER_USURPER*/)
+        //         if (true /*sys->personality == SPRINKLER_USURPER*/)
         //         {
         //             printed = snprintf(pcInsert, iInsertLen, "--");  
         //         }
@@ -2316,7 +2316,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;     
         // case SSI_rpage: //rpage
         // {
-        //     switch(cfg->personality)
+        //     switch(sys->personality)
         //     {
         //     default:
         //     case NO_PERSONALITY:
@@ -2395,7 +2395,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         // break;      
         // case SSI_z1dur:
         // {
-        //     if (cfg->personality == SPRINKLER_USURPER)
+        //     if (sys->personality == SPRINKLER_USURPER)
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "Duration");
         //     }
@@ -2937,7 +2937,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //         case SSI_tct:  // thermostat current temperature
 //         {
 //             printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.thermostat_temperature<0?'-':' ', abs(web.thermostat_temperature/10), abs(web.thermostat_temperature%10)); 
-//             // if (!cfg->use_archaic_units)
+//             // if (!sys->use_archaic_units)
 //             // {
 //             //     printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.thermostat_temperature<0?'-':' ', abs(web.thermostat_temperature/10), abs(web.thermostat_temperature%10)); 
 //             // }
@@ -3028,7 +3028,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //                 lower = web.thermostat_heating_set_point - cfg->thermostat_hysteresis;
 //                 upper = web.thermostat_heating_set_point + cfg->thermostat_hysteresis;
 
-//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", cfg->use_archaic_units?"F":"C");
+//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", sys->use_archaic_units?"F":"C");
 //                 break;
 //             default:
 //             case HVAC_OFF:
@@ -3049,7 +3049,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
 //                 lower = web.thermostat_cooling_set_point - cfg->thermostat_hysteresis;
 //                 upper = web.thermostat_cooling_set_point + cfg->thermostat_hysteresis;
 
-//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", cfg->use_archaic_units?"F":"C");
+//                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", sys->use_archaic_units?"F":"C");
 //                 break;
 //             default:
 //             case HVAC_OFF:            

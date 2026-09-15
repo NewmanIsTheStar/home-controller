@@ -270,13 +270,13 @@ int send_syslog_message(char *log_name, const char *format, ...)
     char syslog_message[200];
 
 
-    if (cfg->syslog_enable)
+    if (sys->syslog_enable)
     {
         // cache our ip address for use in syslog messages 
         if (!*ip_address_string) STRNCPY(ip_address_string, ipaddr_ntoa(netif_ip4_addr(&cyw43_state.netif[0])), sizeof(ip_address_string));
 
         // (re)establish socket connection
-        if (syslog_socket < 0) syslog_socket = establish_socket(cfg->syslog_server_ip, /*&syslog_address,*/ 514, SOCK_DGRAM);    
+        if (syslog_socket < 0) syslog_socket = establish_socket(sys->syslog_server_ip, /*&syslog_address,*/ 514, SOCK_DGRAM);    
 
         if (syslog_socket >= 0)
         {
@@ -338,7 +338,7 @@ int check_watchdog_reboot(void)
         web_page_updated = true;  
     }
 
-    if (watchdog_reset && cfg->syslog_enable && !syslog_sent)
+    if (watchdog_reset && sys->syslog_enable && !syslog_sent)
     {
         // log watchdog event
         if ((send_syslog_message("usurper", "REBOOT @ %s [reason = %lu]", web.watchdog_timestring, get_reboot_reason())) > 0)   

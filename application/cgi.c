@@ -418,7 +418,7 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
     //force daylight saving off -- I really hate that this is how it works!  We only get passed the parameter when checkbox is "on"
-    cfg->daylightsaving_enable = 0;
+    sys->daylightsaving_enable = 0;
 
     i = 0;
     while (i < iNumParams)
@@ -451,61 +451,61 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
                         new_value = hour*60 - minute;
                     }
 
-                    cfg->timezone_offset = new_value;
+                    sys->timezone_offset = new_value;
                 }
             }
 
             if (strcasecmp("dsstart", param) == 0)
             {
-                sanitize_daylight_saving_date(value, cfg->daylightsaving_start, sizeof(cfg->daylightsaving_start));
+                sanitize_daylight_saving_date(value, sys->daylightsaving_start, sizeof(sys->daylightsaving_start));
 
             }
 
             if (strcasecmp("dsend", param) == 0)
             {
-                sanitize_daylight_saving_date(value, cfg->daylightsaving_end, sizeof(cfg->daylightsaving_end));
+                sanitize_daylight_saving_date(value, sys->daylightsaving_end, sizeof(sys->daylightsaving_end));
             }
 
             if (strcasecmp("ts1", param) == 0)
             {
-                STRNCPY(cfg->time_server[0], value, sizeof(cfg->time_server[0]));
+                STRNCPY(sys->time_server[0], value, sizeof(sys->time_server[0]));
             }
 
             if (strcasecmp("ts2", param) == 0)
             {
-                STRNCPY(cfg->time_server[1], value, sizeof(cfg->time_server[1]));
+                STRNCPY(sys->time_server[1], value, sizeof(sys->time_server[1]));
             }
 
             if (strcasecmp("ts3", param) == 0)
             {
-                STRNCPY(cfg->time_server[2], value, sizeof(cfg->time_server[2]));
+                STRNCPY(sys->time_server[2], value, sizeof(sys->time_server[2]));
             }
 
             if (strcasecmp("ts4", param) == 0)
             {
-                STRNCPY(cfg->time_server[3], value, sizeof(cfg->time_server[3]));
+                STRNCPY(sys->time_server[3], value, sizeof(sys->time_server[3]));
             }  
 
             if (strcasecmp("dsenable", param) == 0)
             {
                 if (value[0])
                 {
-                    cfg->daylightsaving_enable = 1;
+                    sys->daylightsaving_enable = 1;
                 } 
                 else
                 {
-                    cfg->daylightsaving_enable = 0;
+                    sys->daylightsaving_enable = 0;
                 }                              
             }
 
             if (strcasecmp("glat", param) == 0)
             {
-                sscanf(value, "%lf", &(cfg->latitude));
+                sscanf(value, "%lf", &(sys->latitude));
             }   
             
             if (strcasecmp("glng", param) == 0)
             {
-                sscanf(value, "%lf", &(cfg->longitude));
+                sscanf(value, "%lf", &(sys->longitude));
             }              
         }
 
@@ -623,7 +623,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
     //force dhcp_enable off -- I really hate that this is how it works!  We only get passed the parameter when checkbox is "on"
-    cfg->dhcp_enable = 0;
+    sys->dhcp_enable = 0;
 
     i = 0;
     while (i < iNumParams)
@@ -638,29 +638,29 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             
             if (strcasecmp("ssid", param) == 0)
             {
-                STRNCPY(cfg->wifi_ssid, value, sizeof(cfg->wifi_ssid));
+                STRNCPY(sys->wifi_ssid, value, sizeof(sys->wifi_ssid));
             }
 
             if (strcasecmp("wpass", param) == 0)
             {
                 if (strcasecmp(value, "********") != 0)
                 {
-                    STRNCPY(cfg->wifi_password, value, sizeof(cfg->wifi_password));
+                    STRNCPY(sys->wifi_password, value, sizeof(sys->wifi_password));
                 }
             }   
 
             if (strcasecmp("hostn", param) == 0)
             {
-                STRNCPY(cfg->host_name, value, sizeof(cfg->host_name));
+                STRNCPY(sys->host_name, value, sizeof(sys->host_name));
             }
 
             if (strcasecmp("ipad", param) == 0)
             {
 
-                if (strncasecmp(value, "automatic+via+DHCP", sizeof(cfg->ip_address))!=0)
+                if (strncasecmp(value, "automatic+via+DHCP", sizeof(sys->ip_address))!=0)
                 {
-                    STRNCPY(cfg->ip_address, value, sizeof(cfg->ip_address));
-                    if (!cfg->dhcp_enable)
+                    STRNCPY(sys->ip_address, value, sizeof(sys->ip_address));
+                    if (!sys->dhcp_enable)
                     {
                         STRNCPY(web.ip_address_string, value, sizeof(web.ip_address_string));
                     }                    
@@ -671,10 +671,10 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             if (strcasecmp("nmsk", param) == 0)
             {
 
-                if (strncasecmp(value, "automatic+via+DHCP", sizeof(cfg->network_mask))!=0)
+                if (strncasecmp(value, "automatic+via+DHCP", sizeof(sys->network_mask))!=0)
                 {
-                    STRNCPY(cfg->network_mask, value, sizeof(cfg->network_mask));
-                    if (!cfg->dhcp_enable)
+                    STRNCPY(sys->network_mask, value, sizeof(sys->network_mask));
+                    if (!sys->dhcp_enable)
                     {
                         STRNCPY(web.network_mask_string, value, sizeof(web.network_mask_string));
                     }                     
@@ -685,10 +685,10 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             if (strcasecmp("gatewy", param) == 0)
             {
 
-                if (strncasecmp(value, "automatic+via+DHCP", sizeof(cfg->gateway))!=0)
+                if (strncasecmp(value, "automatic+via+DHCP", sizeof(sys->gateway))!=0)
                 {
-                    STRNCPY(cfg->gateway, value, sizeof(cfg->gateway));
-                    if (!cfg->dhcp_enable)
+                    STRNCPY(sys->gateway, value, sizeof(sys->gateway));
+                    if (!sys->dhcp_enable)
                     {
                         STRNCPY(web.gateway_string, value, sizeof(web.gateway_string));
                     }                     
@@ -700,11 +700,11 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
             {
                 if (value[0])
                 {
-                    cfg->dhcp_enable = 1;
+                    sys->dhcp_enable = 1;
                 } 
                 else
                 {
-                    cfg->dhcp_enable = 0;
+                    sys->dhcp_enable = 0;
                 }                             
             }
 
@@ -1140,7 +1140,7 @@ const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
        
     // vile design caused by web browser not sending unchecked parameters, they must be presumed unchecked
-    cfg->syslog_enable = 0;       
+    sys->syslog_enable = 0;       
 
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
 
@@ -1157,17 +1157,17 @@ const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], cha
             {
                 if (value[0])
                 {
-                    cfg->syslog_enable = 1;
+                    sys->syslog_enable = 1;
                 } 
                 else
                 {
-                    cfg->syslog_enable = 0; // unfortunately will never occur, hence unconditionally forced to zero at start of function 
+                    sys->syslog_enable = 0; // unfortunately will never occur, hence unconditionally forced to zero at start of function 
                 }                              
             }
             
             if (strcasecmp("slog", param) == 0)
             {
-                STRNCPY(cfg->syslog_server_ip, value, sizeof(cfg->syslog_server_ip));
+                STRNCPY(sys->syslog_server_ip, value, sizeof(sys->syslog_server_ip));
             }  
         }
 
@@ -1198,8 +1198,8 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
     int new_use_archaic_units = 0;   
 
     // set off by default
-    cfg->use_simplified_english  = 0; 
-    cfg->use_monday_as_week_start = 0; 
+    sys->use_simplified_english  = 0; 
+    sys->use_monday_as_week_start = 0; 
 
     //dump_parameters(iIndex, iNumParams, pcParam, pcValue);
  
@@ -1228,11 +1228,11 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
             {
                 if (value[0])
                 {
-                    cfg->use_simplified_english = 1;
+                    sys->use_simplified_english = 1;
                 } 
                 else
                 {
-                    cfg->use_simplified_english  = 0;  // this should never happen, since the parameter is only passed if "on"
+                    sys->use_simplified_english  = 0;  // this should never happen, since the parameter is only passed if "on"
                 }   
             }   
 
@@ -1240,11 +1240,11 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
             {
                 if (value[0])
                 {
-                    cfg->use_monday_as_week_start = 1;
+                    sys->use_monday_as_week_start = 1;
                 } 
                 else
                 {
-                    cfg->use_monday_as_week_start = 0;  // this should never happen, since the parameter is only passed if "on"
+                    sys->use_monday_as_week_start = 0;  // this should never happen, since the parameter is only passed if "on"
                 } 
             }                                                                   
         }
@@ -1256,9 +1256,9 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
     set_calendar_html_page();  
 
     // check for change in units
-    if (new_use_archaic_units != cfg->use_archaic_units)
+    if (new_use_archaic_units != sys->use_archaic_units)
     {
-        cfg->use_archaic_units = new_use_archaic_units;
+        sys->use_archaic_units = new_use_archaic_units;
 
         switch (new_use_archaic_units)
         {
@@ -1443,7 +1443,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
                 switch(new_personality)
                 {
                     case REMOTE_SWITCH:
-                        cfg->personality = new_personality;
+                        sys->personality = new_personality;
                         break;                                              
                     
                     default:
@@ -1578,7 +1578,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //     }    
 
 //     // normally open must be used in controller mode
-//     if (cfg->personality == SPRINKLER_CONTROLLER)
+//     if (sys->personality == SPRINKLER_CONTROLLER)
 //     {
 //         cfg->relay_normally_open = 1;
 //     }
@@ -1586,7 +1586,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //     config_changed();
 
 //     // Send the next page back to the user
-//     if (cfg->personality == SPRINKLER_CONTROLLER)
+//     if (sys->personality == SPRINKLER_CONTROLLER)
 //     {
 //         if (!web.irrigation_test_enable)
 //         {    
@@ -1634,8 +1634,8 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 
             if (strcasecmp("wific", param) == 0)
             {
-                STRNCPY(cfg->wifi_country, value, sizeof(cfg->wifi_country));
-                deplus_string(cfg->wifi_country, sizeof(cfg->wifi_country));             
+                STRNCPY(sys->wifi_country, value, sizeof(sys->wifi_country));
+                deplus_string(sys->wifi_country, sizeof(sys->wifi_country));             
             }                                                         
         }
 
@@ -1668,7 +1668,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //     xTaskNotifyGiveIndexed(worker_tasks[0].task_handle, 0);
                
 //     // Send the next page back to the user
-//     if (cfg->personality == SPRINKLER_CONTROLLER)
+//     if (sys->personality == SPRINKLER_CONTROLLER)
 //     {
 //         if (!web.irrigation_test_enable)
 //         {    
@@ -2244,7 +2244,7 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
                     case SETPOINT_TEMP_INVALID_FAN:
                     case SETPOINT_TEMP_INVALID_OFF:
                     case SETPOINT_TEMP_UNDEFINED:
-                        if (cfg->use_archaic_units)
+                        if (sys->use_archaic_units)
                         {
                             cfg->setpoint_temperaturex10[web.thermostat_period_row] = SETPOINT_TEMP_DEFAULT_F;
                         }
@@ -2254,7 +2254,7 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
                         }
                         break;
                     default:  // reject temps below absolute zero
-                        if (cfg->use_archaic_units)
+                        if (sys->use_archaic_units)
                         {
                             if (cfg->setpoint_temperaturex10[web.thermostat_period_row] < 4600)
                             {
@@ -2481,7 +2481,7 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
 //         {
 //             web.thermostat_period_row = i;
 //             cfg->setpoint_start_mow[i] = web.thermostat_day*24*60;
-//             if (cfg->use_archaic_units)
+//             if (sys->use_archaic_units)
 //             {
 //                 cfg->setpoint_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
 //                 cfg->setpoint_heating_temperaturex10[i] = SETPOINT_TEMP_DEFAULT_F;
@@ -3046,7 +3046,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
             case GP_INPUT_PULLED_LOW:
             case GP_OUTPUT_HIGH:
             case GP_OUTPUT_LOW:
-                cfg->gpio_default[gpio_number] = gpio_value;
+                sys->gpio_default[gpio_number] = gpio_value;
                 break;
         }
     }
@@ -3956,20 +3956,20 @@ const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char 
             
             if (strcasecmp("mquser", param) == 0)
             {
-                STRNCPY(cfg->mqtt_user, value, sizeof(cfg->mqtt_user));
+                STRNCPY(sys->mqtt_user, value, sizeof(sys->mqtt_user));
             }
 
             if (strcasecmp("mqpass", param) == 0)
             {
                 if (strcasecmp(value, "********") != 0)
                 {
-                    STRNCPY(cfg->mqtt_password, value, sizeof(cfg->mqtt_password));
+                    STRNCPY(sys->mqtt_password, value, sizeof(sys->mqtt_password));
                 }
             }   
 
             if (strcasecmp("mqaddr", param) == 0)
             {
-                STRNCPY(cfg->mqtt_broker_address, value, sizeof(cfg->mqtt_broker_address));
+                STRNCPY(sys->mqtt_broker_address, value, sizeof(sys->mqtt_broker_address));
             }            
         }
 

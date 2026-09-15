@@ -386,7 +386,10 @@ static void execute_shell_command(const char* cmd)
     }         
     else if (strncmp(cmd, "rm ", 3) == 0) 
     {
-        if (strlen(cmd) > 4) remove((char *)(cmd+3));  
+        //if (strlen(cmd) > 4) remove((char *)(cmd+3));  
+
+        STRNCPY(web.delete_filename, ((char *)(cmd+3)), sizeof(web.delete_filename));
+        hc_queue_send(HC_CMD_DELETE_FILE);  
     } 
     else if (strncmp(cmd, "mv ", 3) == 0) 
     {        

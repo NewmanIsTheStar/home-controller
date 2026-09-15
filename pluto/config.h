@@ -87,31 +87,31 @@ typedef struct
 {   
     // ***system config start ***
     int version;
-    PERSONALITY_E personality;
-    char wifi_ssid[32];
-    char wifi_password[32];
-    char wifi_country[32];
-    char dhcp_enable;
-    char host_name[32];
-    char ip_address[32];
-    char network_mask[32];    
-    char gateway[32];      
-    int timezone_offset;
-    char daylightsaving_enable;
-    char daylightsaving_start[32];
-    char daylightsaving_end[32];
-    char time_server[4][32];
-    int syslog_enable;
-    char syslog_server_ip[32];    
-    int use_archaic_units; 
-    int use_simplified_english;
-    int use_monday_as_week_start; 
-    GPIO_DEFAULT_T gpio_default[29];
-    char mqtt_user[32];
-    char mqtt_password[32];
-    char mqtt_broker_address[32];
-    double latitude;
-    double longitude; 
+    PERSONALITY_E xpersonality;
+    char xwifi_ssid[32];
+    char xwifi_password[32];
+    char xwifi_country[32];
+    char xdhcp_enable;
+    char xhost_name[32];
+    char xip_address[32];
+    char xnetwork_mask[32];    
+    char xgateway[32];      
+    int xtimezone_offset;
+    char xdaylightsaving_enable;
+    char xdaylightsaving_start[32];
+    char xdaylightsaving_end[32];
+    char xtime_server[4][32];
+    int sxyslog_enable;
+    char xsyslog_server_ip[32];    
+    int xuse_archaic_units; 
+    int xuse_simplified_english;
+    int xuse_monday_as_week_start; 
+    GPIO_DEFAULT_T xgpio_default[29];
+    char xmqtt_user[32];
+    char xmqtt_password[32];
+    char xmqtt_broker_address[32];
+    double xlatitude;
+    double xlongitude; 
     // ***system config end*** 
     uint16_t system_crc;
 
