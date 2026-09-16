@@ -240,6 +240,9 @@ void boss_task(__unused void *params)
         }
     }
 
+    // transition TEST TEST TEST
+    //picofs_copy("config.bin", "application.cfg");
+
     // get application configuration from flash
     config_read(CONFIG_FILE); 
 
@@ -254,7 +257,7 @@ void boss_task(__unused void *params)
     }
 
     // transition TEST TEST TEST
-    memcpy((char *)sys, (char *)cfg, sizeof(SYSTEM_VARIABLES_T));
+    //memcpy((char *)sys, (char *)cfg, sizeof(SYSTEM_VARIABLES_T));
 
     // default gpio settings  -- primarily for unused hardware connected to gpios
     set_gpio_defaults();

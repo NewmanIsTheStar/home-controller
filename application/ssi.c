@@ -2602,12 +2602,12 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
             if (cfg->automation_state[iIndex-SSI_autoe1] == AUTOMATION_ENABLED)
             {
                 printed = snprintf(pcInsert, iInsertLen, "checked");
-                printf("auto%02d checked\n", iIndex-SSI_autoe1);
+                //printf("auto%02d checked\n", iIndex-SSI_autoe1);
             }   
             else
             {
                 printed = 0;
-                printf("auto%02d NOT checked\n", iIndex-SSI_autoe1);
+                //printf("auto%02d NOT checked\n", iIndex-SSI_autoe1);
             }      
         }
         break;            

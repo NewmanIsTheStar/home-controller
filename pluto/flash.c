@@ -45,15 +45,15 @@ int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
     {
     default:
     case CONFIG_FILE:
-        printf("Checking for configuration in config.bin\n");
+        printf("Checking for application configuration in application.cfg\n");
 
-        return_status = stat("config.bin", &file_status);
+        return_status = stat("application.cfg", &file_status);
 
         //err = config_read_from_file("config.bin");
-        err = config_mmap("config.bin");            
+        err = config_mmap("application.cfg");            
         if (err)
         {
-            printf("Failed to open file: config.bin\n");
+            printf("Failed to open file: application.cfg\n");
         }        
         break;
     case CONFIG_PENULTIMATE_FLASH_SECTOR:        
