@@ -15,7 +15,11 @@ target_sources(${PROJECT_NAME} PRIVATE
     wifi.c
     ping_core.c
     memory_wrappers.c
-    syscfg.c
+    syscfg_file.c
+    syscfg_conversion.c
+    syscfg_change.c
+    syscfg_read.c
+    syscfg_write.c
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

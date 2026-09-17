@@ -12,8 +12,12 @@ int syscfg_read(void);
 int syscfg_write(void);
 void syscfg_changed(void);
 bool syscfg_dirty(bool clear_flag);
-int syscfg_timeserver_failsafe(void);
-
+int syscfg_map_file(void);
+int syscfg_mmap(char *filename);
+int syscfg_sync_file(void);
+void *syscfg_get_flash_location(void);
+bool syscfg_compare_flash_ram(bool stop_at_first_difference, bool print_differences);
+int syscfg_validate(void);
 
 // device personality
 typedef enum
@@ -28,15 +32,6 @@ typedef enum
     NO_PERSONALITY             =   4294967295     // force enum to be 4 bytes long 
 } PERSONALITY_E;
 
-// device personality
-// typedef enum
-// {
-//     AUTOMATION_UNDEFINED          =   0,            
-//     AUTOMATION_ENABLED            =   1,           
-//     AUTOMATION_DISABLED           =   2,          
-    
-//     NO_AUTOMATION                 =   4294967295     // force enum to be 4 bytes long 
-// } AUTOMATION_STATE_E;
 
 // non-vol structure conversion info
 typedef struct
@@ -102,10 +97,10 @@ typedef struct
     // ***system config end*** 
     uint16_t crc;
     
-} SYSTEM_VARIABLES_T;  //_VERSION_1
+} SYSTEM_CONFIG_T;  //_VERSION_1
 
 // extern for all that #include this header file
-extern SYSTEM_VARIABLES_T *sys;
+extern SYSTEM_CONFIG_T *sys;
 
 
 // previous non-volatile data stuctures -- used when upgrading
