@@ -36,7 +36,7 @@
 
 #define SYSTEM_CONFIG_FILE "system.cfg"
 
-int syscfg_fd = -1;
+
 SYSTEM_CONFIG_T *sys = NULL;
 SYSTEM_CONFIG_T system_config;
 
@@ -107,6 +107,7 @@ void *syscfg_get_flash_location(void)
  */
 int syscfg_mmap(char *filename) 
 {
+    int syscfg_fd = -1;
     size_t FILE_SIZE = 4096; // 4 KB (typically matches 1 memory page)
     char *map;
 
@@ -142,5 +143,7 @@ int syscfg_mmap(char *filename)
     // point cfg at the mapped file
     sys = (SYSTEM_CONFIG_T *)map;
 
+    close(syscfg_fd);
+    
     return EXIT_SUCCESS;
 }

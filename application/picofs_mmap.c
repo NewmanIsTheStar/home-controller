@@ -196,16 +196,20 @@ int picofs_munmap(void *addr, size_t len)
         // RAM associated with a file descriptor (i.e. points within the cache)
         if (custom_fds[fd].mmap_ref_count > 0)
         {
-            custom_fds[fd].mmap_ref_count--;
+            custom_fds[fd].mmap_ref_count--;   // TODO: needs to be atomic
         }
 
-        //TODO: release fd if it file was closed but fd was held open by this mapping 
+        // release fd if it file was closed but fd was held open by this mapping
+        if ((custom_fds[fd].mmap_delayed_close) && (custom_fds[fd].mmap_ref_count == 0))
+        {
+            close(fd);
+        }
         
         return(0);
     }
     else
     {
-        // RAM not associated with a file descriptor so assume anonymouse mapping and free the malloc'd buffer
+        // RAM not associated with a file descriptor so assume anonymous mapping and free the malloc'd buffer
         if (addr != NULL && addr != MAP_FAILED) 
         {
             free(addr);

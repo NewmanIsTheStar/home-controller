@@ -103,7 +103,8 @@ typedef struct
     char *data;                   // flash or RAM: data contained in the file 
     size_t data_len;              // flash or RAM: data length
     size_t data_offset;           // flash or RAM: offset used by standard C library functions e.g. fread
-    int mmap_ref_count;           // number of active mappings   
+    int mmap_ref_count;           // number of active mappings
+    bool mmap_delayed_close;      // close was postponed due to an active mapping   
     u8_t rollover_fid;            // previous fid pending deletion  
 } PICOFS_FD_T;
 

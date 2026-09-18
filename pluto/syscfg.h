@@ -8,16 +8,7 @@
 
 #include <limits.h>
 
-int syscfg_read(void);
-int syscfg_write(void);
-void syscfg_changed(void);
-bool syscfg_dirty(bool clear_flag);
-int syscfg_map_file(void);
-int syscfg_mmap(char *filename);
-int syscfg_sync_file(void);
-void *syscfg_get_flash_location(void);
-bool syscfg_compare_flash_ram(bool stop_at_first_difference, bool print_differences);
-int syscfg_validate(void);
+
 
 // device personality
 typedef enum
@@ -99,8 +90,27 @@ typedef struct
     
 } SYSTEM_CONFIG_T;  //_VERSION_1
 
+
+// prototypes
+//int syscfg_read(char *filename, SYSTEM_CONVERSION_T conversion_table[], int conversion_table_rows, void **configuration_buffer);
+int syscfg_read(void);
+int syscfg_write(void);
+void syscfg_changed(void);
+bool syscfg_dirty(bool clear_flag);
+int syscfg_map_file(void);
+int syscfg_mmap(char *filename);
+int syscfg_sync_file(void);
+void *syscfg_get_flash_location(void);
+bool syscfg_compare_flash_ram(bool stop_at_first_difference, bool print_differences);
+int syscfg_validate(void);
+
+
 // extern for all that #include this header file
 extern SYSTEM_CONFIG_T *sys;
+// extern SYSTEM_CONVERSION_T syscfg_info[];
+// extern int syscfg_info_rows;
+
+
 
 
 // previous non-volatile data stuctures -- used when upgrading

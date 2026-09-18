@@ -97,13 +97,23 @@ int picofs_close_file(int fd, bool disable_purge)
 {
     int err = -1;
 
+    // if mmap is active postpone the close
+    if (custom_fds[fd].mmap_ref_count > 0)
+    {
+        // close will be called by munmap() when the last mapping is released
+        custom_fds[fd].mmap_delayed_close = true;
+
+        err = 0;
+        return(err);
+    }
+
     // flush file to flash
     err = picofs_sync_file(fd, disable_purge);
 
     // clear the cache
-    picofs_deallocate_cache(fd);   //TODO: should not delete cache if active mmap
+    picofs_deallocate_cache(fd);
 
-    // clear out the remainder of the file descriptor
+    // clear out the file descriptor
     custom_fds[fd].file = NULL;
     custom_fds[fd].file_len = 0;
     custom_fds[fd].file_trailer = NULL;
@@ -111,6 +121,8 @@ int picofs_close_file(int fd, bool disable_purge)
     custom_fds[fd].data_len = 0;
     custom_fds[fd].data_offset = 0;
     custom_fds[fd].rollover_fid = FS_INVALID_FID;
+    custom_fds[fd].mmap_ref_count = 0;
+    custom_fds[fd].mmap_delayed_close = false;
 
     return(err);
 }

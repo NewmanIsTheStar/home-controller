@@ -165,7 +165,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
 
                         if (!disable_fid_rollover && (custom_fds[fd].file_trailer->file_sequence == FS_MAX_SEQ))
                         {
-                            // out of sequence numbers so change to new FID and schedule delete old file
+                            // out of sequence numbers so change to new FID and schedule deletion of the old file
                             custom_fds[fd].rollover_fid = custom_fds[fd].file_trailer->file_id;
                             custom_fds[fd].file_trailer->file_id = picofs_get_new_file_id();
                             custom_fds[fd].file_trailer->file_sequence = 0;
@@ -258,6 +258,7 @@ int picofs_fd_new(int fd, int flags, char *name)
         custom_fds[fd].data_len = 0;
         custom_fds[fd].data_offset = 0;
         custom_fds[fd].mmap_ref_count = 0;
+        custom_fds[fd].mmap_delayed_close = false;
         
         err = picofs_create_file_trailer(fd, name);
     }
@@ -313,6 +314,7 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
             custom_fds[fd].data_len = 0;
             custom_fds[fd].data_offset = 0;
             custom_fds[fd].mmap_ref_count = 0;
+            custom_fds[fd].mmap_delayed_close = false;
 
             // NB we rely on the cache not being touched here during double initialization sequences
         }

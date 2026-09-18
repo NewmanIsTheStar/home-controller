@@ -42,6 +42,7 @@
  * 
  * \return 0 on success, -1 on error
  */
+//int syscfg_read(char *filename, SYSTEM_CONVERSION_T conversion_table[], int conversion_table_rows, void **configuration_buffer)
 int syscfg_read(void)
 {
     int err = 0;

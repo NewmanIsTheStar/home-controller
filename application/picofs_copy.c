@@ -114,7 +114,7 @@ int picofs_copy(const char *src, const char *dst)
             return(err);
         }
 
-        if (picofs_open_by_name(fd, src, O_WRONLY))
+        if (picofs_open_by_name(fd, src, O_WRONLY))  //TODO: open read only to allow copying open files (i.e. last synced version)
         {
             errno = ENOENT; // File not found
             xSemaphoreGive(picofs_mutex);
@@ -135,7 +135,7 @@ int picofs_copy(const char *src, const char *dst)
             }
 
             file_id = existing_dst->file_id;
-            file_sequence = existing_dst->file_sequence + 1; 
+            file_sequence = existing_dst->file_sequence + 1;   //TODO: handle FID rollover -- will happen automatically if dst opened for write (will need cache resizing if dst smaller than src)
         }
         else    
         {

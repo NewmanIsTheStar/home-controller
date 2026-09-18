@@ -32,6 +32,7 @@
 
 #include "flash.h"
 #include "picofs.h"
+#include "syscfg.h"
 
 //#define DISABLE_SYSCFG_UPGRADE
 
@@ -39,10 +40,12 @@
 void syscfg_blank_to_v1(void *previous_config);
 
 // table of conversion functions -- these are run sequentially from the starting version to convert to the latest version
-static SYSTEM_CONVERSION_T syscfg_info[] =
+SYSTEM_CONVERSION_T syscfg_info[] =
 {
     {1,      offsetof(SYSTEM_CONFIG_T, version),   offsetof(SYSTEM_CONFIG_T, crc),   &syscfg_blank_to_v1},                 
 };
+
+int syscfg_info_rows = 0; //NUM_ROWS(syscfg_info);
 
 /*!
  * \brief Check configuration is valid and upgrade if necessary 

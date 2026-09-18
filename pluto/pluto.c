@@ -50,6 +50,7 @@
 #include "pluto.h"
 #include "shell.h"
 #include "picofs.h"
+#include "syscfg.h"
 
 #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
@@ -228,6 +229,7 @@ void boss_task(__unused void *params)
     printf("Searching for configuration...\n");
     
     // get system configuration from flash
+    //syscfg_read("system.cfg", syscfg_info, syscfg_info_rows, (void **)&sys); 
     syscfg_read(); 
 
     // check system configuration
