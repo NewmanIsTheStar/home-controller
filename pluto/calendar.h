@@ -53,6 +53,7 @@ bool sntp_alive(void);
 int get_delta_string_from_delta_seconds(char *string, int len, uint32_t delta_seconds);
 int get_sunrise_mod(void);
 int get_sunset_mod(void);
+int calendar_timeserver_failsafe(void);
 
 #ifdef FAKE_RTC
 uint32_t rtc_update(void);

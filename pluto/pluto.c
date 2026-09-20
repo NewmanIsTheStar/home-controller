@@ -590,7 +590,7 @@ int set_realtime_clock(void)
     setTimeSec(0);  //1970
 
     // sntp timeservers
-    config_timeserver_failsafe();
+    calendar_timeserver_failsafe();
     sntp_setservername(0, sys->time_server[0]); 
     sntp_setservername(1, sys->time_server[1]); 
     sntp_setservername(2, sys->time_server[2]); 

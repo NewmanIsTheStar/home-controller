@@ -37,41 +37,41 @@
 #define SYSTEM_CONFIG_FILE "system.cfg"
 
 
-SYSTEM_CONFIG_T *sys = NULL;
-SYSTEM_CONFIG_T system_config;
+//SYSTEM_CONFIG_T *sys = NULL;
+//SYSTEM_CONFIG_T system_config;
 
 
 
-/*!
- * \brief Copy configuration from flash to RAM
- * 
- * \return 0 on success, -1 on error
- */
-int syscfg_map_file(void)
-{
-    int err = 0;
-    struct stat file_status;
+// /*!
+//  * \brief Copy configuration from flash to RAM
+//  * 
+//  * \return 0 on success, -1 on error
+//  */
+// int syscfg_map_file(void)
+// {
+//     int err = 0;
+//     struct stat file_status;
 
-    // map file into RAM, create the file if it doesn't already exist
-    err = syscfg_mmap(SYSTEM_CONFIG_FILE);
-    if (err)
-    {
-        printf("syscfg_map_file: failed to mmap file: %s\n", SYSTEM_CONFIG_FILE);
-    }          
+//     // map file into RAM, create the file if it doesn't already exist
+//     err = syscfg_mmap(SYSTEM_CONFIG_FILE);
+//     if (err)
+//     {
+//         printf("syscfg_map_file: failed to mmap file: %s\n", SYSTEM_CONFIG_FILE);
+//     }          
     
-    return(err);
-}
+//     return(err);
+// }
 
 /*!
  * \brief Copy configuration from RAM into flash
  * 
  * \return 0 on success
  */
-int syscfg_sync_file(void)
+int syscfg_sync_file(void *configuration_buffer, int configuration_len)
 {
     int err = 0;
 
-    err = picofs_msync(sys, sizeof(SYSTEM_CONFIG_T), MS_SYNC);
+    err = picofs_msync(configuration_buffer, configuration_len, MS_SYNC);
 
     return(err);
 }
@@ -81,13 +81,13 @@ int syscfg_sync_file(void)
  *
  * \return pointer to file in flash memory or NULL if not found
  */
-void *syscfg_get_flash_location(void)
+void *syscfg_get_flash_location(char *filename)
 {
     void *location = NULL;
     FILE_TRAILER_T *config_trailer = NULL;
 
 
-    if (!picofs_find_file(SYSTEM_CONFIG_FILE, FS_INVALID_FID, &config_trailer))
+    if (!picofs_find_file(filename, FS_INVALID_FID, &config_trailer))
     {
         location = (char *)config_trailer + sizeof(FILE_TRAILER_T) - config_trailer->file_size;
     }
@@ -105,7 +105,7 @@ void *syscfg_get_flash_location(void)
  * 
  * \return nothing
  */
-int syscfg_mmap(char *filename) 
+int syscfg_mmap(char *filename, void **configuration_buffer) 
 {
     int syscfg_fd = -1;
     size_t FILE_SIZE = 4096; // 4 KB (typically matches 1 memory page)
@@ -140,8 +140,9 @@ int syscfg_mmap(char *filename)
     }
     //printf("syscfg_mmap: @%p\n", map);
     
-    // point cfg at the mapped file
-    sys = (SYSTEM_CONFIG_T *)map;
+    // update the configuration pointer
+    //sys = (SYSTEM_CONFIG_T *)map;
+    *configuration_buffer = map;
 
     close(syscfg_fd);
     

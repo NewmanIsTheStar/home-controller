@@ -8,6 +8,7 @@
 
 #include <limits.h>
 #include "syscfg.h"
+#include "system_config.h"
 
 typedef enum
 {

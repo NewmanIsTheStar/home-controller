@@ -16,10 +16,11 @@ target_sources(${PROJECT_NAME} PRIVATE
     ping_core.c
     memory_wrappers.c
     syscfg_file.c
-    syscfg_conversion.c
     syscfg_change.c
     syscfg_read.c
     syscfg_write.c
+    syscfg_validate.c
+    system_config.c
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

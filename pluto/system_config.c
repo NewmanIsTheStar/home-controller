@@ -32,9 +32,13 @@
 
 #include "flash.h"
 #include "picofs.h"
+#include "system_config.h"
 #include "syscfg.h"
 
 //#define DISABLE_SYSCFG_UPGRADE
+
+SYSTEM_CONFIG_T *sys = NULL;
+
 
 // system configuration conversion functions
 void syscfg_blank_to_v1(void *previous_config);
@@ -45,77 +49,9 @@ SYSTEM_CONVERSION_T syscfg_info[] =
     {1,      offsetof(SYSTEM_CONFIG_T, version),   offsetof(SYSTEM_CONFIG_T, crc),   &syscfg_blank_to_v1},                 
 };
 
-int syscfg_info_rows = 0; //NUM_ROWS(syscfg_info);
-
-/*!
- * \brief Check configuration is valid and upgrade if necessary 
- * 
- * \return 0 on success, -1 on error
- */
-int syscfg_validate(void)
-{
-    int err = 0;
-    int i = 0;
-    int version_from_flash = 0;
-    uint16_t crc_from_flash = 0;
-    uint16_t calculated_crc = 0;
-    int latest_valid_syscfg_version = 0;
-    void *previous_config = NULL;
-    CONFIG_TYPE_T syscfg_type;
+int syscfg_info_rows = NUM_ROWS(syscfg_info);
 
 
-    // read configuration into RAM
-    err = syscfg_map_file(); 
-
-    if (!err)
-    {
-        // check for valid configuration
-        for(i=0; i < NUM_ROWS(syscfg_info); i++)
-        {
-            version_from_flash = *((int *)((uint8_t *)sys + syscfg_info[i].version_offset));
-            crc_from_flash = *((uint16_t *)((uint8_t *)sys + syscfg_info[i].crc_offset));
-            calculated_crc = crc_buffer((uint8_t *)sys, syscfg_info[i].crc_offset);        
-
-            if ((version_from_flash == syscfg_info[i].version) && (crc_from_flash == calculated_crc))
-            {
-                printf("Found valid system system configuration version %d\n", version_from_flash);
-                latest_valid_syscfg_version = version_from_flash;
-                break;
-            }
-        }
-    }
-    
-
-#ifndef DISABLE_SYSCFG_UPGRADE
-    // obtain pointer to previous config if available
-    if (version_from_flash > 0)
-    {
-        previous_config = syscfg_get_flash_location();  //TODO: should have this pointer from the file open
-    }
-
-    // upgrade configuration sequentially to latest version 
-    for(i=0; i < NUM_ROWS(syscfg_info); i++)
-    {
-        if (latest_valid_syscfg_version < syscfg_info[i].version)
-        {
-            syscfg_info[i].upgrade_function(previous_config);
-        }
-    }
-#else
-    if (latest_valid_syscfg_version < syscfg_info[i].version)
-    {
-        for (;;)
-        {
-            printf("BAD CONFIG!\n");
-            hex_dump(sys, sizeof(SYSTEM_VARIABLES_T));
-
-            SLEEP_MS(10000);
-        }
-    }
-#endif
-
-    return(err);
-}
 
 /*!
  * \brief Set default values for configuration v1

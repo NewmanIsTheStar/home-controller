@@ -32,10 +32,14 @@
 
 #include "flash.h"
 #include "picofs.h"
+#include "syscfg.h"
+#include "system_config.h"
 
 
 //#define DISABLE_SYSCFG_VALIDATION (1)
 
+extern SYSTEM_CONVERSION_T syscfg_info[];
+extern int syscfg_info_rows;
 
 /*!
  * \brief Copy the configuration from flash into RAM.  Set default values if flash is corrupt.
@@ -49,7 +53,7 @@ int syscfg_read(void)
 
 #ifndef DISABLE_SYSCFG_VALIDATION
     // read configuration and upgrade to the latest version if necessary
-    err = syscfg_validate(); 
+    err = syscfg_validate("system.cfg", syscfg_info, syscfg_info_rows, (void **)&sys); 
 #else
     // read configuration from flash
     err = syscfg_map_file();  

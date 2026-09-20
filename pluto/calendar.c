@@ -1691,3 +1691,22 @@ int get_sunset_mod(void)
    
    return(mod);
 }
+
+/*!
+ * \brief Set a default time server in config if all four time server entries are blank
+ * 
+ * \return 0 on success, -1 on error
+ */
+int calendar_timeserver_failsafe(void)
+{
+    // failsafe - if no timeserver configured try pool.ntp.org
+    if ((sys->time_server[0][0] == 0) &&
+        (sys->time_server[1][0] == 0) &&
+        (sys->time_server[2][0] == 0) &&
+        (sys->time_server[3][0] == 0))
+    {
+        STRNCPY(sys->time_server[0], "pool.ntp.org", sizeof(sys->time_server[0]));
+    }
+
+    return(0);
+}
