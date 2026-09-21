@@ -13,7 +13,9 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 #include <sys/stat.h>
@@ -38,6 +40,8 @@
 
 extern SYSTEM_CONVERSION_T syscfg_info[];
 extern int syscfg_info_rows;
+extern SYSTEM_CONVERSION_T appcfg_info[];
+extern int appcfg_info_rows;
 
 // prototypes
 int syscfg_sync_changes(char *filename, void *configuration_buffer, int configuration_len, SYSTEM_CONVERSION_T conversion_table[], int conversion_table_rows);
@@ -65,6 +69,7 @@ int syscfg_write(void)
         } while (syscfg_dirty(true));
 
         syscfg_sync_changes("system.cfg", sys, sizeof(SYSTEM_CONFIG_T), syscfg_info, syscfg_info_rows);
+        syscfg_sync_changes("application.cfg", cfg, sizeof(NON_VOL_VARIABLES_T), appcfg_info, appcfg_info_rows);        
     }  
     #endif
 

@@ -49,7 +49,9 @@
 #include "ssi.h"
 #include "flash.h"
 #include "utility.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "watchdog.h"
 #include "pluto.h"
 // #include "led_strip.h"
@@ -352,7 +354,7 @@ int picofs_allocate_cache(int fd)
         if (custom_fds[fd].cache != NULL)
         {
             custom_fds[fd].cache_len = cache_size;
-
+            //printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
             err = 0;            
         }
     }

@@ -13,7 +13,9 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 #include <sys/stat.h>
@@ -105,7 +107,7 @@ void *syscfg_get_flash_location(char *filename)
  * 
  * \return nothing
  */
-int syscfg_mmap(char *filename, void **configuration_buffer) 
+int syscfg_mmap(char *filename, void **configuration_buffer, size_t config_size) 
 {
     int syscfg_fd = -1;
     size_t FILE_SIZE = 4096; // 4 KB (typically matches 1 memory page)
@@ -120,8 +122,8 @@ int syscfg_mmap(char *filename, void **configuration_buffer)
     }
     //printf("config_mmap: config_fd = %d\n", config_fd);
 
-    // adjust the file length to match the current configuration version TODO: make this the largest known config to support conversion to a smaller config
-    if (ftruncate(syscfg_fd, sizeof(SYSTEM_CONFIG_T)) == -1) 
+    // adjust the file length to match the current configuration version 
+    if (ftruncate(syscfg_fd, config_size) == -1) 
     {
         perror("syscfg_mmap: Error setting file size");
         close(syscfg_fd);

@@ -31,12 +31,16 @@
 #include "cgi.h"
 
 #include "flash.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "pluto.h"
 #include "ssi.h"
 #include "time.h"
 #include "utility.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 
 #include <stdio.h>
 #include <math.h>

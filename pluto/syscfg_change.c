@@ -13,7 +13,9 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 #include <sys/stat.h>

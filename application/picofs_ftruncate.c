@@ -48,7 +48,9 @@
 #include "ssi.h"
 #include "flash.h"
 #include "utility.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "watchdog.h"
 #include "pluto.h"
 // #include "led_strip.h"
@@ -96,52 +98,76 @@ int picofs_ftruncate(int fd, off_t length)
 
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS) && (custom_fds[fd].flags & (O_WRONLY | O_RDWR)))
     {
-
-        // sanity check
+        // abort if no change requested
         if (length == custom_fds[fd].data_len)
         {
             return(0);
         }
-        
-        // allocate cache in multiples of sectors (4k)
-        cache_size = ((length + (4*1024))/(4*1024))*(4*1024);        
-        new_cache = pvPortMalloc(cache_size);
 
-        if (new_cache && custom_fds[fd].cache)
-        {
-            if (length > custom_fds[fd].data_len)
+        // round up requested length to the nearest sector (4k)
+        cache_size = ((length + (4*1024))/(4*1024))*(4*1024); 
+
+        // adjust cache size if necessary
+        if (cache_size != custom_fds[fd].cache_len)
+        {            
+            // allocate cache
+            new_cache = pvPortMalloc(cache_size);
+
+            if (new_cache && custom_fds[fd].cache)
             {
-                // expand and pad with zeros
-                memcpy(new_cache, custom_fds[fd].cache, custom_fds[fd].data_len);
-                memset(new_cache+custom_fds[fd].data_len, 0, length-custom_fds[fd].data_len);
+                if (length > custom_fds[fd].data_len)
+                {
+                    // copy all data 
+                    memcpy(new_cache, custom_fds[fd].cache, custom_fds[fd].data_len);
+                }
+                else
+                {
+                    // copy truncated data
+                    memcpy(new_cache, custom_fds[fd].cache, length);
+                }
+
+                // delete original cache
+                vPortFree(custom_fds[fd].cache);
+                custom_fds[fd].cache = NULL;
             }
-            else
+            else if (new_cache)
             {
-                // truncate
-                memcpy(new_cache, custom_fds[fd].cache, length);
+                // no previous cache to copy from so zero the newly created cache
+                memset(new_cache, 0, cache_size);
             }
 
-            // delete original cache
-            vPortFree(custom_fds[fd].cache);
-            //custom_fds[fd].cache = NULL;
-        }
-        else if (new_cache)
-        {
-            // no previous cache to copy from so zero the newly created cache
-            memset(new_cache, 0, cache_size);
-        }
+            if (new_cache)
+            {
+                // point file descriptor to the new new cache
+                custom_fds[fd].cache = new_cache;
+                custom_fds[fd].cache_len = cache_size;
+                custom_fds[fd].data = new_cache;
 
-        if (new_cache)
-        {
-            // point file descriptor to the new new cache
-            custom_fds[fd].cache = new_cache;
-            custom_fds[fd].cache_len = cache_size;
-            custom_fds[fd].data = new_cache;
-            custom_fds[fd].data_len = length;
+                printf("truncate: fd = %d new cache = %p [cache size %d]\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
+                err = 0;
+            }
 
-            printf("truncate: new cache = %p data length = %d [cache size %d]\n", custom_fds[fd].cache, custom_fds[fd].data_len, custom_fds[fd].cache_len);
+        }
+        else
+        {
             err = 0;
         }
+        
+        // ensure length remains within the allocated cache 
+        CLIP(length, 0, custom_fds[fd].cache_len);
+
+        if (!err && custom_fds[fd].cache)
+        {
+            // check if file expanded
+            if (length > custom_fds[fd].data_len)
+            {
+                // zero pad the expanded region
+                memset(custom_fds[fd].cache+custom_fds[fd].data_len, 0, length-custom_fds[fd].data_len);
+            }
+        }
+
+        // finalize the data length
+        custom_fds[fd].data_len = length;        
     }
 
     return(err);

@@ -22,6 +22,8 @@
 #include "hardware/watchdog.h"
 #include "hardware/structs/powman.h"
 #include "hardware/regs/powman.h"
+#include "pico/flash.h"
+#include <hardware/flash.h>
 
 #include "lwip/netif.h"
 #include "lwip/ip4_addr.h"
@@ -42,7 +44,9 @@
 #include "flash.h"
 #include "utility.h"
 #include "syscfg.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "watchdog.h"
 #include "worker_tasks.h"
 #include "wifi.h"
@@ -100,6 +104,7 @@ void print_reset_reason(void);
 void print_tasks_list(void);
 int test_myfilesystem(void);
 int test_stat(void);
+void pluto_get_program_size(void);
 
 // TODO -- put in header file
 //void init_websocket_subsystem(void);
@@ -142,8 +147,8 @@ int pluto(void)
     printf("%s\n\n", PLUTO_VER);
 #endif
 
-    flash_get_program_size();
-    flash_get_config_size();
+    pluto_get_program_size();
+    //flash_get_config_size();
     printf("Compiled: %s %s\n",__DATE__,__TIME__);
     printf("Pico SDK Version: %s\n\n", PICO_SDK_VERSION_STRING);
 
@@ -232,31 +237,31 @@ void boss_task(__unused void *params)
     //syscfg_read("system.cfg", syscfg_info, syscfg_info_rows, (void **)&sys); 
     syscfg_read(); 
 
-    // check system configuration
-    if (!sys)
-    {
-        printf("Guru Meditation: failed to allocate memory for the system configuration.\n");
-        for(;;)
-        {
-            SLEEP_MS(60000); 
-        }
-    }
+    // // check system configuration
+    // if (!sys)
+    // {
+    //     printf("Guru Meditation: failed to allocate memory for the system configuration.\n");
+    //     for(;;)
+    //     {
+    //         SLEEP_MS(60000); 
+    //     }
+    // }
 
-    // transition TEST TEST TEST
-    //picofs_copy("config.bin", "application.cfg");
+    // // transition TEST TEST TEST
+    // //picofs_copy("config.bin", "application.cfg");
 
-    // get application configuration from flash
-    config_read(CONFIG_FILE); 
+    // // get application configuration from flash
+    // config_read(CONFIG_FILE); 
 
-    // check application configuration
-    if (!cfg)
-    {
-        printf("Guru Meditation: failed to allocate memory for the applciation configuration.\n");
-        for(;;)
-        {
-            SLEEP_MS(60000); 
-        }
-    }
+    // // check application configuration
+    // if (!cfg)
+    // {
+    //     printf("Guru Meditation: failed to allocate memory for the applciation configuration.\n");
+    //     for(;;)
+    //     {
+    //         SLEEP_MS(60000); 
+    //     }
+    // }
 
     // transition TEST TEST TEST
     //memcpy((char *)sys, (char *)cfg, sizeof(SYSTEM_VARIABLES_T));
@@ -371,7 +376,7 @@ void boss_task(__unused void *params)
 
         // copy configuration changes from RAM into flash
         syscfg_write();
-        config_write(CONFIG_FILE);
+        //config_write(CONFIG_FILE);
 
         // check stack high water mark for each worker task
         monitor_stacks();    
@@ -419,7 +424,8 @@ void boss_task(__unused void *params)
             if (reboot_reason == REBOOT_USER_REQUEST)
             {
                 // flush recent config changes to flash prior to reboot with one retry
-                if (config_write(CONFIG_FILE)) config_write(CONFIG_FILE);
+                //if (config_write(CONFIG_FILE)) config_write(CONFIG_FILE);
+                if (syscfg_write()) syscfg_write();
             }
 
             printf("***REBOOT in 100 ms***\n");
@@ -497,10 +503,11 @@ int ap_mode(void)
         // tell watchdog task that we are alive
         //watchdog_pulse();  // trade off -- allow more time before regular watchdog reboot vs. risk of never rebooting
 
-        if (config_dirty(false))
+        if (syscfg_dirty(false))
         {
-            config_write(CONFIG_FILE);
-            
+            //config_write(CONFIG_FILE);
+            syscfg_write();
+
             //user is changing configuration
             ap_idle = 0;
         }
@@ -526,7 +533,8 @@ int ap_mode(void)
 
         if (restart_requested)
         {
-            config_write(CONFIG_FILE);
+            //config_write(CONFIG_FILE);
+            syscfg_write();
             
             printf("***REBOOT in 100 ms***\n");
             cyw43_arch_disable_ap_mode();
@@ -1146,3 +1154,17 @@ int test_stat(void)
 
     return 0;
 }
+
+void pluto_get_program_size(void)
+{
+    int flash_percentage = 0;
+    extern char __flash_binary_start;  // defined in linker script
+    extern char __flash_binary_end;    // defined in linker script
+
+    uintptr_t start = (uintptr_t) &__flash_binary_start;
+    uintptr_t end = (uintptr_t) &__flash_binary_end;
+    printf("Binary start: %08x\nBinary end:   %08x\nBinary size:  %08x\n", start, end, end-start);
+    flash_percentage = ((end-start)*1000)/(PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE);
+    printf("Flash used:   %d.%d%%\n\n", flash_percentage/10, flash_percentage%10);
+}
+

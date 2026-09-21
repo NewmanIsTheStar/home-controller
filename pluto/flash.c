@@ -18,10 +18,14 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "pluto.h"
 #include "utility.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "flash.h"
 #include "picofs.h"
 
@@ -50,7 +54,7 @@ int flash_read_non_volatile_variables(CONFIG_TYPE_T config_type)
         return_status = stat("application.cfg", &file_status);
 
         //err = config_read_from_file("config.bin");
-        err = config_mmap("application.cfg");            
+        //err = config_mmap("application.cfg");            
         if (err)
         {
             printf("Failed to open file: application.cfg\n");

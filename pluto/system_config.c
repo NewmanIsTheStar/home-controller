@@ -13,7 +13,9 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 #include <sys/stat.h>
@@ -46,7 +48,7 @@ void syscfg_blank_to_v1(void *previous_config);
 // table of conversion functions -- these are run sequentially from the starting version to convert to the latest version
 SYSTEM_CONVERSION_T syscfg_info[] =
 {
-    {1,      offsetof(SYSTEM_CONFIG_T, version),   offsetof(SYSTEM_CONFIG_T, crc),   &syscfg_blank_to_v1},                 
+    {1,      sizeof(SYSTEM_CONFIG_T),   offsetof(SYSTEM_CONFIG_T, version),   offsetof(SYSTEM_CONFIG_T, crc),   &syscfg_blank_to_v1},                 
 };
 
 int syscfg_info_rows = NUM_ROWS(syscfg_info);

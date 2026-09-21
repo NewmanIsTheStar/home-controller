@@ -51,7 +51,9 @@
 #include "ssi.h"
 #include "flash.h"
 #include "utility.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "watchdog.h"
 #include "pluto.h"
 // #include "led_strip.h"
@@ -203,12 +205,12 @@ void hc_task(__unused void *params)
                         hc_hex_dump(web.file_to_hexdump);                
                         break;                                                                        
                     case HC_CMD_LIGHTS:
-                        //shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
+                        shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
                         //config_mmap_test();
                         //config_write_to_file("config.bin"); 
-                        config_mmap("config.bin");
-                        strcpy(cfg->automation_name[31], "A31 set via mmap");
-                        picofs_msync(cfg, sizeof(NON_VOL_VARIABLES_T), MS_SYNC);
+                        // config_mmap("config.bin");
+                        // strcpy(cfg->automation_name[31], "A31 set via mmap");
+                        // picofs_msync(cfg, sizeof(NON_VOL_VARIABLES_T), MS_SYNC);
                         break; 
                     case HC_CMD_SHELLY_DEVICE_DUMP :
                         shelly_cache_device_dump(web.shelly_device_ip);

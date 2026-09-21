@@ -13,7 +13,9 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 #include <sys/stat.h>
@@ -53,12 +55,30 @@ int syscfg_validate(char *filename, SYSTEM_CONVERSION_T conversion_table[], int 
     uint16_t calculated_crc = 0;
     int latest_valid_syscfg_version = 0;
     void *previous_config = NULL;
-    CONFIG_TYPE_T syscfg_type;
+    //CONFIG_TYPE_T syscfg_type;
+    size_t biggest_config_size = 0;
 
 
-    // read configuration into RAM
-    err = syscfg_mmap(filename, configuration_buffer);  // originally call syscfg_map_file() but we now bypass to a lower level function
+    if (conversion_table_rows < 1)
+    {
+        printf("syscfg_validate: error no conversion table row found\n");
+        return(-1);
+    }
 
+    // find the biggest version of the configuration
+    for(i=0; i < conversion_table_rows; i++)
+    {
+        if (conversion_table[i].size > biggest_config_size)
+        {
+            biggest_config_size = conversion_table[i].size;
+        }
+    }
+
+    // map configuration file into RAM and resize it to the biggest known configuration size 
+    // this gives enough space for sequential conversion up to the latest configuration version
+    err = syscfg_mmap(filename, configuration_buffer, biggest_config_size); 
+
+    // find the configuration version that the file contains
     if (!err)
     {
         // check for valid configuration
@@ -70,7 +90,7 @@ int syscfg_validate(char *filename, SYSTEM_CONVERSION_T conversion_table[], int 
 
             if ((version_from_flash == conversion_table[i].version) && (crc_from_flash == calculated_crc))
             {
-                printf("Found valid system system configuration version %d\n", version_from_flash);
+                printf("Found valid configuration in %s with version %d\n", filename, version_from_flash);
                 latest_valid_syscfg_version = version_from_flash;
                 break;
             }
@@ -79,10 +99,11 @@ int syscfg_validate(char *filename, SYSTEM_CONVERSION_T conversion_table[], int 
     
 
 #ifndef DISABLE_SYSCFG_UPGRADE
-    // obtain pointer to previous config if available
+    // obtain pointer to previous config if available (
+    // this gives the conversion functions access to the original file in flash while modifying the cached version in RAM
     if (version_from_flash > 0)
     {
-        previous_config = syscfg_get_flash_location(filename);  //TODO: should have this pointer from the file open
+        previous_config = syscfg_get_flash_location(filename);
     }
 
     // upgrade configuration sequentially to latest version 
@@ -127,7 +148,6 @@ int syscfg_get_conversion_row(SYSTEM_CONVERSION_T conversion_table[], int conver
 
         if ((version_from_flash == conversion_table[i].version))
         {
-            printf("Found valid system system configuration version %d\n", version_from_flash);
             row = i;
             break;
         }

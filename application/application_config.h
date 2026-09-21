@@ -34,9 +34,9 @@ typedef struct
     int hc_enable;
     AUTOMATION_STATE_E automation_state[64];   
     char automation_name[64][64];
-    uint32_t automation_triggered[64];   
+    uint32_t automation_triggered[64];         
     uint16_t crc;
-    
+        
 } NON_VOL_VARIABLES_T;
 
 

@@ -18,7 +18,9 @@
 //#include "weather.h"
 #include "calendar.h"
 #include "utility.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 // #include "rmtsw.h"
 
 #include "pluto.h"

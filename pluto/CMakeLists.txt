@@ -2,11 +2,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(${PROJECT_NAME} PRIVATE
     pluto.c
     web.c
-    flash.c
+    # flash.c
     calendar.c
     utility.c
-    config.c
-    config_mmap.c
+    # config.c
+    # config_mmap.c
     dhcpserver.c
     dnsserver.c
     sdk_callback.c

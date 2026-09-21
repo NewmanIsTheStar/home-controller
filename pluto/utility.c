@@ -30,7 +30,9 @@
 #include "flash.h"
 #include "calendar.h"
 #include "utility.h"
-#include "config.h"
+#include "syscfg.h"
+#include "system_config.h"
+#include "application_config.h"
 #include "watchdog.h"
 #include "pluto.h"
 

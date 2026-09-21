@@ -28,6 +28,7 @@
 typedef struct
 {
     int version;
+    size_t size;
     size_t version_offset;
     size_t crc_offset;
     void (*upgrade_function)(void *previous_config);
@@ -98,7 +99,7 @@ int syscfg_write(void);
 void syscfg_changed(void);
 bool syscfg_dirty(bool clear_flag);
 int syscfg_map_file(void);
-int syscfg_mmap(char *filename, void **configuration_buffer);
+int syscfg_mmap(char *filename, void **configuration_buffer, size_t config_size);
 int syscfg_sync_file(void *configuration_buffer, int configuration_len);
 void *syscfg_get_flash_location(char *filename);
 bool syscfg_compare_flash_ram(char *filename, void *configuration_buffer, bool stop_at_first_difference, bool print_differences);
