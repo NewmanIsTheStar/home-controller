@@ -14,11 +14,11 @@
 #include "timers.h"
 #include "queue.h"
 
-#include "flash.h"
+
 //#include "weather.h"
 #include "calendar.h"
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 // #include "rmtsw.h"
@@ -36,7 +36,7 @@
 
 extern uint32_t unix_time;
 extern WEB_VARIABLES_T web;
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 
 
 #define SYSTEM_SSI_TAGS \

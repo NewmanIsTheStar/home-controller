@@ -49,9 +49,9 @@
 // #include "weather.h"
 #include "cgi.h"
 #include "ssi.h"
-#include "flash.h"
+
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
@@ -98,7 +98,7 @@ int hc_automation_run(int automation_number);
 
 // external variables
 extern u32_t unix_time;
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 extern WEB_VARIABLES_T web;
 extern char *basic_program;
 extern size_t current_buffer_index;
@@ -210,7 +210,7 @@ void hc_task(__unused void *params)
                         //config_write_to_file("config.bin"); 
                         // config_mmap("config.bin");
                         // strcpy(cfg->automation_name[31], "A31 set via mmap");
-                        // picofs_msync(cfg, sizeof(NON_VOL_VARIABLES_T), MS_SYNC);
+                        // picofs_msync(cfg, sizeof(APP_CONFIG_T), MS_SYNC);
                         break; 
                     case HC_CMD_SHELLY_DEVICE_DUMP :
                         shelly_cache_device_dump(web.shelly_device_ip);

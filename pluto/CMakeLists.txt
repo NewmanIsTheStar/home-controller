@@ -2,11 +2,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(${PROJECT_NAME} PRIVATE
     pluto.c
     web.c
-    # flash.c
     calendar.c
     utility.c
-    # config.c
-    # config_mmap.c
     dhcpserver.c
     dnsserver.c
     sdk_callback.c
@@ -15,11 +12,11 @@ target_sources(${PROJECT_NAME} PRIVATE
     wifi.c
     ping_core.c
     memory_wrappers.c
-    syscfg_file.c
-    syscfg_change.c
-    syscfg_read.c
-    syscfg_write.c
-    syscfg_validate.c
+    config_file.c
+    config_change.c
+    config_read.c
+    config_write.c
+    config_validate.c
     system_config.c
 )
 

@@ -41,10 +41,10 @@
 #include "task.h"
 
 #include "cgi.h"
-#include "flash.h"
+
 #include "utility.h"
-#include "syscfg.h"
-#include "syscfg.h"
+#include "config.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
@@ -54,7 +54,7 @@
 #include "pluto.h"
 #include "shell.h"
 #include "picofs.h"
-#include "syscfg.h"
+#include "config.h"
 
 #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
@@ -79,7 +79,7 @@ REBOOT_REASON_T __uninitialized_ram(reboot_reason);
 
 // external variables
 extern u32_t unix_time;
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 extern WEB_VARIABLES_T web;
 extern WORKER_TASK_T worker_tasks[];
 
@@ -234,8 +234,8 @@ void boss_task(__unused void *params)
     printf("Searching for configuration...\n");
     
     // get system configuration from flash
-    //syscfg_read("system.cfg", syscfg_info, syscfg_info_rows, (void **)&sys); 
-    syscfg_read(); 
+    //config_read("system.cfg", config_info, syscfg_info_rows, (void **)&sys); 
+    config_read(); 
 
     // // check system configuration
     // if (!sys)
@@ -375,7 +375,7 @@ void boss_task(__unused void *params)
         led_on = !led_on;
 
         // copy configuration changes from RAM into flash
-        syscfg_write();
+        config_write();
         //config_write(CONFIG_FILE);
 
         // check stack high water mark for each worker task
@@ -425,7 +425,7 @@ void boss_task(__unused void *params)
             {
                 // flush recent config changes to flash prior to reboot with one retry
                 //if (config_write(CONFIG_FILE)) config_write(CONFIG_FILE);
-                if (syscfg_write()) syscfg_write();
+                if (config_write()) config_write();
             }
 
             printf("***REBOOT in 100 ms***\n");
@@ -503,10 +503,10 @@ int ap_mode(void)
         // tell watchdog task that we are alive
         //watchdog_pulse();  // trade off -- allow more time before regular watchdog reboot vs. risk of never rebooting
 
-        if (syscfg_dirty(false))
+        if (config_dirty(false))
         {
             //config_write(CONFIG_FILE);
-            syscfg_write();
+            config_write();
 
             //user is changing configuration
             ap_idle = 0;
@@ -534,7 +534,7 @@ int ap_mode(void)
         if (restart_requested)
         {
             //config_write(CONFIG_FILE);
-            syscfg_write();
+            config_write();
             
             printf("***REBOOT in 100 ms***\n");
             cyw43_arch_disable_ap_mode();

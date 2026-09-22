@@ -30,15 +30,15 @@
 #include "calendar.h"
 #include "cgi.h"
 
-#include "flash.h"
-#include "syscfg.h"
+
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "pluto.h"
 #include "ssi.h"
 #include "time.h"
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 
@@ -54,7 +54,7 @@
 #define HOURS_IN_DAY (24)
 #define DAYS_IN_WEEK (7)
 
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 
 // global variable
 char current_calendar_web_page[50] = "/landscape.shtml";

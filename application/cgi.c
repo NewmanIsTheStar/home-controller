@@ -22,11 +22,11 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-#include "flash.h"
+
 //#include "weather.h"
 #include "calendar.h"
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 //#include "led_strip.h"
@@ -43,7 +43,7 @@ typedef struct
     tMYCGIHandler pfnCGIHandler;
 } MY_CGI_T;
 
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 extern WEB_VARIABLES_T web;
 extern WORKER_TASK_T worker_tasks[];
 
@@ -106,7 +106,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     }
     
 //     // Send the index page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/index.shtml";
 // }
 
@@ -127,7 +127,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     //toggle the state (assumes index 1-7 used in cgi_handlers[] for weekdays)
 //     cfg->day_schedule_enable[iIndex-1] = !cfg->day_schedule_enable[iIndex-1];
 
-//     syscfg_changed();
+//     config_changed();
 
 //     // Send the current page back to the user
 //     return(current_calendar_web_page);
@@ -165,7 +165,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     cfg->zone_duration[0][i]++;
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return(current_calendar_web_page);
 // }
 
@@ -204,7 +204,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return(current_calendar_web_page);
 // }
 
@@ -247,7 +247,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return(current_calendar_web_page);
 // }
 
@@ -289,7 +289,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return(current_calendar_web_page);
 // }
 
@@ -340,7 +340,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     cfg->day_start[i] = hour*60 + minute;
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return(current_calendar_web_page);
 // }
 
@@ -391,7 +391,7 @@ void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[
 //     cfg->day_start[i] = hour*60 + minute;
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return(current_calendar_web_page);
 // }
 
@@ -516,7 +516,7 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
 
 
     // Send the next page back to the user
-    syscfg_changed();
+    config_changed();
     return "/time.shtml";
 }
 
@@ -598,7 +598,7 @@ const char * cgi_time_handler(int iIndex, int iNumParams, char *pcParam[], char 
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/weather.shtml";
 // }
 
@@ -719,7 +719,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
 
 
     // Send the next page back to the user
-    syscfg_changed();
+    config_changed();
     return "/network.shtml";
 }
 
@@ -825,7 +825,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
 
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/addressable_led.shtml";
 // }
 
@@ -916,7 +916,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/portrait.shtml";
 // }
 
@@ -1018,7 +1018,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 //     }
 
 
-//     syscfg_changed();
+//     config_changed();
 
 
 //     // Send the current page back to the user
@@ -1120,7 +1120,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/moodlight.shtml";
 // }
 
@@ -1178,7 +1178,7 @@ const char * cgi_syslog_handler(int iIndex, int iNumParams, char *pcParam[], cha
 
 
     // Send the next page back to the user
-    syscfg_changed();
+    config_changed();
     return "/syslog.shtml";
 }
 
@@ -1276,7 +1276,7 @@ const char * cgi_units_handler(int iIndex, int iNumParams, char *pcParam[], char
     }     
 
     // Send the next page back to the user
-    syscfg_changed();
+    config_changed();
     return "/units.shtml";
 }
 
@@ -1328,7 +1328,7 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
 
 
     // Send the next page back to the user
-    syscfg_changed();
+    config_changed();
     return "/software_load.shtml";
 }
 
@@ -1405,7 +1405,7 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/remote_led_strips.shtml";
 // }
 
@@ -1452,7 +1452,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
                         printf("Invalid personality\n");
                         break;
                 } 
-                syscfg_changed();              
+                config_changed();              
             }
         }  
         i++;
@@ -1585,7 +1585,7 @@ const char * cgi_personality_handler(int iIndex, int iNumParams, char *pcParam[]
 //         cfg->relay_normally_open = 1;
 //     }
 
-//     syscfg_changed();
+//     config_changed();
 
 //     // Send the next page back to the user
 //     if (sys->personality == SPRINKLER_CONTROLLER)
@@ -1646,7 +1646,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 
 
     // Send the next page back to the user
-    syscfg_changed();
+    config_changed();
     return "/network.shtml";
 }
 
@@ -1847,7 +1847,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 //     if (pattern_set)
 //     {
 //         pattern_type = -1;
-//         syscfg_changed();
+//         config_changed();
 //         return "/addressable_led.shtml";
 //     }
 //     else
@@ -1915,7 +1915,7 @@ const char * cgi_wificountry_handler(int iIndex, int iNumParams, char *pcParam[]
 
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/led_strip.shtml";
 // }
 
@@ -1988,7 +1988,7 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
         i++;
     }
 
-    syscfg_changed();
+    config_changed();
 
     // Send the next page back to the user
     return "/ts_setpoints.shtml";
@@ -2094,7 +2094,7 @@ const char * cgi_setpoints_handler(int iIndex, int iNumParams, char *pcParam[], 
 //         i++;
 //     }
 
-//     syscfg_changed();
+//     config_changed();
 
 //     // Send the next page back to the user
 //     return "/ts_periods.shtml";
@@ -2373,7 +2373,7 @@ const char * cgi_thermostat_schedule_change_handler(int iIndex, int iNumParams, 
     make_schedule_grid();
 
     // write config changes to flash
-    syscfg_changed();
+    config_changed();
 #endif
     // Send the next page back to the user
     return "/t_schedule.shtml";
@@ -2435,7 +2435,7 @@ const char * cgi_thermostat_period_delete_handler(int iIndex, int iNumParams, ch
                     make_schedule_grid();
 
                     // write config changes to flash
-                    syscfg_changed();
+                    config_changed();
                 }                
             } 
         }
@@ -2735,7 +2735,7 @@ const char * cgi_thermostat_schedule_handler(int iIndex, int iNumParams, char *p
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 
 //     return "/powerwall.shtml";
 // }
@@ -2806,7 +2806,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
     make_schedule_grid();
 
     // write config changes to flash
-    syscfg_changed();
+    config_changed();
  
 #endif
     // Send the next page back to the user
@@ -2982,7 +2982,7 @@ const char * cgi_thermostat_copy_handler(int iIndex, int iNumParams, char *pcPar
 //     }
 
 //     // write config changes to flash
-//     syscfg_changed();
+//     config_changed();
  
 //     // Send the next page back to the user
 //     return "/t_gpio.shtml";    
@@ -3054,7 +3054,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
     }
 
     // write config changes to flash
-    syscfg_changed();
+    config_changed();
  
     // Send the next page back to the user
     return "/gpio_defaults.shtml";    
@@ -3121,7 +3121,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/t_sensors.shtml";
 // }
 
@@ -3208,7 +3208,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     }
 
 //     // Send the next page back to the user
-//     syscfg_changed();
+//     config_changed();
 //     return "/t_advanced.shtml";
 // }
  
@@ -3279,7 +3279,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     // tell mqtt_task that a relay state change might have occured
 //     mqtt_relay_refresh();
 
-//     syscfg_changed();
+//     config_changed();
 
 
 //     return "/rs_relay_default.shtml";
@@ -3328,7 +3328,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //         i++;
 //     }   
 
-//     syscfg_changed();
+//     config_changed();
 
 //     return "/rs_gpio.shtml";
     
@@ -3404,7 +3404,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //         //printf("set relay[%d] normally closed to %d\n", i, cfg->rmtsw_relay_normally_closed[i]);
 //     }
 
-//     syscfg_changed();
+//     config_changed();
 
 //     return "/rs_gpio.shtml";
     
@@ -3462,7 +3462,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //         i++;
 //     }   
 
-//     syscfg_changed();
+//     config_changed();
 
 //     return "/rs_names.shtml";
     
@@ -3616,7 +3616,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     }
 
 //     // write config changes to flash
-//     syscfg_changed();
+//     config_changed();
 
 //     // Send the next page back to the user
 //     return "/rs_schedule.shtml";
@@ -3735,7 +3735,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //                     //rmtsw_make_schedule_grid();  TODO do we need a grid view?
 
 //                     // write config changes to flash
-//                     syscfg_changed();
+//                     config_changed();
 //                 }                
 //             } 
 //         }
@@ -3919,7 +3919,7 @@ const char * cgi_gpio_default_handler(int iIndex, int iNumParams, char *pcParam[
 //     //make_schedule_grid();   //TODO do we need grid?
 
 //     // write config changes to flash
-//     syscfg_changed();
+//     config_changed();
  
 //     // Send the next page back to the user
 //     return "/rs_schedule.shtml";    
@@ -3980,7 +3980,7 @@ const char * cgi_mqtt_handler(int iIndex, int iNumParams, char *pcParam[], char 
 
 
     // Send the next page back to the user
-    syscfg_changed();
+    config_changed();
     return "/mqtt.shtml";
 }
 
@@ -4026,7 +4026,7 @@ const char * cgi_basic_run_handler(int iIndex, int iNumParams, char *pcParam[], 
 
 
     // Send the next page back to the user
-    //syscfg_changed();
+    //config_changed();
     return "/basic.shtml";
 }
 
@@ -4084,7 +4084,7 @@ const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pc
 
 
     // Send the next page back to the user
-    //syscfg_changed();
+    //config_changed();
     return "/edit.shtml";
 }
 
@@ -4149,7 +4149,7 @@ const char * cgi_hc_automation_enable_handler(int iIndex, int iNumParams, char *
     }      
 
     // Send the next page back to the user
-    //syscfg_changed();
+    //config_changed();
     return "/placeholder";   // the return value is ignored
 }
 
@@ -4206,7 +4206,7 @@ const char * cgi_hc_automation_delete_handler(int iIndex, int iNumParams, char *
 
 
     // Send the next page back to the user
-    //syscfg_changed();
+    //config_changed();
     return "/delete.shtml";
 }
 
@@ -4279,7 +4279,7 @@ const char * cgi_hc_automation_save_handler(int iIndex, int iNumParams, char *pc
 
 
     // Send the next page back to the user
-    //syscfg_changed();
+    //config_changed();
     return "/hc_automation_list.shtml";
 }
 

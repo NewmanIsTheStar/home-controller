@@ -37,11 +37,11 @@ typedef struct
     uint32_t automation_triggered[64];         
     uint16_t crc;
         
-} NON_VOL_VARIABLES_T;
+} APP_CONFIG_T;
 
 
 // extern for all that #include this header file
-extern NON_VOL_VARIABLES_T *cfg;
+extern APP_CONFIG_T *cfg;
 
 
 // previous non-volatile data stuctures -- these are used when upgrading

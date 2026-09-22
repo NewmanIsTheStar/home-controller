@@ -1,140 +1,35 @@
-// /**
-//  * Copyright (c) 2024 NewmanIsTheStar
-//  *
-//  * SPDX-License-Identifier: BSD-3-Clause
-//  */
-// #ifndef CONFIG_H
-// #define CONFIG_H
+/**
+ * Copyright (c) 2024 NewmanIsTheStar
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+#ifndef SYSTEM_H
+#define SYSTEM_H
 
-// #include <limits.h>
-// #include "syscfg.h"
-// #include "system_config.h"
-
-// typedef enum
-// {
-//     CONFIG_FILE                         = 0,
-//     CONFIG_PENULTIMATE_FLASH_SECTOR     = 1,
-//     CONFIG_LAST_FLASH_SECTOR            = 2,
-
-//     NUM_CONFIG_TYPES                    = 3
-// } CONFIG_TYPE_T;
-
-// void config_changed(void);
-// bool config_dirty(bool clear_flag);
-// int config_timeserver_failsafe(void);
-// int config_read(CONFIG_TYPE_T config_type);
-// int config_write(CONFIG_TYPE_T config_type);
-// int config_mmap_test();
-// int config_write_to_file(char *filename);
-// int config_read_from_file(char *filename);
-// int config_mmap(char *filename);
-
-// // device personality
-// // typedef enum
-// // {
-// //     SPRINKLER_USURPER          =   0,             // add wifi control to exising "dumb" sprinkler controller
-// //     SPRINKLER_CONTROLLER       =   1,             // multizone sprinkler control 
-// //     LED_STRIP_CONTROLLER       =   2,             // allows remote control of an led strip
-// //     HVAC_THERMOSTAT            =   3,             // wifi confrolled thermostat
-// //     HOME_CONTROLLER            =   4,             // home controller
-// //     REMOTE_SWITCH              =   5,             // wifi controlled relays
-    
-// //     NO_PERSONALITY             =   4294967295     // force enum to be 4 bytes long 
-// // } PERSONALITY_E;
-
-// // // device personality
-// // typedef enum
-// // {
-// //     AUTOMATION_UNDEFINED          =   0,            
-// //     AUTOMATION_ENABLED            =   1,           
-// //     AUTOMATION_DISABLED           =   2,          
-    
-// //     NO_AUTOMATION                 =   4294967295     // force enum to be 4 bytes long 
-// // } AUTOMATION_STATE_E;
-
-// // non-vol structure conversion info
-// typedef struct
-// {
-//     int version;
-//     size_t version_offset;
-//     size_t crc_offset;
-//     void (*upgrade_function)(void *previous_config);
-// } NON_VOL_CONVERSION_T;
-
-// // gpio defaults
-// // typedef enum
-// // {
-// //     GP_UNINITIALIZED          =   0,         
-// //     GP_INPUT_FLOATING         =   1,              
-// //     GP_INPUT_PULLED_HIGH      =   2,             
-// //     GP_INPUT_PULLED_LOW       =   3,
-// //     GP_OUTPUT_HIGH            =   4,
-// //     GP_OUTPUT_LOW             =   5,
-    
-// //     GP_LAST                   =   4294967295     // force enum to be 4 bytes long 
-// // } GPIO_DEFAULT_T;
-
-// /*
-// * current non-volatile memory structure
-// * Modification Rule 1 -- copy this structure, append a version number(format "_VERSION_X") and place at the bottom of this file before making changes
-// * Modification Rule 2 -- only add new fields, do not reorder or resize existing fields (except crc)
-// * Modification Rule 3 -- crc field must always be last (used to find end of config in flash)
-// * Modification Rule 4 -- add an upgrade function to convert from previous version and add this function to the config_info table
-// * Modification Rule 5 -- the config size must never reduce as conversions occur within memory allocated for the latest version
-// */
-
-// // current version
-// typedef struct
-// {   
-//     // ***system config start ***
-//     int version;
-//     PERSONALITY_E xpersonality;
-//     char xwifi_ssid[32];
-//     char xwifi_password[32];
-//     char xwifi_country[32];
-//     char xdhcp_enable;
-//     char xhost_name[32];
-//     char xip_address[32];
-//     char xnetwork_mask[32];    
-//     char xgateway[32];      
-//     int xtimezone_offset;
-//     char xdaylightsaving_enable;
-//     char xdaylightsaving_start[32];
-//     char xdaylightsaving_end[32];
-//     char xtime_server[4][32];
-//     int sxyslog_enable;
-//     char xsyslog_server_ip[32];    
-//     int xuse_archaic_units; 
-//     int xuse_simplified_english;
-//     int xuse_monday_as_week_start; 
-//     GPIO_DEFAULT_T xgpio_default[29];
-//     char xmqtt_user[32];
-//     char xmqtt_password[32];
-//     char xmqtt_broker_address[32];
-//     double xlatitude;
-//     double xlongitude; 
-//     // ***system config end*** 
-//     uint16_t system_crc;
-
-//     // ***application config start***
-//     int hc_enable;
-//     // uint8_t shelly_device_ip[64][4];
-//     // uint8_t shelly_device_type[64];
-//     // uint8_t shelly_parameter_device_index[128];
-//     // uint8_t shelly_parameter_name_index[128];
-//     // char shelly_parameter_value[128][32];
-//     // char shelly_parameter_name[64][32]; 
-//     AUTOMATION_STATE_E automation_state[64];   
-//     char automation_name[64][64];
-//     uint32_t automation_triggered[64];
-
-//     // ***application config end***    
-//     uint16_t crc;
-    
-// } NON_VOL_VARIABLES_T;
-
-// extern NON_VOL_VARIABLES_T *cfg;
-// // previous non-volatile data stuctures -- used when upgrading
+#include <limits.h>
 
 
-// #endif
+// configuration conversion info
+typedef struct
+{
+    int version;
+    size_t size;
+    size_t version_offset;
+    size_t crc_offset;
+    void (*upgrade_function)(void *previous_config);
+} CONFIG_CONVERSION_T;
+
+
+// prototypes
+int config_read(void);
+int config_write(void);
+void config_changed(void);
+bool config_dirty(bool clear_flag);
+int config_mmap(char *filename, void **configuration_buffer, size_t config_size);
+int config_sync_file(void *configuration_buffer, int configuration_len);
+void *config_get_flash_location(char *filename);
+bool config_compare_flash_ram(char *filename, void *configuration_buffer, bool stop_at_first_difference, bool print_differences);
+int config_validate(char *filename, CONFIG_CONVERSION_T conversion_table[], int conversion_table_rows, void **configuration_buffer);
+int config_get_conversion_row(CONFIG_CONVERSION_T conversion_table[], int conversion_table_rows, void *configuration_buffer);
+
+#endif

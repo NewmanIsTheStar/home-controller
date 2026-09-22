@@ -46,9 +46,9 @@
 // #include "weather.h"
 #include "cgi.h"
 #include "ssi.h"
-#include "flash.h"
+
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
@@ -77,7 +77,7 @@
 
 // external variables
 extern u32_t unix_time;
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 

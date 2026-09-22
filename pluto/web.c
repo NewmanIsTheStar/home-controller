@@ -28,10 +28,10 @@
 
 #include "watchdog.h"
 // #include "weather.h"
-#include "flash.h"
+
 #include "calendar.h"
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 // #include "led_strip.h"

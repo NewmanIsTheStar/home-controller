@@ -13,7 +13,7 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 
@@ -28,26 +28,26 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-#include "syscfg.h"
+#include "config.h"
 #include "pluto.h"
 #include "utility.h"
 
-#include "flash.h"
+
 #include "picofs.h"
 #include "system_config.h"
-#include "syscfg.h"
+#include "config.h"
 
-//#define DISABLE_SYSCFG_UPGRADE
+//#define DISABLE_CONFIG_UPGRADE
 
-NON_VOL_VARIABLES_T *cfg = NULL;
+APP_CONFIG_T *cfg = NULL;
 
 // system configuration conversion functions
 void appcfg_blank_to_v1(void *previous_config);
 
 // table of conversion functions -- these are run sequentially from the starting version to convert to the latest version
-SYSTEM_CONVERSION_T appcfg_info[] =
+CONFIG_CONVERSION_T appcfg_info[] =
 {
-    {1,      sizeof(NON_VOL_VARIABLES_T),  offsetof(NON_VOL_VARIABLES_T, version),   offsetof(NON_VOL_VARIABLES_T, crc),   &appcfg_blank_to_v1},                 
+    {1,      sizeof(APP_CONFIG_T),  offsetof(APP_CONFIG_T, version),   offsetof(APP_CONFIG_T, crc),   &appcfg_blank_to_v1},                 
 };
 
 int appcfg_info_rows = NUM_ROWS(appcfg_info);
@@ -67,7 +67,7 @@ void appcfg_blank_to_v1(void *previous_config)
     {
         printf("Initializing applicaton configuration version 1 @ %p\n", cfg);
         
-        memset((char *)cfg, 0, sizeof(NON_VOL_VARIABLES_T));
+        memset((char *)cfg, 0, sizeof(APP_CONFIG_T));
 
         // version
         cfg->version = 1;

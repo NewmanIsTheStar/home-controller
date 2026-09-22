@@ -47,9 +47,9 @@
 // #include "weather.h"
 #include "cgi.h"
 #include "ssi.h"
-#include "flash.h"
+
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
@@ -78,7 +78,7 @@ int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **t
 
 // external variables
 extern u32_t unix_time;
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FS_FAKE_FLASH == 1
@@ -403,16 +403,25 @@ bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fid)
 int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
 {
     int err = -1;
-    int i;
-    FILE_TRAILER_T *t = NULL;
+    int i = -1;
 
 
-    // try ram
+    // special case -- fid given as filename (example FID:49)
+    if ((fid == FS_INVALID_FID) && (strncasecmp(filename, "FID:", 4) == 0))
+    {
+        sscanf(filename+4, "%d", &i);
+
+        if ((i>=0) && (i<(FS_MAX_SEQ-1)))
+        {
+            fid = i;
+        }
+    }
+
+    // if fid is known then index it directly, otherwise search for file name
     if ((fid != FS_INVALID_FID) && picofs_files[fid].valid && (fid == picofs_files[fid].trailer->file_id) && !(picofs_files[fid].trailer->file_status & STS_DELETED))
     {
         *trailer = picofs_files[fid].trailer;
         err = 0;
-        //printf("picofs: found file by FID in RAM fid = %d name = %s\n", fid, picofs_files[fid].trailer->name);
     }
     else if ((fid == FS_INVALID_FID) && filename)
     {
@@ -422,7 +431,6 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
             {
                 *trailer = picofs_files[i].trailer;
                 err = 0;
-                //printf("picofs: found file by NAME in RAM name = %s fid = %d\n", picofs_files[i].trailer->name, picofs_files[i].trailer->file_id);
                 break;
             }
         }

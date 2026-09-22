@@ -13,7 +13,7 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 
@@ -28,25 +28,25 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-#include "syscfg.h"
+#include "config.h"
 #include "pluto.h"
 #include "utility.h"
 
-#include "flash.h"
+
 #include "picofs.h"
 
 
 
-static int syscfg_dirty_flag = 0;
+static int config_dirty_flag = 0;
 
 
 
 /*!
  * \brief Record that configuration copy in RAM was altered and may now differ from the flash copy
  */
-void syscfg_changed(void)
+void config_changed(void)
 {
-    syscfg_dirty_flag = 1;
+    config_dirty_flag = 1;
 }
 
 /*!
@@ -56,17 +56,17 @@ void syscfg_changed(void)
  * 
  * \return true if config in RAM differs from config in flash, otherwise flase
  */
-bool syscfg_dirty(bool clear_flag)
+bool config_dirty(bool clear_flag)
 {
     int dirty = false;
 
-    if (syscfg_dirty_flag)
+    if (config_dirty_flag)
     {
         dirty = true;
 
         if (clear_flag)
         {
-            syscfg_dirty_flag = 0;
+            config_dirty_flag = 0;
         }
     }
 

@@ -13,7 +13,7 @@
 #include <string.h>
 #include <lwip/arch.h>
 #include "picofs.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 
@@ -28,16 +28,16 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 
-#include "syscfg.h"
+#include "config.h"
 #include "pluto.h"
 #include "utility.h"
 
-#include "flash.h"
+
 #include "picofs.h"
 #include "system_config.h"
-#include "syscfg.h"
+#include "config.h"
 
-//#define DISABLE_SYSCFG_UPGRADE
+//#define DISABLE_CONFIG_UPGRADE
 
 SYSTEM_CONFIG_T *sys = NULL;
 
@@ -46,7 +46,7 @@ SYSTEM_CONFIG_T *sys = NULL;
 void syscfg_blank_to_v1(void *previous_config);
 
 // table of conversion functions -- these are run sequentially from the starting version to convert to the latest version
-SYSTEM_CONVERSION_T syscfg_info[] =
+CONFIG_CONVERSION_T syscfg_info[] =
 {
     {1,      sizeof(SYSTEM_CONFIG_T),   offsetof(SYSTEM_CONFIG_T, version),   offsetof(SYSTEM_CONFIG_T, crc),   &syscfg_blank_to_v1},                 
 };

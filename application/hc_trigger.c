@@ -45,9 +45,9 @@
 #include "weather.h"
 #include "cgi.h"
 #include "ssi.h"
-#include "flash.h"
+
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
@@ -73,7 +73,7 @@
 
 
 // external variables
-extern NON_VOL_VARIABLES_T config;
+extern APP_CONFIG_T config;
 extern WEB_VARIABLES_T web;
 
 //static variables

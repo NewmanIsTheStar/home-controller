@@ -8,11 +8,11 @@
 
 #include "lwip/sockets.h"
 
-#include "flash.h"
+
 //#include "weather.h"
 #include "calendar.h"
 #include "utility.h"
-#include "syscfg.h"
+#include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 
