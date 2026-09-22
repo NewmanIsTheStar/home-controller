@@ -52,7 +52,7 @@ int config_sync_changes(char *filename, void *configuration_buffer, int configur
  * 
  * \return 0 on success, -1 on error
  */
-int syscfg_write(void)
+int config_write(void)
 {
     int err = 0;
 
