@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #include <limits.h>
 

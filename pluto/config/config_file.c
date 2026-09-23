@@ -90,7 +90,7 @@ int config_mmap(char *filename, void **configuration_buffer, size_t config_size)
     }
     //printf("config_mmap: config_fd = %d\n", config_fd);
 
-    // adjust the file length to match the current configuration version 
+    // adjust the file length to the requested size 
     if (ftruncate(config_fd, config_size) == -1) 
     {
         perror("config_mmap: Error setting file size");
@@ -99,7 +99,7 @@ int config_mmap(char *filename, void **configuration_buffer, size_t config_size)
         return EXIT_FAILURE;
     }
 
-    // map the file into the process address space
+    // map the file so that tasks can access it directly as memory (rather than using file i/o)
     map = picofs_mmap(NULL, FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, config_fd, 0);
     if (map == MAP_FAILED) 
     {
@@ -115,6 +115,7 @@ int config_mmap(char *filename, void **configuration_buffer, size_t config_size)
     *configuration_buffer = map;
 
     close(config_fd);
-    
+    config_fd = -1;
+
     return EXIT_SUCCESS;
 }

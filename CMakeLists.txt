@@ -75,14 +75,14 @@ project(home-controller C CXX ASM)   # set the project name ${PROJECT_NAME}
 
 add_executable(${PROJECT_NAME})
 
-target_link_libraries(home-controller PRIVATE 
-    pico_stdlib
-    pico_cyw43_arch_lwip_sys_freertos
-)
+# target_link_libraries(home-controller PRIVATE 
+#     pico_stdlib
+#     pico_cyw43_arch_lwip_sys_freertos
+# )
 
 add_subdirectory(pluto)  
 add_subdirectory(application)
-add_subdirectory(picofs)
+# add_subdirectory(picofs)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_NAME="${PROJECT_NAME}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_HOME_CONTROLLER)

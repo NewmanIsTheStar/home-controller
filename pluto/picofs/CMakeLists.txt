@@ -27,7 +27,6 @@ target_sources(picofs INTERFACE
 # headers
 target_include_directories(picofs INTERFACE 
     ${CMAKE_CURRENT_LIST_DIR}
-    ${CMAKE_SOURCE_DIR}/pluto # For lwipopts.h access
 )
 
 # link dependencies

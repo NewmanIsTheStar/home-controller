@@ -2,15 +2,15 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(${PROJECT_NAME} PRIVATE
     pluto.c
     web.c
-    calendar.c
+    # calendar.c
     utility.c
-    dhcpserver.c
-    dnsserver.c
+    # dhcpserver.c
+    # dnsserver.c
     sdk_callback.c
     watchdog.c
     udp.c
     wifi.c
-    ping_core.c
+    # ping_core.c
     memory_wrappers.c
     # config_file.c
     # config_change.c
@@ -20,7 +20,12 @@ target_sources(${PROJECT_NAME} PRIVATE
     system_config.c
 )
 
+add_subdirectory(picofs)
 add_subdirectory(config) 
+add_subdirectory(dhcp)
+add_subdirectory(dns)
+add_subdirectory(ping)
+add_subdirectory(calendar)
 
 if(PICO_BOARD STREQUAL "pico_w")
     set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/")
@@ -32,8 +37,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}
         ${FREERTOS_PORT_DIR}
         ${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/include/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_base_headers/include/ # <-- FIXED: For basic pico types/macros
-        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_rand/include/         # <-- FIXED: Provides "pico/rand.h"
+        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_base_headers/include/
+        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_rand/include/
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/src/include/  
         ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_lwip/include/ 
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/ports/freertos/include/ 
