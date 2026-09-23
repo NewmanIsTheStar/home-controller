@@ -12,30 +12,41 @@ target_sources(${PROJECT_NAME} PRIVATE
     wifi.c
     ping_core.c
     memory_wrappers.c
-    config_file.c
-    config_change.c
-    config_read.c
-    config_write.c
-    config_validate.c
+    # config_file.c
+    # config_change.c
+    # config_read.c
+    # config_write.c
+    # config_validate.c
     system_config.c
 )
 
+add_subdirectory(config) 
+
+if(PICO_BOARD STREQUAL "pico_w")
+    set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/")
+else()
+    set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2350_ARM_NTZ/include/")
+endif()
+
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}
-        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/ports/freertos/include/ 
-        if(PICO_BOARD STREQUAL "pico_w")
-        ${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/
-        else()
-        ${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2350_ARM_NTZ/include/
-        endif()        
+        ${FREERTOS_PORT_DIR}
         ${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/include/
+        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_base_headers/include/ # <-- FIXED: For basic pico types/macros
+        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_rand/include/         # <-- FIXED: Provides "pico/rand.h"
+        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/src/include/  
+        ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_lwip/include/ 
+        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/ports/freertos/include/ 
         ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_arch/include/
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/cyw43-driver/src/
         ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_driver/include/
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/src/apps/altcp_tls/
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/mbedtls/include/
         ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/apps/ping/
-        )
+)
+
+
+
 
 # redirect memory allocation to wrappers for FreeRTOS
 target_link_options(${PROJECT_NAME} PRIVATE
@@ -59,6 +70,7 @@ set(pluto_link_libraries
         pico_lwip_mqtt
         pico_stdlib
         pico_rand
+        pico_base_headers
         FreeRTOS-Kernel-Heap4
         pico_flash
         hardware_pio
@@ -66,7 +78,7 @@ set(pluto_link_libraries
         pico_httpd_content
         )
 
-target_link_libraries(${PROJECT_NAME} ${pluto_link_libraries})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${pluto_link_libraries})
 
 # create githash used instead of APP_VERSION for debug builds
 execute_process(

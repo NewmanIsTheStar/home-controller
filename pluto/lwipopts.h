@@ -16,7 +16,7 @@
 #define SNTP_UPDATE_DELAY           (3600000)
 void setTimeSec(uint32_t sec);
 #define SNTP_SET_SYSTEM_TIME(sec)   setTimeSec(sec)
-#define MEMP_NUM_SYS_TIMEOUT        (LWIP_NUM_SYS_TIMEOUT_INTERNAL+1)
+//#define MEMP_NUM_SYS_TIMEOUT        (LWIP_NUM_SYS_TIMEOUT_INTERNAL+1)   // Newman moved to MQTT section
 #define LWIP_DHCP_MAX_NTP_SERVERS   (4)
 //#define HTTPD_FSDATA_FILE           "htmldata.c"
 #define HTTPD_FSDATA_FILE "pico_fsdata.inc"
@@ -186,7 +186,7 @@ Increase MQTT_OUTPUT_RINGBUF_SIZE: If sending multiple subscription requests in 
 
 // Newman added for webhook test task
 #define DEFAULT_ACCEPTMBOX_SIZE         6   // Backlog queue depth for listen()
-#define DEFAULT_TCP_RECVMBOX_SIZE       6   
+//#define DEFAULT_TCP_RECVMBOX_SIZE       6    // WAS ALREADY BIGGER
 #define MEMP_NUM_SYS_MBOX               10  // Total concurrent mailboxes allowed
 #define MEMP_NUM_SYS_SEM                10  // Total concurrent semaphores allowed
 

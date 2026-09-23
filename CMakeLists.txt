@@ -50,6 +50,8 @@ include(pico-sdk/pico_sdk_init.cmake)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+set(pico_lwip_user_options_path ${CMAKE_CURRENT_SOURCE_DIR}/pluto)
+
 if(PICO_BOARD STREQUAL "pico_w") 
     include(FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
 elseif(PICO_BOARD STREQUAL "pico2_w") 
@@ -72,14 +74,23 @@ endif()
 project(home-controller C CXX ASM)   # set the project name ${PROJECT_NAME}
 
 add_executable(${PROJECT_NAME})
+
+target_link_libraries(home-controller PRIVATE 
+    pico_stdlib
+    pico_cyw43_arch_lwip_sys_freertos
+)
+
 add_subdirectory(pluto)  
 add_subdirectory(application)
+add_subdirectory(picofs)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_NAME="${PROJECT_NAME}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_HOME_CONTROLLER)
 
 pico_set_program_name(${PROJECT_NAME} "${PROJECT_NAME}")
 pico_set_program_version(${PROJECT_NAME} ${APP_VERSION})
+
+
 
 # enable/disable output over UART/USB
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
