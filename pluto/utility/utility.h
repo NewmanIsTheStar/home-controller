@@ -16,30 +16,53 @@ typedef struct
     int read_data;
 } DOUBLE_BUF_INT;
 
+// utility_crc.c
 uint16_t crc_buffer(uint8_t *pbuff, int num_bytes);
+
+// utility_string.c
 void hex_dump_to_string(const uint8_t *bptr, uint32_t len, char *out_string, int out_len);
 void hex_dump(const uint8_t *bptr, uint32_t len);
-int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/ int port, int type);
-int send_syslog_message(char *log_name, const char *format, ...);
-int check_watchdog_reboot(void);
-int send_govee_command(int on, int red, int green, int blue);
-int establish_multicast_socket(struct sockaddr_in *ipv4_address, int port, int type);
-int JoinGroup(int sock, const char* join_ip, const char* local_ip);
-int send_pluto_message(char *message);
-int set_double_buf_integer(DOUBLE_BUF_INT *integer, int value);
-int get_double_buf_integer(DOUBLE_BUF_INT *integer, int retry);
-int initialize_relay_gpio(int gpio_number);
-int deplus_string(char *string, int max_len);
-int send_shelly_command(int on);
-int test_http(int on);
 int print_printable_text(char *contaminated_string);
-int indent(int num_spaces);  
-bool gpio_valid(int gpio_number);
-bool gpio_conflict(int *gpio_list, int len);
-i2c_inst_t *gpio_get_i2c(int gpio_clock, int gpio_data);
+int indent(int num_spaces);
+int deplus_string(char *string, int max_len);
 void urldecode(char *dst, const char *src);
 uint32_t address_string_to_ip(char *address_string);
 int ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array);
 void to_lowercase(char *str);
+
+
+// utility_socket.c
+int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/ int port, int type);
+int establish_multicast_socket(struct sockaddr_in *ipv4_address, int port, int type);
+int JoinGroup(int sock, const char* join_ip, const char* local_ip);
+
+// utility_syslog.c
+int send_syslog_message(char *log_name, const char *format, ...);
+
+// utility_govee.c
+int send_govee_command(int on, int red, int green, int blue);
+
+// utilty_pluto_msg.c
+int send_pluto_message(char *message);
+
+// utlity_primative.c
+int set_double_buf_integer(DOUBLE_BUF_INT *integer, int value);
+int get_double_buf_integer(DOUBLE_BUF_INT *integer, int retry);
+
+// utility_shelly.c
+//int send_shelly_command(int on);
+int test_http(int on);
+
+// utility_gpio.c
+int initialize_relay_gpio(int gpio_number);  
+bool gpio_valid(int gpio_number);
+bool gpio_conflict(int *gpio_list, int len);
+i2c_inst_t *gpio_get_i2c(int gpio_clock, int gpio_data);
+
+
+
+
+int check_watchdog_reboot(void);
+
 
 #endif

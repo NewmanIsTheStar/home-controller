@@ -214,3 +214,42 @@ int8_t get_real_time_clock_seconds(void)
 
    return(date.sec);
 }
+
+/*!
+ * \brief Used by lwip sntp application to set the rtc 
+ *
+ * \param sec time in seconds since epoch (1970)
+ *
+ * \return nothing
+ */
+void setTimeSec(uint32_t sec)
+{
+	#ifdef FAKE_RTC
+	rtc_set_datetime(sec);
+	#else
+	datetime_t date;
+	struct tm * timeinfo;
+	time_t t;
+    time_t offset_hours = 0;
+    time_t offset_minutes = 0;
+    
+
+    // offset from UTC
+    t = sec + (60 * 60 * offset_hours) + offset_minutes* 60;
+
+	timeinfo = gmtime(&t);
+
+	memset(&date, 0, sizeof(date));
+	date.sec = timeinfo->tm_sec;
+	date.min = timeinfo->tm_min;
+	date.hour = timeinfo->tm_hour;
+	date.day = timeinfo->tm_mday;
+	date.month = timeinfo->tm_mon + 1;
+	date.year = timeinfo->tm_year + 1900;
+
+    date.dotw = get_day_of_week(date.month, date.day, date.year);
+    //printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>SETTING RTC to: year = %u month = %u day = %u hour = %u min = %u sec = %u\n", date.year, date.month, date.day, date.hour, date.min, date.sec);
+
+	rtc_set_datetime (&date);
+	#endif
+}

@@ -39,7 +39,7 @@
 
 // external variables
 extern WORKER_TASK_T worker_tasks[];
-
+extern WEB_VARIABLES_T web;
 
 /*!
  * \brief Tell watchdog taskdog task that we are alive!
@@ -112,4 +112,43 @@ void watchdog_task(void *params)
 #endif
         SLEEP_MS(1000);
     }
+}
+
+/*!
+ * \brief Log watchdog reset if it occured
+ * This function may be called multiple times.  It will do nothing once it has 
+ * successfully sent a log message to the syslog server.  The intent is to ensure 
+ * that watchdog reboots are logged even if the syslog server was not available
+ * when the system started.
+ * \return socket or -1 on error
+ */
+int check_watchdog_reboot(void)
+{
+    static int watchdog_reset = -1;
+    static bool syslog_sent = false;
+    static bool web_page_updated = false;
+
+    if (watchdog_reset < 0)
+    {
+        // cache watchdog reset status
+        watchdog_reset = watchdog_caused_reboot();
+    }
+    
+    if (watchdog_reset && !web_page_updated)
+    {
+        // update web page
+        get_timestamp(web.watchdog_timestring, sizeof(web.watchdog_timestring), false, true); 
+        web_page_updated = true;  
+    }
+
+    if (watchdog_reset && sys->syslog_enable && !syslog_sent)
+    {
+        // log watchdog event
+        if ((send_syslog_message("usurper", "REBOOT @ %s [reason = %lu]", web.watchdog_timestring, get_reboot_reason())) > 0)   
+        {
+            syslog_sent = true;
+        }
+    }    
+
+    return(0);
 }

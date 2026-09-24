@@ -17,7 +17,7 @@
 #include "application_config.h"
 
 #include "pluto.h"
-#include "wifi.h"
+#include "pluto_wifi.h"
 
 
 typedef struct

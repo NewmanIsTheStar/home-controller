@@ -1,22 +1,9 @@
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(${PROJECT_NAME} PRIVATE
-    pluto.c
-    web.c
-    # calendar.c
-    utility.c
-    # dhcpserver.c
-    # dnsserver.c
-    sdk_callback.c
-    watchdog.c
-    udp.c
-    wifi.c
-    # ping_core.c
-    memory_wrappers.c
-    # config_file.c
-    # config_change.c
-    # config_read.c
-    # config_write.c
-    # config_validate.c
+    pluto_main.c
+    pluto_wifi.c    
+    pluto_malloc.c
+    web.c    
     system_config.c
 )
 
@@ -26,6 +13,9 @@ add_subdirectory(dhcp)
 add_subdirectory(dns)
 add_subdirectory(ping)
 add_subdirectory(calendar)
+add_subdirectory(udp)
+add_subdirectory(utility)
+add_subdirectory(watchdog)
 
 if(PICO_BOARD STREQUAL "pico_w")
     set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/")

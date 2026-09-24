@@ -49,7 +49,7 @@
 #include "application_config.h"
 #include "watchdog.h"
 #include "worker_tasks.h"
-#include "wifi.h"
+#include "pluto_wifi.h"
 #include "calendar.h"
 #include "pluto.h"
 #include "shell.h"
