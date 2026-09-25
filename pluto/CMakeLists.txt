@@ -5,6 +5,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_malloc.c
     web.c    
     system_config.c
+    swload_task.c
 )
 
 add_subdirectory(picofs)

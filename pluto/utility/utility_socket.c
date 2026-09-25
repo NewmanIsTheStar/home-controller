@@ -268,7 +268,7 @@ int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/
     {
         for (rp = result; rp != NULL; rp = rp->ai_next)
         {
-            //printf("Trying to open socket with family = %d socktype = %d protocol = %d [%s, %s, %d]\n", rp->ai_family, rp->ai_socktype, rp->ai_protocol, address_string, port_string, type);
+            printf("Trying to open socket with family = %d socktype = %d protocol = %d [%s, %s, %d]\n", rp->ai_family, rp->ai_socktype, rp->ai_protocol, address_string, port_string, type);
             socket = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
             if (socket >= 0)
             {
