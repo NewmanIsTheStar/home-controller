@@ -66,6 +66,7 @@ typedef struct WEB_VARIABLES
   char ping_target[16];             // TODO: remove this hack and replace with inter-task message
   char edit_text_filename[16];
   char delete_filename[16];
+  char download_url[256];
   char *basic_file_to_execute;
   char *file_to_cat;
   char *file_to_hexdump;

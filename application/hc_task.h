@@ -21,7 +21,8 @@
 #define HC_CMD_LIST_CORRUPT (14)
 #define HC_CMD_SHELLY_DEVICE_DUMP (15)
 #define HC_CMD_HEXDUMP_FILE (16)
-#define HC_CMD_DELETE_FILE 17
+#define HC_CMD_DELETE_FILE (17)
+#define HC_CMD_DOWNLOAD_FILE 18
 
 typedef enum
 {

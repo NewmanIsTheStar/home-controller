@@ -135,11 +135,9 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
         // we transform them into more sensible bit flags in the two least significant bits for easier processing
-        //printf("Open called with flags = %d\n", flags);
+
         open_mode = (flags + 1) & (O_ACCMODE);
-        //printf("open_mode = %d\n", open_mode);
         MASKED_WRITE(flags, open_mode, O_ACCMODE);
-        //printf("updated flags = %d\n", flags);
         
         if (flags & FWRITE)
         {

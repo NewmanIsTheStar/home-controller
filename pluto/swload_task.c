@@ -24,10 +24,12 @@
 // #include "config.h"
 #include "watchdog.h"
 #include "pluto.h"
+#include "shell.h"
 
 
-int http_parse_haeader(char *buffer, int buflen, int *filelen, char **filestart);
+int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart);
 int image_compare(char *ptr1, char *ptr2, int len);
+int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t uri_size);
 
 #define HTTPC_CLIENT_AGENT "MonkeyBuntBob"
 
@@ -97,97 +99,98 @@ void swload_task(__unused void *params)
 
     for(;;)
     {
-        // (re)establish socket connection
-        if (web_socket < 0) web_socket = establish_socket("psycho.badnet", 80, SOCK_STREAM);
+        // // (re)establish socket connection
+        // if (web_socket < 0) web_socket = establish_socket("psycho.badnet", 80, SOCK_STREAM);
         
-        if(web_socket >= 0)
-        {
-            // create request
-            snprintf(buffer, sizeof(buffer), HTTPC_REQ_11_HOST_FORMAT("/pluto.bin", "fileserver.psycho"));
+        // if(web_socket >= 0)
+        // {
+        //     // create request
+        //     snprintf(buffer, sizeof(buffer), HTTPC_REQ_11_HOST_FORMAT("/wombat", "fileserver.psycho"));
 
-            // send a request
-            wrote_bytes = send(web_socket, buffer, strlen(buffer), 0);
+        //     // send a request
+        //     wrote_bytes = send(web_socket, buffer, strlen(buffer), 0);
 
-            if (wrote_bytes > 0) 
-            {
-                printf("read software file\n");                    
-                total_expected = 0;
-                for (retry=0; retry<5; retry++)
-                {
-                    FD_ZERO(&readset);
-                    FD_SET(web_socket, &readset);
-                    tv.tv_sec = 5;
-                    tv.tv_usec = 500;
+        //     if (wrote_bytes > 0) 
+        //     {
+        //         printf("read software file\n");                    
+        //         total_expected = 0;
+        //         for (retry=0; retry<5; retry++)
+        //         {
+        //             FD_ZERO(&readset);
+        //             FD_SET(web_socket, &readset);
+        //             tv.tv_sec = 5;
+        //             tv.tv_usec = 500;
 
-                    ret = select(web_socket + 1, &readset, NULL, NULL, &tv);
+        //             ret = select(web_socket + 1, &readset, NULL, NULL, &tv);
 
-                    if ((ret > 0) && FD_ISSET(web_socket, &readset))
-                    {
-                        read_bytes = recv(web_socket, buffer, sizeof(buffer), 0);
-                        if (read_bytes > 0)
-                        {
-                            // reset retry counter
-                            retry = 0;
+        //             if ((ret > 0) && FD_ISSET(web_socket, &readset))
+        //             {
+        //                 read_bytes = recv(web_socket, buffer, sizeof(buffer), 0);
+        //                 if (read_bytes > 0)
+        //                 {
+        //                     // reset retry counter
+        //                     retry = 0;
 
-                            //hex_dump(buffer, read_bytes);
+        //                     //hex_dump(buffer, read_bytes);
                             
-                            // attempt to find http header -- only works if header is completely contained in a buffer
-                            if (!total_expected && !http_parse_haeader(buffer, read_bytes, &file_len, &file_start))
-                            {
-                                file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
-                                total_expected = file_offset + file_len;
+        //                     // attempt to find http header -- only works if header is completely contained in a buffer
+        //                     if (!total_expected && !http_parse_header(buffer, read_bytes, &file_len, &file_start))
+        //                     {
+        //                         file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
+        //                         total_expected = file_offset + file_len;
 
-                                // compare bytes of file in the header with flash
-                                compare = image_compare((char *)XIP_BASE, file_start, read_bytes - file_offset);
-                                total_bad_compares += compare;                                
+                               
+        //                         // compare bytes of file in the header with flash
+        //                         // compare = image_compare((char *)XIP_BASE, file_start, read_bytes - file_offset);
+        //                         // total_bad_compares += compare;                                
 
-                                //printf("MEM COMPARE beginning at file byte %d returned %d\n", read_bytes - file_offset, compare);
-                            }
-                            else
-                            {
-                                compare = image_compare((char *)XIP_BASE + total_read - file_offset, buffer, read_bytes);
+        //                         //printf("MEM COMPARE beginning at file byte %d returned %d\n", read_bytes - file_offset, compare);
+        //                     }
+        //                     else
+        //                     {
+        //                         compare = image_compare((char *)XIP_BASE + total_read - file_offset, buffer, read_bytes);
                                 
-                                if((total_read - file_offset + read_bytes) < 1024*1024)
-                                {
-                                    total_bad_compares += compare;
-                                }
+        //                         if((total_read - file_offset + read_bytes) < 1024*1024)
+        //                         {
+        //                             total_bad_compares += compare;
+        //                         }
 
-                                //printf("MEM COMPARE beginning at file byte %d returned %d\n", total_read - file_offset, compare);                             
-                            }
+        //                         //printf("MEM COMPARE beginning at file byte %d returned %d\n", total_read - file_offset, compare);                             
+        //                     }
 
 
-                            // accumulate total bytes received
-                            total_read += read_bytes;
+        //                     // accumulate total bytes received
+        //                     total_read += read_bytes;
 
-                            //printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);
-                            if (total_expected && (total_read >= total_expected)) break;
-                        }
-                        else {
-                            perror("READ ERROR = ");
-                            printf("read returned %d  ||| retry = %d\n", read_bytes, retry);
-                            err = -1;
-                        }
-                    }
-                    else
-                    {
-                        printf("select returned %d  and FD_ISSET was not set  ||| retry = %d\n", ret, retry);
-                        err = -1;
-                    }  
+        //                     //printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);
+        //                     if (total_expected && (total_read >= total_expected)) break;
+        //                 }
+        //                 else {
+        //                     perror("READ ERROR = ");
+        //                     printf("read returned %d  ||| retry = %d\n", read_bytes, retry);
+        //                     err = -1;
+        //                 }
+        //             }
+        //             else
+        //             {
+        //                 printf("select returned %d  and FD_ISSET was not set  ||| retry = %d\n", ret, retry);
+        //                 err = -1;
+        //             }  
 
-                }         
-            }
-            else
-            {
-                printf("wrote_bytes = %d\n", wrote_bytes);
+        //         }         
+        //     }
+        //     else
+        //     {
+        //         printf("wrote_bytes = %d\n", wrote_bytes);
 
-                // close socket
-                lwip_close(web_socket);
-                web_socket = -1;
-                err = -1;
-            }
-        }
+        //         // close socket
+        //         lwip_close(web_socket);
+        //         web_socket = -1;
+        //         err = -1;
+        //     }
+        // }
 
-        printf("TOTAL_READ = %d TOTAL_EXPECTED = %d TOTAL_BAD_COMPARES %d\n", total_read, total_expected, total_bad_compares);        
+        // printf("TOTAL_READ = %d TOTAL_EXPECTED = %d TOTAL_BAD_COMPARES %d\n", total_read, total_expected, total_bad_compares);        
 
         SLEEP_MS(60000);
 
@@ -198,7 +201,7 @@ void swload_task(__unused void *params)
 
 
 
-int http_parse_haeader(char *buffer, int buflen, int *filelen, char **filestart)
+int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart)
 {
     char *eol = NULL;
     char *eoh = NULL;
@@ -256,13 +259,13 @@ int http_parse_haeader(char *buffer, int buflen, int *filelen, char **filestart)
                         *filelen = atoi(content_len);
                         *filestart = eoh+strlen("\r\n\r\n");
 
-                        printf("FILE portion in buffer with header: ");
-                        for (i=0; i<*filelen && i<buflen; i++)
-                        {
-                            if (i%16 == 0) printf("\n");
-                            printf("%02x ", (*filestart)[i]);                            
-                        }
-                        printf("\nEND FILE portion in buffer with header\n");
+                        // printf("FILE portion in buffer with header: ");
+                        // for (i=0; i<*filelen && i<buflen; i++)
+                        // {
+                        //     if (i%16 == 0) printf("\n");
+                        //     printf("%02x ", (*filestart)[i]);                            
+                        // }
+                        // printf("\nEND FILE portion in buffer with header\n");
 
                         err = 0;
                     }
@@ -293,4 +296,208 @@ int image_compare(char *ptr1, char *ptr2, int len)
     // }
 
     return(num_different_bytes);
+}
+
+/*!
+ * \brief Monitor weather and control relay based on conditions and time of day
+ *
+ * \param params unused garbage
+ * 
+ * \return nothing
+ */
+int download_file(char *url)
+{
+    int err = 0;
+    int ret;
+    int wrote_bytes;
+    int read_bytes;
+    static int msg_to_snd;
+    int retry;
+    fd_set readset;
+    struct timeval tv;  
+    char buffer[1600];
+    int web_socket = -1;    
+    int file_len;
+    char *file_start;
+    int total_read = 0;
+    int total_expected = 0;
+    int compare;
+    int file_offset = 0;
+    int total_bad_compares = 0;
+    char host[256];
+    char uri[256];
+    char filename[16];
+    FILE *filePointer;
+    int i = 0;
+    int j = 0;
+    
+    if (parse_url(url, host, sizeof(host), uri, sizeof(uri)) == 0) 
+    {
+        // generate filename from uri
+        for(i=0; i < sizeof(uri); i++)
+        {
+            if (isalpha(uri[i]) || isdigit(uri[i]) || uri[i] == 0)
+            {
+                filename[j++] = uri[i];
+                if ((j >= 16) || (uri[i] == 0)) 
+                {
+                    // force zero termination
+                    filename[15] = 0;
+                    break;
+                }
+            }
+        }
+
+        shell_printf("Host:      %s\n", host);
+        shell_printf("URI:       %s\n", uri);
+        shell_printf("Filename:  %s\n", filename);                
+    } 
+    else 
+    {
+        shell_printf("download_file: URL parsing failed.\n");
+        return (-1);
+    }
+    
+    filePointer = fopen(filename, "wb");
+
+    // check if the file exists and opened successfully
+    if (filePointer == NULL) 
+    {
+        shell_printf("hd: %s: No such file\n", filename);
+        return 1; 
+    }
+
+    // establish socket connection
+    if (web_socket < 0) web_socket = establish_socket(host, 80, SOCK_STREAM);
+    
+    if(web_socket >= 0)
+    {
+        // create request
+        snprintf(buffer, sizeof(buffer), HTTPC_REQ_11_HOST_FORMAT(uri, host));
+
+        hex_dump(buffer, strlen(buffer));
+
+        // send a request
+        wrote_bytes = send(web_socket, buffer, strlen(buffer), 0);
+
+        if (wrote_bytes == strlen(buffer))    //TODO: handle short write by sending rest of the buffer
+        {
+            printf("read file\n");                    
+            total_expected = 0;
+            for (retry=0; retry<5; retry++)
+            {
+                FD_ZERO(&readset);
+                FD_SET(web_socket, &readset);
+                tv.tv_sec = 5;
+                tv.tv_usec = 500;
+
+                ret = select(web_socket + 1, &readset, NULL, NULL, &tv);
+
+                if ((ret > 0) && FD_ISSET(web_socket, &readset))
+                {
+                    read_bytes = recv(web_socket, buffer, sizeof(buffer), 0);
+                    if (read_bytes > 0)
+                    {
+                        // reset retry counter
+                        retry = 0;
+
+                        //hex_dump(buffer, read_bytes);
+                        
+                        // attempt to find http header -- only works if header is completely contained in a buffer
+                        if (!total_expected && !http_parse_header(buffer, read_bytes, &file_len, &file_start))
+                        {
+                            file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
+                            total_expected = file_offset + file_len;
+
+                             fwrite(file_start, read_bytes - file_offset, 1, filePointer);
+                        }
+                        else
+                        {
+                            fwrite(buffer, read_bytes, 1, filePointer);                           
+                        }
+
+                        // accumulate total bytes received
+                        total_read += read_bytes;
+
+                        //printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);
+                        if (total_expected && (total_read >= total_expected)) break;
+                    }
+                    else {
+                        perror("READ ERROR = ");
+                        printf("read returned %d  ||| retry = %d\n", read_bytes, retry);
+                        err = -1;
+                    }
+                }
+                else
+                {
+                    printf("select returned %d  and FD_ISSET was not set  ||| retry = %d\n", ret, retry);
+                    err = -1;
+                }  
+
+            }         
+        }
+        else
+        {
+            shell_printf("download_file: error failed to send HTTP GET :: bytes sent = %d [expected %d]\n", wrote_bytes, strlen(buffer));
+            
+            printf("wrote_bytes = %d\n", wrote_bytes);
+
+            // close socket
+            lwip_close(web_socket);
+            web_socket = -1;
+            err = -1;
+        }
+    }
+
+    printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);        
+
+
+    fclose(filePointer);
+
+    if (web_socket >= 0)
+    {
+        lwip_close(web_socket);
+        web_socket = -1;
+    } 
+
+    return(err);
+}
+
+
+
+int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t uri_size) 
+{
+    const char *p = url;
+    
+    // Skip protocol (http:// or https://) if present
+    const char *scheme_end = strstr(url, "://");
+    if (scheme_end != NULL) {
+        p = scheme_end + 3;
+    }
+    
+    // Find the first '/' after the scheme which marks the start of the URI/path
+    const char *path_start = strchr(p, '/');
+    
+    if (path_start != NULL) {
+        // Copy hostname part
+        size_t h_len = (size_t)(path_start - p);
+        if (h_len >= host_size) return -1; // Buffer too small
+        strncpy(host, p, h_len);
+        host[h_len] = '\0';
+        
+        // Copy URI part (including the leading '/')
+        if (strlen(path_start) >= uri_size) return -1; // Buffer too small
+        strncpy(uri, path_start, uri_size);
+    } else {
+        // No path found, entire remaining string is the host, URI is "/"
+        if (strlen(p) >= host_size) return -1;
+        strncpy(host, p, host_size);
+        
+        if (uri_size > 1) {
+            strcpy(uri, "/");
+        } else {
+            return -1;
+        }
+    }
+    return 0;
 }

@@ -365,7 +365,12 @@ static void execute_shell_command(const char* cmd)
     else if (strncmp(cmd, "edit ", 5) == 0) 
     {
         if (strlen(cmd) > 6) shell_edit((char *)(cmd+5));  
-    }                 
+    }   
+    else if (strncmp(cmd, "wget ", 5) == 0) 
+    {
+        STRNCPY(web.download_url, ((char *)(cmd+5)), sizeof(web.download_url));
+        hc_queue_send(HC_CMD_DOWNLOAD_FILE);  
+    }                    
     else if (strncmp(cmd, "cat ", 4) == 0) 
     {
         web.file_to_cat = ((char *)(cmd+4)); 
