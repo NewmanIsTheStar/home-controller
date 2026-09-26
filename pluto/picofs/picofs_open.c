@@ -121,7 +121,7 @@ SemaphoreHandle_t crc_mutex = NULL;
  * \param disable_fid_rollover  allow file with maximum sequence number to be opened (this is only used for deletion of the file) 
  * \return 0 on success
  */
-int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover)
+int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover, size_t known_size)
 {
     int err = -1;
     FILE_TRAILER_T *file_trailer = NULL;
@@ -145,7 +145,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
             if (!picofs_file_in_use(file_trailer, fd) && (!(flags & O_EXCL)))
             {
                 picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
-                err = picofs_allocate_cache(fd);
+                err = picofs_allocate_cache(fd, known_size);
                 
                 if (!err)
                 {
@@ -303,6 +303,9 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
             }
             custom_fds[fd].data_offset = 0;
             custom_fds[fd].mmap_ref_count = 0;
+            custom_fds[fd].mmap_delayed_close = false;
+            custom_fds[fd].reserved_flash_start = NULL;
+            custom_fds[fd].reserved_flash_end = NULL;
         }
         else
         {
@@ -315,6 +318,8 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
             custom_fds[fd].data_offset = 0;
             custom_fds[fd].mmap_ref_count = 0;
             custom_fds[fd].mmap_delayed_close = false;
+            custom_fds[fd].reserved_flash_start = NULL;
+            custom_fds[fd].reserved_flash_end = NULL;
 
             // NB we rely on the cache not being touched here during double initialization sequences
         }
@@ -329,10 +334,11 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
  * \param fd     file descriptor
  * \return nothing
  */
-int picofs_allocate_cache(int fd)
+int picofs_allocate_cache(int fd, size_t known_size)
 {
     int err = -1;
     size_t cache_size = 0;
+    size_t reserved_flash_size = 0;
 
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
@@ -344,10 +350,33 @@ int picofs_allocate_cache(int fd)
             custom_fds[fd].cache = NULL;
         }
 
-        // allocate one 4k block greater than currently used
-        cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
+        if (known_size < 16*1024)
+        {
+            // regular sized file so allocate cache with one 4k block greater than currently used
+            cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
+            custom_fds[fd].cache = pvPortMalloc(cache_size);
+        }
+        else
+        {
+            // large file so allocate 4K for ache and pre-allocate flash for the entire file
+            // flash must be reserved since multiple cache writes will be required and we don't want someone
+            // else writing into the contiguous block we are writing for this file
+            cache_size = 4*1024;
 
-        custom_fds[fd].cache = pvPortMalloc(cache_size);
+            // add space for trailer and round up to a page boundary
+            known_size = (((known_size  + sizeof(FILE_TRAILER_T))/FS_PAGE_SIZE)+1)*FS_PAGE_SIZE;
+
+            // reserve flash and make 64K aligned [for now we assume all large files are executable but this should be a passed parameter in future]
+            if (!picofs_find_contiguous_free_area(known_size, &(custom_fds[fd].reserved_flash_start), &reserved_flash_size, true))
+            {
+                custom_fds[fd].reserved_flash_start = 0;
+                custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + known_size;
+
+                custom_fds[fd].cache = pvPortMalloc(cache_size);
+            }
+        }
+
+        
 
         if (custom_fds[fd].cache != NULL)
         {

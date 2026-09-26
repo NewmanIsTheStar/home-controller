@@ -125,6 +125,8 @@ int picofs_close_file(int fd, bool disable_purge)
     custom_fds[fd].rollover_fid = FS_INVALID_FID;
     custom_fds[fd].mmap_ref_count = 0;
     custom_fds[fd].mmap_delayed_close = false;
+    custom_fds[fd].reserved_flash_start = NULL;
+    custom_fds[fd].reserved_flash_end = NULL;     
 
     return(err);
 }
@@ -187,7 +189,7 @@ int picofs_sync_file(int fd, bool disable_purge)
             }
         }
 
-        if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size) && (err == 0))
+        if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size, false) && (err == 0))
         {
             picofs_flash_program(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
     

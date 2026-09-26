@@ -156,7 +156,7 @@ int picofs_consolidate_all_files_in_flash(void)
         picofs_printf("\nTotal size    %08d\n", size_files);
         picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
 
-        picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
+        picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size, false)?"NO":"YES");
 
         // picofs_printf("consolidation_area = %p\n", consolidation_area);
 
@@ -165,7 +165,7 @@ int picofs_consolidate_all_files_in_flash(void)
             shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
             picofs_erase_obsolete_sectors(true);
 
-            if (picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size))
+            if (picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size, false))
             {
                 picofs_printf("After erasure, we still have insufficent space to consolidate.  --ABORT--\n"); 
 

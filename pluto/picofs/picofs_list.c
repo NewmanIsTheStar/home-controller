@@ -354,7 +354,7 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
         picofs_printf("\nTotal size    %08d\n", size_files);
         picofs_printf("Remnants size %08d\n", size_files_plus_remnants - size_files);
 
-        picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size)?"NO":"YES");
+        picofs_printf("Space to consolidate? %s\n", picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size, false)?"NO":"YES");
     }
     else  // display raw file remnants -- cannot assume self consistency as CRCs are being ignored!
     {

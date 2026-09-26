@@ -72,7 +72,7 @@
 
 
 //prototypes
-
+bool picofs_is_cell_reserved(u8_t *cell);
 
 
 // external variables
@@ -256,15 +256,16 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
  *  *     
  * \return 0 on success
  */
-int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size)
+int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size, bool executable_alignment)
 {
     int err = 1;
     char *cell = NULL;
-    u32_t erase_block_absolute = 0;
-    u32_t erase_block_relative = 0;    
+    // u32_t erase_sector_absolute = 0;
+    // u32_t erase_sector_relative = 0;  
+    u32_t executable_block_relative = 0;        
     u32_t page_relative = 0;
     u32_t free_pages = 0;
-    u32_t total_pages = 0;
+    // u32_t total_pages = 0;
     TickType_t start_tick;
     TickType_t elapsed_ticks = 0;
     u32_t contiguous_pages_required = 0;
@@ -277,14 +278,24 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
 
     for(cell = *start_of_area = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
-        erase_block_absolute = ((u32_t)cell)/FS_SECTOR_SIZE;
-        erase_block_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_SECTOR_SIZE;            
+        // erase_sector_absolute = ((u32_t)cell)/FS_SECTOR_SIZE;
+        // erase_sector_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_SECTOR_SIZE;  
+        executable_block_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_EXE_BLOCK_SIZE;            
         page_relative = ((u32_t)(cell - FLASH_SCAN_START)%FS_SECTOR_SIZE)/FS_PAGE_SIZE;          
         
-        if (*cell != FS_ERASED_CELL_VALUE)
-        {            
-            // skip to next page
-            cell = FLASH_SCAN_START + erase_block_relative*FS_SECTOR_SIZE+((page_relative+1)*FS_PAGE_SIZE);
+        if ((*cell != FS_ERASED_CELL_VALUE) || picofs_is_cell_reserved(cell))
+        {
+            if (!executable_alignment)
+            {            
+                // skip to next page
+                //cell = FLASH_SCAN_START + erase_sector_relative*FS_SECTOR_SIZE+((page_relative+1)*FS_PAGE_SIZE);  //TODO:  this looks wrong, written as if page_relative is relative to start of sector but it is not
+                cell = FLASH_SCAN_START + (page_relative+1)*FS_PAGE_SIZE; // TEST TEST TEST -- THIS MAKES MORE SENSE 
+            }
+            else
+            {
+                // skip to next executable block
+                cell = FLASH_SCAN_START + (executable_block_relative+1)*FS_EXE_BLOCK_SIZE;                
+            }
 
             // reset counter
             contiguous_pages_found = 0;
@@ -334,3 +345,32 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
 }
 
 
+/*!
+ * \brief Identify contiguous erased area large enough to hold size bytes
+ * 
+ * \param[in]   size             number of bytes
+ * 
+ * \param[out]  start_of_area    pointer to found area
+ *  *     
+ * \return 0 on success
+ */
+bool picofs_is_cell_reserved(u8_t *cell)
+{
+    bool reserved = false;
+    int i;
+
+    for(i=0; i<FS_NUM_FID; i++)
+    {
+        if (custom_fds[i].in_use && custom_fds[i].reserved_flash_start && custom_fds[i].reserved_flash_end)
+        {
+            if ((cell >= custom_fds[i].reserved_flash_start) && (cell < custom_fds[i].reserved_flash_end))
+            {
+                // cell is within a region reserved for a large open file
+                reserved = true;
+                break;
+            }
+        }
+    }
+
+    return(reserved);
+}

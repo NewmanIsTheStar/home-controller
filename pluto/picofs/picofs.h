@@ -9,6 +9,7 @@
 
 #if FS_FAKE_FLASH == 1
 #define FS_SECTOR_SIZE (1024)
+#define FS_EXE_BLOCK_SIZE (1024)
 #define FS_TEST_ROWS (128)
 #define FS_FLASH_BASE ((char *)(&test_filesystem))
 #define FS_START ((char *)(&test_filesystem))
@@ -17,6 +18,7 @@
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
 #else
 #define FS_SECTOR_SIZE (4096)
+#define FS_EXE_BLOCK_SIZE (64*1024)
 #define FS_FLASH_BASE (XIP_BASE)
 #define FS_START ((char *)(XIP_BASE + (PICO_FLASH_SIZE_BYTES/2)))
 #define FS_END ((char *)(XIP_BASE + PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE)))
@@ -106,6 +108,8 @@ typedef struct
     int mmap_ref_count;           // number of active mappings
     bool mmap_delayed_close;      // close was postponed due to an active mapping   
     u8_t rollover_fid;            // previous fid pending deletion  
+    u8_t *reserved_flash_start;   // start of flash reservation for large files that cannot be cached in RAM
+    u8_t *reserved_flash_end;     // end of flash reservation for large files that cannot be cached in RAM
 } PICOFS_FD_T;
 
 typedef struct file_metrics
@@ -130,10 +134,10 @@ typedef enum
     PFS_DISPLAY_SHELL_PAGE_MAP = 4    
 } PFS_DISPLAY_TYPE_T;
 
-#define picofs_open(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false)))
-#define picofs_open_by_name(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false)))
-#define picofs_open_for_deletion_by_name(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (true)))
-#define picofs_open_for_deletion_by_fid(fd, fid, flags)  (picofs_open_file((fd), (NULL), (flags), (fid), (true)))
+#define picofs_open(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false), 0))
+#define picofs_open_by_name(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false), 0))
+#define picofs_open_for_deletion_by_name(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (true), 0))
+#define picofs_open_for_deletion_by_fid(fd, fid, flags)  (picofs_open_file((fd), (NULL), (flags), (fid), (true), 0))
 #define picofs_find_by_name(filename, trailer) (picofs_find_file((filename), (FS_INVALID_FID), (trailer)))
 #define picofs_find_by_fid(fid, trailer) (picofs_find_file((NULL), (fid), (trailer)))
 #define picofs_close(fid) (picofs_close_file((fid), (false)))
@@ -147,12 +151,12 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
 int picofs_list_all_files_from_flash(bool ignore_crc);
 int picofs_list_all_files_from_cache(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
-int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size);
+int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size, bool executable_alignment);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
-int picofs_allocate_cache(int fd);
+int picofs_allocate_cache(int fd, size_t known_size);
 int picofs_deallocate_cache(int fd);
-int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover);
+int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover, size_t known_size);
 int picofs_read(int fd, char *ptr, int len);
 int picofs_write(int fd, char *ptr, int len);
 int picofs_create_file_trailer(int fd, const char *name);
