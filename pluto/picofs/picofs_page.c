@@ -260,12 +260,10 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
 {
     int err = 1;
     char *cell = NULL;
-    // u32_t erase_sector_absolute = 0;
-    // u32_t erase_sector_relative = 0;  
+    u32_t erase_sector_relative = 0;  
     u32_t executable_block_relative = 0;        
     u32_t page_relative = 0;
     u32_t free_pages = 0;
-    // u32_t total_pages = 0;
     TickType_t start_tick;
     TickType_t elapsed_ticks = 0;
     u32_t contiguous_pages_required = 0;
@@ -279,7 +277,7 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
     for(cell = *start_of_area = FLASH_SCAN_START; cell < FLASH_SCAN_END;)
     {
         // erase_sector_absolute = ((u32_t)cell)/FS_SECTOR_SIZE;
-        // erase_sector_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_SECTOR_SIZE;  
+        erase_sector_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_SECTOR_SIZE;  
         executable_block_relative = (u32_t)(cell - FLASH_SCAN_START)/FS_EXE_BLOCK_SIZE;            
         page_relative = ((u32_t)(cell - FLASH_SCAN_START)%FS_SECTOR_SIZE)/FS_PAGE_SIZE;          
         
@@ -288,8 +286,7 @@ int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area
             if (!executable_alignment)
             {            
                 // skip to next page
-                //cell = FLASH_SCAN_START + erase_sector_relative*FS_SECTOR_SIZE+((page_relative+1)*FS_PAGE_SIZE);  //TODO:  this looks wrong, written as if page_relative is relative to start of sector but it is not
-                cell = FLASH_SCAN_START + (page_relative+1)*FS_PAGE_SIZE; // TEST TEST TEST -- THIS MAKES MORE SENSE 
+                cell = FLASH_SCAN_START + erase_sector_relative*FS_SECTOR_SIZE+((page_relative+1)*FS_PAGE_SIZE);
             }
             else
             {
@@ -359,7 +356,7 @@ bool picofs_is_cell_reserved(u8_t *cell)
     bool reserved = false;
     int i;
 
-    for(i=0; i<FS_NUM_FID; i++)
+    for(i=0; i<FS_MAX_FILE_DESCRIPTORS; i++)
     {
         if (custom_fds[i].in_use && custom_fds[i].reserved_flash_start && custom_fds[i].reserved_flash_end)
         {

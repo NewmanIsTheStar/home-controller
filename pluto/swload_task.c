@@ -25,6 +25,7 @@
 #include "watchdog.h"
 #include "pluto.h"
 #include "shell.h"
+#include "picofs.h"
 
 
 int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart);
@@ -327,7 +328,7 @@ int download_file(char *url)
     char host[256];
     char uri[256];
     char filename[16];
-    FILE *filePointer;
+    int filePointer = -1;
     int i = 0;
     int j = 0;
     
@@ -358,14 +359,7 @@ int download_file(char *url)
         return (-1);
     }
     
-    filePointer = fopen(filename, "wb");
 
-    // check if the file exists and opened successfully
-    if (filePointer == NULL) 
-    {
-        shell_printf("hd: %s: No such file\n", filename);
-        return 1; 
-    }
 
     // establish socket connection
     if (web_socket < 0) web_socket = establish_socket(host, 80, SOCK_STREAM);
@@ -406,14 +400,33 @@ int download_file(char *url)
                         // attempt to find http header -- only works if header is completely contained in a buffer
                         if (!total_expected && !http_parse_header(buffer, read_bytes, &file_len, &file_start))
                         {
+                            shell_printf("Size:      %d\n", file_len);  
+            
+                            if (filePointer < 0)
+                            {
+                                //filePointer = fopen(filename, "wb");
+                                filePointer = picofs_open_download_file(filename, file_len); 
+
+                                // check if the file exists and opened successfully
+                                if (filePointer < 0) 
+                                {
+                                    shell_printf("download_file: failed to open local file %s for write\n", filename);
+                                    lwip_close(web_socket);
+                                    web_socket = -1;                                    
+                                    return 1; 
+                                }
+                            }
+
                             file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
                             total_expected = file_offset + file_len;
 
-                             fwrite(file_start, read_bytes - file_offset, 1, filePointer);
+                             //fwrite(file_start, read_bytes - file_offset, 1, filePointer);
+                            picofs_write(filePointer, file_start, read_bytes - file_offset);
                         }
                         else
                         {
-                            fwrite(buffer, read_bytes, 1, filePointer);                           
+                            //fwrite(buffer, read_bytes, 1, filePointer); 
+                            picofs_write(filePointer, buffer, read_bytes);                          
                         }
 
                         // accumulate total bytes received
@@ -452,7 +465,7 @@ int download_file(char *url)
     printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);        
 
 
-    fclose(filePointer);
+    picofs_close(filePointer);
 
     if (web_socket >= 0)
     {

@@ -243,6 +243,7 @@ int picofs_deallocate_cache(int fd)
 
         // clear the cache        
         custom_fds[fd].cache_len = 0;
+        custom_fds[fd].cache_offset = 0;
         memset(&custom_fds[fd].cache_trailer, 0, sizeof(FILE_TRAILER_T));
     }
 
@@ -305,6 +306,104 @@ int picofs_purge_duplicates(char *filename, u8_t keep_fid)
             picofs_printf("Total size of files purged is %d bytes\n", size_files);
         }
     }        
+
+    return(err);
+}
+
+
+/*!
+ * \brief flush LARGE file cache to flash --THIS IS USED FOR FILES THAT DON'T FIT IN THE RAM CACHE-- 
+ *
+ * \param fd              file descriptor
+ * \param disable_purge   do not purge duplicate filenames (only used when already executing a purge)
+ * \return 0 on success
+ */
+int picofs_flush_file(int fd, bool disable_purge)
+{
+    int err = -1;
+    int i;
+    u8_t *erased_area;
+    size_t erased_area_size;
+    int padding_len = 0;
+    int cache_index = 0;
+
+    if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
+    {
+        return(err);
+    }
+
+    if (!custom_fds[fd].in_use)
+    {
+        return(err);
+    }
+
+    cache_index = custom_fds[fd].data_offset - custom_fds[fd].cache_offset;
+
+    // TODO pad the cache with 0xFF up to a page boundary or figure out how to calculate the CRC in two parts 1) in flash 2) in RAM cache
+
+
+    if (custom_fds[fd].cache)
+    {
+        // update trailer
+
+        // set size and status
+        custom_fds[fd].cache_trailer.file_size = custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
+        custom_fds[fd].cache_trailer.file_status = custom_fds[fd].file_status;
+        custom_fds[fd].cache_trailer.crc = picofs_calculate_crc32(custom_fds[fd].cache, custom_fds[fd].data_len);
+
+        // append trailer to end of cached file 
+        if ((custom_fds[fd].data_len + sizeof(FILE_TRAILER_T)) < custom_fds[fd].cache_len)
+        {
+            memcpy(custom_fds[fd].cache + custom_fds[fd].data_len, &(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
+            err = 0;
+        }
+        else
+        {
+            //TODO: expand cache as needed
+            shell_printf("picoFS: out of cache appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
+            err = -2;            
+        }
+
+        // pad cache with consolidated files
+        if (!err)
+        {
+            padding_len = custom_fds[fd].cache_trailer.file_size%256?(256 - custom_fds[fd].cache_trailer.file_size%256):0;
+
+            if (padding_len)
+            {
+                picofs_consolidate_files_to_buffer(custom_fds[fd].cache + custom_fds[fd].cache_trailer.file_size, padding_len, custom_fds[fd].cache_trailer.file_id);
+            }
+        }
+
+        if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size, false) && (err == 0))
+        {
+            picofs_flash_program(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
+    
+            err = 0;
+        }
+        else
+        {
+            shell_printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
+            err = -2;
+        }
+
+        if (!err && !disable_purge)
+        {
+            picofs_purge_duplicates(custom_fds[fd].cache_trailer.name, custom_fds[fd].cache_trailer.file_id);
+        }
+    }
+    
+    // handle pending deletion of the fid used prior to rollover
+    if (custom_fds[fd].rollover_fid != FS_INVALID_FID)
+    {
+        picofs_unlink_by_fid(custom_fds[fd].rollover_fid);
+        custom_fds[fd].rollover_fid = FS_INVALID_FID;
+    }
+
+    // update global list of files
+    picofs_refresh_files();
+
+    tab_completion_sequence++;
 
     return(err);
 }

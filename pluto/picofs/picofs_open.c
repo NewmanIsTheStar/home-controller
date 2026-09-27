@@ -252,7 +252,8 @@ int picofs_fd_new(int fd, int flags, char *name)
         custom_fds[fd].file_len = 0;
         custom_fds[fd].file_status = 0;
         custom_fds[fd].cache = NULL;                 
-        custom_fds[fd].cache_len = 0;                  
+        custom_fds[fd].cache_len = 0;   
+        custom_fds[fd].cache_offset = 0;                        
         custom_fds[fd].file_trailer = NULL;
         custom_fds[fd].data = NULL;
         custom_fds[fd].data_len = 0;
@@ -381,6 +382,7 @@ int picofs_allocate_cache(int fd, size_t known_size)
         if (custom_fds[fd].cache != NULL)
         {
             custom_fds[fd].cache_len = cache_size;
+            custom_fds[fd].cache_offset = 0;
             //printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
             err = 0;            
         }
@@ -656,4 +658,29 @@ int picofs_access(const char *filename)
     
 
     return(exists);
+}
+
+int picofs_open_download_file(const char *name, size_t known_size) 
+{
+    int err = -1;
+    int i;
+    int fd;
+
+    fd = picofs_find_available_fd();   // NB we are bypassing the wrappers so have to manage file descriptors directly in this function
+    
+    if (fd == -1) 
+    {
+        errno = ENFILE; // Too many open files
+        return -1;
+    }
+
+    if (picofs_open_file(fd, name, O_WRONLY, FS_INVALID_FID, true, known_size))   //TODO ideally should be append
+    {
+        errno = ENOENT; // File not found
+        return -1;
+    }
+
+    custom_fds[fd].in_use = true;
+
+    return(fd + 3);
 }

@@ -100,6 +100,7 @@ typedef struct
     u8_t file_status;             // flash: file status  
     char *cache;                  // RAM: file start
     size_t cache_len;             // RAM: cache size
+    size_t cache_offset;          // RAM: offset used when cache is two small to hold entire file
     FILE_TRAILER_T cache_trailer; // holds trailer while file is being written to cache
     FILE_TRAILER_T *file_trailer; // flash or RAM: file trailer
     char *data;                   // flash or RAM: data contained in the file 
@@ -200,5 +201,8 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len);
 int picofs_get_file_size(char *filename);
 int picofs_sync_file(int fd, bool disable_purge);
 int picofs_msync(void *addr, size_t length, int flags);
+int picofs_open_download_file(const char *name, size_t known_size);
+int picofs_find_available_fd(void);
+int picofs_release_fd(int fd);
 
 #endif

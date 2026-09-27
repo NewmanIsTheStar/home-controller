@@ -74,8 +74,7 @@
 
 
 //prototypes
-int picofs_find_available_fd(void);
-int picofs_release_fd(int fd);
+
 
 // external variables
 extern u32_t unix_time;

@@ -62,15 +62,6 @@
 #include "discovery_task.h"
 #include "picofs.h"
 
-
-//#define DEBUG_UDP_MESSAGES
-
-//#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
-
-
-
-
-
 //prototypes
 int picofs_expand_cache(int fd);
 
@@ -87,6 +78,13 @@ int picofs_write(int fd, char *ptr, int len)
 {
     int err = 0;
     int i;
+    int cache_index = 0;
+
+    if ((custom_fds[fd].data >= FLASH_SCAN_START) && (custom_fds[fd].data  < FLASH_SCAN_END))
+    {
+        shell_printf("picoFS: ABORT!!!  data pointer is pointing to flash %p\n", custom_fds[fd].data);
+        return(-88);
+    }
 
     if (custom_fds[fd].flags & O_APPEND)
     {
@@ -96,21 +94,65 @@ int picofs_write(int fd, char *ptr, int len)
 
     for(i=0; i<len; i++)
     { 
-             
-        if (custom_fds[fd].cache_len && (custom_fds[fd].data_offset + i) < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T)))
+        // get index within the cache window (cache_offset is the start of the cache window within the file) 
+        cache_index = custom_fds[fd].data_offset + i - custom_fds[fd].cache_offset;
+
+        if (!((custom_fds[fd].reserved_flash_start) && (custom_fds[fd].reserved_flash_end)))
         {
-            custom_fds[fd].data[custom_fds[fd].data_offset + i] = ptr[i];
-            
-        }
-        else if (!picofs_expand_cache(fd))
-        {
-            custom_fds[fd].data[custom_fds[fd].data_offset + i] = ptr[i];
+            // file fits within cache
+            if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T))))
+            {
+                // data fits within the current cache
+                custom_fds[fd].data[cache_index] = ptr[i];            
+            }
+            else if (!picofs_expand_cache(fd))
+            {
+                custom_fds[fd].data[cache_index] = ptr[i];
+            }
+            else
+            {
+                shell_printf("picoFS: write truncated, out of cache\n");
+                err = -1;
+                break;
+            }
         }
         else
         {
-            shell_printf("picoFS: write truncated, out of cache\n");
-            err = -1;
-            break;
+            // file does not fit within cache
+            if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len)))
+            {
+                // data fits within the cache window
+                custom_fds[fd].data[cache_index] = ptr[i];            
+            }
+            else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].data_offset + cache_index) < custom_fds[fd].reserved_flash_end)
+            {
+                // write the cache to flash
+                picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, custom_fds[fd].cache_len);
+
+                // clear the cache 
+                // NB we only support append mode for large files, so no need to populate cache with data pulled from flash
+                memset(custom_fds[fd].cache, FS_ERASED_CELL_VALUE, custom_fds[fd].cache_len);
+
+                // shift the cache window 
+                custom_fds[fd].cache_offset = custom_fds[fd].data_offset + i;
+
+                // sanity check
+                if(custom_fds[fd].cache_offset % FS_PAGE_SIZE)
+                {
+                    shell_printf("picoFS: write error shifting cache window -- not on a page boundary %d\n", custom_fds[fd].cache_offset);
+                    err = -99;
+                    break;                    
+                }
+
+                // store the data in the first byte of the new cache window
+                custom_fds[fd].data[0] = ptr[i];
+            }
+            else
+            {
+                shell_printf("picoFS: write truncated, out of pre-allocated flash\n");
+                err = -1;
+                break;
+            }            
         }
     }
 
