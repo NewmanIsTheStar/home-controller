@@ -331,6 +331,7 @@ int download_file(char *url)
     int filePointer = -1;
     int i = 0;
     int j = 0;
+    int total_wrtitten = 0;
     
     if (parse_url(url, host, sizeof(host), uri, sizeof(uri)) == 0) 
     {
@@ -419,14 +420,34 @@ int download_file(char *url)
 
                             file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
                             total_expected = file_offset + file_len;
-
-                             //fwrite(file_start, read_bytes - file_offset, 1, filePointer);
-                            picofs_write(filePointer, file_start, read_bytes - file_offset);
+                            
+                            if (((read_bytes - file_offset) + total_wrtitten) < total_expected)
+                            {
+                                // write all data after the http header to file
+                                picofs_write(filePointer, buffer, (read_bytes - file_offset));    
+                                total_wrtitten += (read_bytes - file_offset);
+                            }
+                            else if (total_wrtitten < total_expected)
+                            {
+                                // truncate at total_expected -- remainder of buffer is http
+                                picofs_write(filePointer, buffer, total_expected - total_wrtitten);
+                                total_wrtitten += (total_expected - total_wrtitten);
+                            }                            
                         }
                         else
                         {
-                            //fwrite(buffer, read_bytes, 1, filePointer); 
-                            picofs_write(filePointer, buffer, read_bytes);                          
+                            if ((read_bytes + total_wrtitten) < total_expected)
+                            {
+                                // write all data to file
+                                picofs_write(filePointer, buffer, read_bytes);    
+                                total_wrtitten += read_bytes;
+                            }
+                            else if (total_wrtitten < total_expected)
+                            {
+                                // truncate at total_expected -- remainder of buffer is http
+                                picofs_write(filePointer, buffer, total_expected - total_wrtitten);
+                                total_wrtitten += (total_expected - total_wrtitten);
+                            }
                         }
 
                         // accumulate total bytes received

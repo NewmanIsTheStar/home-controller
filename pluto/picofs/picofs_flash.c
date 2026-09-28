@@ -143,7 +143,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
 
     if ((len%FS_PAGE_SIZE) || ((dst+len) > FS_END))
     {
-        printf("picofs: error: picofs_flash_program(): invalid length (%#0x) [dst+len = %#0p FS_END = $%p]\n", dst+len, FS_END);
+        printf("picofs: error: picofs_flash_program(): invalid length (%#0x) [dst+len = %#0p FS_END = $%p]\n", len, dst+len, FS_END);
         return(-2);
     }
 
@@ -153,7 +153,8 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     shim_parameters.len = len;
 
     //printf("FLASH PROGRAM: offset = %#0x len = %#0x plus FS_BASE = %#0x\n", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
-   
+    //hex_dump(src, len);
+
     err = flash_safe_execute(picofs_flash_program_shim, &shim_parameters, 5000);
 
     if (err)
@@ -173,7 +174,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
 
         if (err)
         {
-            printf("picofs: error: picofs_flash_program(): verification failed\n");
+            printf("picofs: error: picofs_flash_program(): verification failed @%p\n", dst);
         }
     }
     

@@ -218,11 +218,15 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
         // file does not exist
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
-            // create new file and do not allocate cache
+            // create new file and do not allocate cache -- cache will be allocated on write
             err = picofs_fd_new(fd, flags, (char *)name);
 
             if (!err)
             {
+                if (known_size >= 16*1024)   // TODO probably don't need this condition, it allows normal size files to delay allocating cache until a write is done, thus ftruncate() can specifiy size prior to write()
+                {
+                    err = picofs_allocate_cache(fd, known_size);
+                }
                 //printf("picofs_open_file: file did not exist so created new file named: %s\n", name);
             }
         }
@@ -365,15 +369,18 @@ int picofs_allocate_cache(int fd, size_t known_size)
             cache_size = 4*1024;
 
             // add space for trailer and round up to a page boundary
-            known_size = (((known_size  + sizeof(FILE_TRAILER_T))/FS_PAGE_SIZE)+1)*FS_PAGE_SIZE;
+            known_size = (((known_size  + sizeof(FILE_TRAILER_T))/FS_PAGE_SIZE)+10)*FS_PAGE_SIZE;   //TEST TEST TEST should be +1 but running out of space during testing
 
             // reserve flash and make 64K aligned [for now we assume all large files are executable but this should be a passed parameter in future]
             if (!picofs_find_contiguous_free_area(known_size, &(custom_fds[fd].reserved_flash_start), &reserved_flash_size, true))
             {
-                custom_fds[fd].reserved_flash_start = 0;
                 custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + known_size;
 
                 custom_fds[fd].cache = pvPortMalloc(cache_size);
+            }
+            else
+            {
+                printf("picofs_allocate_cache: failed to find a contiguous area of flash for known_size = %d\n", known_size);
             }
         }
 
@@ -383,6 +390,8 @@ int picofs_allocate_cache(int fd, size_t known_size)
         {
             custom_fds[fd].cache_len = cache_size;
             custom_fds[fd].cache_offset = 0;
+            custom_fds[fd].data = custom_fds[fd].cache;
+            
             //printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
             err = 0;            
         }
@@ -674,13 +683,14 @@ int picofs_open_download_file(const char *name, size_t known_size)
         return -1;
     }
 
-    if (picofs_open_file(fd, name, O_WRONLY, FS_INVALID_FID, true, known_size))   //TODO ideally should be append
+    if (picofs_open_file(fd, name, O_WRONLY | O_CREAT, FS_INVALID_FID, true, known_size))   //TODO ideally should be append
     {
         errno = ENOENT; // File not found
         return -1;
     }
 
+    printf("picofs_open_download_file: set fd = %d to IN_USE = TRUE\n", fd);
     custom_fds[fd].in_use = true;
 
-    return(fd + 3);
+    return(fd);
 }

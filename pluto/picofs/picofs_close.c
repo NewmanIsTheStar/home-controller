@@ -73,7 +73,7 @@
 
 
 //prototypes
-
+int picofs_flush_file(int fd, bool disable_purge);
 
 // external variables
 extern u32_t unix_time;
@@ -109,8 +109,17 @@ int picofs_close_file(int fd, bool disable_purge)
         return(err);
     }
 
-    // flush file to flash
-    err = picofs_sync_file(fd, disable_purge);
+    // check if cache contains partial file or the entire file
+    if (custom_fds[fd].reserved_flash_start && custom_fds[fd].reserved_flash_end)
+    {
+        err = picofs_flush_file(fd, disable_purge);  
+    }
+    else
+    {
+        // flush entire file to flash from cache
+        err = picofs_sync_file(fd, disable_purge);
+    }
+
 
     // clear the cache
     picofs_deallocate_cache(fd);
@@ -326,6 +335,11 @@ int picofs_flush_file(int fd, bool disable_purge)
     size_t erased_area_size;
     int padding_len = 0;
     int cache_index = 0;
+    uint32_t ram_crc = 0;
+    uint32_t flash_crc = 0;
+    uint32_t combined_crc = 0;
+    uint32_t final_crc = 0;  
+    size_t left_over_trailer = 0;  
 
     if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
     {
@@ -338,9 +352,7 @@ int picofs_flush_file(int fd, bool disable_purge)
     }
 
     cache_index = custom_fds[fd].data_offset - custom_fds[fd].cache_offset;
-
-    // TODO pad the cache with 0xFF up to a page boundary or figure out how to calculate the CRC in two parts 1) in flash 2) in RAM cache
-
+    printf("ci = %0x do = %0x co = %0x\n", cache_index, custom_fds[fd].data_offset, custom_fds[fd].cache_offset);
 
     if (custom_fds[fd].cache)
     {
@@ -349,48 +361,65 @@ int picofs_flush_file(int fd, bool disable_purge)
         // set size and status
         custom_fds[fd].cache_trailer.file_size = custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
         custom_fds[fd].cache_trailer.file_status = custom_fds[fd].file_status;
-        custom_fds[fd].cache_trailer.crc = picofs_calculate_crc32(custom_fds[fd].cache, custom_fds[fd].data_len);
 
-        // append trailer to end of cached file 
-        if ((custom_fds[fd].data_len + sizeof(FILE_TRAILER_T)) < custom_fds[fd].cache_len)
+        // calculate the file CRC in two parts 1) portion of file already in flash 2) remainder of file still in the RAM cache
+        flash_crc = picofs_calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].cache_offset);
+        ram_crc =   picofs_calculate_crc32(custom_fds[fd].cache, cache_index);      
+
+        // calculate the crc of the two blocks concatenated
+        combined_crc = rp2350_crc32_combine(flash_crc, ram_crc, cache_index);
+        custom_fds[fd].cache_trailer.crc = combined_crc; /* ^ 0xFFFFFFFF;*/
+
+        // check if trailer fits entirely in buffer for final data write to flash
+        if ((cache_index + sizeof(FILE_TRAILER_T)) < custom_fds[fd].cache_len)
         {
-            memcpy(custom_fds[fd].cache + custom_fds[fd].data_len, &(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
+            left_over_trailer = 0;
+        }
+        else
+        {
+            left_over_trailer = cache_index + sizeof(FILE_TRAILER_T) - custom_fds[fd].cache_len;
+        }
+
+        if (left_over_trailer > sizeof(FILE_TRAILER_T))
+        {
+            printf("ERRROOOORRRR!!!!!! left_over_trailer too big!!!!! %0x\n", left_over_trailer);
+        }
+        
+        // copy as much of trailer into cache as will fit
+        memcpy(custom_fds[fd].cache + cache_index, &(custom_fds[fd].cache_trailer), (sizeof(FILE_TRAILER_T) - left_over_trailer));
+
+        // compute padding for final data write
+        padding_len = left_over_trailer?0:(cache_index + sizeof(FILE_TRAILER_T))%256?(256 - (cache_index + sizeof(FILE_TRAILER_T))%256):0;
+        printf("padding length = %0x left_over_trailer = %0x\n", padding_len, left_over_trailer);
+        printf("writing FINAL pages to flash @ %0x with size = %0x [datalen = %0x]\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len, cache_index);
+        picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len);
+
+        if (!left_over_trailer)
+        {
+            // final page writen
             err = 0;
         }
         else
         {
-            //TODO: expand cache as needed
-            shell_printf("picoFS: out of cache appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
-            err = -2;            
-        }
+            // additional page required to write remainder of the trailer
+            
+            // clear the cache 
+            memset(custom_fds[fd].cache, FS_ERASED_CELL_VALUE, custom_fds[fd].cache_len);
 
-        // pad cache with consolidated files
-        if (!err)
-        {
-            padding_len = custom_fds[fd].cache_trailer.file_size%256?(256 - custom_fds[fd].cache_trailer.file_size%256):0;
+            // shift the cache window 
+            custom_fds[fd].cache_offset = cache_index + sizeof(FILE_TRAILER_T) + padding_len;
 
-            if (padding_len)
-            {
-                picofs_consolidate_files_to_buffer(custom_fds[fd].cache + custom_fds[fd].cache_trailer.file_size, padding_len, custom_fds[fd].cache_trailer.file_id);
-            }
-        }
+            // copy remainder of trailer into cache
+            memcpy((char *)custom_fds[fd].cache_offset, ((char *)(&(custom_fds[fd].cache_trailer)))+(sizeof(FILE_TRAILER_T) - left_over_trailer), left_over_trailer);
 
-        if (!picofs_find_contiguous_free_area(custom_fds[fd].cache_trailer.file_size, &erased_area, &erased_area_size, false) && (err == 0))
-        {
-            picofs_flash_program(erased_area, custom_fds[fd].cache, custom_fds[fd].cache_trailer.file_size + padding_len);
-    
-            err = 0;
-        }
-        else
-        {
-            shell_printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
-            err = -2;
+            printf("writing LEFT OVER trailer single page to flash @ %d with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
+            picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, FS_PAGE_SIZE);            
         }
 
         if (!err && !disable_purge)
         {
             picofs_purge_duplicates(custom_fds[fd].cache_trailer.name, custom_fds[fd].cache_trailer.file_id);
-        }
+        }  
     }
     
     // handle pending deletion of the fid used prior to rollover
@@ -404,6 +433,11 @@ int picofs_flush_file(int fd, bool disable_purge)
     picofs_refresh_files();
 
     tab_completion_sequence++;
+
+
+    final_crc = picofs_calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].data_len);
+
+    printf("FINAL_DATA_LEN = %d\n\nFILE CRC SUMMARY\nflash=%0x\nram=%0x\ncombined=%0x\nfinal=%0x\n", custom_fds[fd].data_len, flash_crc, ram_crc, combined_crc, final_crc);
 
     return(err);
 }

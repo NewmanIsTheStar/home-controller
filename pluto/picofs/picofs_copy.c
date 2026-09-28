@@ -186,6 +186,8 @@ int picofs_find_available_fd(void)
         return -1;
     }
 
+    printf("picofs_find_available_fd: available fd = %d\n", fd);
+
     return(fd);
 }
 
@@ -197,6 +199,6 @@ int picofs_release_fd(int fd)
     }
 
     custom_fds[fd].in_use = false;
-
+    printf("picofs_release_fd: released fd = %d\n", fd);
     return(0);
 }

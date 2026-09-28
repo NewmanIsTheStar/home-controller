@@ -118,7 +118,7 @@ int picofs_write(int fd, char *ptr, int len)
         }
         else
         {
-            // file does not fit within cache
+             // file will not fit within cache
             if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len)))
             {
                 // data fits within the cache window
@@ -126,6 +126,7 @@ int picofs_write(int fd, char *ptr, int len)
             }
             else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].data_offset + cache_index) < custom_fds[fd].reserved_flash_end)
             {
+                printf("writing to flash @ %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset);
                 // write the cache to flash
                 picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, custom_fds[fd].cache_len);
 
@@ -149,7 +150,7 @@ int picofs_write(int fd, char *ptr, int len)
             }
             else
             {
-                shell_printf("picoFS: write truncated, out of pre-allocated flash\n");
+                shell_printf("picoFS: write truncated, out of pre-allocated flash s = %d do = %d ci =%d e = %d\n", custom_fds[fd].reserved_flash_start, custom_fds[fd].data_offset, cache_index, custom_fds[fd].reserved_flash_end);
                 err = -1;
                 break;
             }            
@@ -217,8 +218,6 @@ int picofs_expand_cache(int fd)
 
     return(err);
 }
-
-
 
 // TODO: zero-copy write buffer to file in one shot
 int write_buffer_direct(const char* filename, size_t total_bytes) 
