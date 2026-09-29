@@ -1,4 +1,5 @@
 
+#include <fcntl.h>
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "pico/util/datetime.h"
@@ -283,24 +284,29 @@ int image_compare(char *ptr1, char *ptr2, int len)
     int i;
     int num_different_bytes = 0;
 
-    // for (i=0; i< len; i++)
-    // {
-    //     if (ptr1[i] != ptr2[i])
-    //     {
-    //         if ((ptr1[i] != 0xFF) && (ptr2[i]!= 0x00))
-    //         {
-    //             num_different_bytes++;
-    //             printf("@%08x %02x vs %02x\n", ptr1 - (char *)XIP_BASE+i, ptr1[i], ptr2[i]);                
-    //         }
+    for (i=0; i< len; i++)
+    {
+        if (ptr1[i] != ptr2[i])
+        {
+            if ((ptr1[i] != 0xFF) && (ptr2[i]!= 0x00))
+            {
+                num_different_bytes++;
+                printf("@%08x %02x vs %02x\n", ptr1 - (char *)XIP_BASE+i, ptr1[i], ptr2[i]);                
+            }
 
-    //     }
-    // }
+        }
+    }
+
+    if (!num_different_bytes)
+    {
+        printf("@%08x OK\n", ptr1 - (char *)XIP_BASE+i);
+    }
 
     return(num_different_bytes);
 }
 
 /*!
- * \brief Monitor weather and control relay based on conditions and time of day
+ * \brief download file from server, large files are assumed executable and placed at 64K boundary for address translation
  *
  * \param params unused garbage
  * 
@@ -424,13 +430,13 @@ int download_file(char *url)
                             if (((read_bytes - file_offset) + total_wrtitten) < total_expected)
                             {
                                 // write all data after the http header to file
-                                picofs_write(filePointer, buffer, (read_bytes - file_offset));    
+                                picofs_write(filePointer, buffer + file_offset, (read_bytes - file_offset));    
                                 total_wrtitten += (read_bytes - file_offset);
                             }
                             else if (total_wrtitten < total_expected)
                             {
                                 // truncate at total_expected -- remainder of buffer is http
-                                picofs_write(filePointer, buffer, total_expected - total_wrtitten);
+                                picofs_write(filePointer, buffer + file_offset, total_expected - total_wrtitten);
                                 total_wrtitten += (total_expected - total_wrtitten);
                             }                            
                         }
@@ -534,4 +540,221 @@ int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t u
         }
     }
     return 0;
+}
+
+/*!
+ * \brief compare file on server with local file in flash memory
+ *
+ * \param params unused garbage
+ * 
+ * \return nothing
+ */
+int verify_file(char *url)
+{
+    int err = 0;
+    int ret;
+    int wrote_bytes;
+    int read_bytes;
+    static int msg_to_snd;
+    int retry;
+    fd_set readset;
+    struct timeval tv;  
+    char buffer[1600];
+    int web_socket = -1;    
+    int file_len;
+    char *file_start;
+    int total_read = 0;
+    int total_expected = 0;
+    int compare;
+    int file_offset = 0;
+    int total_bad_compares = 0;
+    char host[256];
+    char uri[256];
+    char filename[16];
+    int fd = -1;
+    int i = 0;
+    int j = 0;
+    int total_compared = 0;
+    char *flash_data = NULL;
+    int differences_found = 0;
+    
+    if (parse_url(url, host, sizeof(host), uri, sizeof(uri)) == 0) 
+    {
+        // generate filename from uri
+        for(i=0; i < sizeof(uri); i++)
+        {
+            if (isalpha(uri[i]) || isdigit(uri[i]) || uri[i] == 0)
+            {
+                filename[j++] = uri[i];
+                if ((j >= 16) || (uri[i] == 0)) 
+                {
+                    // force zero termination
+                    filename[15] = 0;
+                    break;
+                }
+            }
+        }
+
+        shell_printf("Host:      %s\n", host);
+        shell_printf("URI:       %s\n", uri);
+        shell_printf("Filename:  %s\n", filename);                
+    } 
+    else 
+    {
+        shell_printf("download_file: URL parsing failed.\n");
+        return (-1);
+    }
+    
+
+
+    // establish socket connection
+    if (web_socket < 0) web_socket = establish_socket(host, 80, SOCK_STREAM);
+    
+    if(web_socket >= 0)
+    {
+        // create request
+        snprintf(buffer, sizeof(buffer), HTTPC_REQ_11_HOST_FORMAT(uri, host));
+
+        hex_dump(buffer, strlen(buffer));
+
+        // send a request
+        wrote_bytes = send(web_socket, buffer, strlen(buffer), 0);
+
+        if (wrote_bytes == strlen(buffer))    //TODO: handle short write by sending rest of the buffer
+        {
+            printf("read file\n");                    
+            total_expected = 0;
+            for (retry=0; retry<5; retry++)
+            {
+                FD_ZERO(&readset);
+                FD_SET(web_socket, &readset);
+                tv.tv_sec = 5;
+                tv.tv_usec = 500;
+
+                ret = select(web_socket + 1, &readset, NULL, NULL, &tv);
+
+                if ((ret > 0) && FD_ISSET(web_socket, &readset))
+                {
+                    read_bytes = recv(web_socket, buffer, sizeof(buffer), 0);
+                    if (read_bytes > 0)
+                    {
+                        // reset retry counter
+                        retry = 0;
+
+                        //hex_dump(buffer, read_bytes);
+                        
+                        // attempt to find http header -- only works if header is completely contained in a buffer
+                        if (!total_expected && !http_parse_header(buffer, read_bytes, &file_len, &file_start))
+                        {
+                            shell_printf("Size:      %d\n", file_len);  
+            
+                            if (fd < 0)
+                            {
+                                // open the file with for read/write (create if it doesn't exist)
+                                fd = open(filename, O_RDONLY);
+                                
+                                // check if the file exists and opened successfully
+                                if (fd < 0) 
+                                {
+                                    shell_printf("verify_file: failed to open local file %s for read\n", filename);
+                                    lwip_close(web_socket);
+                                    web_socket = -1;                                    
+                                    return EXIT_FAILURE; 
+                                }
+
+                                // map the file for direct memory access
+                                flash_data = picofs_mmap(NULL, file_len, PROT_READ, MAP_SHARED, fd, 0);
+                                if (flash_data == MAP_FAILED) 
+                                {
+                                    perror("verify_file: Error mapping the file");
+                                    close(fd);
+                                    fd = -1;
+                                    return EXIT_FAILURE;
+                                }
+                            }
+
+                            file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
+                            total_expected = file_offset + file_len;
+                            
+                            if (((read_bytes - file_offset) + total_compared) < total_expected)
+                            {
+                                // write all data after the http header to file
+                                differences_found += image_compare(flash_data+total_compared, buffer+file_offset, (read_bytes - file_offset));    
+                                total_compared += (read_bytes - file_offset);
+                            }
+                            else if (total_compared < total_expected)
+                            {
+                                // truncate at total_expected -- remainder of buffer is http
+                                differences_found += image_compare(flash_data+total_compared, buffer+file_offset, total_expected - total_compared);
+                                total_compared += (total_expected - total_compared);
+                            }                            
+                        }
+                        else
+                        {
+                            if ((read_bytes + total_compared) < total_expected)
+                            {
+                                // write all data to file
+                                differences_found += image_compare(flash_data+total_compared, buffer, read_bytes);    
+                                total_compared += read_bytes;
+                            }
+                            else if (total_compared < total_expected)
+                            {
+                                // truncate at total_expected -- remainder of buffer is http
+                                differences_found += image_compare(flash_data+total_compared, buffer, total_expected - total_compared);
+                                total_compared += (total_expected - total_compared);
+                            }
+                        }
+
+                        // accumulate total bytes received
+                        total_read += read_bytes;
+
+                        //printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);
+                        if (total_expected && (total_read >= total_expected)) break;
+                    }
+                    else {
+                        perror("READ ERROR = ");
+                        printf("read returned %d  ||| retry = %d\n", read_bytes, retry);
+                        err = -1;
+                    }
+                }
+                else
+                {
+                    printf("select returned %d  and FD_ISSET was not set  ||| retry = %d\n", ret, retry);
+                    err = -1;
+                }  
+
+            }         
+        }
+        else
+        {
+            shell_printf("download_file: error failed to send HTTP GET :: bytes sent = %d [expected %d]\n", wrote_bytes, strlen(buffer));
+            
+            printf("wrote_bytes = %d\n", wrote_bytes);
+
+            // close socket
+            lwip_close(web_socket);
+            web_socket = -1;
+            err = -1;
+        }
+    }
+
+    printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);        
+
+
+    picofs_close(fd);
+
+    if (web_socket >= 0)
+    {
+        lwip_close(web_socket);
+        web_socket = -1;
+    } 
+
+    if (flash_data)
+    {
+        picofs_munmap(flash_data, file_len);
+    }
+
+    shell_printf("verification = %d\n", differences_found);
+
+    return(err);
 }

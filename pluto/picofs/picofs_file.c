@@ -371,7 +371,7 @@ int picofs_refresh_files(void)
 
     memset(picofs_files, 0, sizeof(picofs_files));
 
-    while(!picofs_iter_next_file(&current, false))
+    while(!picofs_iter_next_file(&current, true /*false*/))  // FOR DEBUG allow files with bad CRC in cache
     {
         if (current)
         {

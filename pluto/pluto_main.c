@@ -366,7 +366,7 @@ void boss_task(__unused void *params)
     }    
 
     print_tasks_list();
-    hex_dump((char *)0x102db000, 0x400);
+    //hex_dump((char *)0x102db000, 0x400);
     
     // flash the led for attention while doing no actual work (like a boss!)
     while(true) 

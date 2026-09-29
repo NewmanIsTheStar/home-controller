@@ -96,6 +96,7 @@ int hc_hex_dump(char *filename);
 void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_size);
 int hc_delete_file(void);
 int hc_download_file(void);
+int hc_verify_file(void);
 int hc_automation_run(int automation_number);
 
 // external variables
@@ -250,7 +251,10 @@ void hc_task(__unused void *params)
                         break;
                     case HC_CMD_DOWNLOAD_FILE:                    
                         hc_download_file();
-                        break;                        
+                        break;      
+                    case HC_CMD_VERIFY_FILE:                    
+                        hc_verify_file();
+                        break;                                           
                     default:
                         printf("HC task received unrecognized message (%d)\n", hc_message);
                         break;
@@ -674,6 +678,26 @@ int hc_download_file(void)
 
     return(err);
 }
+
+int hc_verify_file(void)
+{
+    int err = -1;
+
+    if (web.download_url[0])
+    {
+        if (err = verify_file(web.download_url))
+        {
+            shell_printf("wget: failed to download %s\n", web.download_url);
+        }
+    }
+    else
+    {
+        shell_printf("wget: error: no URL provided\n");
+    }
+
+    return(err);
+}
+
 
 bool hc_automation_condition(bool condition)
 {

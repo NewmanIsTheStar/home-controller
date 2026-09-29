@@ -370,7 +370,12 @@ static void execute_shell_command(const char* cmd)
     {
         STRNCPY(web.download_url, ((char *)(cmd+5)), sizeof(web.download_url));
         hc_queue_send(HC_CMD_DOWNLOAD_FILE);  
-    }                    
+    }     
+    else if (strncmp(cmd, "verify ", 7) == 0) 
+    {
+        STRNCPY(web.download_url, ((char *)(cmd+7)), sizeof(web.download_url));
+        hc_queue_send(HC_CMD_VERIFY_FILE);  
+    }      
     else if (strncmp(cmd, "cat ", 4) == 0) 
     {
         web.file_to_cat = ((char *)(cmd+4)); 
