@@ -754,7 +754,7 @@ int verify_file(char *url)
         picofs_munmap(flash_data, file_len);
     }
 
-    shell_printf("verification = %d\n", differences_found);
+    shell_printf("verification errors = %d\n", differences_found);
 
     return(err);
 }

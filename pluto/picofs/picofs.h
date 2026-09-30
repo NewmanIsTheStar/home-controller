@@ -196,7 +196,7 @@ bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_f
 bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file);
 void init_crc_subsystem(void);
 uint32_t picofs_calculate_crc32(const uint8_t *data_ptr, size_t length);
-uint32_t rp2350_crc32_combine(uint32_t crc1, uint32_t crc2, size_t len2);
+uint32_t picofs_combine_crc32(uint32_t crc1, uint32_t crc2, size_t len2);
 int picofs_ftruncate(int fd, off_t length);
 int picofs_generate_tab_completion_file_list(char *buffer, int len);
 int picofs_get_file_size(char *filename);
@@ -205,5 +205,6 @@ int picofs_msync(void *addr, size_t length, int flags);
 int picofs_open_download_file(const char *name, size_t known_size);
 int picofs_find_available_fd(void);
 int picofs_release_fd(int fd);
+uint32_t picofs_calculate_crc32_software(const uint8_t *data, size_t length);
 
 #endif

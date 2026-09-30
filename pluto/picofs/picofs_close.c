@@ -335,6 +335,7 @@ int picofs_flush_file(int fd, bool disable_purge)
     size_t erased_area_size;
     int padding_len = 0;
     int cache_index = 0;
+    int saved_cache_index = 0;
     uint32_t ram_crc = 0;
     uint32_t flash_crc = 0;
     uint32_t combined_crc = 0;
@@ -367,7 +368,7 @@ int picofs_flush_file(int fd, bool disable_purge)
         ram_crc =   picofs_calculate_crc32(custom_fds[fd].cache, cache_index);      
 
         // calculate the crc of the two blocks concatenated
-        combined_crc = rp2350_crc32_combine(flash_crc, ram_crc, cache_index);
+        combined_crc = picofs_combine_crc32(flash_crc, ram_crc, cache_index);
         custom_fds[fd].cache_trailer.crc = combined_crc; /* ^ 0xFFFFFFFF;*/
 
         // check if trailer fits entirely in buffer for final data write to flash
@@ -407,7 +408,7 @@ int picofs_flush_file(int fd, bool disable_purge)
             memset(custom_fds[fd].cache, FS_ERASED_CELL_VALUE, custom_fds[fd].cache_len);
 
             // shift the cache window 
-            custom_fds[fd].cache_offset = cache_index + sizeof(FILE_TRAILER_T) + padding_len;
+            custom_fds[fd].cache_offset += custom_fds[fd].cache_len;
 
             // copy remainder of trailer into cache
             memcpy((char *)custom_fds[fd].cache_offset, ((char *)(&(custom_fds[fd].cache_trailer)))+(sizeof(FILE_TRAILER_T) - left_over_trailer), left_over_trailer);
@@ -439,5 +440,21 @@ int picofs_flush_file(int fd, bool disable_purge)
 
     printf("FINAL_DATA_LEN = %d\n\nFILE CRC SUMMARY\nflash=%0x\nram=%0x\ncombined=%0x\nfinal=%0x\n", custom_fds[fd].data_len, flash_crc, ram_crc, combined_crc, final_crc);
 
+    // printf("USING DMA SNIFFER\n");
+    // printf("DMA -- first block CRC  = %0x length = %0x\n", picofs_calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].cache_offset), custom_fds[fd].cache_offset);
+    // printf("DMA -- second block CRC = %0x length = %0x\n", picofs_calculate_crc32(custom_fds[fd].reserved_flash_start+custom_fds[fd].cache_offset, cache_index), cache_index);    
+
+    // printf("USING PURE SOFTWARE\n");
+    // flash_crc = calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].cache_offset);
+    // ram_crc = calculate_crc32(custom_fds[fd].reserved_flash_start+custom_fds[fd].cache_offset, cache_index);
+    // combined_crc = rp2350_crc32_combine(flash_crc, ram_crc, cache_index);
+    // final_crc = calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].data_len);
+
+    // printf("SW -- first block CRC  = %0x length = %0x\n", flash_crc, custom_fds[fd].cache_offset);
+    // printf("SW -- second block CRC = %0x length = %0x\n", ram_crc, cache_index, cache_index);     
+    // printf("SW -- combined CRCs    = %0x\n", combined_crc);
+    // printf("SW -- final CRC        = %0x\n", final_crc); 
+  
+    // google says combined CRC = 0x43567900
     return(err);
 }
