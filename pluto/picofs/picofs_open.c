@@ -136,17 +136,15 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
     {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
         // we transform them into more sensible bit flags in the two least significant bits for easier processing
-
         open_mode = (flags + 1) & (O_ACCMODE);
-        MASKED_WRITE(flags, open_mode, O_ACCMODE);
-        
+        MASKED_WRITE(flags, open_mode, O_ACCMODE);        
         
         if ((flags & FWRITE) && !picofs_file_in_use(file_trailer, fd))
         {
             // open for write access
             picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
 
-            err = picofs_allocate_cache(fd, flags, known_size);
+            err = picofs_cache_allocate(fd, flags, known_size);
             
             if (!err)
             {
@@ -157,10 +155,11 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
                     custom_fds[fd].file_len = sizeof(FILE_TRAILER_T);
                     custom_fds[fd].data_len = 0;
 
-                    // populate cache with trailer (an empty file)
+                    // copy the original trailer into the cache
                     memcpy(custom_fds[fd].cache, file_trailer, sizeof(FILE_TRAILER_T));
 
-                    // set file size in cache trailer
+                    // set file size of the cached trailer 
+                    // an empty file contains only a trailer
                    ((FILE_TRAILER_T *)(custom_fds[fd].cache))->file_size = sizeof(FILE_TRAILER_T);                       
                 }
                 else if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
@@ -230,7 +229,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
             {
                 if (known_size >= 16*1024)   // TODO probably don't need this condition, it allows normal size files to delay allocating cache until a write is done, thus ftruncate() can specifiy size prior to write()
                 {
-                    err = picofs_allocate_cache(fd, flags, known_size);
+                    err = picofs_cache_allocate(fd, flags, known_size);
                 }
             }
         }
@@ -267,6 +266,8 @@ int picofs_fd_new(int fd, int flags, char *name)
         custom_fds[fd].data_offset = 0;
         custom_fds[fd].mmap_ref_count = 0;
         custom_fds[fd].mmap_delayed_close = false;
+        custom_fds[fd].reserved_flash_start = NULL;
+        custom_fds[fd].reserved_flash_end = NULL;        
         
         err = picofs_create_file_trailer(fd, name);
     }
@@ -312,8 +313,8 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
             custom_fds[fd].data_offset = 0;
             custom_fds[fd].mmap_ref_count = 0;
             custom_fds[fd].mmap_delayed_close = false;
-            custom_fds[fd].reserved_flash_start = NULL;
-            custom_fds[fd].reserved_flash_end = NULL;
+            // custom_fds[fd].reserved_flash_start = NULL;
+            // custom_fds[fd].reserved_flash_end = NULL;
         }
         else
         {
@@ -326,8 +327,8 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
             custom_fds[fd].data_offset = 0;
             custom_fds[fd].mmap_ref_count = 0;
             custom_fds[fd].mmap_delayed_close = false;
-            custom_fds[fd].reserved_flash_start = NULL;
-            custom_fds[fd].reserved_flash_end = NULL;
+            // custom_fds[fd].reserved_flash_start = NULL;
+            // custom_fds[fd].reserved_flash_end = NULL;
 
             // NB we rely on the cache not being touched here during double initialization sequences
         }
@@ -686,7 +687,7 @@ int picofs_open_download_file(const char *name, size_t known_size)
         return -1;
     }
 
-    if (picofs_open_file(fd, name, O_WRONLY | O_CREAT /* | O_TRUNC | O_APPEND */, FS_INVALID_FID, true, known_size))
+    if (picofs_open_file(fd, name, O_WRONLY | O_CREAT | O_TRUNC /*| O_APPEND*/, FS_INVALID_FID, true, known_size))
     {
         errno = ENOENT; // File not found
         return -1;

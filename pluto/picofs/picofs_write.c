@@ -63,7 +63,6 @@
 #include "picofs.h"
 
 //prototypes
-int picofs_expand_cache(int fd);
 
 // external variables
 extern u32_t unix_time;
@@ -97,7 +96,7 @@ int picofs_write(int fd, char *ptr, int len)
         // get index within the cache window (cache_offset is the start of the cache window within the file) 
         cache_index = custom_fds[fd].data_offset + i - custom_fds[fd].cache_offset;
 
-        if (!((custom_fds[fd].reserved_flash_start) && (custom_fds[fd].reserved_flash_end)))
+        if (picofs_cache_contains_entire_file(fd))
         {
             // cache holds entire file
             if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T))))
@@ -105,7 +104,7 @@ int picofs_write(int fd, char *ptr, int len)
                 // data fits within the current cache
                 custom_fds[fd].data[cache_index] = ptr[i];            
             }
-            else if (!picofs_expand_cache(fd))
+            else if (!picofs_cache_expand(fd))
             {
                 custom_fds[fd].data[cache_index] = ptr[i];
             }
@@ -162,7 +161,7 @@ int picofs_write(int fd, char *ptr, int len)
     {
         custom_fds[fd].data_offset += i; 
 
-        // check if write increase data length
+        // check if write increased data length
         if (custom_fds[fd].data_offset > custom_fds[fd].data_len)
         {
             // increase data length to match offset 
@@ -179,48 +178,6 @@ int picofs_write(int fd, char *ptr, int len)
 }
 
 
-// /*!
-//  * \brief expand cache by one sector
-//  *
-//  * \param fd     file descriptor
-//  * \return nothing
-//  */
-// int picofs_expand_cache(int fd)
-// {
-//     int err = -1;
-//     size_t cache_size = 0;
-//     char *expanded_cache = NULL;
-
-//     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS) )
-//     {
-//         // allocate one 4k sector greater than currently used
-//         cache_size = ((custom_fds[fd].cache_len + (4*1024))/(4*1024))*(4*1024);        
-//         expanded_cache = pvPortMalloc(cache_size);
-
-//         if (expanded_cache && custom_fds[fd].cache)
-//         {
-//             // copy original cache content into the expanded cache
-//             memcpy(expanded_cache, custom_fds[fd].cache, custom_fds[fd].cache_len);
-
-//             // delete original cache
-//             vPortFree(custom_fds[fd].cache);
-//             //custom_fds[fd].cache = NULL;
-//         }
-
-//         if (expanded_cache)
-//         {
-//             // point file descriptor to the new expanded cache
-//             custom_fds[fd].cache = expanded_cache;
-//             custom_fds[fd].cache_len = cache_size;
-//             custom_fds[fd].data = expanded_cache;
-
-//             //printf("expanded cache: @%p size %d\n", custom_fds[fd].cache , custom_fds[fd].cache_len);
-//             err = 0;
-//         }
-//     }
-
-//     return(err);
-// }
 
 // TODO: zero-copy write buffer to file in one shot
 int write_buffer_direct(const char* filename, size_t total_bytes) 

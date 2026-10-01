@@ -17,6 +17,7 @@
 #define FS_SIZE (sizeof(test_filesystem))
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
 #define FS_FILE_CACHE_MAX (16*1024)
+#define FS_FILE_CACHE_MIN (4*1024)
 #else
 #define FS_SECTOR_SIZE (4096)
 #define FS_EXE_BLOCK_SIZE (64*1024)
@@ -26,6 +27,7 @@
 #define FS_SIZE (FS_END - FS_START)
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
 #define FS_FILE_CACHE_MAX (16*1024)
+#define FS_FILE_CACHE_MIN (4*1024)
 #endif
 
 #define FS_PAGE_SIZE (256)
@@ -157,7 +159,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size, bool executable_alignment);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
-int picofs_allocate_cache(int fd, int flags, size_t known_size);
+int picofs_cache_allocate(int fd, int flags, size_t known_size);
 int picofs_deallocate_cache(int fd);
 int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover, size_t known_size);
 int picofs_read(int fd, char *ptr, int len);
@@ -209,5 +211,7 @@ int picofs_find_available_fd(void);
 int picofs_release_fd(int fd);
 uint32_t picofs_calculate_crc32_software(const uint8_t *data, size_t length);
 int picofs_cache_realloc(int fd, size_t new_size, u8_t fill);
+bool picofs_cache_contains_entire_file(int fd);
+int picofs_cache_expand(int fd);
 
 #endif

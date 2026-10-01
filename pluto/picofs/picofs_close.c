@@ -110,16 +110,16 @@ int picofs_close_file(int fd, bool disable_purge)
     }
 
     // check if cache contains partial file or the entire file
-    if (custom_fds[fd].reserved_flash_start && custom_fds[fd].reserved_flash_end)
-    {
-        err = picofs_flush_file(fd, disable_purge);  
-    }
-    else
+    if (picofs_cache_contains_entire_file(fd))
     {
         // flush entire file to flash from cache
         err = picofs_sync_file(fd, disable_purge);
     }
-
+    else
+    {
+        // flash remainder of file from cache
+        err = picofs_flush_file(fd, disable_purge);  
+    }
 
     // clear the cache
     picofs_deallocate_cache(fd);

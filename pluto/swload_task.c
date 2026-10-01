@@ -654,7 +654,7 @@ int verify_file(char *url)
             
                             if (fd < 0)
                             {
-                                // open the file with for read/write (create if it doesn't exist)
+                                // open the file with for read
                                 fd = open(filename, O_RDONLY);
                                 
                                 // check if the file exists and opened successfully

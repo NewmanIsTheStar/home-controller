@@ -104,71 +104,16 @@ int picofs_ftruncate(int fd, off_t length)
             return(0);
         }
 
-        // round up requested length to the nearest sector (4k)
-        cache_size = ((length + (4*1024))/(4*1024))*(4*1024); 
+         err = picofs_cache_realloc(fd, length, 0x00);  
 
-        // adjust cache size if necessary
-        if (cache_size != custom_fds[fd].cache_len)
-        {            
-            // allocate cache
-            new_cache = pvPortMalloc(cache_size);
+        if (!err)
+        {        
+            // ensure length remains within the allocated cache 
+            CLIP(length, 0, custom_fds[fd].cache_len);
 
-            if (new_cache && custom_fds[fd].cache)
-            {
-                if (length > custom_fds[fd].data_len)
-                {
-                    // copy all data 
-                    memcpy(new_cache, custom_fds[fd].cache, custom_fds[fd].data_len);
-                }
-                else
-                {
-                    // copy truncated data
-                    memcpy(new_cache, custom_fds[fd].cache, length);
-                }
-
-                // delete original cache
-                vPortFree(custom_fds[fd].cache);
-                custom_fds[fd].cache = NULL;
-            }
-            else if (new_cache)
-            {
-                // no previous cache to copy from so zero the newly created cache
-                // 0x00 is the standard even though 0xFF would be a better choice for flash
-                memset(new_cache, 0, cache_size);
-            }
-
-            if (new_cache)
-            {
-                // point file descriptor to the new new cache
-                custom_fds[fd].cache = new_cache;
-                custom_fds[fd].cache_len = cache_size;
-                custom_fds[fd].data = new_cache;
-
-                printf("truncate: fd = %d new cache = %p [cache size %d]\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
-                err = 0;
-            }
-
+            // finalize the data length
+            custom_fds[fd].data_len = length;        
         }
-        else
-        {
-            err = 0;
-        }
-        
-        // ensure length remains within the allocated cache 
-        CLIP(length, 0, custom_fds[fd].cache_len);
-
-        if (!err && custom_fds[fd].cache)
-        {
-            // check if file expanded
-            if (length > custom_fds[fd].data_len)
-            {
-                // zero pad the expanded region
-                memset(custom_fds[fd].cache+custom_fds[fd].data_len, 0, length-custom_fds[fd].data_len);
-            }
-        }
-
-        // finalize the data length
-        custom_fds[fd].data_len = length;        
     }
 
     return(err);
