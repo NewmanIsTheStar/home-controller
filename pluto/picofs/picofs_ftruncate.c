@@ -133,6 +133,7 @@ int picofs_ftruncate(int fd, off_t length)
             else if (new_cache)
             {
                 // no previous cache to copy from so zero the newly created cache
+                // 0x00 is the standard even though 0xFF would be a better choice for flash
                 memset(new_cache, 0, cache_size);
             }
 

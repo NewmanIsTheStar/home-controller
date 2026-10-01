@@ -131,6 +131,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
 
     // hex_dump((char *)test_filesystem, 512);
 
+    // check if file exists
     if (!picofs_find_file(name, fid, &file_trailer))
     {      
         // for historical reasons the values 0, 1 and 2 are used for read, write and read/wwrite modes
@@ -139,82 +140,86 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
         open_mode = (flags + 1) & (O_ACCMODE);
         MASKED_WRITE(flags, open_mode, O_ACCMODE);
         
-        if (flags & FWRITE)
+        
+        if ((flags & FWRITE) && !picofs_file_in_use(file_trailer, fd))
         {
-            // need exclusive access for write
-            if (!picofs_file_in_use(file_trailer, fd) && (!(flags & O_EXCL)))
-            {
-                picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
-                err = picofs_allocate_cache(fd, known_size);
-                
-                if (!err)
-                {
-                    if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
-                    {
-                        // populate cache
-                        memcpy(custom_fds[fd].cache, custom_fds[fd].file, custom_fds[fd].file_len);
+            // open for write access
+            picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
 
-                        // increment sequence
-                        ((FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)))->file_sequence++;
-
-                        // reinitialize the file descriptor using the cache
-                        picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
-
-                        // since we are writing to the file set the file descriptor to use the cached trailer
-                        custom_fds[fd].file_trailer = &(custom_fds[fd].cache_trailer);
-
-                        if (!disable_fid_rollover && (custom_fds[fd].file_trailer->file_sequence == FS_MAX_SEQ))
-                        {
-                            // out of sequence numbers so change to new FID and schedule deletion of the old file
-                            custom_fds[fd].rollover_fid = custom_fds[fd].file_trailer->file_id;
-                            custom_fds[fd].file_trailer->file_id = picofs_get_new_file_id();
-                            custom_fds[fd].file_trailer->file_sequence = 0;
-
-                            if (custom_fds[fd].file_trailer->file_id == FS_INVALID_FID)
-                            {
-                                // rollover to new fid failed
-                                printf("picoFS: out of file identifiers during rollover\n");
-                                picofs_deallocate_cache(fd);
-                                custom_fds[fd].rollover_fid = FS_INVALID_FID;  // cancel pending deletion
-                                err = -6;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        picofs_deallocate_cache(fd);
-                        err = -3;
-                    }
-                }
+            err = picofs_allocate_cache(fd, flags, known_size);
             
-                if (!err && (flags & O_APPEND))
-                {
-                    printf("APPEND flag\n");
-                    custom_fds[fd].data_offset = custom_fds[fd].data_len;
-                }
-
-                if (!err && (flags & O_TRUNC))
+            if (!err)
+            {
+                if (flags & O_TRUNC)
                 {
                     // truncate file
                     custom_fds[fd].data_offset = 0;
                     custom_fds[fd].file_len = sizeof(FILE_TRAILER_T);
                     custom_fds[fd].data_len = 0;
 
-                    // update file trailer in cache  TODO: why not directly access cached trailer in the fd
-                    custom_fds[fd].file_trailer->file_size = custom_fds[fd].file_len;
+                    // populate cache with trailer (an empty file)
+                    memcpy(custom_fds[fd].cache, file_trailer, sizeof(FILE_TRAILER_T));
+
+                    // set file size in cache trailer
+                   ((FILE_TRAILER_T *)(custom_fds[fd].cache))->file_size = sizeof(FILE_TRAILER_T);                       
                 }
-            }            
+                else if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
+                {
+                    // populate cache with entire file
+                    memcpy(custom_fds[fd].cache, custom_fds[fd].file, custom_fds[fd].file_len);
+                }
+
+                if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
+                {
+                    // increment sequence
+                    ((FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)))->file_sequence++;
+
+                    // reinitialize the file descriptor using the cache
+                    picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
+
+                    // since we are writing to the file set the file descriptor to use the cached trailer
+                    custom_fds[fd].file_trailer = &(custom_fds[fd].cache_trailer);
+
+                    if (!disable_fid_rollover && (custom_fds[fd].file_trailer->file_sequence == FS_MAX_SEQ))
+                    {
+                        // out of sequence numbers so change to new FID and schedule deletion of the old file
+                        custom_fds[fd].rollover_fid = custom_fds[fd].file_trailer->file_id;
+                        custom_fds[fd].file_trailer->file_id = picofs_get_new_file_id();
+                        custom_fds[fd].file_trailer->file_sequence = 0;
+
+                        if (custom_fds[fd].file_trailer->file_id == FS_INVALID_FID)
+                        {
+                            // rollover to new fid failed
+                            printf("picoFS: out of file identifiers during rollover\n");
+                            picofs_deallocate_cache(fd);
+                            custom_fds[fd].rollover_fid = FS_INVALID_FID;  // cancel pending deletion
+                            err = -6;
+                        }
+                    }
+                }
+                else
+                {
+                    picofs_deallocate_cache(fd);
+                    err = -3;
+                }
+            }
+        
+            if (!err && (flags & O_APPEND))
+            {
+                printf("APPEND flag\n");
+                custom_fds[fd].data_offset = custom_fds[fd].data_len;  
+            }                           
         }  
-        else if (flags & FREAD)
+        else if ((flags & FREAD) && !(flags & FWRITE))
         {
+            // open for read access
             err = 0;
 
             picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)file_trailer);
-        }               
-    }
+        } 
+    }                  
     else
     {
-
         // file does not exist
         if (((flags & O_WRONLY) || (flags & O_RDWR)) && (flags & O_CREAT))
         {
@@ -225,14 +230,12 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
             {
                 if (known_size >= 16*1024)   // TODO probably don't need this condition, it allows normal size files to delay allocating cache until a write is done, thus ftruncate() can specifiy size prior to write()
                 {
-                    err = picofs_allocate_cache(fd, known_size);
+                    err = picofs_allocate_cache(fd, flags, known_size);
                 }
-                //printf("picofs_open_file: file did not exist so created new file named: %s\n", name);
             }
         }
     }
 
-    //printf("At completion of picofs_open err %d id %d sq %d sz %d st %d\n", err, custom_fds[fd].file_trailer->file_id, custom_fds[fd].file_trailer->file_sequence, custom_fds[fd].file_trailer->file_size, custom_fds[fd].file_trailer->file_status);
     return(err);
 }
 
@@ -333,72 +336,72 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
     return(0);
 }
 
-/*!
- * \brief allocate RAM cache for file writes
- *
- * \param fd     file descriptor
- * \return nothing
- */
-int picofs_allocate_cache(int fd, size_t known_size)
-{
-    int err = -1;
-    size_t cache_size = 0;
-    size_t reserved_flash_size = 0;
+// /*!
+//  * \brief allocate RAM cache for file writes
+//  *
+//  * \param fd     file descriptor
+//  * \return nothing
+//  */
+// int picofs_allocate_cache(int fd, size_t known_size)
+// {
+//     int err = -1;
+//     size_t cache_size = 0;
+//     size_t reserved_flash_size = 0;
 
-    if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
-    {
-        // clean up -- this should never happen !!! TODO: remove as this is potentially worse than leaking memory as it could corupt the heap
-        if (custom_fds[fd].cache)
-        {
-            printf("Hanging cache allocation discovered and cleaned up\n");
-            vPortFree(custom_fds[fd].cache);
-            custom_fds[fd].cache = NULL;
-        }
+//     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
+//     {
+//         // clean up -- this should never happen !!! TODO: remove as this is potentially worse than leaking memory as it could corupt the heap
+//         if (custom_fds[fd].cache)
+//         {
+//             printf("Hanging cache allocation discovered and cleaned up\n");
+//             vPortFree(custom_fds[fd].cache);
+//             custom_fds[fd].cache = NULL;
+//         }
 
-        if (known_size < 16*1024)
-        {
-            // regular sized file so allocate cache with one 4k block greater than currently used
-            cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
-            custom_fds[fd].cache = pvPortMalloc(cache_size);
-        }
-        else
-        {
-            // large file so allocate 4K for ache and pre-allocate flash for the entire file
-            // flash must be reserved since multiple cache writes will be required and we don't want someone
-            // else writing into the contiguous block we are writing for this file
-            cache_size = 4*1024;
+//         if (known_size < 16*1024)
+//         {
+//             // regular sized file so allocate cache with one 4k block greater than currently used
+//             cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
+//             custom_fds[fd].cache = pvPortMalloc(cache_size);
+//         }
+//         else
+//         {
+//             // large file so allocate 4K for cache and pre-allocate flash for the entire file
+//             // flash must be reserved since multiple cache writes will be required and we don't want someone
+//             // else writing into the contiguous block we are writing for this file
+//             cache_size = 4*1024;
 
-            // add space for trailer and round up to a page boundary
-            known_size = (((known_size  + sizeof(FILE_TRAILER_T))/FS_PAGE_SIZE)+10)*FS_PAGE_SIZE;   //TEST TEST TEST should be +1 but running out of space during testing
+//             // add space for trailer and round up to a page boundary
+//             known_size = (((known_size  + sizeof(FILE_TRAILER_T))/FS_PAGE_SIZE)+1)*FS_PAGE_SIZE;   //TEST TEST TEST should be +1 but running out of space during testing
 
-            // reserve flash and make 64K aligned [for now we assume all large files are executable but this should be a passed parameter in future]
-            if (!picofs_find_contiguous_free_area(known_size, &(custom_fds[fd].reserved_flash_start), &reserved_flash_size, true))
-            {
-                custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + known_size;
+//             // reserve flash and make 64K aligned [for now we assume all large files are executable but this should be a passed parameter in future]
+//             if (!picofs_find_contiguous_free_area(known_size, &(custom_fds[fd].reserved_flash_start), &reserved_flash_size, true))
+//             {
+//                 custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + known_size;
 
-                custom_fds[fd].cache = pvPortMalloc(cache_size);
-            }
-            else
-            {
-                printf("picofs_allocate_cache: failed to find a contiguous area of flash for known_size = %d\n", known_size);
-            }
-        }
+//                 custom_fds[fd].cache = pvPortMalloc(cache_size);
+//             }
+//             else
+//             {
+//                 printf("picofs_allocate_cache: failed to find a contiguous area of flash for known_size = %d\n", known_size);
+//             }
+//         }
 
         
 
-        if (custom_fds[fd].cache != NULL)
-        {
-            custom_fds[fd].cache_len = cache_size;
-            custom_fds[fd].cache_offset = 0;
-            custom_fds[fd].data = custom_fds[fd].cache;
+//         if (custom_fds[fd].cache != NULL)
+//         {
+//             custom_fds[fd].cache_len = cache_size;
+//             custom_fds[fd].cache_offset = 0;
+//             custom_fds[fd].data = custom_fds[fd].cache;
             
-            //printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
-            err = 0;            
-        }
-    }
+//             //printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
+//             err = 0;            
+//         }
+//     }
 
-    return(err);
-}
+//     return(err);
+// }
 
 
 
@@ -409,14 +412,14 @@ int picofs_allocate_cache(int fd, size_t known_size)
  * \param held_fid  fid of file that caller is trying to open exclusively 
  * \return nothing
  */
-bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fid)
+bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fd)
 {
     int i;
     bool in_use = false;
 
     for(i=0; i < FS_MAX_FILE_DESCRIPTORS; i++)
     {
-        if (i != held_fid)  // don't contend with ourself!
+        if (i != held_fd)  // don't contend with ourself!
         {
             if (file_trailer && (((FILE_TRAILER_T *)file_trailer)->file_id == custom_fds[i].file_trailer->file_id) && custom_fds[i].in_use)        
             {
@@ -683,7 +686,7 @@ int picofs_open_download_file(const char *name, size_t known_size)
         return -1;
     }
 
-    if (picofs_open_file(fd, name, O_WRONLY | O_CREAT, FS_INVALID_FID, true, known_size))   //TODO ideally should be append
+    if (picofs_open_file(fd, name, O_WRONLY | O_CREAT /* | O_TRUNC | O_APPEND */, FS_INVALID_FID, true, known_size))
     {
         errno = ENOENT; // File not found
         return -1;

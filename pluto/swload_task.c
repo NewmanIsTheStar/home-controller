@@ -223,7 +223,7 @@ int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart)
         if ((strncmp(buffer, "HTTP/", 5) == 0))
         {
             STRNCPY(http_version, buffer+5, 4);
-            printf("HTTP VERSION = %s\n", http_version);
+            //printf("HTTP VERSION = %s\n", http_version);
 
             // status appears after first space
             status = strnstr(buffer, " ", buflen);
@@ -237,7 +237,7 @@ int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart)
                     http_status[i] = status[i];
                 }
                 http_status[i] = 0;
-                printf("HTTP STATUS = %s\n", http_status);
+                //printf("HTTP STATUS = %s\n", http_status);
 
                 // find end of header
                 eoh = strnstr(buffer, "\r\n\r\n", buflen);
@@ -252,11 +252,11 @@ int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart)
                         for (i=0; i<15 && content[i] != ' ' && content[i] != '\r' && content[i] != '\n'; i++)
                         {
                             content_len[i] = content[i];
-                            printf("CONTENT_LEN_CHARARCTER = %02x\n", content[i]);
+                            //printf("CONTENT_LEN_CHARARCTER = %02x\n", content[i]);
                         }
-                        printf("LOOP TERMINATED with i = %d content[i] = %02x\n", i, content[i]);
+                        //printf("LOOP TERMINATED with i = %d content[i] = %02x\n", i, content[i]);
                         content_len[i] = 0;
-                        printf("HTTP CONTENT LENGTH = %s\n", content_len);
+                        //printf("HTTP CONTENT LENGTH = %s\n", content_len);
 
                         *filelen = atoi(content_len);
                         *filestart = eoh+strlen("\r\n\r\n");
@@ -376,7 +376,7 @@ int download_file(char *url)
         // create request
         snprintf(buffer, sizeof(buffer), HTTPC_REQ_11_HOST_FORMAT(uri, host));
 
-        hex_dump(buffer, strlen(buffer));
+        //hex_dump(buffer, strlen(buffer));
 
         // send a request
         wrote_bytes = send(web_socket, buffer, strlen(buffer), 0);
@@ -430,7 +430,11 @@ int download_file(char *url)
                             if (((read_bytes - file_offset) + total_wrtitten) < total_expected)
                             {
                                 // write all data after the http header to file
-                                picofs_write(filePointer, buffer + file_offset, (read_bytes - file_offset));    
+                                picofs_write(filePointer, buffer + file_offset, (read_bytes - file_offset));  
+                                
+                                // printf("First DATA\n");
+                                // hex_dump(buffer + file_offset, (read_bytes - file_offset));
+
                                 total_wrtitten += (read_bytes - file_offset);
                             }
                             else if (total_wrtitten < total_expected)

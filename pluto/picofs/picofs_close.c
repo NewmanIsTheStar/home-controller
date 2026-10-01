@@ -411,7 +411,7 @@ int picofs_flush_file(int fd, bool disable_purge)
             custom_fds[fd].cache_offset += custom_fds[fd].cache_len;
 
             // copy remainder of trailer into cache
-            memcpy((char *)custom_fds[fd].cache_offset, ((char *)(&(custom_fds[fd].cache_trailer)))+(sizeof(FILE_TRAILER_T) - left_over_trailer), left_over_trailer);
+            memcpy(custom_fds[fd].cache, ((char *)&(custom_fds[fd].cache_trailer))+(sizeof(FILE_TRAILER_T) - left_over_trailer), (sizeof(FILE_TRAILER_T) - left_over_trailer));
 
             printf("writing LEFT OVER trailer single page to flash @ %d with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
             picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, FS_PAGE_SIZE);            

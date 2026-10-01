@@ -16,6 +16,7 @@
 #define FS_END ((char *)(&test_filesystem) + sizeof(test_filesystem))
 #define FS_SIZE (sizeof(test_filesystem))
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
+#define FS_FILE_CACHE_MAX (16*1024)
 #else
 #define FS_SECTOR_SIZE (4096)
 #define FS_EXE_BLOCK_SIZE (64*1024)
@@ -24,6 +25,7 @@
 #define FS_END ((char *)(XIP_BASE + PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE)))
 #define FS_SIZE (FS_END - FS_START)
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
+#define FS_FILE_CACHE_MAX (16*1024)
 #endif
 
 #define FS_PAGE_SIZE (256)
@@ -100,7 +102,7 @@ typedef struct
     u8_t file_status;             // flash: file status  
     char *cache;                  // RAM: file start
     size_t cache_len;             // RAM: cache size
-    size_t cache_offset;          // RAM: offset used when cache is two small to hold entire file
+    size_t cache_offset;          // RAM: offset used when cache is too small to hold entire file
     FILE_TRAILER_T cache_trailer; // holds trailer while file is being written to cache
     FILE_TRAILER_T *file_trailer; // flash or RAM: file trailer
     char *data;                   // flash or RAM: data contained in the file 
@@ -155,7 +157,7 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size, bool executable_alignment);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
-int picofs_allocate_cache(int fd, size_t known_size);
+int picofs_allocate_cache(int fd, int flags, size_t known_size);
 int picofs_deallocate_cache(int fd);
 int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover, size_t known_size);
 int picofs_read(int fd, char *ptr, int len);
@@ -206,5 +208,6 @@ int picofs_open_download_file(const char *name, size_t known_size);
 int picofs_find_available_fd(void);
 int picofs_release_fd(int fd);
 uint32_t picofs_calculate_crc32_software(const uint8_t *data, size_t length);
+int picofs_cache_realloc(int fd, size_t new_size, u8_t fill);
 
 #endif

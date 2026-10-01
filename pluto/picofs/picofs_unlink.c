@@ -101,7 +101,7 @@ int picofs_unlink(const char *name, u8_t fid)
         return -1;
     }
 
-    if (picofs_open_file(fd, name, O_WRONLY, fid, true, 0))   
+    if (picofs_open_file(fd, name, O_WRONLY | O_TRUNC, fid, true, 0))   
     {
         errno = ENOENT; // File not found
         return -1;
