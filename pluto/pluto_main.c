@@ -135,6 +135,8 @@ int pluto(void)
     TaskHandle_t task;
 
     stdio_init_all();
+    
+    printf("******************************************************\n");
 
     pluto_boot_launch();
 

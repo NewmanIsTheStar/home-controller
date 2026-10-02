@@ -9,6 +9,9 @@
 #error "LWIP_HTTPD_SUPPORT_WEBSOCKET must be enabled in lwipopts.h to use this file!"
 #endif
 
+#include "hardware/structs/qmi.h"
+#include "hardware/watchdog.h"
+#include "pico/bootrom.h"
 #include <stdio.h>
 #include <sys/stat.h> 
 #include <string.h>
@@ -153,178 +156,60 @@ int pluto_boot_launch(void)
 
 
 
-// void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset) {
-//     // 1. Permanently silence interrupts so code execution does not jump back to standard XIP 
-//     uint32_t ints = save_and_disable_interrupts();
-    
-//     // 2. Clear out the primary XIP cache to discard obsolete vector mappings
-//     flash_flush_cache();
-
-//     /* 
-//      * 3. Remap the XIP Window via the correct hardware registers.
-//      * On the RP2350, xip_ctrl_hw->atrans[0] controls the primary 4MB window spanning from 0x10000000.
-//      */
-//     volatile uint32_t *atrans0_reg = (volatile uint32_t *)(XIP_CTRL_BASE + 0x40);
-//     *atrans0_reg = (physical_flash_offset >> 12); 
-
-//     // 4. Clean out the cache again to commit the new virtual routing table
-//     flash_flush_cache();
-
-//     // 5. Bypass the translated XIP window entirely to get the new vector pointers safely
-//     // We target the non-translating, non-cached flash alias mapping to read raw bytes:
-//     uint32_t physical_lookup_base = XIP_NOCACHE_NOALLOC_NOTRANSLATE_BASE + physical_flash_offset;
-//     uint32_t *vector_table = (uint32_t *)physical_lookup_base;
-    
-//     uint32_t stack_pointer = vector_table[0];
-//     uint32_t reset_handler = vector_table[1];
-
-//     // 6. Enforce ARM Thumb Mode bit on the entry address to avoid a UsageFault
-//     reset_handler |= 1;
-
-//     // 7. Reset core hardware registers to match the initial boot expectations
-//     //__set_MSP(stack_pointer);
-//     __asm volatile ("msr msp, %0" : : "r" (stack_pointer) : "memory");
-
-//     // 8. Jump execution directly into the remap binary reset entry vector
-//     void (*target_entry)(void) = (void (*)(void))reset_handler;
-//     target_entry();
-// }
-
-// void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset) {
-//     // 1. Temporarily silence interrupts while we manipulate hardware mappings
-//     uint32_t ints = save_and_disable_interrupts();
-    
-//     // 2. Clear out the primary XIP cache to discard obsolete vector mappings
-//     flash_flush_cache();
-
-//     /* 
-//      * 3. Remap the XIP Window via hardware register offsets.
-//      * ATRANS0 is located at XIP_CTRL_BASE + 0x40 on the RP2350.
-//      */
-//     volatile uint32_t *atrans0_reg = (volatile uint32_t *)(XIP_CTRL_BASE + 0x40);
-//     *atrans0_reg = (physical_flash_offset >> 12); 
-
-//     // 4. Clean out the cache again to commit the new virtual routing table [2]
-//     flash_flush_cache();
-
-//     /*
-//      * 5. CORRECTED: Read the vectors directly from the translated virtual window. [2]
-//      * Because ATRANS0 is active, XIP_BASE (0x10000000) now cleanly points 
-//      * directly to the start of your new binary. [2]
-//      */
-//     uint32_t *vector_table = (uint32_t *)XIP_BASE; 
-//     uint32_t stack_pointer = vector_table[0];
-//     uint32_t reset_handler = vector_table[1];
-
-//     // 6. Enforce ARM Thumb Mode bit on the entry address to avoid a UsageFault [1, 2]
-//     reset_handler |= 1;
-
-//     // 7. Reset the Main Stack Pointer to the new application's stack frame [2]
-//     __asm volatile ("msr msp, %0" : : "r" (stack_pointer) : "memory");
-
-//     // 8. Re-enable interrupts so the new binary can process its own startup routines [2]
-//     restore_interrupts(ints);
-
-//     // 9. Jump execution directly into the remap binary reset entry vector [1, 2]
-//     void (*target_entry)(void) = (void (*)(void))reset_handler;
-//     target_entry();
-// }
-
 // #include "pico/stdlib.h"
 // #include "hardware/sync.h"
-// #include "cmsis/core.h" // Ensures access to SCB definitions
-
-// void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset) {
-//     // 1. Temporarily silence interrupts while we manipulate hardware mappings
-//     uint32_t ints = save_and_disable_interrupts();
-    
-//     // 2. Clear out the primary XIP cache to discard obsolete vector mappings
-//     flash_flush_cache();
-
-//     /* 
-//      * 3. Remap the XIP Window via hardware register offsets.
-//      * ATRANS0 is located at XIP_CTRL_BASE + 0x40 on the RP2350.
-//      */
-//     volatile uint32_t *atrans0_reg = (volatile uint32_t *)(XIP_CTRL_BASE + 0x40);
-//     *atrans0_reg = (physical_flash_offset >> 12); 
-
-//     // 4. Clean out the cache again to commit the new virtual routing table
-//     flash_flush_cache();
-
-//     /*
-//      * 5. Read the vectors directly from the translated virtual window.
-//      * Because ATRANS0 is active, XIP_BASE (0x10000000) now cleanly points 
-//      * directly to the start of your new binary.
-//      */
-//     uint32_t *vector_table = (uint32_t *)XIP_BASE; 
-//     uint32_t stack_pointer = vector_table[0]; // Extract the Stack Pointer value
-//     uint32_t reset_handler = vector_table[1]; // Extract the Target Reset Handler address
-
-//     // 6. Enforce ARM Thumb Mode bit on the entry address to avoid a UsageFault
-//     reset_handler |= 1;
-
-//     // 7. Update the hardware Vector Table Offset Register (VTOR)
-//     // This anchors the Cortex-M33 interrupt lookup mechanism back to the standard base
-//     SCB->VTOR = XIP_BASE;
-
-//     // 8. Reset the Main Stack Pointer to the new application's stack frame
-//     __asm volatile ("msr msp, %0" : : "r" (stack_pointer) : "memory");
-
-//     // 9. Re-enable interrupts so the new binary can process its own startup routines
-//     restore_interrupts(ints);
-
-//     // 10. Jump execution directly into the remap binary reset entry vector
-//     void (*target_entry)(void) = (void (*)(void))reset_handler;
-//     target_entry();
-// }
-
-
-// #include "pico/stdlib.h"
-// #include "hardware/sync.h"
+// #include "hardware/watchdog.h"
+// #include "hardware/structs/qmi.h" // Crucial header for qmi_hw structure on RP2350
 
 void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset) {
-    // 1. Temporarily silence interrupts while we manipulate hardware mappings
+    // 1. Permanently silence interrupts while we manipulate hardware mappings
     uint32_t ints = save_and_disable_interrupts();
     
-    // 2. Clear out the primary XIP cache to discard obsolete vector mappings
+    // 2. Disable the Watchdog Timer to prevent background chip resets
+    watchdog_disable(); 
+    
+    // 3. Completely disable the ARM SysTick Timer and its interrupts.
+    volatile uint32_t *systick_ctrl = (volatile uint32_t *)0xE000E010;
+    *systick_ctrl = 0; 
+
+    // 4. Clear out the primary XIP cache to discard obsolete vector mappings
     flash_flush_cache();
 
     /* 
-     * 3. Remap the XIP Window via hardware register offsets.
-     * ATRANS0 is located at XIP_CTRL_BASE + 0x40 on the RP2350.
+     * 5. CORRECTED: Remap the XIP Window via the native QMI Hardware block.
+     * On the RP2350, qmi_hw->atrans[0] maps the baseline 0x10000000 execution space.
+     * The upper bits dictate size matching. We preserve the active window bits 
+     * and inject our specific aligned physical page offset chunk.
      */
-    volatile uint32_t *atrans0_reg = (volatile uint32_t *)(XIP_CTRL_BASE + 0x40);
-    *atrans0_reg = (physical_flash_offset >> 12); 
+    // Clear the current base page mapping bits, keeping sizing/permission flags intact
+    uint32_t current_atrans = qmi_hw->atrans[0];
+    current_atrans &= 0xFF000000; // Preserve upper size configuration tags
+    
+    // Inject the new page mapping (physical offset shifted to match the 4KiB grid allocation)
+    qmi_hw->atrans[0] = current_atrans | (physical_flash_offset >> 12); 
 
-    // 4. Clean out the cache again to commit the new virtual routing table
+    // 6. Clean out the cache again to commit the new virtual routing table
     flash_flush_cache();
 
-    /*
-     * 5. Read the vectors directly from the translated virtual window.
-     * Because ATRANS0 is active, XIP_BASE (0x10000000) now cleanly points 
-     * directly to the start of your new binary.
-     */
+    // 7. Read the vectors directly from the newly translated virtual window.
     uint32_t *vector_table = (uint32_t *)XIP_BASE; 
-    uint32_t stack_pointer = vector_table[0]; // Fetch initial SP 
-    uint32_t reset_handler = vector_table[1]; // Fetch initial PC
+    uint32_t stack_pointer = vector_table[0]; 
+    uint32_t reset_handler = vector_table[1]; 
 
-    // 6. Enforce ARM Thumb Mode bit on the entry address to avoid a UsageFault
+    // 8. Enforce ARM Thumb Mode bit on the entry address to avoid a UsageFault
     reset_handler |= 1;
 
-    /*
-     * 7. Update the hardware Vector Table Offset Register (VTOR).
-     * Bypasses missing CMSIS header structures by writing directly to 0xE000ED08.
-     */
+    // 9. Update the hardware Vector Table Offset Register (VTOR)
     volatile uint32_t *vtor_reg = (volatile uint32_t *)0xE000ED08;
     *vtor_reg = XIP_BASE;
 
-    // 8. Reset the Main Stack Pointer to the new application's stack frame
+    // 10. Reset the Main Stack Pointer to the new application's stack frame
     __asm volatile ("msr msp, %0" : : "r" (stack_pointer) : "memory");
 
-    // 9. Re-enable interrupts so the new binary can process its own startup routines
-    restore_interrupts(ints);
+    // 11. Clear PRIMASK to leave the CPU in a clean, raw execution state
+    __asm volatile ("cpsie i" : : : "memory");
 
-    // 10. Jump execution directly into the remap binary reset entry vector
+    // 12. Jump execution directly into the remap binary reset entry vector
     void (*target_entry)(void) = (void (*)(void))reset_handler;
     target_entry();
 }
