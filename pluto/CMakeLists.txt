@@ -3,6 +3,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_main.c
     pluto_wifi.c    
     pluto_malloc.c
+    pluto_boot.c
     web.c    
     system_config.c
     swload_task.c

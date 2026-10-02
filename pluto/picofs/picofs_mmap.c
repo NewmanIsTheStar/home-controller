@@ -188,6 +188,11 @@ int picofs_munmap(void *addr, size_t len)
     // if it points inside the Flash XIP window, nothing to free
     if (address >= XIP_BASE && address < (XIP_BASE + PICO_FLASH_SIZE_BYTES)) 
     {
+        if (custom_fds[fd].mmap_ref_count > 0)
+        {
+            custom_fds[fd].mmap_ref_count--;   // TODO: needs to be atomic
+        }
+        
         return(0); 
     }
      

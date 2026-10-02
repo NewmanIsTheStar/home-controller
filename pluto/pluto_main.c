@@ -136,6 +136,8 @@ int pluto(void)
 
     stdio_init_all();
 
+    pluto_boot_launch();
+
     //print_reset_reason();
     print_reset_reason();
 

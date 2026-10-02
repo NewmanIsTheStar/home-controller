@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 
 #include "hardware/pio.h"
@@ -98,6 +99,7 @@ int hc_delete_file(void);
 int hc_download_file(void);
 int hc_verify_file(void);
 int hc_automation_run(int automation_number);
+int hc_boot_file(void);
 
 // external variables
 extern u32_t unix_time;
@@ -246,6 +248,9 @@ void hc_task(__unused void *params)
                         //picofs_consolidate_all_files();
                         picofs_consolidate_all_files_in_flash();
                         break;
+                    case HC_CMD_STAT:                    
+                        picofs_stat(web.stat_filename);
+                        break;                        
                     case HC_CMD_DELETE_FILE:                    
                         hc_delete_file();
                         break;
@@ -254,7 +259,10 @@ void hc_task(__unused void *params)
                         break;      
                     case HC_CMD_VERIFY_FILE:                    
                         hc_verify_file();
-                        break;                                           
+                        break;  
+                    case HC_CMD_BOOT:
+                        hc_boot_file();
+                        break;
                     default:
                         printf("HC task received unrecognized message (%d)\n", hc_message);
                         break;
@@ -698,6 +706,47 @@ int hc_verify_file(void)
     return(err);
 }
 
+int hc_boot_file(void)
+{
+    int err = -1;
+    int exe_fd = -1;
+    char *map;    
+
+    if (web.boot_filename[0])
+    {
+        // open the file with for read
+        exe_fd = open(web.boot_filename, O_RDONLY, 0644);
+        if (exe_fd == -1) 
+        {
+            perror("hc_boot_file: Error opening/creating file");
+            return EXIT_FAILURE;
+        }
+
+        // map the file so that tasks can access it directly as memory (rather than using file i/o)
+        map = picofs_mmap(NULL, 0, PROT_READ, MAP_SHARED, exe_fd, 0);
+        if (map == MAP_FAILED) 
+        {
+            perror("hc_boot_file: Error mapping the file");
+            close(exe_fd);
+            exe_fd = -1;
+            return EXIT_FAILURE;
+        }
+
+        picofs_munmap(map, 0);
+
+        close(exe_fd);
+        exe_fd = -1;
+    }
+    else
+    {
+        shell_printf("boot: error: no file provided\n");
+    }
+
+    // for now we assume executable was linked to be loaded at the standard location (XIP_BASE)
+    pluto_boot_setup(map, (char *)XIP_BASE);
+
+    return(err);
+}
 
 bool hc_automation_condition(bool condition)
 {

@@ -213,5 +213,6 @@ uint32_t picofs_calculate_crc32_software(const uint8_t *data, size_t length);
 int picofs_cache_realloc(int fd, size_t new_size, u8_t fill);
 bool picofs_cache_contains_entire_file(int fd);
 int picofs_cache_expand(int fd);
+int picofs_stat(char *filename);
 
 #endif

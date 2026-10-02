@@ -37,6 +37,7 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 #endif
 
 // prototypes
+int shell_boot(char *filename);
 int shell_edit(char *filename);
 int shell_cat(char *filename);
 void shell_printf_nb(const char *format, ...);
@@ -362,6 +363,16 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_DEFRAGMENT); 
     }     
+    else if (strncmp(cmd, "boot ", 5) == 0) 
+    {
+        if (strlen(cmd) > 6) shell_boot((char *)(cmd+5));  
+        hc_queue_send(HC_CMD_BOOT); 
+    }  
+    else if (strncmp(cmd, "stat ", 5) == 0) 
+    {
+        STRNCPY(web.stat_filename, ((char *)(cmd+5)), sizeof(web.stat_filename));
+        hc_queue_send(HC_CMD_STAT); 
+    }       
     else if (strncmp(cmd, "edit ", 5) == 0) 
     {
         if (strlen(cmd) > 6) shell_edit((char *)(cmd+5));  
@@ -974,6 +985,25 @@ void dump_text_buffer(void)
         printf("%02x ", basic_program[i]);        
     }    
     printf("\n");    
+}
+
+/*!
+ * \brief boot the file
+ *
+ * \param[in]  filename  file to print to shell
+ * \return nothing
+ */
+int shell_boot(char *filename)
+{
+    FILE *filePointer = NULL;
+    int file_size = 0;
+    char buffer[256];
+
+ 
+    // remember name of file to boot
+    STRNCPY(web.boot_filename, filename, sizeof(web.boot_filename));
+
+    return 0;
 }
 
 /*!

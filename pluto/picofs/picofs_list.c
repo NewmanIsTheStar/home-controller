@@ -512,3 +512,32 @@ int picofs_get_file_size(char *filename)
     return(size_files);
 }
 
+/*!
+ * \brief Print details about a file
+ * 
+ * \param[in]   filename     name to find
+ * 
+ *  *     
+ * \return 0 on success
+ */
+int picofs_stat(char *filename)
+{
+    int err = -1;
+    FILE_TRAILER_T *trailer = NULL;
+
+    if (!picofs_find_file(filename, FS_INVALID_FID, &trailer) && trailer)
+    {
+        shell_printf("File Identifier = %d\n", trailer->file_id);
+        shell_printf("Sequence number = %d\n", trailer->file_sequence);
+        shell_printf("Status          = %08b\n", trailer->file_status);
+        shell_printf("     Deleted    = %s\n", (trailer->file_status & STS_DELETED)?"yes":"no");
+        shell_printf("     Executable = %s\n", (trailer->file_status & STS_EXECUTABLE)?"yes":"no");        
+        shell_printf("Size            = %d\n", trailer->file_size);
+        shell_printf("CRC             = %08x\n", trailer->crc);
+        shell_printf("Flash location  = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size);
+        shell_printf("Flash offset    = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size - XIP_BASE);
+
+    }
+
+    return(0);
+}

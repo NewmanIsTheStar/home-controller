@@ -64,7 +64,8 @@ typedef struct WEB_VARIABLES
   int rmtsw_relay_day_events[7];
   int rmtsw_relay_grid[8][8];
   char ping_target[16];             // TODO: remove this hack and replace with inter-task message
-  char edit_text_filename[16];
+  char boot_filename[16];
+  char edit_text_filename[16];  
   char delete_filename[16];
   char download_url[256];
   char *basic_file_to_execute;
@@ -72,6 +73,7 @@ typedef struct WEB_VARIABLES
   char *file_to_hexdump;
   char *shelly_device_ip;
   int automation_running;
+  char stat_filename[16];
 } WEB_VARIABLES_T;                  //remember to add initialization code when adding to this structure !!!
 
 typedef struct {

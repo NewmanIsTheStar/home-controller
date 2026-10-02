@@ -23,7 +23,9 @@
 #define HC_CMD_HEXDUMP_FILE (16)
 #define HC_CMD_DELETE_FILE (17)
 #define HC_CMD_DOWNLOAD_FILE (18)
-#define HC_CMD_VERIFY_FILE 19
+#define HC_CMD_VERIFY_FILE (19)
+#define HC_CMD_BOOT (21)
+#define HC_CMD_STAT 22
 
 typedef enum
 {
