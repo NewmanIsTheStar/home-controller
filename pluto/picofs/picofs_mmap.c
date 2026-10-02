@@ -201,7 +201,7 @@ int picofs_munmap(void *addr, size_t len)
             custom_fds[fd].mmap_ref_count--;   // TODO: needs to be atomic
         }
 
-        // release fd if it file was closed but fd was held open by this mapping
+        // release fd if the file was closed but fd was held open by this mapping
         if ((custom_fds[fd].mmap_delayed_close) && (custom_fds[fd].mmap_ref_count == 0))
         {
             close(fd);
@@ -263,9 +263,9 @@ int picofs_msync(void *addr, size_t length, int flags)
 
             if (custom_fds[fd].cache_trailer.file_id != fid)
             {
-                // rollover occured to a new fid so delete file with old fid
-                //picofs_unlink_by_fid(fid);
-                custom_fds[fd].rollover_fid = fid;  //TODO: what if we wrap twice?!! need to unlink before scheduling another to occur on close
+                // rollover occured to a new fid so schedule the deletion of the file with old fid
+                // the deletion occurs during the next msync or close of the file 
+                custom_fds[fd].rollover_fid = fid;  
             }
         }
     }

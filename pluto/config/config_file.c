@@ -78,7 +78,6 @@ void *config_get_flash_location(char *filename)
 int config_mmap(char *filename, void **configuration_buffer, size_t config_size) 
 {
     int config_fd = -1;
-    size_t FILE_SIZE = 4096; // 4 KB (typically matches 1 memory page)
     char *map;
 
     // open the file with for read/write (create if it doesn't exist)
@@ -100,7 +99,7 @@ int config_mmap(char *filename, void **configuration_buffer, size_t config_size)
     }
 
     // map the file so that tasks can access it directly as memory (rather than using file i/o)
-    map = picofs_mmap(NULL, FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, config_fd, 0);
+    map = picofs_mmap(NULL, config_size, PROT_READ | PROT_WRITE, MAP_SHARED, config_fd, 0);
     if (map == MAP_FAILED) 
     {
         perror("config_mmap: Error mapping the file");

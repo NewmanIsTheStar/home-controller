@@ -175,9 +175,13 @@ extern FILE_STATUS_T picofs_files[FS_NUM_FID];
 int picofs_cache_allocate(int fd, int flags, size_t known_size)
 {
     int err = -1;
-    size_t cache_size = 0;
-    size_t reserved_flash_size = 0;
 
+    if (!known_size)
+    {
+        // use existing file size
+        known_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
+    }
+    
     err =  picofs_cache_realloc(fd, known_size, FS_ERASED_CELL_VALUE);
 
     return(err);
@@ -237,7 +241,7 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
             new_cache_size = FS_FILE_CACHE_MIN;
 
             // check for attempt to resize flash reservation
-            // the only supported use case for existing large files is to overwrite them entirely (O_TRUNC)
+            // the only supported use case for writing to existing large files is to overwrite them entirely (O_TRUNC)
             if (!picofs_cache_contains_entire_file)
             {
                 printf("picofs_cache_realloc: WARNING resizing the flash reservation is unsupported.  Previously written flash sectors will NOT be copied into the new reservation.\n");
@@ -249,6 +253,9 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
             {
                 custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + flash_reservation_size;
                 custom_fds[fd].cache_offset = 0;
+
+                // TODO: pass explicit parameter or set this bit externally for EXE files -- at present we presume large files (>16KB) are EXE
+                custom_fds[fd].file_status |= STS_EXECUTABLE;
 
                 printf("flash reservation: ask = %0x actual = %0x\n", flash_reservation_size, actual_reservation_size);
             }

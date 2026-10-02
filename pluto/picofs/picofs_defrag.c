@@ -121,13 +121,16 @@ int picofs_consolidate_all_files_in_flash(void)
         {
             if (current)
             {
-                consoldation_files[current->file_id].valid = true;
-                num_files++;
-                size_files_plus_remnants += current->file_size;
-
-                if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence) 
+                if (!(current->file_status & STS_EXECUTABLE))
                 {
-                    consoldation_files[current->file_id].trailer = current;
+                    consoldation_files[current->file_id].valid = true;
+                    num_files++;
+                    size_files_plus_remnants += current->file_size;
+
+                    if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence) 
+                    {
+                        consoldation_files[current->file_id].trailer = current;
+                    }
                 }
             }
             else
@@ -373,13 +376,16 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
     {
         if (current)
         {
-            consoldation_files[current->file_id].valid = true;
-            num_files++;
-            size_files_plus_remnants += current->file_size;
-
-            if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence) 
+            if (!(current->file_status & STS_EXECUTABLE))
             {
-                consoldation_files[current->file_id].trailer = current;
+                consoldation_files[current->file_id].valid = true;
+                num_files++;
+                size_files_plus_remnants += current->file_size;
+
+                if (current->file_sequence >= consoldation_files[current->file_id].trailer->file_sequence) 
+                {
+                    consoldation_files[current->file_id].trailer = current;
+                }
             }
         }
         else

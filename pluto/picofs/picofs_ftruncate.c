@@ -104,7 +104,7 @@ int picofs_ftruncate(int fd, off_t length)
             return(0);
         }
 
-         err = picofs_cache_realloc(fd, length, 0x00);  
+         err = picofs_cache_realloc(fd, length, 0x00);   // 0x00 is technically correct, OxFF avoids unnecessary erase cycles when resizing a file
 
         if (!err)
         {        

@@ -316,10 +316,11 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
         t = (FILE_TRAILER_T *)p;
 
         // move to new location
+        // we cannot ignore the crc when skipping over files as the corrupted file may have been overwritten with a new file
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION) &&
             ((t->file_size >= sizeof(FILE_TRAILER_T)) && (t->file_size < FS_MAX_FILE_SIZE)) &&
-            (ignore_crc || (t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T)))))
+            ((t->crc == picofs_calculate_crc32(((const uint8_t *)(p + sizeof(FILE_TRAILER_T) - t->file_size)), t->file_size - sizeof(FILE_TRAILER_T)))))
         {
             p = p - t->file_size;  
         }        
@@ -345,11 +346,11 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
     {
         *current_file = (FILE_TRAILER_T *)p;
 
-        // printf("Iterator return: %s %d %p\n", t->name, not_found, *current_file);
+        // printf("picofs_iter_next_file: return: %s %d %p\n", t->name, not_found, *current_file);
     }
     else
     {
-        // printf("Iterator returning not found %d\n", not_found);
+        // printf("picofs_iter_next_file: returning not found %d\n", not_found);
     }
 
     return(not_found);

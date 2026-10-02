@@ -63,7 +63,7 @@
 
 // file_status bit definitions
 #define STS_DELETED (BIT0)
-#define STS_UNUSED1 (BIT1)
+#define STS_EXECUTABLE (BIT1)
 #define STS_UNUSED2 (BIT2)
 #define STS_UNUSED3 (BIT3)
 #define STS_UNUSED4 (BIT4)
