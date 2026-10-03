@@ -90,10 +90,17 @@ extern WORKER_TASK_T worker_tasks[];
 void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset);
 
 
-
 /*!
- * \brief load the executable addresses into watchdog scratch registers in preparation for the next boot
- *
+ * \brief   load the executable addresses into watchdog scratch registers in preparation for the next boot
+ * \details Physical address refers to the default memory map.  The name is not technically accurate
+ *          but hopefull conveys the concept succinctly. Code compiled and linked to run at the default 
+ *          location is stored in flash at a different location inside the file system.  
+ * 
+ *          Address Translation is altered to make it appear that the the code is executing at the default
+ *          location.  The code stored in the file system can then be executed without modification.  
+ *          
+ *          This allows N copies of the application to be stored in the file system or N different
+ *          applications to be stored at once.
  * \param none
  *
  * \return 0 if scheduler stops (should never happen)
@@ -112,11 +119,11 @@ int pluto_boot_setup(char *exe_physical_addr, char *exe_virtual_addr)
 }
 
 /*!
- * \brief load the executable addresses into watchdog scratch registers in preparation for the next boot
+ * \brief select and execute code
  *
  * \param none
  *
- * \return 0 if scheduler stops (should never happen)
+ * \return 0
  */
 int pluto_boot_launch(void)
 {
@@ -132,20 +139,35 @@ int pluto_boot_launch(void)
 
         flash_offset = watchdog_hw->scratch[0] - XIP_BASE;
 
-        // clear scratch registers to prevent boot loops
-        watchdog_hw->scratch[0] = 0x00;
-        watchdog_hw->scratch[1] = 0x01;
-        watchdog_hw->scratch[2] = 0x02;
-        watchdog_hw->scratch[3] = 0x03;                
+        // set scratch registers to launch pattern
+        watchdog_hw->scratch[2] = 0xFEEDC0DE;
+        watchdog_hw->scratch[3] = 0xFEEDC0DE;              
 
-        printf("Shifting address translation to offset %0x\n", flash_offset);
+        printf("*** Jumping to executable at flash offset %0x ***\n", flash_offset);
 
-        printf("Jumping to executable...\n");
         remap_and_boot_app(flash_offset);
+    }
+    else if ((watchdog_hw->scratch[2] == 0xFEEDC0DE) &&          
+             (watchdog_hw->scratch[3] == 0xFEEDC0DE))
+    {
+        printf("pluto_boot_launch: executing code physical @ %0x virtual @ %0x ***\n", watchdog_hw->scratch[0], watchdog_hw->scratch[1]);
+                
+        // set scratch registers to application running pattern
+        watchdog_hw->scratch[0] = 0xDEADD00D;
+        watchdog_hw->scratch[1] = 0xDEADD00D;
+        watchdog_hw->scratch[2] = 0xDEADD00D;
+        watchdog_hw->scratch[3] = 0xDEADD00D;          
     }
     else
     {
-        printf("pluto_boot_launch: nothing ready to launch\n");
+        printf("pluto_boot_launch: executing default code @ %0x ***\n", XIP_BASE);
+
+        // set scratch registers to bootloader running pattern
+        watchdog_hw->scratch[0] = 0x1BADB002;
+        watchdog_hw->scratch[1] = 0x1BADB002;
+        watchdog_hw->scratch[2] = 0x1BADB002;
+        watchdog_hw->scratch[3] = 0x1BADB002; 
+        
         rom_flash_reset_address_trans();
     }
    
@@ -154,62 +176,63 @@ int pluto_boot_launch(void)
 }
 
 
-
-
-// #include "pico/stdlib.h"
-// #include "hardware/sync.h"
-// #include "hardware/watchdog.h"
-// #include "hardware/structs/qmi.h" // Crucial header for qmi_hw structure on RP2350
-
-void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset) {
-    // 1. Permanently silence interrupts while we manipulate hardware mappings
+/*!
+ * \brief set address translation and reset vectors then jump to executable
+ *
+ * \param none
+ *
+ * \return never
+ */
+void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset) 
+{
+    // permanently silence interrupts while we manipulate hardware mappings
     uint32_t ints = save_and_disable_interrupts();
     
-    // 2. Disable the Watchdog Timer to prevent background chip resets
+    // disable the Watchdog Timer to prevent background chip resets
     watchdog_disable(); 
     
-    // 3. Completely disable the ARM SysTick Timer and its interrupts.
+    // completely disable the ARM SysTick Timer and its interrupts.
     volatile uint32_t *systick_ctrl = (volatile uint32_t *)0xE000E010;
     *systick_ctrl = 0; 
 
-    // 4. Clear out the primary XIP cache to discard obsolete vector mappings
+    // clear out the primary XIP cache to discard obsolete vector mappings
     flash_flush_cache();
 
     /* 
-     * 5. CORRECTED: Remap the XIP Window via the native QMI Hardware block.
+     * Remap the XIP Window via the native QMI Hardware block.
      * On the RP2350, qmi_hw->atrans[0] maps the baseline 0x10000000 execution space.
      * The upper bits dictate size matching. We preserve the active window bits 
      * and inject our specific aligned physical page offset chunk.
      */
-    // Clear the current base page mapping bits, keeping sizing/permission flags intact
+    // clear the current base page mapping bits, keeping sizing/permission flags intact
     uint32_t current_atrans = qmi_hw->atrans[0];
     current_atrans &= 0xFF000000; // Preserve upper size configuration tags
     
-    // Inject the new page mapping (physical offset shifted to match the 4KiB grid allocation)
+    // inject the new page mapping (physical offset shifted to match the 4KiB grid allocation)
     qmi_hw->atrans[0] = current_atrans | (physical_flash_offset >> 12); 
 
-    // 6. Clean out the cache again to commit the new virtual routing table
+    // clean out the cache again to commit the new virtual routing table
     flash_flush_cache();
 
-    // 7. Read the vectors directly from the newly translated virtual window.
+    // read the vectors directly from the newly translated virtual window.
     uint32_t *vector_table = (uint32_t *)XIP_BASE; 
     uint32_t stack_pointer = vector_table[0]; 
     uint32_t reset_handler = vector_table[1]; 
 
-    // 8. Enforce ARM Thumb Mode bit on the entry address to avoid a UsageFault
+    // enforce ARM Thumb Mode bit on the entry address to avoid a UsageFault
     reset_handler |= 1;
 
-    // 9. Update the hardware Vector Table Offset Register (VTOR)
+    // update the hardware Vector Table Offset Register (VTOR)
     volatile uint32_t *vtor_reg = (volatile uint32_t *)0xE000ED08;
     *vtor_reg = XIP_BASE;
 
-    // 10. Reset the Main Stack Pointer to the new application's stack frame
+    // reset the Main Stack Pointer to the new application's stack frame
     __asm volatile ("msr msp, %0" : : "r" (stack_pointer) : "memory");
 
-    // 11. Clear PRIMASK to leave the CPU in a clean, raw execution state
+    // clear PRIMASK to leave the CPU in a clean, raw execution state
     __asm volatile ("cpsie i" : : : "memory");
 
-    // 12. Jump execution directly into the remap binary reset entry vector
+    // jump execution directly into the remap binary reset entry vector
     void (*target_entry)(void) = (void (*)(void))reset_handler;
     target_entry();
 }
