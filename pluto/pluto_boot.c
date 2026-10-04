@@ -67,6 +67,7 @@
 #include "shell.h"
 #include "picofs.h"
 #include "config.h"
+#include "picofs.h"
 
 #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
@@ -91,10 +92,10 @@ void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_o
 
 
 /*!
- * \brief   load the executable addresses into watchdog scratch registers in preparation for the next boot
+ * \brief   load the executable addresses into watchdog scratch registers in preparation for the next reset
  * \details Physical address refers to the default memory map.  The name is not technically accurate
  *          but hopefull conveys the concept succinctly. Code compiled and linked to run at the default 
- *          location is stored in flash at a different location inside the file system.  
+ *          location may be stored in flash at a different location inside the file system.  
  * 
  *          Address Translation is altered to make it appear that the the code is executing at the default
  *          location.  The code stored in the file system can then be executed without modification.  
@@ -236,3 +237,65 @@ void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_o
     void (*target_entry)(void) = (void (*)(void))reset_handler;
     target_entry();
 }
+
+
+
+
+
+
+
+
+// *******************************************************************************************************
+/*!
+ * \brief find the boot image using minimal software (no file system functions, no dma based crc)
+ * \details This is the boot method of last resort. This code lives at the start of flash and should
+ *          NEVER be erased!
+ *          This function will find the boot image if it exists in flash.  It is only
+ *          relied upon used when all else fails due to flash corruption.
+ * \param[in]   filename     name to find
+ * \param[in]   fid          fid to find or FS_INVALID_FID, if valid the fid is used instead of the name
+ * \param[out]  trailer      pointer to file trailer
+ * \return 0 on success
+ */
+int pluto_find_boot_image(char **physical_address)
+{
+    int err = -1;
+    int i;
+    char * p;
+    FILE_TRAILER_T *t = NULL;
+    FILE_TRAILER_T *boot_trailer = NULL;
+    u8_t best_sequence = 0;
+
+    // find file called "boot"
+    for(p=FS_START+sizeof(FILE_TRAILER_T); p < FS_END; p++)
+    {
+        if ((p[0] == 'p') && (p[1] == 'f') && (p[2] == 's') && (p[0] == 0))
+        {
+            t = (FILE_TRAILER_T *)p;
+
+            if ((t->picofs_version == FS_VERION) &&
+                !(t->file_status & STS_DELETED) &&
+                ((t->name[0] == 'b') && (t->name[1] == 'o') && (t->name[2] == 'o') && (t->name[3] == 't') && (t->name[4] == 0)) &&
+                (t->file_sequence > best_sequence))
+            {
+                // TODO: software based CRC check
+                best_sequence = t->file_sequence;
+                boot_trailer = t;
+            }
+        }
+    }
+
+    if (boot_trailer)
+    {
+        // look for file name of image to boot inside boot file
+        
+    }
+    else
+    {
+        // search for a random executable file
+        
+    }
+
+
+    return(err);
+} 

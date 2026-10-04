@@ -193,6 +193,10 @@ int pluto(void)
     printf("Starting %s on core 0\n", rtos_name);
 #endif
 
+    //  TEST TEST TEST
+    // xTaskCreate(vMenuInterfaceTask, "Boot Menu", 1024, NULL, 1, &task);  
+    // vTaskStartScheduler();
+
     // initialize boss task
     xTaskCreate(boss_task, "Boss Task", 1024, NULL, BOSS_TASK_PRIORITY, &task);  
 

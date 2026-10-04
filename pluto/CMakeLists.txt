@@ -4,6 +4,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_wifi.c    
     pluto_malloc.c
     pluto_boot.c
+    pluto_terminal.c
     web.c    
     system_config.c
     swload_task.c
@@ -72,7 +73,9 @@ set(pluto_link_libraries
         pico_flash
         hardware_pio
         hardware_i2c
+        hardware_uart
         pico_httpd_content
+        pico_stdio_usb
         )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${pluto_link_libraries})

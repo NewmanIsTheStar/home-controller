@@ -498,40 +498,38 @@ int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **t
     u8_t best_sequence = 0;
     u8_t best_status = 0;
 
-    // try flash
-    if (err)
+    // search flash
+    while(!picofs_iter_next_file(&t, false))
     {
-        while(!picofs_iter_next_file(&t, false))
+        if (t)
         {
-            if (t)
+            if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
+                (t->picofs_version == FS_VERION) &&
+                (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
+                !picofs_is_file_deleted_from_flash(t->file_id))
             {
-                if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
-                    (t->picofs_version == FS_VERION) &&
-                    (((fid == FS_INVALID_FID) && (strcmp(t->name, filename) == 0)) || ((fid != FS_INVALID_FID) && (t->file_id == fid))) &&
-                    !picofs_is_file_deleted_from_flash(t->file_id))
+                // match
+                if (t->file_sequence >= best_sequence) 
                 {
-                    // match
-                    if (t->file_sequence >= best_sequence) 
-                    {
-                        best_sequence = t->file_sequence;
-                        best_status = t->file_status;
-                        *trailer = t;
-                        err = 0;               
-                    }
+                    best_sequence = t->file_sequence;
+                    best_status = t->file_status;
+                    *trailer = t;
+                    err = 0;               
                 }
             }
-            else
-            {
-                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
-                break;
-            }
         }
-
-        if (best_status & STS_DELETED) // file was deleted
+        else
         {
-            err = -1;
-        }    
+            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
     }
+
+    if (best_status & STS_DELETED) // file was deleted
+    {
+        err = -1;
+    }    
+    
 
     return(err);
 }    

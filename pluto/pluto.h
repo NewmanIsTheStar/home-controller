@@ -84,5 +84,6 @@ void unix_to_iso8601(time_t unix_timestamp, char *iso_string, size_t buffer_size
 uint32_t get_reboot_reason(void);
 int pluto_boot_setup(char *exe_physical_addr, char *exe_virtual_addr);
 int pluto_boot_launch(void);
+void vMenuInterfaceTask(void *pvParameters);
 
 #endif 
