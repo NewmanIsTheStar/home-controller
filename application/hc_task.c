@@ -743,7 +743,7 @@ int hc_boot_file(void)
     }
 
     // for now we assume executable was linked to be loaded at the standard location (XIP_BASE)
-    pluto_boot_setup(map, (char *)XIP_BASE);
+    pluto_boot_setup((u_int32_t)map - FS_BASE, (char *)XIP_BASE);
 
     shell_printf("boot file set to: %s @ %p\n", web.boot_filename, map);
 

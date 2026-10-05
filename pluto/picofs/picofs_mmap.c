@@ -164,8 +164,8 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
         return(MAP_FAILED);
     }
 
-    // calculate direct pointer in XIP address space
-    uintptr_t xip_address = XIP_BASE + offset;
+    // calculate direct pointer in flash file system address space
+    uintptr_t picofs_raw_address = FS_BASE + offset;
     
     // ensure bounds match standard flash boundaries
     if (offset + len > PICO_FLASH_SIZE_BYTES) 
@@ -174,7 +174,7 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t off
         return(MAP_FAILED);
     }
 
-    return ((void *)xip_address);
+    return ((void *)picofs_raw_address);
 }
 
 /**
@@ -186,7 +186,7 @@ int picofs_munmap(void *addr, size_t len)
     int fd = -1;
 
     // if it points inside the Flash XIP window, nothing to free
-    if (address >= XIP_BASE && address < (XIP_BASE + PICO_FLASH_SIZE_BYTES)) 
+    if (address >= FS_BASE && address < (FS_BASE + PICO_FLASH_SIZE_BYTES)) 
     {
         if (custom_fds[fd].mmap_ref_count > 0)
         {

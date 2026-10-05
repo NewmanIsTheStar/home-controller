@@ -535,7 +535,7 @@ int picofs_stat(char *filename)
         shell_printf("Size            = %d\n", trailer->file_size);
         shell_printf("CRC             = %08x\n", trailer->crc);
         shell_printf("Flash location  = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size);
-        shell_printf("Flash offset    = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size - XIP_BASE);
+        shell_printf("Flash offset    = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size - FS_BASE);
 
     }
 

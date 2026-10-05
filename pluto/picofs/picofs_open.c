@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
+#include "hardware/flash.h"
+#include "hardware/structs/qmi.h"
+#include "pico/bootrom.h"
+#include "hardware/structs/xip_ctrl.h"
 #include "hardware/pio.h"
 #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
@@ -64,14 +68,6 @@
 #include "picofs.h"
 
 
-//#define DEBUG_UDP_MESSAGES
-
-//#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
-
-
-
-
-
 //prototypes
 int picofs_fd_new(int fd, int flags, char *name);
 int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
@@ -92,12 +88,6 @@ SemaphoreHandle_t picofs_mutex = NULL;
 SemaphoreHandle_t crc_mutex = NULL;
 
 //static variables
-
-
-
-/*
-
-*/
 
 
 /*!
@@ -337,74 +327,6 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
     return(0);
 }
 
-// /*!
-//  * \brief allocate RAM cache for file writes
-//  *
-//  * \param fd     file descriptor
-//  * \return nothing
-//  */
-// int picofs_allocate_cache(int fd, size_t known_size)
-// {
-//     int err = -1;
-//     size_t cache_size = 0;
-//     size_t reserved_flash_size = 0;
-
-//     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS))
-//     {
-//         // clean up -- this should never happen !!! TODO: remove as this is potentially worse than leaking memory as it could corupt the heap
-//         if (custom_fds[fd].cache)
-//         {
-//             printf("Hanging cache allocation discovered and cleaned up\n");
-//             vPortFree(custom_fds[fd].cache);
-//             custom_fds[fd].cache = NULL;
-//         }
-
-//         if (known_size < 16*1024)
-//         {
-//             // regular sized file so allocate cache with one 4k block greater than currently used
-//             cache_size = ((custom_fds[fd].file_len + (4*1024))/(4*1024))*(4*1024);
-//             custom_fds[fd].cache = pvPortMalloc(cache_size);
-//         }
-//         else
-//         {
-//             // large file so allocate 4K for cache and pre-allocate flash for the entire file
-//             // flash must be reserved since multiple cache writes will be required and we don't want someone
-//             // else writing into the contiguous block we are writing for this file
-//             cache_size = 4*1024;
-
-//             // add space for trailer and round up to a page boundary
-//             known_size = (((known_size  + sizeof(FILE_TRAILER_T))/FS_PAGE_SIZE)+1)*FS_PAGE_SIZE;   //TEST TEST TEST should be +1 but running out of space during testing
-
-//             // reserve flash and make 64K aligned [for now we assume all large files are executable but this should be a passed parameter in future]
-//             if (!picofs_find_contiguous_free_area(known_size, &(custom_fds[fd].reserved_flash_start), &reserved_flash_size, true))
-//             {
-//                 custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + known_size;
-
-//                 custom_fds[fd].cache = pvPortMalloc(cache_size);
-//             }
-//             else
-//             {
-//                 printf("picofs_allocate_cache: failed to find a contiguous area of flash for known_size = %d\n", known_size);
-//             }
-//         }
-
-        
-
-//         if (custom_fds[fd].cache != NULL)
-//         {
-//             custom_fds[fd].cache_len = cache_size;
-//             custom_fds[fd].cache_offset = 0;
-//             custom_fds[fd].data = custom_fds[fd].cache;
-            
-//             //printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
-//             err = 0;            
-//         }
-//     }
-
-//     return(err);
-// }
-
-
 
 /*!
  * \brief check if a file is already open  
@@ -584,6 +506,7 @@ bool picofs_is_file_deleted_from_cache(u8_t file_id)
     return(deleted);
 }
 
+
 int picofs_initialize(void)
 {
     int err = 0;
@@ -646,6 +569,8 @@ int picofs_initialize(void)
 
     return(err);
 }
+
+
 
 /*!
  * \brief Returns true if file exists

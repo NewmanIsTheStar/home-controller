@@ -7,6 +7,26 @@
 // set this to 1 to use a chunk of RAM to simulate flash for testing/development purposes
 #define FS_FAKE_FLASH (0)
 
+/*FLASH BASE for file system access
+OPTION 1:   Use the uncached and never translated address range.
+            This avoids cache cohenrency issues and slowing down executable code by pushing it out
+            of the cache.  This is the preferred approach for most applications because files are
+            normally accessed infrequently.
+OPTION 2:   Use the cached but untranslated region starting at 0x10400000.
+            This uses the cache, so it is good for frequent file access.  However, this will
+            potentially displace executable code from the cache, suffers from cache duplication
+            and requires flash_flush_cache() to be called every time flash is modified because
+            modifications are written via the temporarily untranslated XIP region.  
+            NB using the 0x10400000 region relies on the fact that the high bits will be ignored
+            so reading 0x10400000 will access the first byte of flash that is nominally at 
+            0x10000000 and avoids any address translation that might be occuring at 0x10000000.
+NOT OPTION: Using the standard XIP address range is not an option because we allow the executable
+            to be linked for the standard XIP location (0x10000000) but stored at an offset in flash.
+            Then we use address translation to shift the executable to the correct address.
+*/
+#define FS_BASE XIP_NOCACHE_NOALLOC_NOTRANSLATE_BASE // uncached -- best for most applicaitons
+//#define FS_BASE _u(0x10400000)                     // cached   -- could stall execution
+
 #if FS_FAKE_FLASH == 1
 #define FS_SECTOR_SIZE (1024)
 #define FS_EXE_BLOCK_SIZE (1024)
@@ -21,9 +41,9 @@
 #else
 #define FS_SECTOR_SIZE (4096)
 #define FS_EXE_BLOCK_SIZE (64*1024)
-#define FS_FLASH_BASE (XIP_BASE)
-#define FS_START ((char *)(XIP_BASE + (PICO_FLASH_SIZE_BYTES/2)))
-#define FS_END ((char *)(XIP_BASE + PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE)))
+#define FS_FLASH_BASE (FS_BASE)
+#define FS_START ((char *)(FS_BASE + (PICO_FLASH_SIZE_BYTES/2)))
+#define FS_END ((char *)(FS_BASE + PICO_FLASH_SIZE_BYTES - (2*FLASH_SECTOR_SIZE)))
 #define FS_SIZE (FS_END - FS_START)
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
 #define FS_FILE_CACHE_MAX (16*1024)
@@ -177,7 +197,6 @@ int picofs_list_files_by_size(void);
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
 int picofs_munmap(void *addr, size_t len);
 int picofs_erase_obsolete_sectors(bool picofs_mutext_held);
-// int picofs_consolidate_all_files(void);
 int picofs_consolidate_all_files_in_flash(void);
 int picofs_flash_erase_sector_range(int start_block, int end_block);
 int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid);

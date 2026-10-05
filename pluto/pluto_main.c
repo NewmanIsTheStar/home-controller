@@ -134,11 +134,9 @@ int pluto(void)
     const char *rtos_name;
     TaskHandle_t task;
 
-    stdio_init_all();
-    
-    printf("******************************************************\n");
-
     pluto_boot_launch();
+
+    stdio_init_all();
 
     //print_reset_reason();
     print_reset_reason();
@@ -196,6 +194,8 @@ int pluto(void)
     //  TEST TEST TEST
     // xTaskCreate(vMenuInterfaceTask, "Boot Menu", 1024, NULL, 1, &task);  
     // vTaskStartScheduler();
+    // printf("PAUSE\n");
+    // sleep_ms(5000);
 
     // initialize boss task
     xTaskCreate(boss_task, "Boss Task", 1024, NULL, BOSS_TASK_PRIORITY, &task);  

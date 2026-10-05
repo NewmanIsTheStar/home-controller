@@ -82,7 +82,7 @@ int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_
 int get_int_with_tenths_from_string(char *value_string);
 void unix_to_iso8601(time_t unix_timestamp, char *iso_string, size_t buffer_size);
 uint32_t get_reboot_reason(void);
-int pluto_boot_setup(char *exe_physical_addr, char *exe_virtual_addr);
+int pluto_boot_setup(u_int32_t exe_flash_offset, char *exe_linker_start_addr);
 int pluto_boot_launch(void);
 void vMenuInterfaceTask(void *pvParameters);
 

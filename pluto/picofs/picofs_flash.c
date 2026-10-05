@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+#include "pico.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -169,6 +170,10 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     }
     else
     {
+        #if FS_BASE == _u(0x10400000) 
+        flash_flush_cache();
+        #endif
+
         // verify programming result
         err = memcmp(dst, src, len);
 
@@ -253,7 +258,13 @@ int picofs_flash_erase(char *dst, size_t len)
     if (err)
     {
         printf("picofs: error erasing flash: flash_safe_execute() returned error %d\n", err); 
-    }   
+    } 
+    else
+    {
+        #if FS_BASE == _u(0x10400000) 
+        flash_flush_cache();
+        #endif
+    }  
 
     return(err);
 }
