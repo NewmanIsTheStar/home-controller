@@ -85,5 +85,6 @@ uint32_t get_reboot_reason(void);
 int pluto_boot_setup(u_int32_t exe_flash_offset, char *exe_linker_start_addr);
 int pluto_boot_launch(void);
 void vMenuInterfaceTask(void *pvParameters);
+int pluto_boot_status(void);
 
 #endif 
