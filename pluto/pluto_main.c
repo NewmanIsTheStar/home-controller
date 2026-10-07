@@ -55,6 +55,7 @@
 #include "shell.h"
 #include "picofs.h"
 #include "config.h"
+#include "swload_task.h"
 
 #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
@@ -105,6 +106,7 @@ void print_tasks_list(void);
 int test_myfilesystem(void);
 int test_stat(void);
 void pluto_get_program_size(void);
+int pluto_download_software(void);
 
 // TODO -- put in header file
 //void init_websocket_subsystem(void);
@@ -422,6 +424,9 @@ void boss_task(__unused void *params)
             application_restart(REBOOT_SNTP_FAILURE);
         }
 
+        // perform software downlaod if requested through web ui
+        pluto_download_software();
+        
         // reboot if requested
         if (restart_requested)
         {
@@ -1179,3 +1184,21 @@ void pluto_get_program_size(void)
     printf("Flash used:   %d.%d%%\n\n", flash_percentage/10, flash_percentage%10);
 }
 
+int pluto_download_software(void)
+{
+    int err = -1;
+
+    if (web.download_now && web.software_url[0])
+    {
+        web.download_now = 0;
+
+        urldecode(web.software_url, web.software_url);
+
+        if (err = download_file(web.software_url))
+        {
+            printf("pluto_download_software: failed to download %s\n", web.software_url);
+        }
+    }
+
+    return(err);
+}

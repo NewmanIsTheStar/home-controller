@@ -54,7 +54,8 @@ body {
     <a href="/time.shtml">Time</a>     
     <a href="/syslog.shtml">Syslog</a>  
     <a href="/mqtt.shtml">MQTT</a>   
-    <a href="/units.shtml">Foibles</a>     
+    <a href="/units.shtml">Foibles</a>   
+    <a href="/software_load.shtml">Update</a>        
     <a href="/status.shtml">Status</a>    
   </div>
 

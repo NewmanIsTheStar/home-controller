@@ -117,7 +117,7 @@ int config_sync_changes(char *filename, void *configuration_buffer, int configur
     }           
     else
     {
-        printf("Refusing to write system configuration to flash as RAM and flash copies are identical\n");
+        printf("Refusing to write %s to flash as RAM and flash copies are identical\n", filename);
     }
 
     // check for collision

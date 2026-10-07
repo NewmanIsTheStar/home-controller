@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta http-equiv="refresh" content="0; url=/time.shtml">
+    <meta http-equiv="refresh" content="0; url=/software_load.shtml">
     <meta charset="UTF-8">
     <title>Action Processed</title>
 </head>
 <body>
     <h1>Command Processed Successfully</h1>
         
-    <p><a href="/swload.shtml">Return to time form</a></p>
+    <p><a href="/software_load.shtml">Return to software load form</a></p>
 </body>
 </html>

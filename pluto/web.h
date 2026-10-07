@@ -74,6 +74,8 @@ typedef struct WEB_VARIABLES
   char *shelly_device_ip;
   int automation_running;
   char stat_filename[16];
+  char software_download_url[128];
+  int download_now;
 } WEB_VARIABLES_T;                  //remember to add initialization code when adding to this structure !!!
 
 typedef struct {
@@ -140,3 +142,4 @@ typedef struct {
 int init_web_variables(void);
 
 #endif
+

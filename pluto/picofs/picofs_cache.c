@@ -262,13 +262,14 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
             else
             {
                 printf("picofs_allocate_cache: failed to find a contiguous area of flash for new_cache_size = %0x\n", new_cache_size);
+                new_cache_size = 0;
                 err = -3;
             }
 
         }      
 
         // adjust cache size if necessary
-        if (new_cache_size != custom_fds[fd].cache_len)
+        if (new_cache && (new_cache_size != custom_fds[fd].cache_len))
         {            
             // allocate cache
             new_cache = pvPortMalloc(new_cache_size);

@@ -89,11 +89,13 @@ int init_web_variables(void)
     web.led_last_request_ip[0] = 0;
 
     STRNCPY(web.software_server,"psycho.badnet", sizeof(web.software_server));
-    STRNCPY(web.software_url,"fileserver.psycho", sizeof(web.software_url));
+    STRNCPY(web.software_url,"http://psycho.badnet/hc", sizeof(web.software_url));
     STRNCPY(web.software_file,"/pluto.bin", sizeof(web.software_file));        
+    web.download_now = 0;
 
     // set default web page
     set_calendar_html_page();
+
 
     return(0);
 }

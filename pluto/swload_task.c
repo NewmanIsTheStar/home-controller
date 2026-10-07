@@ -383,7 +383,7 @@ int download_file(char *url)
 
         if (wrote_bytes == strlen(buffer))    //TODO: handle short write by sending rest of the buffer
         {
-            printf("read file\n");                    
+            shell_printf("Downloading file...\n");                    
             total_expected = 0;
             for (retry=0; retry<5; retry++)
             {
@@ -464,7 +464,11 @@ int download_file(char *url)
                         total_read += read_bytes;
 
                         //printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);
-                        if (total_expected && (total_read >= total_expected)) break;
+                        if (total_expected && (total_read >= total_expected))
+                        {
+                            shell_printf("Download complete\n");
+                            break;
+                        } 
                     }
                     else {
                         perror("READ ERROR = ");

@@ -1316,11 +1316,14 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
             if (strcasecmp("swlurl", param) == 0)
             {
                 STRNCPY(web.software_url, value, sizeof(web.software_url));
+                urldecode(web.software_url, web.software_url);
             }  
             if (strcasecmp("swlfle", param) == 0)
             {
                 STRNCPY(web.software_file, value, sizeof(web.software_file));
             }                          
+
+            web.download_now = 1;
         }
 
         i++;
@@ -1328,7 +1331,7 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
 
 
     // Send the next page back to the user
-    config_changed();
+    //config_changed();
     return "/software_load.shtml";
 }
 
