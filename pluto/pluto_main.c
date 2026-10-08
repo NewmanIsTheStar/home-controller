@@ -1198,6 +1198,10 @@ int pluto_download_software(void)
         {
             printf("pluto_download_software: failed to download %s\n", web.software_url);
         }
+        else
+        {
+            application_restart(REBOOT_SOFTWARE_UPGRADE);
+        }
     }
 
     return(err);

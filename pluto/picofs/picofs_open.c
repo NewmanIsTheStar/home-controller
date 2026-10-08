@@ -600,7 +600,7 @@ int picofs_open_download_file(const char *name, size_t known_size)
 {
     int err = -1;
     int i;
-    int fd;
+    int fd = -1;
 
     fd = picofs_find_available_fd();   // NB we are bypassing the wrappers so have to manage file descriptors directly in this function
     
@@ -610,14 +610,21 @@ int picofs_open_download_file(const char *name, size_t known_size)
         return -1;
     }
 
-    if (picofs_open_file(fd, name, O_WRONLY | O_CREAT | O_TRUNC /*| O_APPEND*/, FS_INVALID_FID, true, known_size))
+    // open file
+    if (err = picofs_open_file(fd, name, O_WRONLY | O_CREAT | O_TRUNC /*| O_APPEND*/, FS_INVALID_FID, true, known_size))
     {
-        errno = ENOENT; // File not found
-        return -1;
+        // attempt to free flash memory
+        picofs_erase_obsolete_sectors(true);
+
+        // retry opening file
+        err = picofs_open_file(fd, name, O_WRONLY | O_CREAT | O_TRUNC /*| O_APPEND*/, FS_INVALID_FID, true, known_size);
     }
 
-    printf("picofs_open_download_file: set fd = %d to IN_USE = TRUE\n", fd);
-    custom_fds[fd].in_use = true;
+    if (!err)
+    {
+        printf("picofs_open_download_file: set fd = %d to IN_USE = TRUE\n", fd);
+        custom_fds[fd].in_use = true;
+    }
 
     return(fd);
 }

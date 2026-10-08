@@ -229,7 +229,7 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
     if ((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS) )
     {
         // round up requested size to the nearest sector (4k)
-        new_cache_size = ((requested_size + (4*1024))/(4*1024))*(4*1024); 
+        new_cache_size = ((requested_size + (4*1024) - 1)/(4*1024))*(4*1024); 
         printf("picofs_cache_realloc: requested_size = %0x new_cache_size = %0x\n",requested_size, new_cache_size);
 
         if (new_cache_size >= FS_FILE_CACHE_MAX)
@@ -269,7 +269,7 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
         }      
 
         // adjust cache size if necessary
-        if (new_cache && (new_cache_size != custom_fds[fd].cache_len))
+        if (new_cache_size && (new_cache_size != custom_fds[fd].cache_len))
         {            
             // allocate cache
             new_cache = pvPortMalloc(new_cache_size);

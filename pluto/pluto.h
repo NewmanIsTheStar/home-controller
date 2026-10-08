@@ -67,7 +67,7 @@ typedef enum
     REBOOT_SNTP_FAILURE     = 1,
     REBOOT_WEATHER_FAILURE  = 2,
     REBOOT_WATCHDOG         = 3,
-    REBOOT_MQTT_F1          = 4, 
+    REBOOT_SOFTWARE_UPGRADE = 4, 
     REBOOT_MQTT_F2          = 5,   
     REBOOT_MQTT_F3          = 6,   
     REBOOT_MQTT_F4          = 7,   
