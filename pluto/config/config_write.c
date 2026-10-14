@@ -5,35 +5,35 @@
  */
 
  // be cautious what you include here lwip and fcntl have some important conflicts related to BSD / sockets
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 //#include <sys/mman.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
+// #include <fcntl.h>
+// #include <unistd.h>
+// #include <string.h>
 #include <lwip/arch.h>
-#include "picofs.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
+// #include "picofs.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
 
 
-#include <sys/stat.h>
-#include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/flash.h"
-#include <hardware/flash.h>
+// #include <sys/stat.h>
+// #include "pico/cyw43_arch.h"
+// #include "pico/stdlib.h"
+// #include "pico/flash.h"
+// #include <hardware/flash.h>
 
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
-#include "config.h"
+// #include "config.h"
 #include "pluto.h"
-#include "utility.h"
+// #include "utility.h"
 
 
-#include "picofs.h"
+// #include "picofs.h"
 
 
 //#define DISABLE_CONFIG_WRITE (1)

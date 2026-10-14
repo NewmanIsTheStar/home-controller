@@ -42,21 +42,21 @@
 
 #if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
 
-#include "ping.h"
+// #include "ping.h"
 
-#include "lwip/mem.h"
+// #include "lwip/mem.h"
 #include "lwip/raw.h"
 #include "lwip/icmp.h"
-#include "lwip/netif.h"
-#include "lwip/sys.h"
+// #include "lwip/netif.h"
+// #include "lwip/sys.h"
 #include "lwip/timeouts.h"
 #include "lwip/inet_chksum.h"
-#include "lwip/prot/ip4.h"
+// #include "lwip/prot/ip4.h"
 
 #if PING_USE_SOCKETS
 #include "lwip/sockets.h"
-#include "lwip/inet.h"
-#include <string.h>
+// #include "lwip/inet.h"
+// #include <string.h>
 #endif /* PING_USE_SOCKETS */
 
 

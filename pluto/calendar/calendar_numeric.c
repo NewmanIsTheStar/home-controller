@@ -11,43 +11,43 @@
 #define _GNU_SOURCE
 
 #include "pico/cyw43_arch.h"
-#include "pico/types.h"
-#include "pico/stdlib.h"
-#include <string.h>
+// #include "pico/types.h"
+// #include "pico/stdlib.h"
+// #include <string.h>
 //#include "hardware/rtc.h"
-#include "pico/util/datetime.h"
-#include "hardware/watchdog.h"
+// #include "pico/util/datetime.h"
+// #include "hardware/watchdog.h"
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
 
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
 //#include "weather.h"
-#include "calendar.h"
-#include "cgi.h"
+// #include "calendar.h"
+// #include "cgi.h"
 
 
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
 #include "pluto.h"
-#include "ssi.h"
-#include "time.h"
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
+// #include "ssi.h"
+// #include "time.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
 
-#include <stdio.h>
-#include <math.h>
+// #include <stdio.h>
+// #include <math.h>
 
 
 //extern APP_CONFIG_T config;

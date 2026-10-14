@@ -3,13 +3,13 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include "stdarg.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include "stdarg.h"
 
-#include "pico/stdlib.h"
+// #include "pico/stdlib.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
+// #include "FreeRTOSConfig.h"
 #include "task.h"
 
 #include "worker_tasks.h"
@@ -21,7 +21,7 @@
 // #include "thermostat.h"
 #include "hc_task.h"
 #include "discovery_task.h"
-#include "kasa.h"
+// #include "kasa.h"
 #include "swload_task.h"
 
 // worker tasks to launch and monitor

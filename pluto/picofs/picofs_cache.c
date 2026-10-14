@@ -3,64 +3,65 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <fcntl.h>
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include "pico/flash.h"
-#include <hardware/flash.h>
+// #include "hardware/watchdog.h"
+// #include "pico/flash.h"
+// #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
-#include "semphr.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
+// #include "semphr.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+//#include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
+// #include "shell.h"
 #include "picofs.h"
 
 
@@ -74,12 +75,12 @@
 
 //prototypes
 int picofs_fd_new(int fd, int flags, char *name);
-int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
+int picofs_find_file_in_flash(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer);
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FS_FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -110,7 +111,7 @@ extern FILE_STATUS_T picofs_files[FS_NUM_FID];
 //         // clean up -- this should never happen !!! TODO: remove as this is potentially worse than leaking memory as it could corupt the heap
 //         if (custom_fds[fd].cache)
 //         {
-//             printf("Hanging cache allocation discovered and cleaned up\n");
+//             picofs_printf("Hanging cache allocation discovered and cleaned up\n");
 //             vPortFree(custom_fds[fd].cache);
 //             custom_fds[fd].cache = NULL;
 //         }
@@ -144,11 +145,11 @@ extern FILE_STATUS_T picofs_files[FS_NUM_FID];
 
 //                 custom_fds[fd].cache = pvPortMalloc(cache_size);
 
-//                 //printf("picofs_allocate_cache: reserved flash size = %0x [s = %0x e = %0x]\n", known_size, custom_fds[fd].reserved_flash_start, custom_fds[fd].reserved_flash_end);
+//                 //picofs_printf("picofs_allocate_cache: reserved flash size = %0x [s = %0x e = %0x]\n", known_size, custom_fds[fd].reserved_flash_start, custom_fds[fd].reserved_flash_end);
 //             }
 //             else
 //             {
-//                 printf("picofs_allocate_cache: failed to find a contiguous area of flash for known_size = %0x\n", known_size);
+//                 picofs_printf("picofs_allocate_cache: failed to find a contiguous area of flash for known_size = %0x\n", known_size);
 //             }
 //         }
 
@@ -158,7 +159,7 @@ extern FILE_STATUS_T picofs_files[FS_NUM_FID];
 //             custom_fds[fd].cache_offset = 0;
 //             custom_fds[fd].data = custom_fds[fd].cache;
             
-//             //printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
+//             //picofs_printf("allocated memory for fd = %d ptr = %p len = %d\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
 //             err = 0;            
 //         }
 //     }
@@ -217,7 +218,7 @@ int picofs_cache_expand(int fd)
  * \param fd     file descriptor
  * \return nothing
  */
-int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
+int picofs_cache_realloc(int fd, size_t requested_size, uint8_t fill)
 {
     int err = -1;
     size_t new_cache_size = 0;
@@ -230,7 +231,7 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
     {
         // round up requested size to the nearest sector (4k)
         new_cache_size = ((requested_size + (4*1024) - 1)/(4*1024))*(4*1024); 
-        printf("picofs_cache_realloc: requested_size = %0x new_cache_size = %0x\n",requested_size, new_cache_size);
+        picofs_printf("picofs_cache_realloc: requested_size = %0x new_cache_size = %0x\n",requested_size, new_cache_size);
 
         if (new_cache_size >= FS_FILE_CACHE_MAX)
         {
@@ -244,7 +245,7 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
             // the only supported use case for writing to existing large files is to overwrite them entirely (O_TRUNC)
             if (!picofs_cache_contains_entire_file)
             {
-                printf("picofs_cache_realloc: WARNING resizing the flash reservation is unsupported.  Previously written flash sectors will NOT be copied into the new reservation.\n");
+                picofs_printf("picofs_cache_realloc: WARNING resizing the flash reservation is unsupported.  Previously written flash sectors will NOT be copied into the new reservation.\n");
                 err = -2;
             }
 
@@ -257,11 +258,11 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
                 // TODO: pass explicit parameter or set this bit externally for EXE files -- at present we presume large files (>16KB) are EXE
                 custom_fds[fd].file_status |= STS_EXECUTABLE;
 
-                printf("flash reservation: ask = %0x actual = %0x\n", flash_reservation_size, actual_reservation_size);
+                picofs_printf("flash reservation: ask = %0x actual = %0x\n", flash_reservation_size, actual_reservation_size);
             }
             else
             {
-                printf("picofs_allocate_cache: failed to find a contiguous area of flash for new_cache_size = %0x\n", new_cache_size);
+                picofs_printf("picofs_allocate_cache: failed to find a contiguous area of flash for new_cache_size = %0x\n", new_cache_size);
                 new_cache_size = 0;
                 err = -3;
             }
@@ -312,7 +313,7 @@ int picofs_cache_realloc(int fd, size_t requested_size, u8_t fill)
                     CLIP(custom_fds[fd].data_len, 0, custom_fds[fd].cache_len);
                 }
 
-                printf("picofs_cache_realloc: fd = %d new cache = %p [cache size %0x]\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
+                picofs_printf("picofs_cache_realloc: fd = %d new cache = %p [cache size %0x]\n", fd, custom_fds[fd].cache, custom_fds[fd].cache_len);
                 err = 0;
             }            
         }     

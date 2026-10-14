@@ -4,20 +4,20 @@ Description:This file contains the standard BASIC commands.
 ******************************************************************************/
 
 /*Include Files*/
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 //#include <conio.h>
 //#include <windows.h>
-#include "setjmp.h"
-#include "math.h"
-#include "ctype.h"
-#include "string.h"
+// #include "setjmp.h"
+// #include "math.h"
+// #include "ctype.h"
+// #include "string.h"
 //#include "snmp_def.h"
 #include "basic.h"
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
 #include "hc_task.h"
-#include "shell.h"
+// #include "shell.h"
 
 
 /*External Variables*/

@@ -33,7 +33,7 @@ void to_lowercase(char *str);
 
 // utility_socket.c
 int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/ int port, int type);
-int establish_multicast_socket(struct sockaddr_in *ipv4_address, int port, int type);
+//int establish_multicast_socket(struct sockaddr_in *ipv4_address, int port, int type);
 int JoinGroup(int sock, const char* join_ip, const char* local_ip);
 
 // utility_syslog.c

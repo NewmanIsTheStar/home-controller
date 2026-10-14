@@ -1,37 +1,37 @@
 #define _GNU_SOURCE
-#include <string.h>
+// #include <string.h>
 
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include <hardware/flash.h>
+// #include "hardware/watchdog.h"
+// #include <hardware/flash.h>
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
 
-#include "calendar.h"
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
+// #include "calendar.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
 // #include "powerwall.h"
 #include "shelly.h"
 #include "json_parser.h"

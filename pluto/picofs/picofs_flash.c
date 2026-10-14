@@ -3,64 +3,64 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include "pico.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
+// #include "pico.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <fcntl.h>
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
+// #include "hardware/watchdog.h"
 #include "pico/flash.h"
 #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+//#include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
 #include "picofs.h"
 
 
@@ -69,7 +69,7 @@
 //#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
 typedef struct picofs_flash_range
 {
-    u32_t dst_offset;
+    uint32_t dst_offset;
     char *src;  
     size_t len;
 } PICOFS_FLASH_RANGE_T;
@@ -81,9 +81,9 @@ typedef struct picofs_flash_range
 
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -133,18 +133,18 @@ void __no_inline_not_in_flash_func(picofs_flash_program_shim)(void *ptr)
 int picofs_flash_program(char *dst, char *src, size_t len)
 {
     int err = 0;
-    u32_t flash_offset = (u32_t)dst - (u32_t)FS_FLASH_BASE;
+    uint32_t flash_offset = (uint32_t)dst - (uint32_t)FS_FLASH_BASE;
     PICOFS_FLASH_RANGE_T shim_parameters;
 
     if (flash_offset%FS_PAGE_SIZE)
     {
-        printf("picofs: error: picofs_flash_program(): invalid page offset (%d)\n", flash_offset);
+        picofs_printf("picofs: error: picofs_flash_program(): invalid page offset (%d)\n", flash_offset);
         return(-1);
     }
 
     if ((len%FS_PAGE_SIZE) || ((dst+len) > FS_END))
     {
-        printf("picofs: error: picofs_flash_program(): invalid length (%#0x) [dst+len = %#0p FS_END = $%p]\n", len, dst+len, FS_END);
+        picofs_printf("picofs: error: picofs_flash_program(): invalid length (%#0x) [dst+len = %#0p FS_END = $%p]\n", len, dst+len, FS_END);
         return(-2);
     }
 
@@ -153,14 +153,14 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     shim_parameters.src = src;
     shim_parameters.len = len;
 
-    //printf("FLASH PROGRAM: offset = %#0x len = %#0x plus FS_BASE = %#0x\n", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
+    //picofs_printf("FLASH PROGRAM: offset = %#0x len = %#0x plus FS_BASE = %#0x\n", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
     //hex_dump(src, len);
 
     err = flash_safe_execute(picofs_flash_program_shim, &shim_parameters, 5000);
 
     if (err)
     {
-        printf("picofs: error programming flash: flash_safe_execute() returned error %d\n", err);
+        picofs_printf("picofs: error programming flash: flash_safe_execute() returned error %d\n", err);
 
         #ifdef BREAKPOINT_FLASH_WRTIE_FAIL        
             // Hardcoded breakpoint instruction tells the SWD debugger to freeze right here
@@ -179,7 +179,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
 
         if (err)
         {
-            printf("picofs: error: picofs_flash_program(): verification failed @%p\n", dst);
+            picofs_printf("picofs: error: picofs_flash_program(): verification failed @%p\n", dst);
         }
     }
     
@@ -230,12 +230,12 @@ void __no_inline_not_in_flash_func(picofs_flash_erase_shim)(void *ptr)
 int picofs_flash_erase(char *dst, size_t len)
 {
     int err = 0;
-    u32_t flash_offset = (u32_t)dst - (u32_t)FS_FLASH_BASE;
+    uint32_t flash_offset = (uint32_t)dst - (uint32_t)FS_FLASH_BASE;
     PICOFS_FLASH_RANGE_T shim_parameters;    
 
     if (flash_offset%FS_SECTOR_SIZE)
     {
-        printf("picofs: error: picofs_flash_erase(): invalid sector offset\n");
+        picofs_printf("picofs: error: picofs_flash_erase(): invalid sector offset\n");
         return(-1);
     }
 
@@ -243,7 +243,7 @@ int picofs_flash_erase(char *dst, size_t len)
     {
         // BUG!  picofs: error: picofs_flash_erase(): invalid length (1024) [offset = 2048 fs_size = 2560
 
-        printf("picofs: error: picofs_flash_erase(): invalid length ($%0x) [dst+len= $%p FS_END = $%p]\n", dst+len, FS_END);
+        picofs_printf("picofs: error: picofs_flash_erase(): invalid length ($%0x) [dst+len= $%p FS_END = $%p]\n", dst+len, FS_END);
         return(-2);
     }
    
@@ -257,7 +257,7 @@ int picofs_flash_erase(char *dst, size_t len)
 
     if (err)
     {
-        printf("picofs: error erasing flash: flash_safe_execute() returned error %d\n", err); 
+        picofs_printf("picofs: error erasing flash: flash_safe_execute() returned error %d\n", err); 
     } 
     else
     {

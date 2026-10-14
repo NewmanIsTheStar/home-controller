@@ -9,68 +9,68 @@
 #error "LWIP_HTTPD_SUPPORT_WEBSOCKET must be enabled in lwipopts.h to use this file!"
 #endif
 
-#include "hardware/structs/qmi.h"
-#include "hardware/watchdog.h"
-#include "pico/bootrom.h"
-#include <stdio.h>
-#include <sys/stat.h> 
-#include <string.h>
-#include <errno.h>
-#include "hardware/structs/xip_ctrl.h"
+// #include "hardware/structs/qmi.h"
+// #include "hardware/watchdog.h"
+// #include "pico/bootrom.h"
+// #include <stdio.h>
+// #include <sys/stat.h> 
+// #include <string.h>
+// #include <errno.h>
+// #include "hardware/structs/xip_ctrl.h"
 #include "pico/cyw43_arch.h"
-#include "pico/types.h"
-#include "pico/stdlib.h"
-#include "pico/util/datetime.h"
-#include "hardware/watchdog.h"
-#include "hardware/structs/powman.h"
-#include "hardware/regs/powman.h"
-#include "pico/flash.h"
-#include <hardware/flash.h>
+// #include "pico/types.h"
+// #include "pico/stdlib.h"
+// #include "pico/util/datetime.h"
+// #include "hardware/watchdog.h"
+// #include "hardware/structs/powman.h"
+// #include "hardware/regs/powman.h"
+// #include "pico/flash.h"
+// #include <hardware/flash.h>
 
-#include "hardware/sync.h"
-#include "hardware/structs/xip_ctrl.h"
+// #include "hardware/sync.h"
+// #include "hardware/structs/xip_ctrl.h"
 
-#include "pico/stdlib.h"
+// #include "pico/stdlib.h"
 #include "hardware/flash.h"
-#include "hardware/regs/qmi.h"
+// #include "hardware/regs/qmi.h"
 #include "hardware/structs/qmi.h"
 #include "pico/bootrom.h"
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
+// #include "FreeRTOSConfig.h"
 #include "task.h"
 
-#include "cgi.h"
+// #include "cgi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "worker_tasks.h"
-#include "pluto_wifi.h"
-#include "calendar.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "worker_tasks.h"
+// #include "pluto_wifi.h"
+// #include "calendar.h"
 #include "pluto.h"
-#include "shell.h"
-#include "picofs.h"
-#include "config.h"
+// #include "shell.h"
+// #include "picofs.h"
+// #include "config.h"
 #include "picofs.h"
 
-#include "ssi.h"
+// #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
-#include "githash.h"
+// #include "githash.h"
 #endif
 
 

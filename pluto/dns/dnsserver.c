@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <stdio.h>
+// #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <assert.h>
-#include <stdbool.h>
+// #include <assert.h>
+// #include <stdbool.h>
 
 #include "dnsserver.h"
 #include "lwip/udp.h"

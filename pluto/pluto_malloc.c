@@ -1,8 +1,8 @@
-#include <stddef.h>
+// #include <stddef.h>
 #include <string.h>
-#include <stdint.h>
+// #include <stdint.h>
 #include "FreeRTOS.h"
-#include "task.h"
+// #include "task.h"
 
 // Structural alignment layout matching FreeRTOS heap_4.c internal definitions
 #define heapALLOCATION_BYTE_ALIGNMENT    8
@@ -59,18 +59,22 @@ void* __wrap_calloc(size_t nmemb, size_t size) {
 // }
 
 // Wrapper for realloc when using FreeRTOS heap4
-void* __wrap_realloc(void* ptr, size_t size) {
-    if (size == 0) {
+void* __wrap_realloc(void* ptr, size_t size) 
+{
+    if (size == 0) 
+    {
         vPortFree(ptr);
         return NULL;
     }
-    if (ptr == NULL) {
+    if (ptr == NULL) 
+    {
         return pvPortMalloc(size);
     }
 
     // Allocate new block
     void* new_ptr = pvPortMalloc(size);
-    if (new_ptr != NULL) {
+    if (new_ptr != NULL) 
+    {
         // Step back from the user pointer to find the FreeRTOS BlockLink_t header
         uint8_t *puc = (uint8_t *) ptr;
         puc -= xHeapStructSize;

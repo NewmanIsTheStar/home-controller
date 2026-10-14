@@ -3,63 +3,63 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <fcntl.h>
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include "pico/flash.h"
+// #include "hardware/watchdog.h"
+// #include "pico/flash.h"
 #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+//#include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
 #include "picofs.h"
 
 
@@ -76,9 +76,9 @@
 
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -99,7 +99,7 @@ FILE_STATUS_T picofs_files[FS_NUM_FID];
  *  *     
  * \return 0 if latest, 1 if not latest sequence
  */
-int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t sequence) 
+int picofs_is_latest_file_sequence_from_flash(char *filename, uint8_t file_id, uint8_t sequence) 
 {
     int islatest = 1;
     FILE_TRAILER_T *t = NULL;
@@ -116,7 +116,7 @@ int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
     }
@@ -133,7 +133,7 @@ int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t
  *  *     
  * \return 0 if latest, 1 if not latest sequence
  */
-int picofs_is_latest_file_sequence_from_cache(char *filename, u8_t file_id, u8_t sequence)
+int picofs_is_latest_file_sequence_from_cache(char *filename, uint8_t file_id, uint8_t sequence)
 {
     int islatest = 1;
     int i;
@@ -174,7 +174,7 @@ int picofs_is_latest_file_sequence_from_cache(char *filename, u8_t file_id, u8_t
 int picofs_create_file_trailer(int fd, const char *name)
 {
     int err = -1;
-    u8_t file_id = FS_INVALID_FID;
+    uint8_t file_id = FS_INVALID_FID;
 
     file_id = picofs_get_new_file_id();
 
@@ -209,7 +209,7 @@ int picofs_create_file_trailer(int fd, const char *name)
  * 
  * \return file_id or FS_INVALID_FID on failure
  */
-u8_t picofs_get_new_file_id(void)
+uint8_t picofs_get_new_file_id(void)
 {
     int i;
     int fid = FS_INVALID_FID;
@@ -234,13 +234,13 @@ u8_t picofs_get_new_file_id(void)
  * 
  * \return file_id or FS_INVALID_FID on failure
  */
-u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
+uint8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     char *p = NULL;
     FILE_TRAILER_T *t = NULL;
-    u8_t file_id = FS_INVALID_FID;
-    u8_t file_sequence = 0;    
+    uint8_t file_id = FS_INVALID_FID;
+    uint8_t file_sequence = 0;    
     bool found = false;
 
     *trailer = NULL;
@@ -262,7 +262,7 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
         if ((strncmp(t->magic_number, "pfs", 4) == 0) &&
             (t->picofs_version == FS_VERION))
         {
-            // printf("Search began @ %p  found first file trailer @ %p which is a delta of %p\n", search, p, p-search);
+            // picofs_printf("Search began @ %p  found first file trailer @ %p which is a delta of %p\n", search, p, p-search);
             // check that file trailer is for a file that overlaps our search location 
             if ((char *)(p - t->file_size) <= search)
             {
@@ -272,8 +272,8 @@ u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer)
             }
             else
             {
-                // printf("ignoring file %s because its size %0x does not overlap the search start point\n", t->name, t->file_size);
-                hex_dump(search, p-search+sizeof(FILE_TRAILER_T));
+                // picofs_printf("ignoring file %s because its size %0x does not overlap the search start point\n", t->name, t->file_size);
+                //hex_dump(search, p-search+sizeof(FILE_TRAILER_T));  // requires #include "utility.h"
             }
 
             break;
@@ -346,11 +346,11 @@ int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc)
     {
         *current_file = (FILE_TRAILER_T *)p;
 
-        // printf("picofs_iter_next_file: return: %s %d %p\n", t->name, not_found, *current_file);
+        // picofs_printf("picofs_iter_next_file: return: %s %d %p\n", t->name, not_found, *current_file);
     }
     else
     {
-        // printf("picofs_iter_next_file: returning not found %d\n", not_found);
+        // picofs_printf("picofs_iter_next_file: returning not found %d\n", not_found);
     }
 
     return(not_found);
@@ -385,7 +385,7 @@ int picofs_refresh_files(void)
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
     }
@@ -405,7 +405,7 @@ int picofs_refresh_files(void)
 int picofs_increment_sequence(FILE_TRAILER_T *trailer)
 {
     int err = -1;
-    u8_t new_fid = FS_INVALID_FID;
+    uint8_t new_fid = FS_INVALID_FID;
 
     if (trailer->file_sequence == (FS_MAX_SEQ -1))
     {
@@ -451,7 +451,7 @@ bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_f
 
     if (deleted_file_start_sector != deleted_file_end_sector)
     {
-        printf("picofs: error: deleted file spans sectors %d to %d\n", deleted_file_start_sector, deleted_file_end_sector);
+        picofs_printf("picofs: error: deleted file spans sectors %d to %d\n", deleted_file_start_sector, deleted_file_end_sector);
         return(true);
     }
 
@@ -471,7 +471,7 @@ bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_f
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
     }

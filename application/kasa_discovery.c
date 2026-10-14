@@ -4,62 +4,62 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include "string.h"
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include "string.h"
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
+// #include "hardware/watchdog.h"
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 #include "lwip/api.h"
-#include "lwip/sys.h"
+// #include "lwip/sys.h"
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
 #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
 
 
 

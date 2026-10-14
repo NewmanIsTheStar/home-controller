@@ -6,22 +6,22 @@ Description:This file contains all of the non-standard commands added to the
 ******************************************************************************/
 
 /*Include Files*/
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 //#include <conio.h>
 //#include <windows.h>
-#include "setjmp.h"
+// #include "setjmp.h"
 #include "math.h"
-#include "ctype.h"
-#include "string.h"
+// #include "ctype.h"
+// #include "string.h"
 //#include "snmp_def.h"
 #include "basic.h"
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
 //#include "net.h"
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 #include "shelly.h"
-#include "utility.h"
+// #include "utility.h"
 
 #define COMMAND_LINE_LENGTH 1500
 #define noSuchObject	0x80

@@ -3,21 +3,21 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include "lwip/apps/httpd.h"
+// #include "lwip/apps/httpd.h"
 #include "pico/cyw43_arch.h"
 
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 
 
 //#include "weather.h"
-#include "calendar.h"
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
+// #include "calendar.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
 
 #include "pluto.h"
-#include "pluto_wifi.h"
+// #include "pluto_wifi.h"
 
 
 typedef struct

@@ -1,13 +1,13 @@
 #ifndef PICOFS_H
 #define PICOFS_H
 
-#include <stddef.h>
-#include "shell.h"
+// set this to 1 to direct text output to the http shell
+#define USE_HTTP_SHELL (1)
 
 // set this to 1 to use a chunk of RAM to simulate flash for testing/development purposes
 #define FS_FAKE_FLASH (0)
 
-/*FLASH BASE for file system access
+/*set the FLASH BASE for file system access
 OPTION 1:   Use the uncached and never translated address range.
             This avoids cache cohenrency issues and slowing down executable code by pushing it out
             of the cache.  This is the preferred approach for most applications because files are
@@ -17,12 +17,12 @@ OPTION 2:   Use the cached but untranslated region starting at 0x10400000.
             potentially displace executable code from the cache, suffers from cache duplication
             and requires flash_flush_cache() to be called every time flash is modified because
             modifications are written via the temporarily untranslated XIP region.  
-            NB using the 0x10400000 region relies on the fact that the high bits will be ignored
+            Using the 0x10400000 region relies on the fact that the high bits will be ignored
             so reading 0x10400000 will access the first byte of flash that is nominally at 
             0x10000000 and avoids any address translation that might be occuring at 0x10000000.
-NOT OPTION: Using the standard XIP address range is not an option because we allow the executable
-            to be linked for the standard XIP location (0x10000000) but stored at an offset in flash.
-            Then we use address translation to shift the executable to the correct address.
+NOTE:       Using the standard XIP address range is not an option because we allow the executable
+            to be linked for the standard XIP location (0x10000000) but stored elsewhre in flash.
+            Then we use address translation to shift the executable to the expected address.
 */
 #define FS_BASE XIP_NOCACHE_NOALLOC_NOTRANSLATE_BASE // uncached -- best for most applicaitons
 //#define FS_BASE _u(0x10400000)                     // cached   -- could stall execution
@@ -48,6 +48,19 @@ NOT OPTION: Using the standard XIP address range is not an option because we all
 #define FS_NUM_SECTORS (FS_SIZE/FS_SECTOR_SIZE)
 #define FS_FILE_CACHE_MAX (16*1024)
 #define FS_FILE_CACHE_MIN (4*1024)
+#endif
+
+#ifndef USEFUL_MACROS
+#define USEFUL_MACROS
+#define STRNCPY(dst, src, size)  {strncpy((dst), (src), (size)); *((dst)+(size)-1)=0;}
+#define STRNCAT(dst, src, size)  {if ((size) > 0) {*((dst)+(size)-1)=0; strncat((dst), (src), (size)-strlen((dst))-1);};}
+#define STRAPPEND(dst, src)  {*((dst)+(sizeof(dst))-1)=0; strncat((dst), (src), (sizeof(dst))-strlen((dst))-1);}
+#define NUM_ROWS(x) (sizeof(x)/sizeof(x[0]))
+#define MASKED_WRITE(dest,src,mask) {(dest) = (((dest) & (~(mask))) | ((src) & (mask)));}
+#define CLIP(x, low, high)  (x=(((x)>(high))?(high):(((x)<(low))?(low):(x))))
+#define SLEEP_MS(x) (vTaskDelay(x));
+#define FORCE_STRING_TERMINATION(x) {x[sizeof(x)-1]=0;}
+#define SAFEAROUND(x) ((x) >= 0 ? (int)((x) + 0.5f) : (int)((x) - 0.5f))
 #endif
 
 #define FS_PAGE_SIZE (256)
@@ -99,19 +112,23 @@ NOT OPTION: Using the standard XIP address range is not an option because we all
 #define FLASH_SCAN_START FS_START
 #define FLASH_SCAN_END FS_END
 
-// print to terminal or http shell
-//#define picofs_printf(format, ...) printf("[picoFS] " format, ##__VA_ARGS__)
+// print to http shell or sdk default
+#if USE_HTTP_SHELL == 1
+#include "shell.h"
 #define picofs_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
+#else
+#define picofs_printf(format, ...) picofs_printf("[picoFS] " format, ##__VA_ARGS__)
+#endif
 
 typedef struct file_trailer
 {
-    u8_t magic_number[4];   // "pfs"
-    u8_t picofs_version;
-    u8_t file_id;     
-    u8_t file_sequence;
-    u8_t file_status;
-    u32_t file_size;        
-    u32_t crc;
+    uint8_t magic_number[4];   // "pfs"
+    uint8_t picofs_version;
+    uint8_t file_id;     
+    uint8_t file_sequence;
+    uint8_t file_status;
+    uint32_t file_size;        
+    uint32_t crc;
     char name[16];
 } FILE_TRAILER_T;
 
@@ -121,7 +138,7 @@ typedef struct
     int flags;                    // flags passed to open file
     char *file;                   // flash: file start
     size_t file_len;              // flash: length of file including trailer   
-    u8_t file_status;             // flash: file status  
+    uint8_t file_status;             // flash: file status  
     char *cache;                  // RAM: file start
     size_t cache_len;             // RAM: cache size
     size_t cache_offset;          // RAM: offset used when cache is too small to hold entire file
@@ -132,9 +149,9 @@ typedef struct
     size_t data_offset;           // flash or RAM: offset used by standard C library functions e.g. fread
     int mmap_ref_count;           // number of active mappings
     bool mmap_delayed_close;      // close was postponed due to an active mapping   
-    u8_t rollover_fid;            // previous fid pending deletion  
-    u8_t *reserved_flash_start;   // start of flash reservation for large files that cannot be cached in RAM
-    u8_t *reserved_flash_end;     // end of flash reservation for large files that cannot be cached in RAM
+    uint8_t rollover_fid;            // previous fid pending deletion  
+    uint8_t *reserved_flash_start;   // start of flash reservation for large files that cannot be cached in RAM
+    uint8_t *reserved_flash_end;     // end of flash reservation for large files that cannot be cached in RAM
 } PICOFS_FD_T;
 
 typedef struct file_metrics
@@ -146,7 +163,7 @@ typedef struct file_metrics
 
 typedef struct file_test
 {
-    u8_t test_data[FS_PAGE_SIZE-sizeof(FILE_TRAILER_T)];
+    uint8_t test_data[FS_PAGE_SIZE-sizeof(FILE_TRAILER_T)];
     FILE_TRAILER_T test_trailer;    
 } FILE_TEST_T;
 
@@ -171,49 +188,50 @@ typedef enum
 #define picofs_unlink_by_fid(fid) (picofs_unlink((NULL), (fid)))
 
 int picofs_access(const char *filename);
-int picofs_unlink(const char *name, u8_t fid);
-int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
+int picofs_unlink(const char *name, uint8_t fid);
+int picofs_find_file(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer);
 int picofs_list_all_files_from_flash(bool ignore_crc);
 int picofs_list_all_files_from_cache(void);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
-int picofs_find_contiguous_free_area(size_t requested_size, u8_t **start_of_area, size_t *actual_size, bool executable_alignment);
+int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_area, size_t *actual_size, bool executable_alignment);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
 int picofs_cache_allocate(int fd, int flags, size_t known_size);
 int picofs_deallocate_cache(int fd);
-int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover, size_t known_size);
+int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disable_fid_rollover, size_t known_size);
 int picofs_read(int fd, char *ptr, int len);
 int picofs_write(int fd, char *ptr, int len);
+int picofs_seek(int fd, int ptr, int dir);
 int picofs_create_file_trailer(int fd, const char *name);
 int picofs_close_file(int fd, bool disable_purge);
 int picofs_delete(char *filename);
 int picofs_copy(const char *src, const char *dst);
-int picofs_is_latest_file_sequence_from_flash(char *filename, u8_t file_id, u8_t sequence);
-u8_t picofs_get_new_file_id(void);
-bool picofs_is_file_deleted_from_flash(u8_t file_id);
-bool picofs_is_file_deleted_from_cache(u8_t file_id);
+int picofs_is_latest_file_sequence_from_flash(char *filename, uint8_t file_id, uint8_t sequence);
+uint8_t picofs_get_new_file_id(void);
+bool picofs_is_file_deleted_from_flash(uint8_t file_id);
+bool picofs_is_file_deleted_from_cache(uint8_t file_id);
 int picofs_rename(const char *src, const char *dst);
 int picofs_list_files_by_size(void);
-void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset);
+void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, uint32_t offset);
 int picofs_munmap(void *addr, size_t len);
 int picofs_erase_obsolete_sectors(bool picofs_mutext_held);
 int picofs_consolidate_all_files_in_flash(void);
 int picofs_flash_erase_sector_range(int start_block, int end_block);
-int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid);
+int picofs_consolidate_files_to_buffer(char * buffer, int len, uint8_t exclude_fid);
 int picofs_initialize(void);
 int picofs_increment_sequence(FILE_TRAILER_T *trailer);
-int picofs_purge_duplicates(char *filename, u8_t keep_fid);
+int picofs_purge_duplicates(char *filename, uint8_t keep_fid);
 int picofs_iter_next_file(FILE_TRAILER_T **current_file, bool ignore_crc);
 int picofs_load_test_data(void);
 int picofs_flash_program(char *dst, char *src, size_t len);
 int picofs_flash_erase(char *dst, size_t len);
-u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len);
-u8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
+uint8_t picofs_list_files_within_size_range(int size_lo, int size_hi, uint8_t *file_id_list, int *file_size_list, int list_len);
+uint8_t picofs_find_file_at_location(char *search, FILE_TRAILER_T **trailer);
 int picofs_refresh_files(void);
 int picofs_ascending_size_compare(const void *a, const void *b);
 int picofs_descending_size_compare(const void *a, const void *b);
-u32_t picofs_get_start_sector(FILE_TRAILER_T *trailer);
-u32_t picofs_get_end_sector(FILE_TRAILER_T *trailer);
+uint32_t picofs_get_start_sector(FILE_TRAILER_T *trailer);
+uint32_t picofs_get_end_sector(FILE_TRAILER_T *trailer);
 int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len);
 bool picofs_deleted_file_has_remnants_in_other_sectors(FILE_TRAILER_T *deleted_file);
 bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file);
@@ -229,7 +247,7 @@ int picofs_open_download_file(const char *name, size_t known_size);
 int picofs_find_available_fd(void);
 int picofs_release_fd(int fd);
 uint32_t picofs_calculate_crc32_software(const uint8_t *data, size_t length);
-int picofs_cache_realloc(int fd, size_t new_size, u8_t fill);
+int picofs_cache_realloc(int fd, size_t new_size, uint8_t fill);
 bool picofs_cache_contains_entire_file(int fd);
 int picofs_cache_expand(int fd);
 int picofs_stat(char *filename);

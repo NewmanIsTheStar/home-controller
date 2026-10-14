@@ -7,32 +7,32 @@
  #define _GNU_SOURCE
  
 #include "pico/cyw43_arch.h"
-#include "pico/types.h"
-#include "pico/stdlib.h"
-#include <string.h>
+// #include "pico/types.h"
+// #include "pico/stdlib.h"
+// #include <string.h>
 
- #include "hardware/watchdog.h"
+ // #include "hardware/watchdog.h"
 
-#include "lwip/apps/httpd.h"
+// #include "lwip/apps/httpd.h"
 #include "lwip/apps/fs.h"
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
+// #include "FreeRTOSConfig.h"
 #include "task.h"
 
 
 //#include "weather.h"
-#include "calendar.h"
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
+// #include "calendar.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
 //#include "led_strip.h"
 // #include "rmtsw.h"
 // #include "mqtt.h"
-#include "worker_tasks.h"
+// #include "worker_tasks.h"
 #include "pluto.h"
 #include "hc_task.h"
 

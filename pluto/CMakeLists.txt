@@ -4,6 +4,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_wifi.c    
     pluto_malloc.c
     pluto_boot.c
+    pluto_uf2.c
     # pluto_terminal.c
     web.c    
     system_config.c

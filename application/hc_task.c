@@ -7,56 +7,56 @@
 #define _GNU_SOURCE 
 
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 #include <fcntl.h>
 
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
+// #include "hardware/watchdog.h"
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 #include "queue.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "pluto.h"
 // #include "led_strip.h"
 #include "udp.h"
 // #include "message.h"
@@ -66,9 +66,9 @@
 #include "hc_task.h"
 #include "basic.h"
 //#include "http_post.h"
-#include "shell.h"
+// #include "shell.h"
 #include "picofs.h"
-#include "ping_core.h"
+// #include "ping_core.h"
 #include "swload_task.h"
 
 
@@ -668,15 +668,26 @@ int hc_delete_file(void)
     return(err);
 }
 
+
 int hc_download_file(void)
 {
     int err = -1;
 
     if (web.download_url[0])
     {
-        if (err = download_file(web.download_url))
+        if (strstr(web.download_url, ".uf2"))
         {
-            shell_printf("wget: failed to download %s\n", web.download_url);
+            if (err = download_file_uf2(web.download_url))
+            {
+                shell_printf("wget: failed to download %s\n", web.download_url);
+            }
+        }
+        else
+        {
+            if (err = download_file(web.download_url))
+            {
+                shell_printf("wget: failed to download %s\n", web.download_url);
+            }
         }
     }
     else

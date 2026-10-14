@@ -3,63 +3,64 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <fcntl.h>
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include "pico/flash.h"
+// #include "hardware/watchdog.h"
+// #include "pico/flash.h"
 #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
+// #include "shell.h"
 #include "picofs.h"
 
 
@@ -76,9 +77,9 @@
 
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -98,19 +99,19 @@ FILE_STATUS_T list_files[FS_NUM_FID];
  * \param[out]   list_len        list length
  * \return number of files found list of file_id and sizes
  */
-u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id_list, int *file_size_list, int list_len)
+uint8_t picofs_list_files_within_size_range(int size_lo, int size_hi, uint8_t *file_id_list, int *file_size_list, int list_len)
 {
     int err = -1;
     int i = 0;
     int num_matching_files = 0;
-    u8_t *p = NULL;
+    uint8_t *p = NULL;
     FILE_TRAILER_T *t = NULL;
     bool found = false;
     bool already_in_list = false;
     
 
     // initialize lists
-    memset(file_id_list, FS_INVALID_FID, sizeof(u8_t)*list_len);
+    memset(file_id_list, FS_INVALID_FID, sizeof(uint8_t)*list_len);
     memset(file_size_list, 0, sizeof(int)*list_len);
 
     // scan backwards through flash
@@ -145,7 +146,7 @@ u8_t picofs_list_files_within_size_range(int size_lo, int size_hi, u8_t *file_id
                         file_id_list[num_matching_files] = t->file_id;
                         file_size_list[num_matching_files] = t->file_size;
 
-                        printf("file_id = %d file_size = %d file_name = %s\n", file_id_list[num_matching_files], file_size_list[num_matching_files], t->name);
+                        picofs_printf("file_id = %d file_size = %d file_name = %s\n", file_id_list[num_matching_files], file_size_list[num_matching_files], t->name);
                         num_matching_files++;
                     }
                 }
@@ -242,7 +243,7 @@ int picofs_list_files_by_size(void)
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
     }
@@ -303,9 +304,9 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
     int num_files = 0;
     int size_files = 0;
     int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
-    u8_t *consolidation_area = NULL;
+    uint8_t *consolidation_area = NULL;
     size_t consolidation_area_size = 0;
-    u32_t calculated_crc = 0;
+    uint32_t calculated_crc = 0;
 
     if (!ignore_crc) // well ordered list
     {
@@ -326,7 +327,7 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
             }
             else
             {
-                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+                picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
                 break;
             }
         }
@@ -375,7 +376,7 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
             }
             else
             {
-                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+                picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
                 break;
             }
         }
@@ -402,9 +403,9 @@ int picofs_list_all_files_from_cache(void)
     FILE_TRAILER_T *current = NULL;
     bool heading = false;
     int size_files = 0;
-    u8_t *consolidation_area = NULL;
+    uint8_t *consolidation_area = NULL;
     size_t consolidation_area_size = 0;
-    u32_t calculated_crc = 0;
+    uint32_t calculated_crc = 0;
 
     memcpy(list_files, picofs_files, sizeof(list_files));
 
@@ -479,7 +480,7 @@ int picofs_generate_tab_completion_file_list(char *buffer, int len)
     }
     STRNCAT(buffer, "]}\n", len);
 
-    //printf("%s\n", buffer);
+    //picofs_printf("%s\n", buffer);
 
     return(0);
 }
@@ -527,15 +528,15 @@ int picofs_stat(char *filename)
 
     if (!picofs_find_file(filename, FS_INVALID_FID, &trailer) && trailer)
     {
-        shell_printf("File Identifier = %d\n", trailer->file_id);
-        shell_printf("Sequence number = %d\n", trailer->file_sequence);
-        shell_printf("Status          = %08b\n", trailer->file_status);
-        shell_printf("     Deleted    = %s\n", (trailer->file_status & STS_DELETED)?"yes":"no");
-        shell_printf("     Executable = %s\n", (trailer->file_status & STS_EXECUTABLE)?"yes":"no");        
-        shell_printf("Size            = %d\n", trailer->file_size);
-        shell_printf("CRC             = %08x\n", trailer->crc);
-        shell_printf("Flash location  = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size);
-        shell_printf("Flash offset    = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size - FS_BASE);
+        picofs_printf("File Identifier = %d\n", trailer->file_id);
+        picofs_printf("Sequence number = %d\n", trailer->file_sequence);
+        picofs_printf("Status          = %08b\n", trailer->file_status);
+        picofs_printf("     Deleted    = %s\n", (trailer->file_status & STS_DELETED)?"yes":"no");
+        picofs_printf("     Executable = %s\n", (trailer->file_status & STS_EXECUTABLE)?"yes":"no");        
+        picofs_printf("Size            = %d\n", trailer->file_size);
+        picofs_printf("CRC             = %08x\n", trailer->crc);
+        picofs_printf("Flash location  = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size);
+        picofs_printf("Flash offset    = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size - FS_BASE);
 
     }
 

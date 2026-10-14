@@ -3,64 +3,65 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <fcntl.h>
 
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include "pico/flash.h"
-#include <hardware/flash.h>
+// #include "hardware/watchdog.h"
+// #include "pico/flash.h"
+// #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
+// #include "shell.h"
 #include "picofs.h"
 
 
@@ -76,9 +77,9 @@
 int picofs_flush_file(int fd, bool disable_purge);
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -151,7 +152,7 @@ int picofs_sync_file(int fd, bool disable_purge)
 {
     int err = -1;
     int i;
-    u8_t *erased_area;
+    uint8_t *erased_area;
     size_t erased_area_size;
     int padding_len = 0;
 
@@ -183,7 +184,7 @@ int picofs_sync_file(int fd, bool disable_purge)
         else
         {
             //TODO: expand cache as needed
-            shell_printf("picoFS: out of cache appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
+            picofs_printf("picoFS: out of cache appending trailer to %s for write to flash\n",custom_fds[fd].cache_trailer.name);
             err = -2;            
         }
 
@@ -206,7 +207,7 @@ int picofs_sync_file(int fd, bool disable_purge)
         }
         else
         {
-            shell_printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
+            picofs_printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
             err = -2;
         }
 
@@ -270,7 +271,7 @@ int picofs_deallocate_cache(int fd)
  *  *     
  * \return 0 on success
  */
-int picofs_purge_duplicates(char *filename, u8_t keep_fid)
+int picofs_purge_duplicates(char *filename, uint8_t keep_fid)
 {
     int err = 0;
     int i;
@@ -292,7 +293,7 @@ int picofs_purge_duplicates(char *filename, u8_t keep_fid)
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             err = -1;
             break;
         }
@@ -331,7 +332,7 @@ int picofs_flush_file(int fd, bool disable_purge)
 {
     int err = -1;
     int i;
-    u8_t *erased_area;
+    uint8_t *erased_area;
     size_t erased_area_size;
     int padding_len = 0;
     int cache_index = 0;
@@ -353,7 +354,7 @@ int picofs_flush_file(int fd, bool disable_purge)
     }
 
     cache_index = custom_fds[fd].data_offset - custom_fds[fd].cache_offset;
-    printf("ci = %0x do = %0x co = %0x\n", cache_index, custom_fds[fd].data_offset, custom_fds[fd].cache_offset);
+    picofs_printf("ci = %0x do = %0x co = %0x\n", cache_index, custom_fds[fd].data_offset, custom_fds[fd].cache_offset);
 
     if (custom_fds[fd].cache)
     {
@@ -383,7 +384,7 @@ int picofs_flush_file(int fd, bool disable_purge)
 
         if (left_over_trailer > sizeof(FILE_TRAILER_T))
         {
-            printf("ERRROOOORRRR!!!!!! left_over_trailer too big!!!!! %0x\n", left_over_trailer);
+            picofs_printf("ERRROOOORRRR!!!!!! left_over_trailer too big!!!!! %0x\n", left_over_trailer);
         }
         
         // copy as much of trailer into cache as will fit
@@ -391,8 +392,8 @@ int picofs_flush_file(int fd, bool disable_purge)
 
         // compute padding for final data write
         padding_len = left_over_trailer?0:(cache_index + sizeof(FILE_TRAILER_T))%256?(256 - (cache_index + sizeof(FILE_TRAILER_T))%256):0;
-        printf("padding length = %0x left_over_trailer = %0x\n", padding_len, left_over_trailer);
-        printf("writing FINAL pages to flash @ %0x with size = %0x [datalen = %0x]\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len, cache_index);
+        picofs_printf("padding length = %0x left_over_trailer = %0x\n", padding_len, left_over_trailer);
+        picofs_printf("writing FINAL pages to flash @ %0x with size = %0x [datalen = %0x]\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len, cache_index);
         picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len);
 
         if (!left_over_trailer)
@@ -413,7 +414,7 @@ int picofs_flush_file(int fd, bool disable_purge)
             // copy remainder of trailer into cache
             memcpy(custom_fds[fd].cache, ((char *)&(custom_fds[fd].cache_trailer))+(sizeof(FILE_TRAILER_T) - left_over_trailer), (sizeof(FILE_TRAILER_T) - left_over_trailer));
 
-            printf("writing LEFT OVER trailer single page to flash @ %d with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
+            picofs_printf("writing LEFT OVER trailer single page to flash @ %d with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
             picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, FS_PAGE_SIZE);            
         }
 
@@ -438,22 +439,22 @@ int picofs_flush_file(int fd, bool disable_purge)
 
     final_crc = picofs_calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].data_len);
 
-    printf("FINAL_DATA_LEN = %d\n\nFILE CRC SUMMARY\nflash=%0x\nram=%0x\ncombined=%0x\nfinal=%0x\n", custom_fds[fd].data_len, flash_crc, ram_crc, combined_crc, final_crc);
+    picofs_printf("FINAL_DATA_LEN = %d\n\nFILE CRC SUMMARY\nflash=%0x\nram=%0x\ncombined=%0x\nfinal=%0x\n", custom_fds[fd].data_len, flash_crc, ram_crc, combined_crc, final_crc);
 
-    // printf("USING DMA SNIFFER\n");
-    // printf("DMA -- first block CRC  = %0x length = %0x\n", picofs_calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].cache_offset), custom_fds[fd].cache_offset);
-    // printf("DMA -- second block CRC = %0x length = %0x\n", picofs_calculate_crc32(custom_fds[fd].reserved_flash_start+custom_fds[fd].cache_offset, cache_index), cache_index);    
+    // picofs_printf("USING DMA SNIFFER\n");
+    // picofs_printf("DMA -- first block CRC  = %0x length = %0x\n", picofs_calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].cache_offset), custom_fds[fd].cache_offset);
+    // picofs_printf("DMA -- second block CRC = %0x length = %0x\n", picofs_calculate_crc32(custom_fds[fd].reserved_flash_start+custom_fds[fd].cache_offset, cache_index), cache_index);    
 
-    // printf("USING PURE SOFTWARE\n");
+    // picofs_printf("USING PURE SOFTWARE\n");
     // flash_crc = calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].cache_offset);
     // ram_crc = calculate_crc32(custom_fds[fd].reserved_flash_start+custom_fds[fd].cache_offset, cache_index);
     // combined_crc = rp2350_crc32_combine(flash_crc, ram_crc, cache_index);
     // final_crc = calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].data_len);
 
-    // printf("SW -- first block CRC  = %0x length = %0x\n", flash_crc, custom_fds[fd].cache_offset);
-    // printf("SW -- second block CRC = %0x length = %0x\n", ram_crc, cache_index, cache_index);     
-    // printf("SW -- combined CRCs    = %0x\n", combined_crc);
-    // printf("SW -- final CRC        = %0x\n", final_crc); 
+    // picofs_printf("SW -- first block CRC  = %0x length = %0x\n", flash_crc, custom_fds[fd].cache_offset);
+    // picofs_printf("SW -- second block CRC = %0x length = %0x\n", ram_crc, cache_index, cache_index);     
+    // picofs_printf("SW -- combined CRCs    = %0x\n", combined_crc);
+    // picofs_printf("SW -- final CRC        = %0x\n", final_crc); 
   
     // google says combined CRC = 0x43567900
     return(err);

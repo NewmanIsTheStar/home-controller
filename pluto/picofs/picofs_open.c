@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-#include "hardware/flash.h"
-#include "hardware/structs/qmi.h"
-#include "pico/bootrom.h"
-#include "hardware/structs/xip_ctrl.h"
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/flash.h"
+// #include "hardware/structs/qmi.h"
+// #include "pico/bootrom.h"
+// #include "hardware/structs/xip_ctrl.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
@@ -20,7 +20,7 @@
 #include "pico/stdlib.h"
 #include "pico/rand.h"
 #include "pico/util/datetime.h"
-//#include "hardware/rtc.h"
+// #include "hardware/rtc.h"
 #include "hardware/watchdog.h"
 #include "pico/flash.h"
 #include <hardware/flash.h>
@@ -40,42 +40,42 @@
 #include "dhcpserver.h"
 #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 #include "semphr.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
 #include "picofs.h"
 
 
 //prototypes
 int picofs_fd_new(int fd, int flags, char *name);
-int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **trailer);
+int picofs_find_file_in_flash(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer);
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FS_FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -111,13 +111,13 @@ SemaphoreHandle_t crc_mutex = NULL;
  * \param disable_fid_rollover  allow file with maximum sequence number to be opened (this is only used for deletion of the file) 
  * \return 0 on success
  */
-int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable_fid_rollover, size_t known_size)
+int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disable_fid_rollover, size_t known_size)
 {
     int err = -1;
     FILE_TRAILER_T *file_trailer = NULL;
     char *file_data = NULL;
     int open_mode = 0;
-    u8_t rollover_fid = FS_INVALID_FID;
+    uint8_t rollover_fid = FS_INVALID_FID;
 
     // hex_dump((char *)test_filesystem, 512);
 
@@ -179,7 +179,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
                         if (custom_fds[fd].file_trailer->file_id == FS_INVALID_FID)
                         {
                             // rollover to new fid failed
-                            printf("picoFS: out of file identifiers during rollover\n");
+                            picofs_printf("picoFS: out of file identifiers during rollover\n");
                             picofs_deallocate_cache(fd);
                             custom_fds[fd].rollover_fid = FS_INVALID_FID;  // cancel pending deletion
                             err = -6;
@@ -195,7 +195,7 @@ int picofs_open_file(int fd, const char *name, int flags, u8_t fid, bool disable
         
             if (!err && (flags & O_APPEND))
             {
-                printf("APPEND flag\n");
+                picofs_printf("APPEND flag\n");
                 custom_fds[fd].data_offset = custom_fds[fd].data_len;  
             }                           
         }  
@@ -297,7 +297,7 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
             }
             else
             {
-                printf("picoFS: file data length less that zero -- data loss may have occured len = %d vs expected = %d\n", custom_fds[fd].file_len, sizeof(FILE_TRAILER_T));
+                picofs_printf("picoFS: file data length less that zero -- data loss may have occured len = %d vs expected = %d\n", custom_fds[fd].file_len, sizeof(FILE_TRAILER_T));
                 custom_fds[fd].data_len = 0;
             }
             custom_fds[fd].data_offset = 0;
@@ -352,7 +352,7 @@ bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fd)
         }
     }
 
-    // printf("IN USE = %d\n", in_use);
+    // picofs_printf("IN USE = %d\n", in_use);
     return(in_use);
 }
 
@@ -364,7 +364,7 @@ bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int held_fd)
  * \param[out]  trailer      pointer to file trailer
  * \return 0 on success
  */
-int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
+int picofs_find_file(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     int i = -1;
@@ -412,13 +412,13 @@ int picofs_find_file(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
  * \param[out]  trailer      pointer to file trailer
  * \return 0 on success
  */
-int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **trailer)
+int picofs_find_file_in_flash(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer)
 {
     int err = -1;
     int i;
     FILE_TRAILER_T *t = NULL;
-    u8_t best_sequence = 0;
-    u8_t best_status = 0;
+    uint8_t best_sequence = 0;
+    uint8_t best_status = 0;
 
     // search flash
     while(!picofs_iter_next_file(&t, false))
@@ -442,7 +442,7 @@ int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **t
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
     }
@@ -462,7 +462,7 @@ int picofs_find_file_in_flash(const char *filename, u8_t fid, FILE_TRAILER_T **t
  * \param[in]   file_id      file to check
  * \return true if deleted
  */
-bool picofs_is_file_deleted_from_flash(u8_t file_id)
+bool picofs_is_file_deleted_from_flash(uint8_t file_id)
 {
     int err = -1;
     FILE_TRAILER_T *t = NULL;
@@ -480,7 +480,7 @@ bool picofs_is_file_deleted_from_flash(u8_t file_id)
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
     }
@@ -494,7 +494,7 @@ bool picofs_is_file_deleted_from_flash(u8_t file_id)
  * \param[in]   file_id      file to check
  * \return true if deleted
  */
-bool picofs_is_file_deleted_from_cache(u8_t file_id)
+bool picofs_is_file_deleted_from_cache(uint8_t file_id)
 {
     bool deleted = false;
 
@@ -531,40 +531,40 @@ int picofs_initialize(void)
 
     if (!err)
     {
-        //printf("picofs_initialize creating file system semaphone...\n");
+        //picofs_printf("picofs_initialize creating file system semaphone...\n");
         picofs_mutex = xSemaphoreCreateMutex();
 
         if (picofs_mutex)
         {
-            //printf("picofs: init: success creating file system mutex\n");
+            //picofs_printf("picofs: init: success creating file system mutex\n");
             err = 0;
         }
         else
         {
-            printf("picofs: init: failed to create file system mutext **FUBAR**\n");
+            picofs_printf("picofs: init: failed to create file system mutext **FUBAR**\n");
             err = -99;
         }
     }
 
     if (!err)
     {    
-        //printf("picofs_initialize creating crc dma semaphone...\n");
+        //picofs_printf("picofs_initialize creating crc dma semaphone...\n");
         crc_mutex = xSemaphoreCreateMutex();
 
         if (crc_mutex)
         {
-            //printf("picofs: init: success creating crc mutex\n");
+            //picofs_printf("picofs: init: success creating crc mutex\n");
             err = 0;
         }
         else
         {
-            printf("picofs: init: failed to create crc mutext **FUBAR**\n");
+            picofs_printf("picofs: init: failed to create crc mutext **FUBAR**\n");
             err = -101;
         }
     }
 
     // scan flash and cache pointers to all files
-    //printf("picofs_initialize refreshing file cache...\n");
+    //picofs_printf("picofs_initialize refreshing file cache...\n");
     picofs_refresh_files();
 
     return(err);
@@ -622,7 +622,7 @@ int picofs_open_download_file(const char *name, size_t known_size)
 
     if (!err)
     {
-        printf("picofs_open_download_file: set fd = %d to IN_USE = TRUE\n", fd);
+        picofs_printf("picofs_open_download_file: set fd = %d to IN_USE = TRUE\n", fd);
         custom_fds[fd].in_use = true;
     }
 

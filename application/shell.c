@@ -1,18 +1,19 @@
 //#define _GNU_SOURCE 
-#include <sys/stat.h>
+// #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "lwip/opt.h"
-#include "lwip/apps/httpd.h"
+// #include "lwip/opt.h"
+// #include "lwip/apps/httpd.h"
 #include "lwip/apps/fs.h"
-#include "pico/cyw43_arch.h"
-#include <string.h>
+// #include "pico/cyw43_arch.h"
+// #include <string.h>
 #include "hc_task.h"
 #include "pluto.h"
-#include "shell.h"
+// #include "shell.h"
 #include "ping_core.h"
-#include <stdio.h>
+// #include <stdio.h>
 //#include <unistd.h>
+#include "shell.h"
 #include "picofs.h"
 
 // defines

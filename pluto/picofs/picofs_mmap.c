@@ -17,7 +17,7 @@
 #include "pico/stdlib.h"
 #include "pico/rand.h"
 #include "pico/util/datetime.h"
-//#include "hardware/rtc.h"
+// #include "hardware/rtc.h"
 #include "hardware/watchdog.h"
 #include "pico/flash.h"
 #include <hardware/flash.h>
@@ -45,22 +45,22 @@
 #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
 #include "utility.h"
 #include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
-#include "pluto.h"
+// #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
 #include "picofs.h"
 
 
@@ -77,9 +77,9 @@
 int picofs_get_fd_from_mmap_address(void *addr) ;
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -99,7 +99,7 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
  * \param offset   offset to start of mapping e.g. offset of zero maps from the start of file
  * \return pointer to mapping on success
  */
-void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, u32_t offset) 
+void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, uint32_t offset) 
 {
     int target_fd = fd - 3;
 

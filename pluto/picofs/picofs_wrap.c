@@ -1,71 +1,71 @@
 //#define _GNU_SOURCE 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+// #include <sys/stat.h>
+// #include <sys/types.h>
+// #include <sys/stat.h>
 #include <errno.h>
-#include <fcntl.h>
+// #include <fcntl.h>
 // #include "pluto.h"
 // #include "picofs.h"
 //#include <unistd.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 #include <fcntl.h>
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include "pico/flash.h"
-#include <hardware/flash.h>
+// #include "hardware/watchdog.h"
+// #include "pico/flash.h"
+// #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 #include "semphr.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
 #include "picofs.h"
 
 extern SemaphoreHandle_t picofs_mutex;
@@ -213,8 +213,8 @@ int __wrap__write(int fd, char *ptr, int len)
  * \brief repositions the file offset of the open file fd to offset (ptr?) according to the directive whence (dir?)
  *
  * \param fd   The file descriptor (e.g., 0 for standard input, or a value returned by open())
- * \param ptr  !!!Assumed to mean offset
- * \param dir  !!!Assumed to mean whence
+ * \param ptr  called offset in posix api used by applications
+ * \param dir  called whence in posix api used by applicaitons
  * 
  * \return The number of bytes actually read (can be less than count), 0 on End-Of-File (EOF), or -1 on error
  */
@@ -227,25 +227,7 @@ int __wrap__lseek(int fd, int ptr, int dir)
         return -1;
     }
     
-    // Call your custom file system seek logic here
-    // return my_fs_seek(&custom_fds[target_fd].my_fs_handle, ptr, dir);
-
-    // TODO: a *lot* of bounds checking and memory allocation! (i.e. seeking outside range of existing file)
-    switch(dir)
-    {
-    default:
-    case SEEK_SET:
-        custom_fds[fd].data_offset = ptr;
-        break;
-    case SEEK_CUR:
-        custom_fds[fd].data_offset += ptr;
-        break;
-    case SEEK_END: 
-        custom_fds[fd].data_offset = custom_fds[fd].data_len + ptr;
-        break;
-    }
-
-    return custom_fds[fd].data_offset;  // TODO: return -1 on error
+    return (picofs_seek(target_fd, ptr, dir));
 }
 
 // Hook for fclose()

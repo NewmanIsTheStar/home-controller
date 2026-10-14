@@ -3,22 +3,22 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 #include <fcntl.h>
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include "pico/flash.h"
+// #include "hardware/watchdog.h"
+// #include "pico/flash.h"
 #include <hardware/flash.h>
 
 #include "lwip/opt.h"
@@ -36,38 +36,39 @@
 #include "dhcpserver.h"
 #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
+// #include "shell.h"
 #include "picofs.h"
 
 //prototypes
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 //static variables
@@ -81,7 +82,7 @@ int picofs_write(int fd, char *ptr, int len)
 
     if ((custom_fds[fd].data >= FLASH_SCAN_START) && (custom_fds[fd].data  < FLASH_SCAN_END))
     {
-        shell_printf("picoFS: ABORT!!!  data pointer is pointing to flash %p\n", custom_fds[fd].data);
+        picofs_printf("picoFS: ABORT!!!  data pointer is pointing to flash %p\n", custom_fds[fd].data);
         return(-88);
     }
 
@@ -110,7 +111,7 @@ int picofs_write(int fd, char *ptr, int len)
             }
             else
             {
-                shell_printf("picoFS: write truncated, out of cache\n");
+                picofs_printf("picoFS: write truncated, out of cache\n");
                 err = -1;
                 break;
             }
@@ -125,7 +126,7 @@ int picofs_write(int fd, char *ptr, int len)
             }
             else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + cache_index) <= custom_fds[fd].reserved_flash_end)
             {
-                //printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
+                //picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
                 // write the cache to flash
                 picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, custom_fds[fd].cache_len);
 
@@ -139,7 +140,7 @@ int picofs_write(int fd, char *ptr, int len)
                 // sanity check
                 if(custom_fds[fd].cache_offset % FS_PAGE_SIZE)
                 {
-                    shell_printf("picoFS: write error shifting cache window -- not on a page boundary %d\n", custom_fds[fd].cache_offset);
+                    picofs_printf("picoFS: write error shifting cache window -- not on a page boundary %d\n", custom_fds[fd].cache_offset);
                     err = -2;
                     break;                    
                 }
@@ -149,7 +150,7 @@ int picofs_write(int fd, char *ptr, int len)
             }
             else
             {
-                shell_printf("picoFS: write truncated, out of pre-allocated flash s = %0x do+i = %0x ci =%0x e = %0x\n", custom_fds[fd].reserved_flash_start, custom_fds[fd].data_offset+i, cache_index, custom_fds[fd].reserved_flash_end);
+                picofs_printf("picoFS: write truncated, out of pre-allocated flash s = %0x do+i = %0x ci =%0x e = %0x\n", custom_fds[fd].reserved_flash_start, custom_fds[fd].data_offset+i, cache_index, custom_fds[fd].reserved_flash_end);
                 //hex_dump(custom_fds[fd].cache, custom_fds[fd].cache_len);
                 err = -3;
                 break;

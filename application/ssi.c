@@ -3,24 +3,24 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include "lwip/apps/httpd.h"
+// #include "lwip/apps/httpd.h"
 #include "pico/cyw43_arch.h"
 
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
-#include "timers.h"
-#include "queue.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
+// #include "timers.h"
+// #include "queue.h"
 
 
 //#include "weather.h"
-#include "calendar.h"
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
+// #include "calendar.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
 // #include "rmtsw.h"
 
 #include "pluto.h"

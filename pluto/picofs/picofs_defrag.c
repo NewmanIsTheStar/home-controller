@@ -3,64 +3,64 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <fcntl.h>
 
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
+// #include "hardware/pio.h"
+// #include "hardware/clocks.h"
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
 #include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
-#include "pico/rand.h"
-#include "pico/util/datetime.h"
+// #include "pico/stdlib.h"
+// #include "pico/rand.h"
+// #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
-#include "hardware/watchdog.h"
-#include "pico/flash.h"
-#include <hardware/flash.h>
+// #include "hardware/watchdog.h"
+// #include "pico/flash.h"
+// #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
+// #include "lwip/netdb.h"
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
-#include "time.h"
+// #include "time.h"
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 #include "semphr.h"
 
-#include "stdarg.h"
+// #include "stdarg.h"
 
 // #include "weather.h"
-#include "cgi.h"
-#include "ssi.h"
+// #include "cgi.h"
+// #include "ssi.h"
 
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "pluto.h"
+// #include "utility.h"
+// #include "config.h"
+// #include "system_config.h"
+// #include "application_config.h"
+// #include "watchdog.h"
+// #include "pluto.h"
 // #include "led_strip.h"
-#include "udp.h"
+// #include "udp.h"
 // #include "message.h"
 // #include "message_defs.h"
 // #include "powerwall.h"
-#include "shelly.h"
-#include "discovery_task.h"
+// #include "shelly.h"
+// #include "discovery_task.h"
 #include "picofs.h"
 
 
@@ -77,9 +77,9 @@
 
 
 // external variables
-extern u32_t unix_time;
-extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+// extern uint32_t unix_time;
+// extern APP_CONFIG_T config;
+// extern WEB_VARIABLES_T web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 extern SemaphoreHandle_t picofs_mutex;
 #if FAKE_FLASH == 1
@@ -108,7 +108,7 @@ int picofs_consolidate_all_files_in_flash(void)
     int num_files = 0;
     int size_files = 0;
     int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
-    u8_t *consolidation_area = NULL;
+    uint8_t *consolidation_area = NULL;
     size_t consolidation_area_size = 0;
     int total_written = 0;
     FILE_TRAILER_T modified_trailer;
@@ -135,7 +135,7 @@ int picofs_consolidate_all_files_in_flash(void)
             }
             else
             {
-                printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+                picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
                 break;
             }
         }
@@ -165,7 +165,7 @@ int picofs_consolidate_all_files_in_flash(void)
 
         if (!consolidation_area)
         {
-            shell_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
+            picofs_printf("picofs: attempt to free up space by erasing obsolete blocks\n");
             picofs_erase_obsolete_sectors(true);
 
             if (picofs_find_contiguous_free_area(size_files, &consolidation_area, &consolidation_area_size, false))
@@ -184,8 +184,8 @@ int picofs_consolidate_all_files_in_flash(void)
             {
                 if (consoldation_files[i].valid && consoldation_files[i].trailer)
                 {
-                    printf("copying...\n");
-                    //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
+                    picofs_printf("copying...\n");
+                    //hex_dump((uint8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
                     //memcpy(consolidation_area + total_written, (char *)picofs_metrics[i].trailer + sizeof(FILE_TRAILER_T) - picofs_metrics[i].trailer->file_size, picofs_metrics[i].trailer->file_size);
                     
                     // append file data and exclude trailer
@@ -199,7 +199,7 @@ int picofs_consolidate_all_files_in_flash(void)
                     picofs_append_to_flash(consolidation_area, size_files, (char *)&modified_trailer, sizeof(FILE_TRAILER_T));
                     
                     total_written += consoldation_files[i].trailer->file_size;
-                    shell_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
+                    picofs_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
 
                     // check for FID rollover
                     if (modified_trailer.file_id != consoldation_files[i].trailer->file_id)
@@ -220,7 +220,7 @@ int picofs_consolidate_all_files_in_flash(void)
         
                             total_written += sizeof(FILE_TRAILER_T);    
                             
-                            printf("Deleted inline name = %s FID = %d\n", modified_trailer.name, modified_trailer.file_sequence);
+                            picofs_printf("Deleted inline name = %s FID = %d\n", modified_trailer.name, modified_trailer.file_sequence);
                         }
                         else
                         {
@@ -231,7 +231,7 @@ int picofs_consolidate_all_files_in_flash(void)
 
                 if(total_written >= size_files)
                 {
-                    printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", size_files, consoldation_files[i].trailer->file_id);
+                    picofs_printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", size_files, consoldation_files[i].trailer->file_id);
                     break;
                 }
             }
@@ -246,12 +246,12 @@ int picofs_consolidate_all_files_in_flash(void)
                 {
                     picofs_unlink(consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_id);
                     consoldation_files[i].pending_deletion = false;
-                    shell_printf("picofs: cleanup after FID rollover of %s\n", consoldation_files[i].trailer->name); 
+                    picofs_printf("picofs: cleanup after FID rollover of %s\n", consoldation_files[i].trailer->name); 
                 }
             }
         }
 
-        shell_printf("picofs: consolidation completed consolidated size is %d bytes (out of %d bytes)\n", total_written, size_files);
+        picofs_printf("picofs: consolidation completed consolidated size is %d bytes (out of %d bytes)\n", total_written, size_files);
 
         if (total_written == size_files)
         {
@@ -276,15 +276,15 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
 
     if (!dst)
     {
-        printf("NULL dst indicating flush page buffer\n");
+        picofs_printf("NULL dst indicating flush page buffer\n");
     }
     else if (((int)(dst - FS_START))%256)
     {
-        printf("MASSIVE ERROR! Consolidaton area is not page aligned %p\n", dst);
+        picofs_printf("MASSIVE ERROR! Consolidaton area is not page aligned %p\n", dst);
     }
     else
     {
-        printf("Good consolidation area %p\n", dst);
+        picofs_printf("Good consolidation area %p\n", dst);
     }
 
     if (dst && (dst != current_destination))
@@ -331,7 +331,7 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
         if (current_destination)
         {
             // end of files -- flush remaining data to flash
-            printf("flushing partially filled page with %d bytes of data\n", page_index);
+            picofs_printf("flushing partially filled page with %d bytes of data\n", page_index);
             for (; page_index < 256; page_index++)
             {
                 page_buffer[page_index] = FS_ERASED_CELL_VALUE;
@@ -358,7 +358,7 @@ int picofs_append_to_flash(char *dst, size_t dst_len, char *src, size_t src_len)
  * \param[out]  exclude_fid  FID to exclude (use 255 to not exlude anything)  
  * \return 0 on success
  */
-int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
+int picofs_consolidate_files_to_buffer(char * buffer, int len, uint8_t exclude_fid)
 {
     int err = -1;
     int i;
@@ -366,7 +366,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
     int num_files = 0;
     int size_files = 0;
     int size_files_plus_remnants = 0;  // remnants include deleted files and old versions of files that are no longer visible but are taking up space in flash
-    u8_t *consolidation_area = NULL;
+    uint8_t *consolidation_area = NULL;
     int total_written = 0;
 
     memset(consoldation_files, 0, sizeof(consoldation_files));
@@ -390,7 +390,7 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
         }
         else
         {
-            printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
             break;
         }
     }
@@ -427,12 +427,12 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                 (consoldation_files[i].trailer->file_sequence < (FS_MAX_SEQ-1)))
             {
                 // normal consolidation
-                //printf("copying...\n");
-                //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
+                //picofs_printf("copying...\n");
+                //hex_dump((uint8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
                 memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_size);
                 picofs_increment_sequence((FILE_TRAILER_T *)(consolidation_area + total_written + consoldation_files[i].trailer->file_size - sizeof(FILE_TRAILER_T)));
                 total_written += consoldation_files[i].trailer->file_size;
-                //shell_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
+                //picofs_printf("picofs: consolidated file: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
             }
             else if ((consoldation_files[i].valid && consoldation_files[i].trailer) &&
                      ((consoldation_files[i].trailer->file_size + sizeof(FILE_TRAILER_T)) < (len - total_written)) &&
@@ -440,13 +440,13 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                      (consoldation_files[i].trailer->file_sequence == (FS_MAX_SEQ-1)))
             {
                 // special case: consolidation with FID rollover, requires extra space for a trailer marking file deletion 
-                //printf("copying...\n");
-                //hex_dump((u8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
+                //picofs_printf("copying...\n");
+                //hex_dump((uint8_t *)((char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size), consoldation_files[i].trailer->file_size);
                 memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer + sizeof(FILE_TRAILER_T) - consoldation_files[i].trailer->file_size, consoldation_files[i].trailer->file_size);
                 if (!picofs_increment_sequence((FILE_TRAILER_T *)(consolidation_area + total_written + consoldation_files[i].trailer->file_size - sizeof(FILE_TRAILER_T))))
                 {
                     total_written += consoldation_files[i].trailer->file_size;
-                    //shell_printf("picofs: consolidated file with FID rollover: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
+                    //picofs_printf("picofs: consolidated file with FID rollover: %s %d bytes\n", consoldation_files[i].trailer->name, consoldation_files[i].trailer->file_size);
 
                     // append empty file marking the deletion of the old FID that had run out of sequence numbers
                     memcpy(consolidation_area + total_written, (char *)consoldation_files[i].trailer, sizeof(FILE_TRAILER_T));
@@ -458,26 +458,26 @@ int picofs_consolidate_files_to_buffer(char * buffer, int len, u8_t exclude_fid)
                 }
                 else
                 {
-                    //printf("Skipped file for speculative consolidation because we ran out of FIDs to rollover a file with sequence 254\n");
+                    //picofs_printf("Skipped file for speculative consolidation because we ran out of FIDs to rollover a file with sequence 254\n");
                 }
             }            
             else
             {
                 if (consoldation_files[i].valid)
                 {
-                    //printf("Skipped file for speculative consolidation because: size %d vs %d | fid %d vs %d | ptr %p | seq %d\n", consoldation_files[i].trailer->file_size, (len - total_written), consoldation_files[i].trailer->file_id, exclude_fid, consoldation_files[i].trailer,  consoldation_files[i].trailer->file_sequence);
+                    //picofs_printf("Skipped file for speculative consolidation because: size %d vs %d | fid %d vs %d | ptr %p | seq %d\n", consoldation_files[i].trailer->file_size, (len - total_written), consoldation_files[i].trailer->file_id, exclude_fid, consoldation_files[i].trailer,  consoldation_files[i].trailer->file_sequence);
                 }
             }
 
             if(total_written >= len)
             {
-                //printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", len, consoldation_files[i].trailer->file_id);
+                //picofs_printf("picofs: consolidate: reached total consolidated size of %d bytes @ FID %d\n", len, consoldation_files[i].trailer->file_id);
                 break;
             }
         }
     }
 
-    //shell_printf("picofs: consolidation completed total size is %d bytes\n", total_written);
+    //picofs_printf("picofs: consolidation completed total size is %d bytes\n", total_written);
 
     return(0);
 }

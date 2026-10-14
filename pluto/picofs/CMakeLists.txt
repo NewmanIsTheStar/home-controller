@@ -22,7 +22,8 @@ target_sources(picofs INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/picofs_file.c 
     ${CMAKE_CURRENT_LIST_DIR}/picofs_crc.c 
     ${CMAKE_CURRENT_LIST_DIR}/picofs_ftruncate.c  
-    ${CMAKE_CURRENT_LIST_DIR}/picofs_cache.c               
+    ${CMAKE_CURRENT_LIST_DIR}/picofs_cache.c 
+    ${CMAKE_CURRENT_LIST_DIR}/picofs_seek.c               
 )
 
 # headers

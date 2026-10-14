@@ -6,20 +6,20 @@ Description:A BASIC interpreter with langauge extensions for SNMP and automatic
 //Use this define to enable parent scripts to continue after a child has crashed
 //#define PARENTS_CONTINUE_AFTER_ERROR
 
-#include <stdio.h>
+// #include <stdio.h>
 #include <sys/stat.h> 
-#include <string.h>
-#include <errno.h>
+// #include <string.h>
+// #include <errno.h>
 
 /*Include Files*/
-#include <stdio.h>
-#include <stdlib.h>
+// #include <stdio.h>
+// #include <stdlib.h>
 //#include <conio.h>
 //#include <windows.h>
-#include "setjmp.h"
-#include "math.h"
-#include "ctype.h"
-#include "string.h"
+// #include "setjmp.h"
+// #include "math.h"
+// #include "ctype.h"
+// #include "string.h"
 //#include "snmp_def.h"
 #include "basic.h"
 //#include "Gpib_cmd.h"
