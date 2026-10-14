@@ -17,7 +17,7 @@
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
 // #include "lwip/opt.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 // #include "lwip/sys.h"
 
 #include "FreeRTOS.h"
@@ -29,7 +29,7 @@
 // #include "watchdog.h"
 // #include "weather.h"
 
-// #include "calendar.h"
+#include "calendar.h"
 // #include "utility.h"
 // #include "config.h"
 // #include "system_config.h"
@@ -37,6 +37,7 @@
 // #include "led_strip.h"
 // #include "message.h"
 #include "pluto.h"
+#include "web.h"
 
 
 

@@ -12,7 +12,7 @@
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
 // #include "lwip/opt.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 // #include "lwip/netdb.h"
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>
@@ -34,9 +34,9 @@
 
 // #include "calendar.h"
 // #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 // #include "watchdog.h"
 // #include "powerwall.h"
 // #include "shelly.h"
@@ -44,6 +44,7 @@
 #include "pluto.h"
 // #include "ping_core.h"
 // #include "shell.h"
+#include "web.h"
 
 // defines
 #define HTTP_PORT 80
@@ -64,7 +65,7 @@ static QueueHandle_t device_queue = NULL;
 // #include <stdio.h>
 // #include <stdlib.h>
 // #include "pico/cyw43_arch.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 // #include "mbedtls/sha1.h"
 // #include "mbedtls/base64.h"
 // #include "FreeRTOS.h"

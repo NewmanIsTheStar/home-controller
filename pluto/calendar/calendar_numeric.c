@@ -18,20 +18,28 @@
 // #include "pico/util/datetime.h"
 // #include "hardware/watchdog.h"
 
+#include "lwip/netif.h"
+#include "lwip/ip4_addr.h"
+#include "lwip/apps/lwiperf.h"
+#include "lwip/apps/sntp.h"
+#include "lwip/apps/httpd.h"
+#include "dhcpserver.h"
+#include "dnsserver.h"
+#include "lwip/sockets.h"
 // #include "lwip/netif.h"
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
 // #include "lwip/apps/sntp.h"
 // #include "lwip/apps/httpd.h"
 
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
+#include "FreeRTOSConfig.h"
+#include "task.h"
 
 //#include "weather.h"
-// #include "calendar.h"
+#include "calendar.h"
 // #include "cgi.h"
 
 
@@ -41,7 +49,7 @@
 #include "pluto.h"
 // #include "ssi.h"
 // #include "time.h"
-// #include "utility.h"
+#include "utility.h"
 // #include "config.h"
 // #include "system_config.h"
 // #include "application_config.h"

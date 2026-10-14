@@ -7,33 +7,7 @@
 #ifndef PLUTO_H
 #define PLUTO_H
 
-#include "pico/cyw43_arch.h"
-#include "pico/types.h"
-#include "pico/stdlib.h"
-#include "pico/util/datetime.h"
-#include "hardware/watchdog.h"
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
 #include "lwip/sockets.h"
-#include "time.h"
-#include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
-#include "cgi.h"
-#include "utility.h"
-#include "config.h"
-#include "system_config.h"
-#include "application_config.h"
-#include "watchdog.h"
-#include "worker_tasks.h"
-#include "pluto_wifi.h"
-#include "calendar.h"
-#include "web.h"
 
 #ifndef USEFUL_MACROS
 #define USEFUL_MACROS

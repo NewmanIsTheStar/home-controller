@@ -2,10 +2,24 @@
 // #include <sys/stat.h>
 #include <fcntl.h>
 
-// #include "lwip/opt.h"
-// #include "lwip/apps/httpd.h"
+#include "pico/cyw43_arch.h"
+
+#include "FreeRTOS.h"
+#include "FreeRTOSConfig.h"
+#include "task.h"
+
+#include "lwip/opt.h"
+#include "lwip/apps/httpd.h"
 #include "lwip/apps/fs.h"
-// #include "pico/cyw43_arch.h"
+#include "lwip/netif.h"
+#include "lwip/ip4_addr.h"
+#include "lwip/apps/lwiperf.h"
+#include "lwip/apps/sntp.h"
+#include "lwip/apps/httpd.h"
+#include "dhcpserver.h"
+#include "dnsserver.h"
+#include "lwip/sockets.h"
+
 // #include <string.h>
 #include "hc_task.h"
 #include "pluto.h"
@@ -15,6 +29,8 @@
 //#include <unistd.h>
 #include "shell.h"
 #include "picofs.h"
+#include "calendar.h"
+#include "web.h"
 
 // defines
 #define ITEM_BUF_LEN (128)

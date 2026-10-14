@@ -21,7 +21,7 @@
 // #include "hardware/watchdog.h"
 
 // #include "lwip/opt.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 // #include "lwip/netdb.h"
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>

@@ -21,7 +21,7 @@
 // #include "pico/types.h"
 // #include "pico/stdlib.h"
 // #include "pico/util/datetime.h"
-// #include "hardware/watchdog.h"
+#include "hardware/watchdog.h"
 // #include "hardware/structs/powman.h"
 // #include "hardware/regs/powman.h"
 // #include "pico/flash.h"
@@ -44,7 +44,7 @@
 // #include "dhcpserver.h"
 // #include "dnsserver.h"
 
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 
 // #include "time.h"
 #include "FreeRTOS.h"
@@ -55,9 +55,9 @@
 
 // #include "utility.h"
 // #include "config.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 // #include "watchdog.h"
 // #include "worker_tasks.h"
 // #include "pluto_wifi.h"
@@ -108,8 +108,8 @@
 // external variables
 extern u32_t unix_time;
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
-extern WORKER_TASK_T worker_tasks[];
+//extern WEB_VARIABLES_T web;
+// extern WORKER_TASK_T worker_tasks[];
 
 // static variables
 

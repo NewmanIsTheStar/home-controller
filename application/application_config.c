@@ -12,10 +12,11 @@
 // #include <unistd.h>
 // #include <string.h>
 #include <lwip/arch.h>
+#include "lwip/sockets.h"
 // #include "picofs.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 // #include <sys/stat.h>
@@ -34,8 +35,8 @@
 
 
 // #include "picofs.h"
-// #include "system_config.h"
-// #include "config.h"
+#include "system_config.h"
+#include "config.h"
 
 //#define DISABLE_CONFIG_UPGRADE
 

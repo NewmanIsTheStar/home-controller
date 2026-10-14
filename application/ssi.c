@@ -6,7 +6,8 @@
 // #include "lwip/apps/httpd.h"
 #include "pico/cyw43_arch.h"
 
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
+#include "lwip/apps/httpd.h"
 
 #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
@@ -16,14 +17,15 @@
 
 
 //#include "weather.h"
-// #include "calendar.h"
-// #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "calendar.h"
+#include "utility.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 // #include "rmtsw.h"
 
 #include "pluto.h"
+#include "web.h"
 // #include "powerwall.h"
 // #include "led_strip.h"
 #include "hc_task.h"

@@ -4,18 +4,27 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
- // be cautious what you include here lwip and fcntl have some important conflicts related to BSD / sockets
-// #include <stdio.h>
-// #include <stdlib.h>
-//#include <sys/mman.h>
-// #include <fcntl.h>
-// #include <unistd.h>
-// #include <string.h>
+
+// be cautious what you include here lwip and fcntl have some important conflicts related to BSD / sockets
+#include <stdio.h>
+#include <stdlib.h>
+// #include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 #include <lwip/arch.h>
+#include "lwip/netif.h"
+#include "lwip/ip4_addr.h"
+#include "lwip/apps/lwiperf.h"
+#include "lwip/apps/sntp.h"
+#include "lwip/apps/httpd.h"
+#include "dhcpserver.h"
+#include "dnsserver.h"
+#include "lwip/sockets.h"
 // #include "picofs.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 // #include <sys/stat.h>
@@ -25,15 +34,15 @@
 // #include <hardware/flash.h>
 
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
+#include "FreeRTOSConfig.h"
+#include "task.h"
 
-// #include "config.h"
+#include "config.h"
 #include "pluto.h"
-// #include "utility.h"
+#include "utility.h"
 
 
-// #include "picofs.h"
+#include "picofs.h"
 
 
 //#define DISABLE_CONFIG_WRITE (1)

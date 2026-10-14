@@ -12,7 +12,7 @@
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
 // #include "lwip/opt.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 // #include "lwip/netdb.h"
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>
@@ -27,10 +27,10 @@
 // #include "weather.h"
 
 // #include "calendar.h"
-// #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "utility.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 // #include "watchdog.h"
 // #include "powerwall.h"
 #include "shelly.h"
@@ -38,6 +38,7 @@
 #include "pluto.h"
 #include "ping_core.h"
 #include "shell.h"
+#include "web.h"
 
 #define GET_REQUEST "GET / HTTP/1.0\r\n\r\n"
 

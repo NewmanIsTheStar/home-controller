@@ -21,7 +21,7 @@
 // #include "hardware/watchdog.h"
 
 // #include "lwip/opt.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 // #include "lwip/netdb.h"
 #include "lwip/sys.h"
 // #include <lwip/dns.h>
@@ -37,8 +37,8 @@
 
 // #include "time.h"
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
+#include "FreeRTOSConfig.h"
+#include "task.h"
 
 // #include "stdarg.h"
 
@@ -47,10 +47,10 @@
 // #include "ssi.h"
 
 // #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
-// #include "watchdog.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
+#include "watchdog.h"
 #include "pluto.h"
 // #include "led_strip.h"
 #include "udp.h"
@@ -59,6 +59,7 @@
 // #include "powerwall.h"
 #include "shelly.h"
 // #include "discovery_task.h"
+#include "web.h"
 
 
 //#define DEBUG_UDP_MESSAGES

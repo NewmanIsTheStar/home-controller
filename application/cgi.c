@@ -15,7 +15,7 @@
 
 // #include "lwip/apps/httpd.h"
 #include "lwip/apps/fs.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 
 // #include "time.h"
 #include "FreeRTOS.h"
@@ -25,16 +25,18 @@
 
 //#include "weather.h"
 // #include "calendar.h"
-// #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "utility.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 //#include "led_strip.h"
 // #include "rmtsw.h"
 // #include "mqtt.h"
-// #include "worker_tasks.h"
+#include "worker_tasks.h"
 #include "pluto.h"
 #include "hc_task.h"
+#include "calendar.h"
+#include "web.h"
 
 typedef const char *(*tMYCGIHandler)(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state);
 typedef struct

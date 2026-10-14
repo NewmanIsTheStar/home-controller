@@ -27,6 +27,7 @@
 #include <pluto.h>
 // #include <shelly.h>
 #include "json_parser.h"
+#include "web.h"
 
 
 extern WEB_VARIABLES_T web;

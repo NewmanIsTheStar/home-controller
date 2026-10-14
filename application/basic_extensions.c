@@ -19,9 +19,17 @@ Description:This file contains all of the non-standard commands added to the
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
 //#include "net.h"
-// #include "lwip/sockets.h"
+#include "lwip/netif.h"
+#include "lwip/ip4_addr.h"
+#include "lwip/apps/lwiperf.h"
+#include "lwip/apps/sntp.h"
+#include "lwip/apps/httpd.h"
+#include "dhcpserver.h"
+#include "dnsserver.h"
+#include "lwip/sockets.h"
 #include "shelly.h"
-// #include "utility.h"
+#include "utility.h"
+#include "calendar.h"
 
 #define COMMAND_LINE_LENGTH 1500
 #define noSuchObject	0x80

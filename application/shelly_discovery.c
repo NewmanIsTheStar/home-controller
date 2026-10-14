@@ -12,7 +12,7 @@
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
 // #include "lwip/opt.h"
-// #include "lwip/sockets.h"
+#include "lwip/sockets.h"
 // #include "lwip/netdb.h"
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>
@@ -31,10 +31,10 @@
 // #include "weather.h"
 
 // #include "calendar.h"
-// #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "utility.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 // #include "watchdog.h"
 // #include "powerwall.h"
 // #include "shelly.h"
@@ -42,6 +42,7 @@
 #include "pluto.h"
 // #include "ping_core.h"
 // #include "shell.h"
+#include "web.h"
 
 
 // defines
@@ -63,6 +64,7 @@ int send_http_get(const ip_addr_t *target_addr, const char *path, char *response
 u16_t parse_mdns_name_client(struct pbuf *p, u16_t offset, char *dest, u16_t dest_len);
 int name_containing_string(struct pbuf *p, char *string_to_match);
 void extract_all_names(struct pbuf *p);
+void mdns_recv_callback(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
 
 // Callback triggered whenever an mDNS packet is received

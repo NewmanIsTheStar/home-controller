@@ -13,9 +13,9 @@
 // #include <string.h>
 #include <lwip/arch.h>
 // #include "picofs.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
+#include "config.h"
+#include "system_config.h"
+#include "application_config.h"
 
 
 // #include <sys/stat.h>
@@ -25,8 +25,8 @@
 // #include <hardware/flash.h>
 
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
+#include "FreeRTOSConfig.h"
+#include "task.h"
 
 // #include "config.h"
 #include "pluto.h"
@@ -34,7 +34,7 @@
 
 
 // #include "picofs.h"
-// #include "config.h"
+#include "config.h"
 // #include "system_config.h"
 // #include "application_config.h"
 
