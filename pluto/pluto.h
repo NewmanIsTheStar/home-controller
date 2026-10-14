@@ -7,15 +7,11 @@
 #ifndef PLUTO_H
 #define PLUTO_H
 
-
-
 #include "pico/cyw43_arch.h"
 #include "pico/types.h"
 #include "pico/stdlib.h"
-//#include "hardware/rtc.h"
 #include "pico/util/datetime.h"
 #include "hardware/watchdog.h"
-
 #include "lwip/netif.h"
 #include "lwip/ip4_addr.h"
 #include "lwip/apps/lwiperf.h"
@@ -23,18 +19,12 @@
 #include "lwip/apps/httpd.h"
 #include "dhcpserver.h"
 #include "dnsserver.h"
-
 #include "lwip/sockets.h"
-
 #include "time.h"
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
 #include "task.h"
-
-// #include "weather.h"
-// #include "led_strip.h"
 #include "cgi.h"
-
 #include "utility.h"
 #include "config.h"
 #include "system_config.h"
@@ -43,13 +33,7 @@
 #include "worker_tasks.h"
 #include "pluto_wifi.h"
 #include "calendar.h"
-// #include "powerwall.h"
-// #include "shelly.h"
-// #include  "ping_core.h"
 #include "web.h"
-
-//#define PLUTO_VER "01.00.00"          // release version set in CMakeLists.txt
-//#define USE_GIT_HASH_AS_VERSION       // automatically set in CMakeLists.txt for debug builds
 
 #ifndef USEFUL_MACROS
 #define USEFUL_MACROS
@@ -97,16 +81,12 @@ typedef struct
 } uf2_block_t;
 
 //int applet_entry_point(void);
-// void hex_dump(const uint8_t *bptr, uint32_t len);
-int application_restart(REBOOT_REASON_T reason);
-int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_default);
-int get_int_with_tenths_from_string(char *value_string);
-void unix_to_iso8601(time_t unix_timestamp, char *iso_string, size_t buffer_size);
-uint32_t get_reboot_reason(void);
+int pluto_application_restart(REBOOT_REASON_T reason);
+uint32_t pluto_get_reboot_reason(void);
 int pluto_boot_setup(u_int32_t exe_flash_offset, char *exe_linker_start_addr);
 int pluto_boot_launch(void);
-void vMenuInterfaceTask(void *pvParameters);
+void pluto_boot_menu_task(void *pvParameters);
 int pluto_boot_status(void);
-void process_uf2_block(int fd, const uf2_block_t *block);
+void pluto_write_uf2_block(int fd, const uf2_block_t *block);
 
 #endif 

@@ -844,7 +844,7 @@ const char * cgi_reboot_handler(int iIndex, int iNumParams, char *pcParam[], cha
     printf("REBOOT requested\n");
     
     //request reboot
-    application_restart(REBOOT_USER_REQUEST);
+    pluto_application_restart(REBOOT_USER_REQUEST);
 
     return "/index.shtml";    
 }

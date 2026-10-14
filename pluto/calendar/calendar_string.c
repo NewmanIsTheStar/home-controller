@@ -533,6 +533,27 @@ int get_time_string_from_unix_time(uint32_t unixtime, char *time_string, int len
     return(err);
 }
 
+/*!
+ * \brief convert string to integer times ten plus tenths e.g. "78.32" => 783
+ *
+ * \param[in]   unix_timestamp   seconds since 1970
+ * \param[out]  iso_string       output buffer
+ * \param[in]   buffer_size      length of output buffer
+ * 
+ * \return nothing
+ */
+void unix_to_iso8601(time_t unix_timestamp, char *iso_string, size_t buffer_size)
+{
+    struct tm *timeinfo;
+    
+    // Convert Unix timestamp to a broken-down time structure (UTC)
+    timeinfo = gmtime(&unix_timestamp);
+
+    // Format the broken-down time into an ISO 8601 string
+    // Example format: YYYY-MM-DDTHH:mm:ssZ
+    strftime(iso_string, buffer_size, "%Y-%m-%dT%H:%M:%SZ", timeinfo);
+}
+
 #ifdef USURPER
 /*!
  * \brief Get start and stop times for next irrigation period

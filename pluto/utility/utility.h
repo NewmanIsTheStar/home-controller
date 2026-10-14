@@ -8,6 +8,7 @@
 #define UTILITY_H
 
 #include "hardware/i2c.h"
+#include "system_config.h"
 
 typedef struct
 {
@@ -29,6 +30,8 @@ void urldecode(char *dst, const char *src);
 uint32_t address_string_to_ip(char *address_string);
 int ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array);
 void to_lowercase(char *str);
+int get_int_with_tenths_from_string(char *value_string);
+int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_default);
 
 
 // utility_socket.c

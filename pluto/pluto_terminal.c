@@ -222,7 +222,7 @@ int pico_select_line_timed(const char **file_lines, int total_lines, char *outpu
     return current_selection;
 }
 
-void vMenuInterfaceTask(void *pvParameters)
+void pluto_boot_menu_task(void *pvParameters)
 {
     //TODO: use mmap() to access the boot options from boot.cfg
     const char *mock_file_lines[] = {

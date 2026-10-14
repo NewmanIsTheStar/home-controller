@@ -386,3 +386,136 @@ void to_lowercase(char *str)
         str[i] = (char)tolower((unsigned char)str[i]);
     }
 }
+
+/*!
+ * \brief convert string to integer times ten plus tenths e.g. "78.32" => 783
+ *
+ * \param[in]  value_string index of cgi handler in cgi_handlers table
+ * 
+ * \return integer = value x 10
+ */
+int get_int_with_tenths_from_string(char *value_string)
+{
+    int whole_part = 0;
+    int tenths_part = 0;
+    int new_value = 0;
+    char first_decimal = '0';
+    char second_decimal = '0';
+
+    sscanf(value_string, ".%c%c", &first_decimal, &second_decimal);
+    sscanf(value_string, "%d.%c%c", &whole_part, &first_decimal, &second_decimal);
+
+    // zero out invalid characters
+    if ((first_decimal < '0') || (first_decimal > '9')) first_decimal = '0';
+    if ((second_decimal < '0') || (second_decimal > '9')) second_decimal = '0';
+    
+    tenths_part = first_decimal - '0';
+
+    // round up from second decimal
+    if ((second_decimal - '0') >= 5)
+    {
+        tenths_part++;
+    }
+
+    // round up fron frist decimal
+    if (tenths_part > 9)
+    {
+        tenths_part -=10;
+        whole_part++;
+    }
+
+    CLIP(tenths_part, 0, 9);
+
+    new_value = whole_part*10 + tenths_part;  
+    
+    if (new_value == 662)
+    {
+        printf("AHHHHHHHGGGGGG!!!!\n");
+    }
+
+    return(new_value);
+}
+
+/*!
+ * \brief print list of gpio pins with specified state
+ *
+ * \param none
+ *
+ * \return 0
+ */
+int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_default)
+{
+    int i;
+    bool first_item_printed = false;
+    int printed = 0;
+    int first_in_run = -1;
+    int next_in_run = -1;
+
+    if (len > 8)
+    {
+        buffer[0] = 0;
+        first_item_printed = false;
+        for(i=0; i<NUM_ROWS(sys->gpio_default) && printed < (len-8); i++)
+        {
+            if (sys->gpio_default[i] == gpio_default)
+            {               
+                if (!first_item_printed)
+                {
+                    printed += snprintf(buffer, len, "%d", i);
+                    first_item_printed = true;
+                    first_in_run = i;
+                    next_in_run = i+1;
+                }
+                else
+                {
+                    if ((first_in_run >= 0) && (i == next_in_run) && (i < (NUM_ROWS(sys->gpio_default)-1))) // within in a run
+                    {
+                        next_in_run = i+1;
+                    }
+                    else if ((first_in_run >= 0) && (i != next_in_run) && (first_in_run+1 == next_in_run)) // end of single value run, start of new run
+                    {
+                        printed += snprintf(buffer+printed, len, "&#44; %d", i);
+                        first_in_run = i;
+                        next_in_run = i+1;
+                    } 
+                    else if ((first_in_run >= 0) && (i != next_in_run) && (first_in_run+1 != next_in_run)) // end of run, start of new run
+                    {
+                        printed += snprintf(buffer+printed, len, " - %d&#44; %d", next_in_run-1, i);
+                        first_in_run = i;
+                        next_in_run = i+1;
+                    }
+                    else if ((first_in_run >= 0) && (i == next_in_run) && (i == (NUM_ROWS(sys->gpio_default)-1))) // end of list and end of run
+                    {
+                        printed += snprintf(buffer+printed, len, " - %d", i);
+                        first_in_run = -1;
+                        next_in_run = -1;
+                    }                    
+                    else
+                    {
+                        printed += snprintf(buffer+printed, len, "&#44; %d", i);
+                        first_in_run = i;
+                        next_in_run = i+1;
+                    }                        
+                }          
+            }
+            else if ((first_in_run >= 0) && (first_in_run+1 != next_in_run)) // end of run with more than one value
+            {
+                printed += snprintf(buffer+printed, len, " - %d", next_in_run-1);
+                first_in_run = -1;
+                next_in_run = -1;                
+            }
+            else if ((first_in_run >= 0)) // end of run with a single value
+            {
+                first_in_run = -1;
+                next_in_run = -1;                
+            }            
+        }
+
+        if (printed == 0)
+        {
+            printed += snprintf(buffer, len, "none");
+        }
+    }  
+
+    return(printed);
+}

@@ -994,7 +994,7 @@ int pluto_write_uf2(int fd, char *ptr, int len)
         // check if we have received an entire block
         if (dst_index >= 512)
         {
-            process_uf2_block(fd, (const uf2_block_t *)uf2_block);
+            pluto_write_uf2_block(fd, (const uf2_block_t *)uf2_block);
             
             // clear block buffer
             dst_index = 0;

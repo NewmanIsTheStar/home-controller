@@ -107,7 +107,7 @@ void watchdog_task(void *params)
         }
         else
         {
-            application_restart(REBOOT_WATCHDOG);
+            pluto_application_restart(REBOOT_WATCHDOG);
         }
 #endif
         SLEEP_MS(1000);
@@ -144,7 +144,7 @@ int check_watchdog_reboot(void)
     if (watchdog_reset && sys->syslog_enable && !syslog_sent)
     {
         // log watchdog event
-        if ((send_syslog_message("usurper", "REBOOT @ %s [reason = %lu]", web.watchdog_timestring, get_reboot_reason())) > 0)   
+        if ((send_syslog_message("usurper", "REBOOT @ %s [reason = %lu]", web.watchdog_timestring, pluto_get_reboot_reason())) > 0)   
         {
             syslog_sent = true;
         }

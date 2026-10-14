@@ -78,6 +78,7 @@ int get_day_string_from_unix_time(uint32_t unixtime, char *day_string, int len, 
 int mow_to_time_string(char *string, int length, int mow);
 int time_string_to_mow(char *string, int length, int day);
 int get_delta_string_from_delta_seconds(char *string, int len, uint32_t delta_seconds);
+void unix_to_iso8601(time_t unix_timestamp, char *iso_string, size_t buffer_size);
 
 // TODO: move to application specific code for sprinkler controller (usurper)
 SCHEDULE_QUERY_STATUS_LT get_next_irrigation_period(int *start_mow, int *end_mow, int *delay_mins, int *zone);

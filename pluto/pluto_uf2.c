@@ -27,7 +27,7 @@
 // static uint32_t last_erased_sector_addr = 0xFFFFFFFF;
 
 // Process a completely reconstructed 512-byte UF2 block
-void process_uf2_block(int fd, const uf2_block_t *block) 
+void pluto_write_uf2_block(int fd, const uf2_block_t *block) 
 {
     int err = 0;
 
