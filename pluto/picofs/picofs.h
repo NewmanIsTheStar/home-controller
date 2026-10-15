@@ -190,8 +190,8 @@ typedef enum
 int picofs_access(const char *filename);
 int picofs_unlink(const char *name, uint8_t fid);
 int picofs_find_file(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer);
-int picofs_list_all_files_from_flash(bool ignore_crc);
-int picofs_list_all_files_from_cache(void);
+int picofs_list_all_files_from_flash(char *filter, bool ignore_crc);
+int picofs_list_all_files_from_cache(char *filter);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
 int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_area, size_t *actual_size, bool executable_alignment);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
@@ -205,12 +205,12 @@ int picofs_seek(int fd, int ptr, int dir);
 int picofs_create_file_trailer(int fd, const char *name);
 int picofs_close_file(int fd, bool disable_purge);
 int picofs_delete(char *filename);
-int picofs_copy(const char *src, const char *dst);
+int picofs_copy(const char *dst, const char *src);
 int picofs_is_latest_file_sequence_from_flash(char *filename, uint8_t file_id, uint8_t sequence);
 uint8_t picofs_get_new_file_id(void);
 bool picofs_is_file_deleted_from_flash(uint8_t file_id);
 bool picofs_is_file_deleted_from_cache(uint8_t file_id);
-int picofs_rename(const char *src, const char *dst);
+int picofs_rename(const char *dst, const char *src);
 int picofs_list_files_by_size(void);
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, uint32_t offset);
 int picofs_munmap(void *addr, size_t len);
@@ -251,5 +251,6 @@ int picofs_cache_realloc(int fd, size_t new_size, uint8_t fill);
 bool picofs_cache_contains_entire_file(int fd);
 int picofs_cache_expand(int fd);
 int picofs_stat(char *filename);
+bool picofs_wildcard_match(const char *pattern, const char *str);
 
 #endif

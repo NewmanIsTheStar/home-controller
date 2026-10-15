@@ -9,22 +9,24 @@ typedef enum
     SHELL_MSG_LIGHTS,
     SHELL_MSG_DUMP_PROGRAM,
     SHELL_MSG_LIST,
+    SHELL_MSG_LIST_ALL,
     SHELL_MSG_PING,
     SHELL_MSG_PAGE_MAP,
     SHELL_MSG_PAGE_NUMBERS,
     SHELL_MSG_SAVE_TEXT_FILE,
     SHELL_MSG_DEFRAGMENT,
-    SHELL_MSG_DISK_CLEANUP,
+    SHELL_MSG_CLEANUP,
     SHELL_MSG_BASIC_FILE,
     SHELL_MSG_CAT_FILE,
-    SHELL_MSG_LIST_CORRUPT,
     SHELL_MSG_SHELLY_DEVICE_DUMP,
     SHELL_MSG_HEXDUMP_FILE,
-    SHELL_MSG_DELETE_FILE,
+    SHELL_MSG_UNLINK,
     SHELL_MSG_DOWNLOAD_FILE,
     SHELL_MSG_VERIFY_FILE,
     SHELL_MSG_BOOT,
     SHELL_MSG_STAT,
+    SHELL_MSG_COPY,
+    SHELL_MSG_MOVE,
 
     SHELL_MSG_BE_FOUR_BYTES      =   4294967295     // force enum to be 4 bytes long
 } SHELL_MSG_T;
@@ -36,12 +38,35 @@ typedef struct
     char filename[16];
 } SM_GENERIC_FILE_T;
 
+typedef struct 
+{
+    SHELL_MSG_T message_id;
+    char src[16];
+    char dst[16];    
+} SM_GENERIC_DST_SRC_T;
 
 
 int shell_queue_cat(char *filename);
 int shell_do_cat(SM_GENERIC_FILE_T *msg);
 int shell_queue_hexdump(char *filename);
 int shell_do_hexdump(SM_GENERIC_FILE_T *msg);
-
+int shell_queue_list(char *filename);
+int shell_do_list(SM_GENERIC_FILE_T *msg);
+int shell_queue_list_all(char *filename);
+int shell_do_list_all(SM_GENERIC_FILE_T *msg);
+int shell_queue_stat(char *filename);
+int shell_do_stat(SM_GENERIC_FILE_T *msg);
+int shell_queue_page_map(SHELL_MSG_T msg_id);
+int shell_do_page_map(SM_GENERIC_FILE_T *msg);
+int shell_queue_defragment(void);
+int shell_do_defragment(SM_GENERIC_FILE_T *msg);
+int shell_queue_cleanup(void);
+int shell_do_cleanup(SM_GENERIC_FILE_T *msg);
+int shell_queue_unlink(char *filename);
+int shell_do_unlink(SM_GENERIC_FILE_T *msg);
+int shell_queue_copy(char *dst, char *src);
+int shell_do_copy(SM_GENERIC_DST_SRC_T *msg);
+int shell_queue_move(char *dst, char *src);
+int shell_do_move(SM_GENERIC_DST_SRC_T *msg);
 
 #endif

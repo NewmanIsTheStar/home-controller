@@ -94,11 +94,11 @@ extern SemaphoreHandle_t picofs_mutex;
  * \param fd     file descriptor 
  * \return 0 on success
  */
-int picofs_rename(const char *src, const char *dst)
+int picofs_rename(const char *dst, const char *src)
 {
     int err = -1;
 
-    err = picofs_copy(src, dst);   // NB picofs_copy takes care of locking internally
+    err = picofs_copy(dst, src);   // NB picofs_copy takes care of locking internally
     if (err)
     {
         return(err);

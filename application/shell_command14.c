@@ -1,7 +1,4 @@
-                    case HC_CMD_DEFRAGMENT:
-                        //picofs_consolidate_all_files();
-                        picofs_consolidate_all_files_in_flash();
-                        break;
+
 
 
                         case HC_CMD_STAT:                    

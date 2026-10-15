@@ -6,6 +6,7 @@
 // #include <stdio.h>
 // #include <stdlib.h>
 // #include <fcntl.h>
+#include <stdbool.h>
 
 // #include "hardware/pio.h"
 // #include "hardware/clocks.h"
@@ -73,7 +74,7 @@
 
 
 //prototypes
-
+int picofs_print_trailer_info(FILE_TRAILER_T *trailer);
 
 
 // external variables
@@ -296,7 +297,7 @@ int picofs_metrics_name_compare(const void *a, const void *b)
  *  *     
  * \return 0 on success
  */
-int picofs_list_all_files_from_flash(bool ignore_crc)
+int picofs_list_all_files_from_flash(char *filter, bool ignore_crc)
 {
     int err = -1;
     int i;
@@ -343,12 +344,14 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
         {
             if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED))
             {
+                if ((!filter) || picofs_wildcard_match(filter, list_files[i].trailer->name))
+                {
+                    // calculate crc
+                    calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
+                    picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s%s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, calculated_crc, list_files[i].trailer->crc, list_files[i].trailer->name, calculated_crc == list_files[i].trailer->crc?"":" *corrupt*");
 
-                // calculate crc
-                calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
-                picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s%s\n", list_files[i].trailer->file_size, list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, calculated_crc, list_files[i].trailer->crc, list_files[i].trailer->name, calculated_crc == list_files[i].trailer->crc?"":" *corrupt*");
-
-                size_files += list_files[i].trailer->file_size;
+                    size_files += list_files[i].trailer->file_size;
+                }
             }
         }
 
@@ -368,11 +371,14 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
                     picofs_printf("Size\t\tFID\tSEQ\tCRC calc\tCRC file\tName\n");
                 }    
 
-                // calculate crc
-                calculated_crc = picofs_calculate_crc32(((const uint8_t *)current + sizeof(FILE_TRAILER_T) - current->file_size), current->file_size - sizeof(FILE_TRAILER_T));
-                picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s%s\n", current->file_size, current->file_id, current->file_sequence, calculated_crc, current->crc, current->name, calculated_crc == current->crc?"":" *corrupt*");
+                if ((!filter) || picofs_wildcard_match(filter, current->name))
+                {
+                    // calculate crc
+                    calculated_crc = picofs_calculate_crc32(((const uint8_t *)current + sizeof(FILE_TRAILER_T) - current->file_size), current->file_size - sizeof(FILE_TRAILER_T));
+                    picofs_printf("%08d\t%d\t%d\t%08x\t%08x\t%-16s%s\n", current->file_size, current->file_id, current->file_sequence, calculated_crc, current->crc, current->name, calculated_crc == current->crc?"":" *corrupt*");
 
-                num_files++;
+                    num_files++;
+                }
             }
             else
             {
@@ -396,7 +402,7 @@ int picofs_list_all_files_from_flash(bool ignore_crc)
  *  *     
  * \return 0 on success
  */
-int picofs_list_all_files_from_cache(void)
+int picofs_list_all_files_from_cache(char *filter)
 {
     int err = -1;
     int i;
@@ -415,16 +421,17 @@ int picofs_list_all_files_from_cache(void)
     {
         if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED))
         {
-
             if (!heading)
             {
                 picofs_printf("Size\t\tFID\tSEQ\tCRC     \tName\n");
                 heading = true;
             }
-            // calculate crc            
-            picofs_printf("%8d\t%3d\t%3d\t%8x\t%-16s\n", list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T), list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
-
-            size_files += list_files[i].trailer->file_size;
+            
+            if ((!filter) || picofs_wildcard_match(filter, list_files[i].trailer->name))
+            {
+                picofs_printf("%8d\t%3d\t%3d\t%8x\t%-16s\n", list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T), list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
+                size_files += list_files[i].trailer->file_size;
+            }           
         }
     }
 
@@ -514,6 +521,30 @@ int picofs_get_file_size(char *filename)
 }
 
 /*!
+ * \brief Print file info from trailer
+ * 
+ * \param[in]   filename     name to find
+ * 
+ *  *     
+ * \return 0 on success
+ */
+int picofs_print_trailer_info(FILE_TRAILER_T *trailer)
+{
+    picofs_printf("File Name       = %s\n", trailer->name);    
+    picofs_printf("File Identifier = %d\n", trailer->file_id);
+    picofs_printf("Sequence number = %d\n", trailer->file_sequence);
+    picofs_printf("Status          = %08b\n", trailer->file_status);
+    picofs_printf("     Deleted    = %s\n", (trailer->file_status & STS_DELETED)?"yes":"no");
+    picofs_printf("     Executable = %s\n", (trailer->file_status & STS_EXECUTABLE)?"yes":"no");        
+    picofs_printf("Size            = %d\n", trailer->file_size);
+    picofs_printf("CRC             = %08x\n", trailer->crc);
+    picofs_printf("Flash location  = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size);
+    picofs_printf("Flash offset    = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size - FS_BASE);    
+
+    return(0);
+}
+
+/*!
  * \brief Print details about a file
  * 
  * \param[in]   filename     name to find
@@ -524,21 +555,109 @@ int picofs_get_file_size(char *filename)
 int picofs_stat(char *filename)
 {
     int err = -1;
+    int i;
     FILE_TRAILER_T *trailer = NULL;
 
+    // check for exact match
     if (!picofs_find_file(filename, FS_INVALID_FID, &trailer) && trailer)
     {
-        picofs_printf("File Identifier = %d\n", trailer->file_id);
-        picofs_printf("Sequence number = %d\n", trailer->file_sequence);
-        picofs_printf("Status          = %08b\n", trailer->file_status);
-        picofs_printf("     Deleted    = %s\n", (trailer->file_status & STS_DELETED)?"yes":"no");
-        picofs_printf("     Executable = %s\n", (trailer->file_status & STS_EXECUTABLE)?"yes":"no");        
-        picofs_printf("Size            = %d\n", trailer->file_size);
-        picofs_printf("CRC             = %08x\n", trailer->crc);
-        picofs_printf("Flash location  = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size);
-        picofs_printf("Flash offset    = %p\n", (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size - FS_BASE);
-
+        picofs_print_trailer_info(trailer);
+    }
+    else // scan for pattern match
+    {
+        for (i=0; i<FS_NUM_FID; i++)
+        {
+            if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED))
+            {                
+                if ((!filename) || picofs_wildcard_match(filename, picofs_files[i].trailer->name))
+                {
+                    picofs_print_trailer_info(trailer);                  
+                }           
+            }
+        }        
     }
 
     return(0);
+}
+
+
+
+// bool picofs_wildcard_match(const char *pattern, const char *str) 
+// {
+//     // Base case: both reach the end of the string
+//     if (*pattern == '\0' && *str == '\0') return true;
+
+//     // If pattern has '*', it can match 0 or more characters
+//     if (*pattern == '*') 
+//     {
+//         // Skip consecutive asterisks
+//         while (*(pattern + 1) == '*') pattern++;
+        
+//         // Try matching the rest of the pattern with current/subsequent str positions
+//         while (*str != '\0') 
+//         {
+//             if (picofs_wildcard_match(pattern + 1, str)) return true;
+//             str++;
+//         }
+//         return picofs_wildcard_match(pattern + 1, str);
+//     }
+
+//     // Match single character '?' or exact character match
+//     if (*pattern == '?' && *str != '\0') 
+//     {
+//         return picofs_wildcard_match(pattern + 1, str + 1);
+//     }
+    
+//     if (*pattern == *str) 
+//     {
+//         return picofs_wildcard_match(pattern + 1, str + 1);
+//     }
+
+//     return false;
+// }
+
+bool picofs_wildcard_match(const char *pattern, const char *str) 
+{
+    const char *p_track = pattern;
+    const char *s_track = str;
+    const char *p_star  = NULL;
+    const char *s_star  = NULL;
+
+    while (*s_track != '\0') 
+    {
+        if (*p_track == *s_track || *p_track == '?') 
+        {
+            // Case 1: Exact match or single-character wildcard '?'
+            p_track++;
+            s_track++;
+        }
+        else if (*p_track == '*') 
+        {
+            // Case 2: Multi-character wildcard '*' encountered
+            p_star = p_track; // Track the location of the '*'
+            s_star = s_track; // Track where the string was when we hit the '*'
+            p_track++;        // Move pattern past the '*'
+        }
+        else if (p_star != NULL) 
+        {
+            // Case 3: Mismatch, but we have a previous '*' fallback
+            p_track = p_star + 1; // Backtrack pattern to just after the '*'
+            s_star++;             // Advance string fallback position
+            s_track = s_star;     // Reset current string pointer
+        }
+        else 
+        {
+            // Case 4: Mismatch and no previous '*' to fall back on
+            return false;
+        }
+    }
+
+    // Eat up any trailing asterisks in the pattern
+    while (*p_track == '*') 
+    {
+        p_track++;
+    }
+
+    // If we consumed the entire pattern, it's a match
+    return (*p_track == '\0');
 }

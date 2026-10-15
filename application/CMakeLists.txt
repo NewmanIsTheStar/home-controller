@@ -17,6 +17,14 @@ target_sources(${PROJECT_NAME} PRIVATE
         shell_message.c
         shell_cat.c
         shell_hexdump.c
+        shell_list.c
+        shell_stat.c
+        shell_page_map.c
+        shell_defragment.c
+        shell_cleanup.c
+        shell_unlink.c
+        shell_copy.c
+        shell_move.c
         kasa_discovery.c 
         application_config.c       
 )

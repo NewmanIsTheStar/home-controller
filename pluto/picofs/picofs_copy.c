@@ -94,7 +94,7 @@ extern SemaphoreHandle_t picofs_mutex;
  * \param fd     file descriptor 
  * \return 0 on success
  */
-int picofs_copy(const char *src, const char *dst)
+int picofs_copy(const char *dst, const char *src)
 {
     int err = -1;
     int i;

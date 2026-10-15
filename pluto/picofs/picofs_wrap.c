@@ -291,7 +291,7 @@ int __wrap__unlink(const char *name)
 int __wrap_rename(const char *old_path, const char *new_path) 
 {
 
-    return(picofs_rename(old_path, new_path));  // NB picofs_rename takes care of locking internally
+    return(picofs_rename(new_path, old_path));  // NB picofs_rename takes care of locking internally
 
     return 0;
 }

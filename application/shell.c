@@ -340,11 +340,13 @@ static void execute_shell_command(const char* cmd)
     } 
     else if (strcmp(cmd, "ls a") == 0) 
     {
-        hc_queue_send(HC_CMD_LIST_CORRUPT);          
+        //hc_queue_send(HC_CMD_LIST_CORRUPT); 
+        shell_queue_list_all(((char *)(cmd+5)));         
     } 
     else if (strcmp(cmd, "ls") == 0) 
     {
-        hc_queue_send(HC_CMD_LIST);          
+        //hc_queue_send(HC_CMD_LIST); 
+        shell_queue_list(((char *)(cmd+3)));         
     }     
     else if (strcmp(cmd, "dump program") == 0) 
     {
@@ -368,19 +370,23 @@ static void execute_shell_command(const char* cmd)
     }     
     else if (strcmp(cmd, "df") == 0) 
     {
-        hc_queue_send(HC_CMD_PAGE_MAP);  
+        //hc_queue_send(HC_CMD_PAGE_MAP); 
+        shell_queue_page_map(SHELL_MSG_PAGE_MAP); 
     }  
     else if (strcmp(cmd, "df n") == 0) 
     {
-        hc_queue_send(HC_CMD_PAGE_NUMBERS);  
+        //hc_queue_send(HC_CMD_PAGE_NUMBERS);
+        shell_queue_page_map(SHELL_MSG_PAGE_NUMBERS);   
     }      
     else if (strcmp(cmd, "cleanup") == 0) 
     {
-        hc_queue_send(HC_CMD_DISK_CLEANUP); 
+        // hc_queue_send(HC_CMD_DISK_CLEANUP); 
+        shell_queue_cleanup();
     }      
     else if (strcmp(cmd, "defrag") == 0) 
     {
-        hc_queue_send(HC_CMD_DEFRAGMENT); 
+        // hc_queue_send(HC_CMD_DEFRAGMENT); 
+        shell_queue_defragment();
     }     
     else if (strncmp(cmd, "boot ", 5) == 0) 
     {
@@ -1311,7 +1317,8 @@ int shell_move(char *src_space_dst)
 
     if ((strlen(src) > 2) && (strlen(dst) > 2))
     {
-        rename(src, dst);
+        //rename(src, dst);
+        shell_queue_move(dst, src);
     }
 
     return 0;
@@ -1364,7 +1371,8 @@ int shell_copy(char *src_space_dst)
 
     if ((strlen(src) > 2) && (strlen(dst) > 2))
     {
-        picofs_copy(src, dst);
+        //picofs_copy(dst, src);
+        shell_queue_copy(dst, src);
     }
 
     return 0;

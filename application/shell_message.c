@@ -67,8 +67,21 @@ void shell_task(void *params)
             case SHELL_MSG_HEXDUMP_FILE:
                 shell_do_hexdump((SM_GENERIC_FILE_T *)ucRxBuffer);
                 break;
-
-                
+            case SHELL_MSG_LIST:
+                shell_do_list((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;
+            case SHELL_MSG_LIST_ALL:
+                shell_do_list_all((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;                
+            case SHELL_MSG_STAT:
+                shell_do_stat((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;    
+            case SHELL_MSG_COPY:
+                shell_do_copy((SM_GENERIC_DST_SRC_T *)ucRxBuffer);
+                break;  
+            case SHELL_MSG_MOVE:
+                shell_do_move((SM_GENERIC_DST_SRC_T *)ucRxBuffer);
+                break;                                                
             default:
                 // Unknown or corrupted packet ID handler
                 break;

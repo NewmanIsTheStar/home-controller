@@ -226,10 +226,10 @@ void hc_task(__unused void *params)
                         dump_text_buffer();
                         break;   
                     case HC_CMD_LIST:
-                        picofs_list_all_files_from_cache();  // valid files in cache
+                        picofs_list_all_files_from_cache(NULL);  // valid files in cache
                         break;
                     case HC_CMD_LIST_CORRUPT:
-                        picofs_list_all_files_from_flash(true);  // all files in flash including corrupted ones
+                        picofs_list_all_files_from_flash(NULL, true);  // all files in flash including corrupted ones
                         break;                    
                     case HC_CMD_PING:
                         shell_ping(web.ping_target);
