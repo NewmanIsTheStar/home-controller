@@ -19,7 +19,7 @@
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>
 
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 // #include "task.h"
 
@@ -30,8 +30,8 @@
 
 #include "calendar.h"
 #include "utility.h"
-#include "config.h"
-#include "system_config.h"
+// #include "config.h"
+// #include "system_config.h"
 #include "application_config.h"
 // #include "watchdog.h"
 #include "pluto.h"

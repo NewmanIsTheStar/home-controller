@@ -1,15 +1,15 @@
-#include <fcntl.h>
+// #include <fcntl.h>
 #include "pico/cyw43_arch.h"
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 #include "pluto.h"
 #include "picofs.h"
-#include <stdio.h>
-#include <string.h>
-#include "pico/stdlib.h"
-#include "pico/cyw43_arch.h"
-#include "hardware/flash.h"
-#include "hardware/sync.h"
-#include "lwip/apps/http_client.h"
+// #include <stdio.h>
+// #include <string.h>
+// #include "pico/stdlib.h"
+// #include "pico/cyw43_arch.h"
+// #include "hardware/flash.h"
+// #include "hardware/sync.h"
+// #include "lwip/apps/http_client.h"
 
 // Define the offset in flash memory where the download should begin writing.
 // Ensure your linker script maps the secondary app space to start here.

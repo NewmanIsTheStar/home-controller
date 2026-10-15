@@ -1,6 +1,6 @@
 
 #include <fcntl.h>
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/stdlib.h"
 // #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
@@ -15,7 +15,7 @@
 // #include "lwip/sys.h"
 
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
+// #include "FreeRTOSConfig.h"
 #include "task.h"
 
 // #include "weather.h"
@@ -25,7 +25,7 @@
 // #include "config.h"
 #include "watchdog.h"
 #include "pluto.h"
-#include "shell.h"
+// #include "shell.h"
 #include "picofs.h"
 
 

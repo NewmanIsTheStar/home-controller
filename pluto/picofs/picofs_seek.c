@@ -5,26 +5,26 @@
  */
 
 //#include <errno.h>
-#include <fcntl.h>
-#include "pico/cyw43_arch.h"
+// #include <fcntl.h>
+// #include "pico/cyw43_arch.h"
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
 #include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
 #include "FreeRTOS.h"
-#include "semphr.h"
+// #include "semphr.h"
 // #include "shell.h"
 #include "picofs.h"
 // #include "pluto.h"

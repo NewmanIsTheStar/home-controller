@@ -17,7 +17,7 @@
 // #include <string.h>
 // #include <errno.h>
 // #include "hardware/structs/xip_ctrl.h"
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/types.h"
 // #include "pico/stdlib.h"
 // #include "pico/util/datetime.h"
@@ -44,25 +44,25 @@
 // #include "dhcpserver.h"
 // #include "dnsserver.h"
 
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 
 // #include "time.h"
 #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "task.h"
 
 // #include "cgi.h"
 
 // #include "utility.h"
 // #include "config.h"
-#include "config.h"
-#include "system_config.h"
+// #include "config.h"
+// #include "system_config.h"
 #include "application_config.h"
 // #include "watchdog.h"
 // #include "worker_tasks.h"
 // #include "pluto_wifi.h"
 // #include "calendar.h"
-#include "pluto.h"
+// #include "pluto.h"
 // #include "shell.h"
 // #include "picofs.h"
 // #include "config.h"

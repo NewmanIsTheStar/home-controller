@@ -17,10 +17,10 @@
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
 // #include "lwip/opt.h"
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 // #include "lwip/sys.h"
 
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 // #include "task.h"
 

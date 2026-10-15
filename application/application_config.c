@@ -11,11 +11,11 @@
 // #include <fcntl.h>
 // #include <unistd.h>
 // #include <string.h>
-#include <lwip/arch.h>
+// #include <lwip/arch.h>
 #include "lwip/sockets.h"
 // #include "picofs.h"
-#include "config.h"
-#include "system_config.h"
+// #include "config.h"
+// #include "system_config.h"
 #include "application_config.h"
 
 
@@ -25,7 +25,7 @@
 // #include "pico/flash.h"
 // #include <hardware/flash.h>
 
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 // #include "task.h"
 
@@ -35,7 +35,7 @@
 
 
 // #include "picofs.h"
-#include "system_config.h"
+// #include "system_config.h"
 #include "config.h"
 
 //#define DISABLE_CONFIG_UPGRADE

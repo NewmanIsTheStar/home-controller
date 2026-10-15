@@ -10,7 +10,7 @@
 
 #define _GNU_SOURCE
 
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/types.h"
 // #include "pico/stdlib.h"
 // #include <string.h>
@@ -26,7 +26,7 @@
 
 #include "lwip/sockets.h"
 
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 // #include "task.h"
 

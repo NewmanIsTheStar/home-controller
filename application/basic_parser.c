@@ -5,11 +5,13 @@ Description:Parsing functions for SNMP BASIC.
 ******************************************************************************/
 
 /*Include Files*/
+#include <stdint.h>
+#include <stdbool.h>
 // #include "setjmp.h"
 #include "math.h"
 // #include "ctype.h"
 // #include "stdlib.h"
-// #include "stdio.h"
+#include "stdio.h"
 // #include "string.h"
 #include "basic.h"
 #include "lwip/sockets.h"

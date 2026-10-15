@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 // #include <string.h>
 
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/stdlib.h"
 // #include "pico/util/datetime.h"
 //#include "hardware/rtc.h"
@@ -17,7 +17,7 @@
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>
 
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 // #include "task.h"
 
@@ -28,8 +28,8 @@
 
 // #include "calendar.h"
 #include "utility.h"
-#include "config.h"
-#include "system_config.h"
+// #include "config.h"
+// #include "system_config.h"
 #include "application_config.h"
 // #include "watchdog.h"
 // #include "powerwall.h"

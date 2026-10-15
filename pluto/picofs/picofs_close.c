@@ -13,7 +13,7 @@
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/stdlib.h"
 // #include "pico/rand.h"
 // #include "pico/util/datetime.h"

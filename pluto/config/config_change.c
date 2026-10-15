@@ -11,7 +11,7 @@
 // #include <fcntl.h>
 // #include <unistd.h>
 // #include <string.h>
-#include <lwip/arch.h>
+// #include <lwip/arch.h>
 // #include "picofs.h"
 // #include "config.h"
 // #include "system_config.h"

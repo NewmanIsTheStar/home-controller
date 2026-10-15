@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
 // #include <string.h>
 
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/stdlib.h"
 // #include "pico/util/datetime.h"
 // #include "hardware/rtc.h"
@@ -12,7 +12,7 @@
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
 // #include "lwip/opt.h"
-#include "lwip/sockets.h"
+// #include "lwip/sockets.h"
 // #include "lwip/netdb.h"
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>
@@ -34,14 +34,14 @@
 
 // #include "calendar.h"
 // #include "utility.h"
-#include "config.h"
-#include "system_config.h"
+// #include "config.h"
+// #include "system_config.h"
 #include "application_config.h"
 // #include "watchdog.h"
 // #include "powerwall.h"
 // #include "shelly.h"
 // #include "json_parser.h"
-#include "pluto.h"
+// #include "pluto.h"
 // #include "ping_core.h"
 // #include "shell.h"
 #include "web.h"

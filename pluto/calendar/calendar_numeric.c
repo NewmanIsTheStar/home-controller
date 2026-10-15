@@ -10,7 +10,7 @@
 
 #define _GNU_SOURCE
 
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/types.h"
 // #include "pico/stdlib.h"
 // #include <string.h>
@@ -18,14 +18,14 @@
 // #include "pico/util/datetime.h"
 // #include "hardware/watchdog.h"
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
-#include "lwip/sockets.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
+// #include "lwip/sockets.h"
 // #include "lwip/netif.h"
 // #include "lwip/ip4_addr.h"
 // #include "lwip/apps/lwiperf.h"
@@ -35,8 +35,8 @@
 #include "lwip/sockets.h"
 
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
 //#include "weather.h"
 #include "calendar.h"

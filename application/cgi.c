@@ -6,7 +6,7 @@
 
  #define _GNU_SOURCE
  
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/types.h"
 // #include "pico/stdlib.h"
 // #include <string.h>
@@ -27,7 +27,7 @@
 // #include "calendar.h"
 #include "utility.h"
 #include "config.h"
-#include "system_config.h"
+// #include "system_config.h"
 #include "application_config.h"
 //#include "led_strip.h"
 // #include "rmtsw.h"

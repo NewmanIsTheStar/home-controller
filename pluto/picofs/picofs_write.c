@@ -12,7 +12,7 @@
 // #include "generated/ws2812.pio.h"
 
 // Prune this list of includes
-#include "pico/cyw43_arch.h"
+// #include "pico/cyw43_arch.h"
 // #include "pico/stdlib.h"
 // #include "pico/rand.h"
 // #include "pico/util/datetime.h"
@@ -21,23 +21,23 @@
 // #include "pico/flash.h"
 #include <hardware/flash.h>
 
-#include "lwip/opt.h"
-#include "lwip/sockets.h"
+// #include "lwip/opt.h"
+// #include "lwip/sockets.h"
 #include "lwip/netdb.h"
-#include "lwip/sys.h"
-#include <lwip/dns.h>
+// #include "lwip/sys.h"
+// #include <lwip/dns.h>
 
 
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
-#include "dnsserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
+// #include "dnsserver.h"
 
 // #include "time.h"
-#include "FreeRTOS.h"
+// #include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 // #include "task.h"
 

@@ -10,18 +10,18 @@ Description:A BASIC interpreter with langauge extensions for SNMP and automatic
 #include <sys/stat.h> 
 #include <string.h>
 // #include <errno.h>
-#include "lwip/netif.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/apps/lwiperf.h"
-#include "lwip/apps/sntp.h"
-#include "lwip/apps/httpd.h"
-#include "dhcpserver.h"
+// #include "lwip/netif.h"
+// #include "lwip/ip4_addr.h"
+// #include "lwip/apps/lwiperf.h"
+// #include "lwip/apps/sntp.h"
+// #include "lwip/apps/httpd.h"
+// #include "dhcpserver.h"
 #include "dnsserver.h"
 //#include "lwip/sockets.h"
 
 #include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
+// #include "FreeRTOSConfig.h"
+// #include "task.h"
 
 /*Include Files*/
 // #include <stdio.h>

@@ -45,7 +45,7 @@
 #include "utility.h"
 #include "config.h"
 // #include "config.h"
-#include "system_config.h"
+// #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
 #include "worker_tasks.h"

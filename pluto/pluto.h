@@ -7,19 +7,17 @@
 #ifndef PLUTO_H
 #define PLUTO_H
 
-#include "lwip/sockets.h"
-
 #ifndef USEFUL_MACROS
-#define USEFUL_MACROS
-#define STRNCPY(dst, src, size)  {strncpy((dst), (src), (size)); *((dst)+(size)-1)=0;}
-#define STRNCAT(dst, src, size)  {if ((size) > 0) {*((dst)+(size)-1)=0; strncat((dst), (src), (size)-strlen((dst))-1);};}
-#define STRAPPEND(dst, src)  {*((dst)+(sizeof(dst))-1)=0; strncat((dst), (src), (sizeof(dst))-strlen((dst))-1);}
-#define NUM_ROWS(x) (sizeof(x)/sizeof(x[0]))
-#define MASKED_WRITE(dest,src,mask) {(dest) = (((dest) & (~(mask))) | ((src) & (mask)));}
-#define CLIP(x, low, high)  (x=(((x)>(high))?(high):(((x)<(low))?(low):(x))))
-#define SLEEP_MS(x) (vTaskDelay(x));
-#define FORCE_STRING_TERMINATION(x) {x[sizeof(x)-1]=0;}
-#define SAFEAROUND(x) ((x) >= 0 ? (int)((x) + 0.5f) : (int)((x) - 0.5f))
+    #define USEFUL_MACROS
+    #define STRNCPY(dst, src, size)  {strncpy((dst), (src), (size)); *((dst)+(size)-1)=0;}
+    #define STRNCAT(dst, src, size)  {if ((size) > 0) {*((dst)+(size)-1)=0; strncat((dst), (src), (size)-strlen((dst))-1);};}
+    #define STRAPPEND(dst, src)  {*((dst)+(sizeof(dst))-1)=0; strncat((dst), (src), (sizeof(dst))-strlen((dst))-1);}
+    #define NUM_ROWS(x) (sizeof(x)/sizeof(x[0]))
+    #define MASKED_WRITE(dest,src,mask) {(dest) = (((dest) & (~(mask))) | ((src) & (mask)));}
+    #define CLIP(x, low, high)  (x=(((x)>(high))?(high):(((x)<(low))?(low):(x))))
+    #define SLEEP_MS(x) (vTaskDelay(x));
+    #define FORCE_STRING_TERMINATION(x) {x[sizeof(x)-1]=0;}
+    #define SAFEAROUND(x) ((x) >= 0 ? (int)((x) + 0.5f) : (int)((x) - 0.5f))
 #endif
 
 typedef enum
@@ -57,7 +55,7 @@ typedef struct
 //int applet_entry_point(void);
 int pluto_application_restart(REBOOT_REASON_T reason);
 uint32_t pluto_get_reboot_reason(void);
-int pluto_boot_setup(u_int32_t exe_flash_offset, char *exe_linker_start_addr);
+int pluto_boot_setup(uint32_t exe_flash_offset, char *exe_linker_start_addr);
 int pluto_boot_launch(void);
 void pluto_boot_menu_task(void *pvParameters);
 int pluto_boot_status(void);
