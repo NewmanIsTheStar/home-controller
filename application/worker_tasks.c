@@ -23,6 +23,7 @@
 #include "discovery_task.h"
 // #include "kasa.h"
 #include "swload_task.h"
+#include "shell.h"
 
 // worker tasks to launch and monitor
 WORKER_TASK_T worker_tasks[] =
@@ -39,7 +40,7 @@ WORKER_TASK_T worker_tasks[] =
   {   discovery_task,      "Discovery Task",       8096,   1},          
  // {   kasa_discovery_task, "Kasa Discovery Task",  8096,   1},   
   {   swload_task,      "Software Load Task",       2048,   1},  
-
+  {   shell_task,       "Shell Task",               2048,   1},   
 
     // end of table
     {   NULL,           NULL,               0,      0,         }

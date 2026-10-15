@@ -14,6 +14,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         ssi.c
         cgi.c   
         shell.c   
+        shell_message.c
+        shell_cat.c
+        shell_hexdump.c
         kasa_discovery.c 
         application_config.c       
 )

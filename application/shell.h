@@ -3,6 +3,7 @@
 
 #define MAX_PROGRAM_SIZE (4096) 
 
+void shell_task(void *params);
 void shell_print_string(const char* text);
 void shell_printf(const char *format, ...);
 void pico_send_async_text(const char* text);

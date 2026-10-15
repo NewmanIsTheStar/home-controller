@@ -31,6 +31,8 @@
 #include "picofs.h"
 #include "calendar.h"
 #include "web.h"
+#include "shell.h"
+#include "shell_message.h"
 
 // defines
 #define ITEM_BUF_LEN (128)
@@ -406,13 +408,15 @@ static void execute_shell_command(const char* cmd)
     }      
     else if (strncmp(cmd, "cat ", 4) == 0) 
     {
-        web.file_to_cat = ((char *)(cmd+4)); 
-        hc_queue_send(HC_CMD_CAT_FILE);  
+        // web.file_to_cat = ((char *)(cmd+4)); 
+        // hc_queue_send(HC_CMD_CAT_FILE);  
+        shell_queue_cat(((char *)(cmd+4)));
     } 
     else if (strncmp(cmd, "hd ", 3) == 0) 
     {
-        web.file_to_hexdump = ((char *)(cmd+3)); 
-        hc_queue_send(HC_CMD_HEXDUMP_FILE);  
+        // web.file_to_hexdump = ((char *)(cmd+3)); 
+        // hc_queue_send(HC_CMD_HEXDUMP_FILE);  
+        shell_queue_hexdump(((char *)(cmd+3)));
     }     
     // else if (strncmp(cmd, "hd ", 3) == 0) 
     // {        
