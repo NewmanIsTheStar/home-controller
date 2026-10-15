@@ -324,8 +324,9 @@ static void execute_shell_command(const char* cmd)
     }
     else if (strncmp(cmd, "ping ", 5) == 0)
     {        
-        STRNCPY(web.ping_target, (char *)cmd+5, sizeof(web.ping_target));  // TODO: this is a kludge, should be passing this data in the queue 
-        hc_queue_send(HC_CMD_PING);
+        // STRNCPY(web.ping_target, (char *)cmd+5, sizeof(web.ping_target));  // TODO: this is a kludge, should be passing this data in the queue 
+        // hc_queue_send(HC_CMD_PING);
+        shell_queue_ping((char *)cmd+5);
     }     
     else if (strcmp(cmd, "ff") == 0)
     {

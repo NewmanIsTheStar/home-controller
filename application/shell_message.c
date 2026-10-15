@@ -81,7 +81,10 @@ void shell_task(void *params)
                 break;  
             case SHELL_MSG_MOVE:
                 shell_do_move((SM_GENERIC_DST_SRC_T *)ucRxBuffer);
-                break;                                                
+                break;   
+            case SHELL_MSG_PING:
+                shell_do_ping((SM_PING_T *)ucRxBuffer);
+                break;                                                               
             default:
                 // Unknown or corrupted packet ID handler
                 break;

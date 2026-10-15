@@ -45,6 +45,11 @@ typedef struct
     char dst[16];    
 } SM_GENERIC_DST_SRC_T;
 
+typedef struct 
+{
+    SHELL_MSG_T message_id;
+    char address[24];
+} SM_PING_T;
 
 int shell_queue_cat(char *filename);
 int shell_do_cat(SM_GENERIC_FILE_T *msg);
@@ -68,5 +73,7 @@ int shell_queue_copy(char *dst, char *src);
 int shell_do_copy(SM_GENERIC_DST_SRC_T *msg);
 int shell_queue_move(char *dst, char *src);
 int shell_do_move(SM_GENERIC_DST_SRC_T *msg);
+int shell_queue_ping(char *address);
+int shell_do_ping(SM_PING_T *msg);
 
 #endif
