@@ -7,28 +7,28 @@ target_sources(${PROJECT_NAME} PRIVATE
         shelly_discovery.c
         shelly_monitor.c
         json_parser.c
-        basic_commands.c
-        basic_extensions.c
-        basic_interpreter.c
-        basic_parser.c                  
+        # basic_commands.c
+        # basic_extensions.c
+        # basic_interpreter.c
+        # basic_parser.c                  
         ssi.c
         cgi.c   
-        shell.c   
-        shell_message.c
-        shell_cat.c
-        shell_hexdump.c
-        shell_list.c
-        shell_stat.c
-        shell_page_map.c
-        shell_defragment.c
-        shell_cleanup.c
-        shell_unlink.c
-        shell_copy.c
-        shell_move.c
-        shell_ping.c
-        shell_boot.c
-        shell_download.c
-        shell_basic.c
+        # shell_http.c   
+        # shell_message.c
+        # shell_cat.c
+        # shell_hexdump.c
+        # shell_list.c
+        # shell_stat.c
+        # shell_page_map.c
+        # shell_defragment.c
+        # shell_cleanup.c
+        # shell_unlink.c
+        # shell_copy.c
+        # shell_move.c
+        # shell_ping.c
+        # shell_boot.c
+        # shell_download.c
+        # shell_basic.c
         kasa_discovery.c 
         application_config.c       
 )

@@ -11,6 +11,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     swload_task.c
 )
 
+add_subdirectory(shell)
 add_subdirectory(picofs)
 add_subdirectory(config) 
 add_subdirectory(dhcp)
@@ -20,6 +21,8 @@ add_subdirectory(calendar)
 add_subdirectory(udp)
 add_subdirectory(utility)
 add_subdirectory(watchdog)
+add_subdirectory(basic)
+
 
 if(PICO_BOARD STREQUAL "pico_w")
     set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/")

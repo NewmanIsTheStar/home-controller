@@ -38,6 +38,7 @@ target_link_libraries(picofs INTERFACE
     hardware_flash
     hardware_dma
     pico_cyw43_arch_lwip_sys_freertos
+    shell
 )
 
 # filesystem wrapping options

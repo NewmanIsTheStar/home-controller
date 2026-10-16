@@ -1,7 +1,7 @@
 #ifndef PICOFS_H
 #define PICOFS_H
 
-// set this to 1 to direct text output to the http shell
+// set this to 1 to direct text output to the http shell (TODO: move switch to CMakeLists.txt)
 #define USE_HTTP_SHELL (1)
 
 // set this to 1 to use a chunk of RAM to simulate flash for testing/development purposes
