@@ -365,8 +365,9 @@ static void execute_shell_command(const char* cmd)
     {
         if (strlen(cmd) > 5)
         {
-            web.basic_file_to_execute = ((char *)(cmd+4)); 
-            hc_queue_send(HC_CMD_BASIC_FILE);  
+            // web.basic_file_to_execute = ((char *)(cmd+4)); 
+            // hc_queue_send(HC_CMD_BASIC_FILE);  
+            shell_queue_basic_file(((char *)(cmd+4)));
         }
     }     
     else if (strcmp(cmd, "df") == 0) 
@@ -391,13 +392,15 @@ static void execute_shell_command(const char* cmd)
     }     
     else if (strncmp(cmd, "boot ", 5) == 0) 
     {
-        if (strlen(cmd) > 6) shell_boot((char *)(cmd+5));  
-        hc_queue_send(HC_CMD_BOOT); 
+        // if (strlen(cmd) > 6) shell_boot((char *)(cmd+5));  
+        // hc_queue_send(HC_CMD_BOOT); 
+        shell_queue_boot((char *)(cmd+5));
     }  
     else if (strncmp(cmd, "stat ", 5) == 0) 
     {
-        STRNCPY(web.stat_filename, ((char *)(cmd+5)), sizeof(web.stat_filename));
-        hc_queue_send(HC_CMD_STAT); 
+        // STRNCPY(web.stat_filename, ((char *)(cmd+5)), sizeof(web.stat_filename));
+        // hc_queue_send(HC_CMD_STAT);
+        shell_queue_stat(((char *)(cmd+5))); 
     }       
     else if (strncmp(cmd, "edit ", 5) == 0) 
     {
@@ -405,13 +408,15 @@ static void execute_shell_command(const char* cmd)
     }   
     else if (strncmp(cmd, "wget ", 5) == 0) 
     {
-        STRNCPY(web.download_url, ((char *)(cmd+5)), sizeof(web.download_url));
-        hc_queue_send(HC_CMD_DOWNLOAD_FILE);  
+        // STRNCPY(web.download_url, ((char *)(cmd+5)), sizeof(web.download_url));
+        // hc_queue_send(HC_CMD_DOWNLOAD_FILE);
+        shell_queue_download(((char *)(cmd+5)));  
     }     
     else if (strncmp(cmd, "verify ", 7) == 0) 
     {
-        STRNCPY(web.download_url, ((char *)(cmd+7)), sizeof(web.download_url));
-        hc_queue_send(HC_CMD_VERIFY_FILE);  
+        // STRNCPY(web.download_url, ((char *)(cmd+7)), sizeof(web.download_url));
+        // hc_queue_send(HC_CMD_VERIFY_FILE); 
+        shell_queue_verify(((char *)(cmd+7)));  
     }      
     else if (strncmp(cmd, "cat ", 4) == 0) 
     {
@@ -437,8 +442,9 @@ static void execute_shell_command(const char* cmd)
     {
         //if (strlen(cmd) > 4) remove((char *)(cmd+3));  
 
-        STRNCPY(web.delete_filename, ((char *)(cmd+3)), sizeof(web.delete_filename));
-        hc_queue_send(HC_CMD_DELETE_FILE);  
+        // STRNCPY(web.delete_filename, ((char *)(cmd+3)), sizeof(web.delete_filename));
+        // hc_queue_send(HC_CMD_DELETE_FILE);
+        shell_queue_unlink(((char *)(cmd+3)));
     } 
     else if (strncmp(cmd, "mv ", 3) == 0) 
     {        

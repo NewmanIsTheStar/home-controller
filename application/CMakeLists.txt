@@ -26,6 +26,9 @@ target_sources(${PROJECT_NAME} PRIVATE
         shell_copy.c
         shell_move.c
         shell_ping.c
+        shell_boot.c
+        shell_download.c
+        shell_basic.c
         kasa_discovery.c 
         application_config.c       
 )

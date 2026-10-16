@@ -12,13 +12,13 @@
 
 // Define the total buffer size in bytes 
 #define STREAM_BUFFER_SIZE_BYTES    (1024)
-
+#define MAX_MSG_SIZE   (256)
 
 
 
 MessageBufferHandle_t xMessageBuffer;
 
-void vBufferInit(void) 
+void shell_buffer_init(void) 
 {
     // Create the message buffer
     xMessageBuffer = xMessageBufferCreate(STREAM_BUFFER_SIZE_BYTES);
@@ -29,22 +29,13 @@ void vBufferInit(void)
     }
 }
 
-void vSenderTask(void *pvParameters) 
-{
-    // SensorData_t xSensor = { .xMsgId = MSG_ID_SENSOR_DATA, .fTemperature = 23.8 };
-    // SetPoints_t xTarget  = { .xMsgId = MSG_ID_SETPOINTS,   .fTargetTemp = 25.0 };
-
-    // xMessageBufferSend(xMessageBuffer, &xSensor, sizeof(xSensor), portMAX_DELAY);
-    // xMessageBufferSend(xMessageBuffer, &xTarget, sizeof(xTarget), portMAX_DELAY);
-}
-
-
-#define MAX_MSG_SIZE   (32)
 
 void shell_task(void *params) 
 {
     uint8_t ucRxBuffer[MAX_MSG_SIZE];
     size_t xReceivedBytes;
+
+    shell_buffer_init();
 
     for (;;) 
     {
@@ -84,7 +75,25 @@ void shell_task(void *params)
                 break;   
             case SHELL_MSG_PING:
                 shell_do_ping((SM_PING_T *)ucRxBuffer);
-                break;                                                               
+                break;  
+            case SHELL_MSG_BOOT:
+                shell_do_boot((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;  
+            case SHELL_MSG_DOWNLOAD_FILE:
+                shell_do_download((SM_GENERIC_URL_T *)ucRxBuffer);
+                break; 
+            case SHELL_MSG_VERIFY_FILE:
+                shell_do_verify((SM_GENERIC_URL_T *)ucRxBuffer);
+                break; 
+            case SHELL_MSG_BASIC_FILE:
+                shell_do_basic_file((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;    
+            case SHELL_MSG_BASIC_SCRIPT:
+                shell_do_basic_script((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break; 
+            case SHELL_MSG_BASIC_INTERACTIVE:
+                shell_do_basic_interactive((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;                                                                                                                                                          
             default:
                 // Unknown or corrupted packet ID handler
                 break;

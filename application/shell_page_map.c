@@ -12,12 +12,14 @@
 #include "shell_message.h"
 #include "shell.h"
 #include "picofs.h"
+extern MessageBufferHandle_t xMessageBuffer;
 
 int shell_queue_page_map(SHELL_MSG_T msg_id)
 {
     SM_GENERIC_FILE_T msg;
 
     msg.message_id = msg_id;
+    xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
 
     return(0);
 }

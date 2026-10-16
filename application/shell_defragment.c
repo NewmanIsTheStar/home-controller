@@ -12,12 +12,16 @@
 #include "shell_message.h"
 #include "shell.h"
 #include "picofs.h"
+extern MessageBufferHandle_t xMessageBuffer;
 
 int shell_queue_defragment(void)
 {
     SM_GENERIC_FILE_T msg;
 
     msg.message_id = SHELL_MSG_DEFRAGMENT;
+
+    xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
+
 
     return(0);
 }

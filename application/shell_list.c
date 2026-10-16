@@ -12,6 +12,7 @@
 #include "shell_message.h"
 #include "shell.h"
 #include "picofs.h"
+extern MessageBufferHandle_t xMessageBuffer;
 
 int shell_queue_list(char *filename)
 {
@@ -19,6 +20,8 @@ int shell_queue_list(char *filename)
 
     msg.message_id = SHELL_MSG_LIST;
     STRNCPY(msg.filename, filename, sizeof(msg.filename));
+
+    xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
 
     return(0);
 }

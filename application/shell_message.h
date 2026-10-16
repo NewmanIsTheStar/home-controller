@@ -48,6 +48,12 @@ typedef struct
 typedef struct 
 {
     SHELL_MSG_T message_id;
+    char url[128];
+} SM_GENERIC_URL_T;
+
+typedef struct 
+{
+    SHELL_MSG_T message_id;
     char address[24];
 } SM_PING_T;
 
@@ -75,5 +81,17 @@ int shell_queue_move(char *dst, char *src);
 int shell_do_move(SM_GENERIC_DST_SRC_T *msg);
 int shell_queue_ping(char *address);
 int shell_do_ping(SM_PING_T *msg);
+int shell_queue_boot(char *filename);
+int shell_do_boot(SM_GENERIC_FILE_T *msg);
+int shell_queue_download(char *address);
+int shell_do_download(SM_GENERIC_URL_T *msg);
+int shell_queue_verify(char *address);
+int shell_do_verify(SM_GENERIC_URL_T *msg);
+int shell_queue_basic_file(char *filename);
+int shell_do_basic_file(SM_GENERIC_FILE_T *msg);
+int shell_queue_basic_script(char *filename);
+int shell_do_basic_script(SM_GENERIC_FILE_T *msg);
+int shell_queue_basic_interactive(char *filename);
+int shell_do_basic_interactive(SM_GENERIC_FILE_T *msg);
 
 #endif
