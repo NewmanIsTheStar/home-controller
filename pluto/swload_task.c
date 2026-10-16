@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 NewmanIsTheStar
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 
 #include <fcntl.h>
 // #include "pico/cyw43_arch.h"

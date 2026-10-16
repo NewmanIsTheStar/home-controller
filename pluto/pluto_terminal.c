@@ -1,14 +1,20 @@
-// #include <stdio.h>
-// #include <string.h>
-// #include "pico/stdlib.h"
-// #include "pico/stdio_usb.h"
-// #include "pico/stdio_usb.h"
-// #include "pico/time.h" // Required for hardware absolute timing
-// #include "hardware/uart.h"
+/*
+ * Copyright (c) 2026 NewmanIsTheStar
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
+#include <stdio.h>
+#include <string.h>
+#include "pico/stdlib.h"
+#include "pico/stdio_usb.h"
+#include "pico/stdio_usb.h"
+#include "pico/time.h" // Required for hardware absolute timing
+#include "hardware/uart.h"
 
 // FreeRTOS Includes
-// #include "FreeRTOS.h"
-// #include "task.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #define MAX_LINE_LEN 80
 #define MENU_DISCONNECTED -2

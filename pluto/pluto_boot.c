@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2024 NewmanIsTheStar
+/*
+ * Copyright (c) 2026 NewmanIsTheStar
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */

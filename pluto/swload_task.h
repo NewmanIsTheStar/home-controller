@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 NewmanIsTheStar
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
 #ifndef SWLOAD_TASK_H
 #define SWLOAD_TASK_H
 
