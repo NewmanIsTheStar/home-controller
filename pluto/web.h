@@ -139,7 +139,15 @@ typedef struct {
 //   char *shelly_device_ip;
 } WEB_SESSION_STATE_T;
 
+typedef const char *(*tMYCGIHandler)(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state);
+typedef struct
+{
+    const char *pcCGIName;
+    tMYCGIHandler pfnCGIHandler;
+} MY_CGI_T;
+
 int init_web_variables(void);
+void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
 
 #endif
 

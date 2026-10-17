@@ -5,6 +5,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_malloc.c
     pluto_boot.c
     pluto_uf2.c
+    pluto_cgi.c
     # pluto_terminal.c
     web.c    
     system_config.c
@@ -96,3 +97,55 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/githash.h
     @ONLY
 )
+
+# ******************************************************
+# ***generate embedded file system for the web server***
+# ******************************************************
+
+# define a flat staging directory inside the build folder
+set(WEB_STAGING_DIR "${CMAKE_CURRENT_BINARY_DIR}/web_staging")
+
+# create the staging folder during configuration
+file(MAKE_DIRECTORY "${WEB_STAGING_DIR}")
+
+# add pluto web files
+file(GLOB ALL_SOURCE_FILES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.shtml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.ico"
+)
+# check if the application directory exists
+set(APP_HTML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../application/html_files")
+if(EXISTS "${APP_HTML_DIR}")
+    # add the application web files if present
+    file(GLOB APP_FILES 
+        "${APP_HTML_DIR}/*.shtml"
+        "${APP_HTML_DIR}/*.ico"
+    )
+    list(APPEND ALL_SOURCE_FILES ${APP_FILES})
+endif()
+
+set(STAGED_FILES)
+
+# copy each web file into the staging directory
+foreach(SRC_FILE ${ALL_SOURCE_FILES})
+    get_filename_component(FILE_NAME "${SRC_FILE}" NAME)
+    set(DEST_FILE "${WEB_STAGING_DIR}/${FILE_NAME}")
+    
+    add_custom_command(
+        OUTPUT "${DEST_FILE}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${SRC_FILE}" "${DEST_FILE}"
+        DEPENDS "${SRC_FILE}"
+        COMMENT "Staging ${FILE_NAME} for lwIP"
+    )
+    list(APPEND STAGED_FILES "${DEST_FILE}")
+endforeach()
+
+# create a custom target so CMake actually runs the copy commands
+add_custom_target(stage_web_files DEPENDS ${STAGED_FILES})
+
+# generate the HTTPD content using the staged files list
+pico_add_library(pico_httpd_content NOFLAG)
+pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${STAGED_FILES})
+
+# ensure the staging completes before the Pico tool runs
+add_dependencies(pico_httpd_content_pico_set_lwip_httpd_content stage_web_files)

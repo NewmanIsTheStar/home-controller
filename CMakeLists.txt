@@ -80,9 +80,20 @@ add_executable(${PROJECT_NAME})
 #     pico_cyw43_arch_lwip_sys_freertos
 # )
 
+
+# # Initialize a global property to hold web file paths
+# set_property(GLOBAL PROPERTY GLOBAL_WEB_FILES "")
+
+# Process both subdirectories
 add_subdirectory(pluto)  
 add_subdirectory(application)
-# add_subdirectory(picofs)
+
+# # Retrieve the combined list after subdirectories have run
+# get_property(ALL_WEB_FILES GLOBAL PROPERTY GLOBAL_WEB_FILES)
+
+# # Generate the single combined blob with html from pluto and app
+# pico_add_library(pico_httpd_content NOFLAG)
+# pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${ALL_WEB_FILES})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_NAME="${PROJECT_NAME}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_HOME_CONTROLLER)

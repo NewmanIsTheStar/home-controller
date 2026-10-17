@@ -12,7 +12,7 @@ target_sources(${PROJECT_NAME} PRIVATE
         # basic_interpreter.c
         # basic_parser.c                  
         ssi.c
-        cgi.c   
+        application_cgi.c   
         # shell_http.c   
         # shell_message.c
         # shell_cat.c
@@ -39,9 +39,12 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # picofs library
 target_link_libraries(${PROJECT_NAME} PRIVATE project::picofs)
 
-# web server 
-set(WEB_FILES)
-file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.shtml")
-pico_add_library(pico_httpd_content NOFLAG)
-pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${WEB_FILES})
+# web server ***MOVED TO top level CMakeLists.txt
+# set(WEB_FILES)
+# file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.shtml")
+# pico_add_library(pico_httpd_content NOFLAG)
+# pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${WEB_FILES})
 
+# # add html files to global property to be picked up by top level CMakeLists.txt
+# file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.shtml")
+# set_property(GLOBAL PROPERTY GLOBAL_WEB_FILES APPEND PROPERTY GLOBAL_WEB_FILES ${WEB_FILES})
