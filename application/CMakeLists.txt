@@ -11,8 +11,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         # basic_extensions.c
         # basic_interpreter.c
         # basic_parser.c                  
-        ssi.c
         application_cgi.c   
+        application_ssi.c
         # shell_http.c   
         # shell_message.c
         # shell_cat.c

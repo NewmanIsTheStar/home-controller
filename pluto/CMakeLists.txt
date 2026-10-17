@@ -5,10 +5,11 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_malloc.c
     pluto_boot.c
     pluto_uf2.c
-    pluto_cgi.c
+    system_cgi.c
     # pluto_terminal.c
     web.c    
     system_config.c
+    system_ssi.c
     swload_task.c
 )
 

@@ -147,7 +147,7 @@ typedef struct
 } MY_CGI_T;
 
 int init_web_variables(void);
-void dump_parameters(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
+
 
 #endif
 
