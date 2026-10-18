@@ -46,4 +46,58 @@ int shell_do_copy(SM_GENERIC_DST_SRC_T *msg)
     
     return(0);
 }
-                   
+
+/*!
+ * \brief copy a file
+ *
+ * \param[in]  old_name  file source
+ * \param[in]  new_name  file destination
+ * \return nothing
+ */
+int shell_copy(char *src_space_dst)
+{
+    FILE *filePointer;
+    char buffer[256];
+    int i, j;
+    char src[16];
+    char dst[16];
+
+    src[0] = 0;
+    dst[0] = 0;
+
+    // extract source
+    for(i=0; i<strlen(src_space_dst); i++)
+    {
+        if (src_space_dst[i] == ' ')
+        {
+            src[i++] = 0;
+            break;
+        }
+
+        src[i] = src_space_dst[i];
+        src[i+1] = 0;
+    }
+
+    // extract destination
+    j = 0;
+    for(; i<strlen(src_space_dst); i++)
+    {
+        if ((src_space_dst[i] == 0) || (!isprint(src_space_dst[i])))
+        {
+            dst[j] = 0;
+            break;
+        }
+
+        dst[j++] = src_space_dst[i];
+        dst[j] = 0;
+    }
+
+    if ((strlen(src) > 2) && (strlen(dst) > 2))
+    {
+        //picofs_copy(dst, src);
+        shell_queue_copy(dst, src);
+    }
+
+    return 0;
+}
+

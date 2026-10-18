@@ -97,11 +97,11 @@ int hc_save_text_file_from_ascii_buffer(void);
 int hc_cat(char *filename);
 int hc_hex_dump(char *filename);
 void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_size);
-int hc_delete_file(void);
+// int hc_delete_file(void);
 int hc_download_file(void);
 int hc_verify_file(void);
 int hc_automation_run(int automation_number);
-int hc_boot_file(void);
+// int hc_boot_file(void);
 
 // external variables
 extern u32_t unix_time;
@@ -195,13 +195,13 @@ void hc_task(__unused void *params)
                 {
                     switch(hc_message)
                     {
-                    case HC_CMD_BASIC_INTERACTIVE:
-                        basic_Interpreter(IM_INTERACTIVE, NULL, NULL, basic_program_buffer, strlen(basic_program_buffer), false);
-                        break;
-                    case HC_CMD_BASIC_SCRIPT:
-                        basic_program[current_buffer_index++] = 0;
-                        basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index, false);                
-                        break;
+                    // case HC_CMD_BASIC_INTERACTIVE:
+                    //     basic_Interpreter(IM_INTERACTIVE, NULL, NULL, basic_program_buffer, strlen(basic_program_buffer), false);
+                    //     break;
+                    // case HC_CMD_BASIC_SCRIPT:
+                    //     basic_program[current_buffer_index++] = 0;
+                    //     basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index, false);                
+                    //     break;
                     // case HC_CMD_BASIC_FILE:
                     //     basic_Interpreter(IM_MMAP_FILE, NULL, web.basic_file_to_execute, NULL, 0, false);                
                     //     break; 
@@ -225,45 +225,45 @@ void hc_task(__unused void *params)
                     case HC_CMD_DUMP_PROGRAM:
                         dump_text_buffer();
                         break;   
-                    case HC_CMD_LIST:
-                        picofs_list_all_files_from_cache(NULL);  // valid files in cache
-                        break;
-                    case HC_CMD_LIST_CORRUPT:
-                        picofs_list_all_files_from_flash(NULL, true);  // all files in flash including corrupted ones
-                        break;                    
+                    // case HC_CMD_LIST:
+                    //     picofs_list_all_files_from_cache(NULL);  // valid files in cache
+                    //     break;
+                    // case HC_CMD_LIST_CORRUPT:
+                    //     picofs_list_all_files_from_flash(NULL, true);  // all files in flash including corrupted ones
+                    //     break;                    
                     // case HC_CMD_PING:
                     //     shell_ping(web.ping_target);
                     //     break;
-                    case HC_CMD_PAGE_MAP:    
-                        picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_MAP);
-                        break;
-                    case HC_CMD_PAGE_NUMBERS:
-                        picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_NUMBERS);
-                        break;
+                    // case HC_CMD_PAGE_MAP:    
+                    //     picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_MAP);
+                    //     break;
+                    // case HC_CMD_PAGE_NUMBERS:
+                    //     picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_NUMBERS);
+                    //     break;
                     case HC_CMD_SAVE_TEXT_FILE:
                         hc_save_text_file_from_ascii_buffer();
                         break;  
-                    case HC_CMD_DISK_CLEANUP:
-                        picofs_erase_obsolete_sectors(false);
-                        break;                
-                    case HC_CMD_DEFRAGMENT:
-                        //picofs_consolidate_all_files();
-                        picofs_consolidate_all_files_in_flash();
-                        break;
+                    // case HC_CMD_DISK_CLEANUP:
+                    //     picofs_erase_obsolete_sectors(false);
+                    //     break;                
+                    // case HC_CMD_DEFRAGMENT:
+                    //     //picofs_consolidate_all_files();
+                    //     picofs_consolidate_all_files_in_flash();
+                    //     break;
                     // case HC_CMD_STAT:                    
                     //     picofs_stat(web.stat_filename);
                     //     break;                        
-                    case HC_CMD_DELETE_FILE:                    
-                        hc_delete_file();
-                        break;
-                    case HC_CMD_DOWNLOAD_FILE:                    
-                        hc_download_file();
-                        break;      
-                    case HC_CMD_VERIFY_FILE:                    
-                        hc_verify_file();
-                        break;  
-                    case HC_CMD_BOOT:
-                        hc_boot_file();
+                    // case HC_CMD_DELETE_FILE:                    
+                    //     hc_delete_file();
+                    //     break;
+                    // case HC_CMD_DOWNLOAD_FILE:                    
+                    //     hc_download_file();
+                    //     break;      
+                    //   case HC_CMD_VERIFY_FILE:                    
+                    //     hc_verify_file();
+                    //     break;
+                    // case HC_CMD_BOOT:
+                    //     hc_boot_file();
                         break;
                     default:
                         printf("HC task received unrecognized message (%d)\n", hc_message);
@@ -433,33 +433,6 @@ int hc_save_text_file_from_ascii_buffer(void)
     char *automation_name;
     char *body;
    
-    // extract filename from first line of the buffer
-    // copy_first_line(filename, editor_text, sizeof(filename)); 
-
-    // if (filename[0] == 0)
-    // {
-    //     strncpy(filename, "unnamed", sizeof(filename));
-    // }
-
-    // special case: automations contain the user defined descriptive name on the second buffer line
-    // if (strncmp(filename, "automation", 10) == 0)
-    // {
-    //     sscanf(filename+10, "%d", &automation_number);
-    //     CLIP(automation_number, 0, 31);
-    //     automation_name = strchr(editor_text, '\n') + 1;
-
-    //     copy_first_line(cfg->automation_name[automation_number], automation_name, sizeof(cfg->automation_name[automation_number])); 
-
-    //     body = strchr(automation_name, '\n') + 1;  
-        
-    //     cfg->automation_status[automation_number] = AUTOMATION_ENABLED;
-    //     printf("setting status for automation number %d to Enabled\n", automation_number);        
-    // }
-    // else
-    // {
-    //     body = strchr(editor_text, '\n') + 1;
-    // }
-
     // nothing prepended to the file
     body = (char *)editor_text;
     STRNCPY(filename, web.edit_text_filename, sizeof(filename));
@@ -651,24 +624,24 @@ int hc_get_new_automation_number(void)
     return(err);    
 }
 
-int hc_delete_file(void)
-{
-    int err = -1;
+// int hc_delete_file(void)
+// {
+//     int err = -1;
 
-    if (web.delete_filename[0])
-    {
-        if (err = remove(web.delete_filename))
-        {
-            shell_printf("rm: failed to delete %s\n", web.delete_filename);
-        }
-    }
-    else
-    {
-        shell_printf("rm: error: no filename provided\n");
-    }
+//     if (web.delete_filename[0])
+//     {
+//         if (err = remove(web.delete_filename))
+//         {
+//             shell_printf("rm: failed to delete %s\n", web.delete_filename);
+//         }
+//     }
+//     else
+//     {
+//         shell_printf("rm: error: no filename provided\n");
+//     }
 
-    return(err);
-}
+//     return(err);
+// }
 
 
 int hc_download_file(void)
@@ -719,49 +692,49 @@ int hc_verify_file(void)
     return(err);
 }
 
-int hc_boot_file(void)
-{
-    int err = -1;
-    int exe_fd = -1;
-    char *map;    
+// int hc_boot_file(void)
+// {
+//     int err = -1;
+//     int exe_fd = -1;
+//     char *map;    
 
-    if (web.boot_filename[0])
-    {
-        // open the file with for read
-        exe_fd = open(web.boot_filename, O_RDONLY, 0644);
-        if (exe_fd == -1) 
-        {
-            perror("hc_boot_file: Error opening/creating file");
-            return EXIT_FAILURE;
-        }
+//     if (web.boot_filename[0])
+//     {
+//         // open the file with for read
+//         exe_fd = open(web.boot_filename, O_RDONLY, 0644);
+//         if (exe_fd == -1) 
+//         {
+//             perror("hc_boot_file: Error opening/creating file");
+//             return EXIT_FAILURE;
+//         }
 
-        // map the file so that tasks can access it directly as memory (rather than using file i/o)
-        map = picofs_mmap(NULL, 0, PROT_READ, MAP_SHARED, exe_fd, 0);
-        if (map == MAP_FAILED) 
-        {
-            perror("hc_boot_file: Error mapping the file");
-            close(exe_fd);
-            exe_fd = -1;
-            return EXIT_FAILURE;
-        }
+//         // map the file so that tasks can access it directly as memory (rather than using file i/o)
+//         map = picofs_mmap(NULL, 0, PROT_READ, MAP_SHARED, exe_fd, 0);
+//         if (map == MAP_FAILED) 
+//         {
+//             perror("hc_boot_file: Error mapping the file");
+//             close(exe_fd);
+//             exe_fd = -1;
+//             return EXIT_FAILURE;
+//         }
 
-        picofs_munmap(map, 0);
+//         picofs_munmap(map, 0);
 
-        close(exe_fd);
-        exe_fd = -1;
-    }
-    else
-    {
-        shell_printf("boot: error: no file provided\n");
-    }
+//         close(exe_fd);
+//         exe_fd = -1;
+//     }
+//     else
+//     {
+//         shell_printf("boot: error: no file provided\n");
+//     }
 
-    // for now we assume executable was linked to be loaded at the standard location (XIP_BASE)
-    pluto_boot_setup((u_int32_t)map - FS_BASE, (char *)XIP_BASE);
+//     // for now we assume executable was linked to be loaded at the standard location (XIP_BASE)
+//     pluto_boot_setup((u_int32_t)map - FS_BASE, (char *)XIP_BASE);
 
-    shell_printf("boot file set to: %s @ %p\n", web.boot_filename, map);
+//     shell_printf("boot file set to: %s @ %p\n", web.boot_filename, map);
 
-    return(err);
-}
+//     return(err);
+// }
 
 bool hc_automation_condition(bool condition)
 {

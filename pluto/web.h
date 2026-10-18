@@ -24,18 +24,15 @@ typedef struct WEB_VARIABLES
   int bind_failures;
   int connect_failures;  
   int syslog_transmit_failures;
-  //int govee_transmit_failures;
-  // int weather_station_transmit_failures;
   int pluto_transmit_failures;
-  char software_server[100];     //remove
-  char software_url[100];        //remove
-  char software_file[100];       //remove
-  char boot_filename[16];        //remove
+  char software_server[100];     
+  char software_url[100];        
+  char software_file[100];
+  int download_now;    
   char edit_text_filename[16];   //remove 
-  char delete_filename[16];      //remove
   char *shelly_device_ip;        //exterminate
   int automation_running;
-  int download_now;              //remove
+            
 } WEB_VARIABLES_T;                  //remember to add initialization code when adding to this structure !!!
 
 typedef struct {

@@ -203,8 +203,11 @@ const char * cgi_hc_automation_delete_handler(int iIndex, int iNumParams, char *
                     cfg->automation_state[automation_number] = AUTOMATION_UNDEFINED;
                     sprintf(cfg->automation_name[automation_number], "automation%02d", automation_number); 
 
-                    sprintf(web.delete_filename, "automation%02d", automation_number);
-                    hc_queue_send(HC_CMD_DELETE_FILE);
+                    // sprintf(web.delete_filename, "automation%02d", automation_number);
+                    // hc_queue_send(HC_CMD_DELETE_FILE);
+
+                    sprintf(automation_file_name, "automation%02d", automation_number);
+                    shell_queue_unlink(automation_file_name);
                 }
             }                       
         }
@@ -261,7 +264,7 @@ const char * cgi_hc_automation_save_handler(int iIndex, int iNumParams, char *pc
 
             if (strcasecmp("afname", param) == 0)
             {                              
-                STRNCPY(web.edit_text_filename, value, sizeof(web.edit_text_filename));
+                STRNCPY(web.edit_text_filename, value, sizeof(web.edit_text_filename));  //TODO: why is this here?
 
                  sscanf(value, "automation%02d", &extracted_automation_number);
 

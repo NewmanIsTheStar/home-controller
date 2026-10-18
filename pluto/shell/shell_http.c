@@ -56,9 +56,9 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 #endif
 
 // prototypes
-int shell_boot(char *filename);
+// int shell_boot(char *filename);
 int shell_edit(char *filename);
-int shell_cat(char *filename);
+// int shell_cat(char *filename);
 void shell_printf_nb(const char *format, ...);
 int shell_map_test(char *filename);
 
@@ -474,9 +474,10 @@ static void execute_shell_command(const char* cmd)
     } 
     else 
     {
-        // pass to BASIC interpreter
-        hc_load_basic_program((char *)cmd, strlen(cmd));
-        hc_queue_send(HC_CMD_BASIC_INTERACTIVE);        
+        // // pass to BASIC interpreter
+        // hc_load_basic_program((char *)cmd, strlen(cmd));
+        // hc_queue_send(HC_CMD_BASIC_INTERACTIVE);    
+        pico_send_async_text("Command not found\n");    
     }
 }
 
@@ -1021,24 +1022,24 @@ void dump_text_buffer(void)
     printf("\n");    
 }
 
-/*!
- * \brief boot the file
- *
- * \param[in]  filename  file to print to shell
- * \return nothing
- */
-int shell_boot(char *filename)
-{
-    FILE *filePointer = NULL;
-    int file_size = 0;
-    char buffer[256];
+// /*!
+//  * \brief boot the file
+//  *
+//  * \param[in]  filename  file to print to shell
+//  * \return nothing
+//  */
+// int shell_boot(char *filename)
+// {
+//     FILE *filePointer = NULL;
+//     int file_size = 0;
+//     char buffer[256];
 
  
-    // remember name of file to boot
-    STRNCPY(web.boot_filename, filename, sizeof(web.boot_filename));
+//     // remember name of file to boot
+//     STRNCPY(web.boot_filename, filename, sizeof(web.boot_filename));
 
-    return 0;
-}
+//     return 0;
+// }
 
 /*!
  * \brief edit the content of a text file
@@ -1051,7 +1052,6 @@ int shell_edit(char *filename)
     FILE *filePointer = NULL;
     int file_size = 0;
     char buffer[256];
-
 
     // initialize ascii buffer
     memset(ASCII_HEADER_SIZE + ascii_ram_buffer, 0, sizeof(ascii_ram_buffer) - ASCII_HEADER_SIZE);
@@ -1083,154 +1083,111 @@ int shell_edit(char *filename)
     return 0;
 }
 
-/*!
- * \brief print the contents of a text file to the shell
- *
- * \param[in]  filename  file to print to shell
- * \return nothing
- */
-int shell_cat(char *filename)
-{
-    FILE *filePointer;
-    char buffer[128];
+// /*!
+//  * \brief print the contents of a text file to the shell
+//  *
+//  * \param[in]  filename  file to print to shell
+//  * \return nothing
+//  */
+// int shell_cat(char *filename)
+// {
+//     FILE *filePointer;
+//     char buffer[128];
 
-    // open the file in read mode ("r")
-    filePointer = fopen(filename, "r");
+//     // open the file in read mode ("r")
+//     filePointer = fopen(filename, "r");
 
-    // check if the file exists and opened successfully
-    if (filePointer == NULL) 
-    {
-        shell_printf_nb("cat: %s: No such file\n", filename);
-        return 1; 
-    }
+//     // check if the file exists and opened successfully
+//     if (filePointer == NULL) 
+//     {
+//         shell_printf_nb("cat: %s: No such file\n", filename);
+//         return 1; 
+//     }
 
-    // read and print the file line-by-line
-    while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
-    {
-        shell_printf_nb("%s", buffer);              //TODO: call shell_cat() from another task and use blocking shell_printf to avoid data loss
-    }
+//     // read and print the file line-by-line
+//     while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
+//     {
+//         shell_printf_nb("%s", buffer);              //TODO: call shell_cat() from another task and use blocking shell_printf to avoid data loss
+//     }
 
-    // close the file to free up system resources
-    fclose(filePointer);
+//     // close the file to free up system resources
+//     fclose(filePointer);
 
-    return 0;
-}
+//     return 0;
+// }
 
-/*!
- * \brief print hex dump of buffer
- * 
- * \param[in]  filename  file to dump to shell
- * \return nothing
- */
-int shell_hex_dump(char *filename)
-{
-    FILE *filePointer;
-    unsigned char buffer[16];
-    size_t bytes_read = 0;
-    char output_line[160];
-    char output_byte[8];
-    int i;
+// /*!
+//  * \brief print hex dump of buffer
+//  * 
+//  * \param[in]  filename  file to dump to shell
+//  * \return nothing
+//  */
+// int shell_hex_dump(char *filename)
+// {
+//     FILE *filePointer;
+//     unsigned char buffer[16];
+//     size_t bytes_read = 0;
+//     char output_line[160];
+//     char output_byte[8];
+//     int i;
 
-    printf("hexdump %d\n", filename);
+//     printf("hexdump %d\n", filename);
 
-    // 1. Open the file in read binary mode ("r")
-    filePointer = fopen(filename, "rb");
+//     // 1. Open the file in read binary mode ("r")
+//     filePointer = fopen(filename, "rb");
 
-    // 2. Check if the file exists and opened successfully
-    if (filePointer == NULL) 
-    {
-        shell_printf_nb("hd: %s: No such file\n", filename);
-        return 1; 
-    }
+//     // 2. Check if the file exists and opened successfully
+//     if (filePointer == NULL) 
+//     {
+//         shell_printf_nb("hd: %s: No such file\n", filename);
+//         return 1; 
+//     }
 
-    // 3. Read and print the file 16 bytes at a time
-    while (bytes_read = fread(buffer, 1, sizeof(buffer), filePointer))
-    {
-        if(bytes_read)
-        {
-            output_line[0] = 0;
+//     // 3. Read and print the file 16 bytes at a time
+//     while (bytes_read = fread(buffer, 1, sizeof(buffer), filePointer))
+//     {
+//         if(bytes_read)
+//         {
+//             output_line[0] = 0;
 
-            for (i = 0; i < bytes_read;i++) 
-            {
-                snprintf(output_byte, sizeof(output_byte), "%02x ", buffer[i]);
-                STRAPPEND(output_line, output_byte);
-            }            
+//             for (i = 0; i < bytes_read;i++) 
+//             {
+//                 snprintf(output_byte, sizeof(output_byte), "%02x ", buffer[i]);
+//                 STRAPPEND(output_line, output_byte);
+//             }            
 
-             // add extra padding if less than 16 bytes (i.e. last line)
-            for (; i<16; i++)
-            {
-                STRAPPEND(output_line, "   ");
-            }
+//              // add extra padding if less than 16 bytes (i.e. last line)
+//             for (; i<16; i++)
+//             {
+//                 STRAPPEND(output_line, "   ");
+//             }
 
-            STRAPPEND(output_line, " ");  
-            for (i = 0; i < bytes_read; i++) 
-            {
-                if (isprint(buffer[i]))
-                {
-                   snprintf(output_byte, sizeof(output_byte), "%c", buffer[i]);
-                   STRAPPEND(output_line, output_byte);
-                }
-                else
-                {
-                    snprintf(output_byte, sizeof(output_byte), "-");
-                    STRAPPEND(output_line, output_byte);
-                }
-            }
+//             STRAPPEND(output_line, " ");  
+//             for (i = 0; i < bytes_read; i++) 
+//             {
+//                 if (isprint(buffer[i]))
+//                 {
+//                    snprintf(output_byte, sizeof(output_byte), "%c", buffer[i]);
+//                    STRAPPEND(output_line, output_byte);
+//                 }
+//                 else
+//                 {
+//                     snprintf(output_byte, sizeof(output_byte), "-");
+//                     STRAPPEND(output_line, output_byte);
+//                 }
+//             }
 
-            STRAPPEND(output_line, "\n");
-            shell_printf_nb("%s", output_line);                //TODO: call shell_hex_dump() from another task and use blocking shell_printf to avoid data loss
-        }        
-    }
+//             STRAPPEND(output_line, "\n");
+//             shell_printf_nb("%s", output_line);                //TODO: call shell_hex_dump() from another task and use blocking shell_printf to avoid data loss
+//         }        
+//     }
 
-    // 4. Close the file to free up system resources
-    fclose(filePointer);
+//     // 4. Close the file to free up system resources
+//     fclose(filePointer);
 
-    return(0);
-}
+//     return(0);
+// }
 
-/*!
- * \brief ping - icmp echo request
- * \param[in]  ipv4_string  ip address to send icmp echo 
- * \return 0 on success, -1 on error
- */
-int shell_ping(char *ipv4_string)
-{
-    u32_t ip;
-    int values[4] = {0,0,0,0};
-    u8_t byte = 0;
-    int i;
-
-    // static int number_of_shelly_devices = 0;
-    // char device_type[32];
-    // char device_id[32];
-    ip_addr_t ping_addr;
-    int ping_err = -1;
-
-    sscanf(ipv4_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
-    
-    ip   = 0x00000000;
-    for(i=0; i<4; i++)
-    {
-        byte = (u8_t)values[i];
-        ip = ip<<8 | byte;
-    }
-    ping_addr.addr = htonl(ip);
-
-    shell_printf_nb("PING %d.%d.%d.%d with 32 bytes of data\n", ((u8_t *)&ip)[3], ((u8_t *)&ip)[2], ((u8_t *)&ip)[1], ((u8_t *)&ip)[0]);
-
-    ping_err = ping_device(&ping_addr, 3);
-
-    if (!ping_err)
-    {
-        shell_printf_nb("ping successful\n");
-    } 
-    else
-    {
-        shell_printf_nb("ping failed with error %d\n", ping_err);
-    }
-
-    return(0);
-}
 
 /*!
  * \brief Non-Blocking method to printf to browser --USE WITHIN THIS FILE / overflow will be discarded--
@@ -1277,113 +1234,6 @@ void shell_printf_nb(const char *format, ...)
 
 }
 
-/*!
- * \brief move a file (rename)
- *
- * \param[in]  old_name  file source
- * \param[in]  new_name  file destination
- * \return nothing
- */
-int shell_move(char *src_space_dst)
-{
-    FILE *filePointer;
-    char buffer[256];
-    int i, j;
-    char src[16];
-    char dst[16];
-
-    src[0] = 0;
-    dst[0] = 0;
-
-    // extract source
-    for(i=0; i<strlen(src_space_dst); i++)
-    {
-        if (src_space_dst[i] == ' ')
-        {
-            src[i++] = 0;
-            break;
-        }
-
-        src[i] = src_space_dst[i];
-        src[i+1] = 0;
-    }
-
-    // extract destination
-    j = 0;
-    for(; i<strlen(src_space_dst); i++)
-    {
-        if ((src_space_dst[i] == 0) || (!isprint(src_space_dst[i])))
-        {
-            dst[j] = 0;
-            break;
-        }
-
-        dst[j++] = src_space_dst[i];
-        dst[j] = 0;
-    }
-
-    if ((strlen(src) > 2) && (strlen(dst) > 2))
-    {
-        //rename(src, dst);
-        shell_queue_move(dst, src);
-    }
-
-    return 0;
-}
-
-/*!
- * \brief copy a file
- *
- * \param[in]  old_name  file source
- * \param[in]  new_name  file destination
- * \return nothing
- */
-int shell_copy(char *src_space_dst)
-{
-    FILE *filePointer;
-    char buffer[256];
-    int i, j;
-    char src[16];
-    char dst[16];
-
-    src[0] = 0;
-    dst[0] = 0;
-
-    // extract source
-    for(i=0; i<strlen(src_space_dst); i++)
-    {
-        if (src_space_dst[i] == ' ')
-        {
-            src[i++] = 0;
-            break;
-        }
-
-        src[i] = src_space_dst[i];
-        src[i+1] = 0;
-    }
-
-    // extract destination
-    j = 0;
-    for(; i<strlen(src_space_dst); i++)
-    {
-        if ((src_space_dst[i] == 0) || (!isprint(src_space_dst[i])))
-        {
-            dst[j] = 0;
-            break;
-        }
-
-        dst[j++] = src_space_dst[i];
-        dst[j] = 0;
-    }
-
-    if ((strlen(src) > 2) && (strlen(dst) > 2))
-    {
-        //picofs_copy(dst, src);
-        shell_queue_copy(dst, src);
-    }
-
-    return 0;
-}
 
 
 
