@@ -93,7 +93,7 @@ typedef struct
 int hc_wait(TickType_t timeout);
 int hc_initialize_queue(void);
 int hc_initialize(void);
-int hc_save_text_file_from_ascii_buffer(void);
+// int hc_save_text_file_from_ascii_buffer(void);
 int hc_cat(char *filename);
 int hc_hex_dump(char *filename);
 void copy_first_line(char *dest_buffer, const char *source_buffer, size_t dest_size);
@@ -240,9 +240,9 @@ void hc_task(__unused void *params)
                     // case HC_CMD_PAGE_NUMBERS:
                     //     picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_NUMBERS);
                     //     break;
-                    case HC_CMD_SAVE_TEXT_FILE:
-                        hc_save_text_file_from_ascii_buffer();
-                        break;  
+                    // case HC_CMD_SAVE_TEXT_FILE:
+                    //     hc_save_text_file_from_ascii_buffer();
+                    //     break;  
                     // case HC_CMD_DISK_CLEANUP:
                     //     picofs_erase_obsolete_sectors(false);
                     //     break;                

@@ -1,33 +1,17 @@
-//#define _GNU_SOURCE 
-// #include <sys/stat.h>
+/*
+ * Copyright (c) 2026 NewmanIsTheStar
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
 #include <fcntl.h>
-
 #include "pico/cyw43_arch.h"
-
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
 #include "task.h"
-
-// #include "lwip/opt.h"
-// #include "lwip/apps/httpd.h"
 #include "lwip/apps/fs.h"
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
 #include "lwip/sockets.h"
-
-// #include <string.h>
 #include "hc_task.h"
-// #include "pluto.h"
-// #include "shell.h"
 #include "ping_core.h"
-// #include <stdio.h>
-//#include <unistd.h>
-// #include "shell.h"
 #include "picofs.h"
 #include "calendar.h"
 #include "web.h"
@@ -38,7 +22,6 @@
 #define ITEM_BUF_LEN (128)
 #define QUEUE_DEPTH  (50)   
 #define BULK_SEND_BUF_LEN (QUEUE_DEPTH * ITEM_BUF_LEN)           
-
 
 // typedefs
 typedef enum
@@ -51,14 +34,13 @@ typedef enum
 // external variables
 extern u32_t unix_time;
 extern WEB_VARIABLES_T web;
+extern int tab_completion_sequence; 
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 #endif
 
 // prototypes
-// int shell_boot(char *filename);
 int shell_edit(char *filename);
-// int shell_cat(char *filename);
 void shell_printf_nb(const char *format, ...);
 int shell_map_test(char *filename);
 
@@ -99,19 +81,14 @@ const char http_ascii_buffer_header_tmpl[] =
 // reference to constant requires this define to appear here
 #define ASCII_HEADER_SIZE (sizeof(http_ascii_buffer_header_tmpl) - 1) 
 
-
-// A larger temporary compilation buffer to merge multiple messages together safely
+// local variables
 static char bulk_http_payload[BULK_SEND_BUF_LEN + 128];
-
-// Thread-safe circular ring buffer storage structures
 static char queue_storage[QUEUE_DEPTH][ITEM_BUF_LEN];
 static uint16_t queue_lengths[QUEUE_DEPTH];
 static volatile int queue_head = 0;
 static volatile int queue_tail = 0;
 static struct fs_file *pending_listen_file = NULL;
 static struct fs_file *pending_get_text = NULL;
-
-// Application RAM Storage variables
 char tab_completion_buffer[1024];
 char ascii_ram_buffer[ASCII_HEADER_SIZE + MAX_PROGRAM_SIZE];
 size_t current_buffer_index = 0;
@@ -119,12 +96,8 @@ bool post_validation_success = true;
 const char *basic_program = ascii_ram_buffer + ASCII_HEADER_SIZE;
 const char *editor_text = ascii_ram_buffer + ASCII_HEADER_SIZE;
 HTTP_RX_TYPE_T current_post = HTTP_RX_UNKNOWN;
-
 static char post_buffer[ITEM_BUF_LEN];
 static uint16_t post_len = 0;
-
-// tracker variable for the filesystem state
-extern int tab_completion_sequence; 
 static char last_client_etag[16] = {0};
 
 /*!
@@ -206,22 +179,22 @@ static inline int queue_is_full(void)
  */
 static void check_and_flush_queue(void) 
 {
-    // Only proceed if we have a browser actively waiting AND data queued up
+    // only proceed if we have a browser actively waiting AND data queued up
     if (pending_listen_file != NULL && !queue_is_empty()) 
     {
         
-        // 1. Initialize a pointer to build our text payload body
+        // initialize a pointer to build our text payload body
         char text_body_buf[BULK_SEND_BUF_LEN];
         memset(text_body_buf, 0, sizeof(text_body_buf));
         size_t current_body_len = 0;
 
-        // 2. Loop and completely drain the queue ring into our single string buffer
+        // loop and completely drain the queue ring into our single string buffer
         while (!queue_is_empty()) 
         {
             char* active_text = queue_storage[queue_tail];
             size_t active_len = queue_lengths[queue_tail];
 
-            // Safety check to ensure we don't overflow the transient assembly block
+            // safety check to ensure we don't overflow the transient assembly block
             if (current_body_len + active_len < BULK_SEND_BUF_LEN - 1) 
             {
                 memcpy(text_body_buf + current_body_len, active_text, active_len);
@@ -229,16 +202,16 @@ static void check_and_flush_queue(void)
             } 
             else 
             {
-                // Buffer full; stop pulling items from queue for this cycle
+                // buffer full; stop pulling items from queue for this cycle
                 break;
             }
 
-            // Safely advance tail index
+            // safely advance tail index
             queue_tail = (queue_tail + 1) % QUEUE_DEPTH;
         }
         text_body_buf[current_body_len] = '\0';
 
-        // 3. Format standard dynamic raw HTTP delivery wrapper package headers
+        // format standard dynamic raw HTTP delivery wrapper package headers
         int total_len = snprintf(bulk_http_payload, sizeof(bulk_http_payload),
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: text/plain\r\n"
@@ -246,12 +219,12 @@ static void check_and_flush_queue(void)
             "Connection: close\r\n\r\n"
             "%s", (int)current_body_len, text_body_buf);
 
-        // 4. Update file pointer configuration to trigger immediate single-packet execution
+        // update file pointer configuration to trigger immediate single-packet execution
         pending_listen_file->data = bulk_http_payload;
         pending_listen_file->len  = total_len;
         pending_listen_file->index = total_len;
 
-        // Reset tracking descriptor so subsequent long-polls wait cleanly
+        // reset tracking descriptor so subsequent long-polls wait cleanly
         pending_listen_file = NULL;
     }
 }
@@ -267,25 +240,25 @@ void pico_send_async_text(const char* text)
 {
     if (text == NULL) return;
 
-    // Guard against potential thread concurrency collisions
+    // guard against potential thread concurrency collisions
     cyw43_arch_lwip_begin();
 
     if (!queue_is_full()) 
     {
-        // Copy string payload safely into current head index
+        // copy string payload safely into current head index
         memset(queue_storage[queue_head], 0, ITEM_BUF_LEN);
         snprintf(queue_storage[queue_head], ITEM_BUF_LEN, "%s", text);
         queue_lengths[queue_head] = strlen(queue_storage[queue_head]);
 
-        // Shift head circular tracking index ahead
+        // shift head circular tracking index ahead
         queue_head = (queue_head + 1) % QUEUE_DEPTH;
 
-        // Instantly verify if a browser connection is waiting to take this item
+        // instantly verify if a browser connection is waiting to take this item
         check_and_flush_queue();
     } 
     else 
     {
-        // Optional: Log an internal overflow drop event error here if buffer size isn't deep enough
+        // optional: log an internal overflow drop event error here if buffer size isn't deep enough
     }
 
     cyw43_arch_lwip_end();
@@ -324,8 +297,6 @@ static void execute_shell_command(const char* cmd)
     }
     else if (strncmp(cmd, "ping ", 5) == 0)
     {        
-        // STRNCPY(web.ping_target, (char *)cmd+5, sizeof(web.ping_target));  // TODO: this is a kludge, should be passing this data in the queue 
-        // hc_queue_send(HC_CMD_PING);
         shell_queue_ping((char *)cmd+5);
     }     
     else if (strcmp(cmd, "ff") == 0)
@@ -333,20 +304,17 @@ static void execute_shell_command(const char* cmd)
         #if FS_FAKE_FLASH == 1
         hex_dump((char *)test_filesystem, sizeof(test_filesystem));
         #endif
-
     }     
     else if (strcmp(cmd, "lights") == 0)
     {
         hc_queue_send(HC_CMD_LIGHTS);  
     } 
     else if (strcmp(cmd, "ls a") == 0) 
-    {
-        //hc_queue_send(HC_CMD_LIST_CORRUPT); 
+    { 
         shell_queue_list_all(((char *)(cmd+5)));         
     } 
     else if (strcmp(cmd, "ls") == 0) 
     {
-        //hc_queue_send(HC_CMD_LIST); 
         shell_queue_list(((char *)(cmd+3)));         
     }     
     else if (strcmp(cmd, "dump program") == 0) 
@@ -365,19 +333,15 @@ static void execute_shell_command(const char* cmd)
     {
         if (strlen(cmd) > 5)
         {
-            // web.basic_file_to_execute = ((char *)(cmd+4)); 
-            // hc_queue_send(HC_CMD_BASIC_FILE);  
             shell_queue_basic_file(((char *)(cmd+4)));
         }
     }     
     else if (strcmp(cmd, "df") == 0) 
     {
-        //hc_queue_send(HC_CMD_PAGE_MAP); 
         shell_queue_page_map(SHELL_MSG_PAGE_MAP); 
     }  
     else if (strcmp(cmd, "df n") == 0) 
     {
-        //hc_queue_send(HC_CMD_PAGE_NUMBERS);
         shell_queue_page_map(SHELL_MSG_PAGE_NUMBERS);   
     }      
     else if (strcmp(cmd, "cleanup") == 0) 
@@ -387,19 +351,14 @@ static void execute_shell_command(const char* cmd)
     }      
     else if (strcmp(cmd, "defrag") == 0) 
     {
-        // hc_queue_send(HC_CMD_DEFRAGMENT); 
         shell_queue_defragment();
     }     
     else if (strncmp(cmd, "boot ", 5) == 0) 
-    {
-        // if (strlen(cmd) > 6) shell_boot((char *)(cmd+5));  
-        // hc_queue_send(HC_CMD_BOOT); 
+    { 
         shell_queue_boot((char *)(cmd+5));
     }  
     else if (strncmp(cmd, "stat ", 5) == 0) 
     {
-        // STRNCPY(web.stat_filename, ((char *)(cmd+5)), sizeof(web.stat_filename));
-        // hc_queue_send(HC_CMD_STAT);
         shell_queue_stat(((char *)(cmd+5))); 
     }       
     else if (strncmp(cmd, "edit ", 5) == 0) 
@@ -408,42 +367,26 @@ static void execute_shell_command(const char* cmd)
     }   
     else if (strncmp(cmd, "wget ", 5) == 0) 
     {
-        // STRNCPY(web.download_url, ((char *)(cmd+5)), sizeof(web.download_url));
-        // hc_queue_send(HC_CMD_DOWNLOAD_FILE);
         shell_queue_download(((char *)(cmd+5)));  
     }     
     else if (strncmp(cmd, "verify ", 7) == 0) 
     {
-        // STRNCPY(web.download_url, ((char *)(cmd+7)), sizeof(web.download_url));
-        // hc_queue_send(HC_CMD_VERIFY_FILE); 
         shell_queue_verify(((char *)(cmd+7)));  
     }      
     else if (strncmp(cmd, "cat ", 4) == 0) 
-    {
-        // web.file_to_cat = ((char *)(cmd+4)); 
-        // hc_queue_send(HC_CMD_CAT_FILE);  
+    { 
         shell_queue_cat(((char *)(cmd+4)));
     } 
     else if (strncmp(cmd, "hd ", 3) == 0) 
-    {
-        // web.file_to_hexdump = ((char *)(cmd+3)); 
-        // hc_queue_send(HC_CMD_HEXDUMP_FILE);  
+    { 
         shell_queue_hexdump(((char *)(cmd+3)));
-    }     
-    // else if (strncmp(cmd, "hd ", 3) == 0) 
-    // {        
-    //     if (strlen(cmd) > 5) shell_hex_dump((char *)cmd+3);   
-    // } 
+    }      
     else if (strncmp(cmd, "mt ", 3) == 0) 
     {        
         if (strlen(cmd) > 5) shell_map_test((char *)cmd+3);   
     }         
     else if (strncmp(cmd, "rm ", 3) == 0) 
     {
-        //if (strlen(cmd) > 4) remove((char *)(cmd+3));  
-
-        // STRNCPY(web.delete_filename, ((char *)(cmd+3)), sizeof(web.delete_filename));
-        // hc_queue_send(HC_CMD_DELETE_FILE);
         shell_queue_unlink(((char *)(cmd+3)));
     } 
     else if (strncmp(cmd, "mv ", 3) == 0) 
@@ -473,10 +416,7 @@ static void execute_shell_command(const char* cmd)
         pico_send_async_text(reply);              
     } 
     else 
-    {
-        // // pass to BASIC interpreter
-        // hc_load_basic_program((char *)cmd, strlen(cmd));
-        // hc_queue_send(HC_CMD_BASIC_INTERACTIVE);    
+    {   
         pico_send_async_text("Command not found\n");    
     }
 }
@@ -600,95 +540,77 @@ int fs_open_custom(struct fs_file *file, const char *name)
         return 1;
     }   
     
-// THIS WORKS BUT does not dynamically update the dictionary when new files are added    
-//  if (strcmp(name, "/commands.json") == 0) 
-//     {
-//         ascii_ram_buffer[0] = 0;
-//         picofs_generate_tab_completion_file_list(ascii_ram_buffer, sizeof(ascii_ram_buffer));
-
-//         size_t len = strlen(ascii_ram_buffer);
-//         file->data = ascii_ram_buffer;
-//         file->len = len;
-//         file->index = len;
-//         //file->pextension = NULL;
-//         file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
-
-//         // Cache file pointer structure ahead of loop test parsing
-//         pending_get_text = file;        
-//         return 1;
-//     }    
-
-// Inside your file routing function...
-if (strncmp(name, "/commands.json", 14) == 0) 
-{
-    tab_completion_buffer[0] = 0;
-    static int system_file_version = 1; 
-
-    // Construct the string we are searching for (e.g., "?v=1")
-    char version_query[32];
-    snprintf(version_query, sizeof(version_query), "?v=%d", system_file_version);
-
-    // If the browser passed our exact current version value in the URL
-    if (strstr(name, version_query) != NULL) 
+    if (strncmp(name, "/commands.json", 14) == 0) 
     {
-        // Return a zero-body HTTP 304 Not Modified string response
-        size_t len = snprintf(tab_completion_buffer, sizeof(tab_completion_buffer),
-            "HTTP/1.1 304 Not Modified\r\n"
-            "Connection: keep-alive\r\n"
-            "\r\n");
+        tab_completion_buffer[0] = 0;
+        static int system_file_version = 1; 
 
-        file->data = tab_completion_buffer;
-        file->len = len;
-        file->index = len;
-        file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
-        
-        pending_get_text = file;        
-        return 1;
-    }
-    else 
-    {
-        // 1. Build a strict layout header template block. 
-        // We hardcode a known 5-digit placeholder string ("00000") for Content-Length.
-        int header_len = snprintf(tab_completion_buffer, sizeof(tab_completion_buffer),
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: application/json\r\n"
-            "Content-Length: 00000\r\n" 
-            "\r\n");
+        // Construct the string we are searching for (e.g., "?v=1")
+        char version_query[32];
+        snprintf(version_query, sizeof(version_query), "?v=%d", system_file_version);
 
-        // 2. Generate JSON directly into ascii_ram_buffer immediately following the header block
-        char *json_start_ptr = tab_completion_buffer + header_len;
-        size_t available_json_space = sizeof(tab_completion_buffer) - header_len;
-        
-        picofs_generate_tab_completion_file_list(json_start_ptr, available_json_space);
-        size_t json_len = strlen(json_start_ptr);
+        // If the browser passed our exact current version value in the URL
+        if (strstr(name, version_query) != NULL) 
+        {
+            // Return a zero-body HTTP 304 Not Modified string response
+            size_t len = snprintf(tab_completion_buffer, sizeof(tab_completion_buffer),
+                "HTTP/1.1 304 Not Modified\r\n"
+                "Connection: keep-alive\r\n"
+                "\r\n");
 
-        // 3. Find the exact text window location of our "00000" placeholder sequence inside the buffer
-        // and patch it manually using snprintf safely inside its isolated slot.
-        char *length_placeholder_ptr = strstr(tab_completion_buffer, "Content-Length: ");
-        if (length_placeholder_ptr != NULL) {
-            // Step forward 16 characters past "Content-Length: " to target "00000"
-            char *target_digits = length_placeholder_ptr + 16;
+            file->data = tab_completion_buffer;
+            file->len = len;
+            file->index = len;
+            file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
             
-            // Print exactly 5 digits into this window slot.
-            // This overwrites "00000" with your actual size (e.g., "00142") 
-            // without adding an accidental null-terminator byte to cut off your JSON string.
-            char temp_digits[6];
-            snprintf(temp_digits, sizeof(temp_digits), "%05d", (int)json_len);
-            memcpy(target_digits, temp_digits, 5);
+            pending_get_text = file;        
+            return 1;
         }
+        else 
+        {
+            // build a strict layout header template block. 
+            // We hardcode a known 5-digit placeholder string ("00000") for Content-Length.
+            int header_len = snprintf(tab_completion_buffer, sizeof(tab_completion_buffer),
+                "HTTP/1.1 200 OK\r\n"
+                "Content-Type: application/json\r\n"
+                "Content-Length: 00000\r\n" 
+                "\r\n");
 
-        // 4. Calculate total explicit layout length safely
-        size_t total_len = header_len + json_len;
-        file->data = tab_completion_buffer;
-        file->len = total_len;
-        file->index = total_len;
-        file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+            // generate JSON directly into ascii_ram_buffer immediately following the header block
+            char *json_start_ptr = tab_completion_buffer + header_len;
+            size_t available_json_space = sizeof(tab_completion_buffer) - header_len;
+            
+            picofs_generate_tab_completion_file_list(json_start_ptr, available_json_space);
+            size_t json_len = strlen(json_start_ptr);
 
-        pending_get_text = file;        
-        return 1;
-    }
-    
-}    
+            // find the exact text window location of our "00000" placeholder sequence inside the buffer
+            // and patch it manually using snprintf safely inside its isolated slot.
+            char *length_placeholder_ptr = strstr(tab_completion_buffer, "Content-Length: ");
+            if (length_placeholder_ptr != NULL) 
+            {
+                // Step forward 16 characters past "Content-Length: " to target "00000"
+                char *target_digits = length_placeholder_ptr + 16;
+                
+                // Print exactly 5 digits into this window slot.
+                // This overwrites "00000" with your actual size (e.g., "00142") 
+                // without adding an accidental null-terminator byte to cut off your JSON string.
+                char temp_digits[6];
+                snprintf(temp_digits, sizeof(temp_digits), "%05d", (int)json_len);
+                memcpy(target_digits, temp_digits, 5);
+            }
+
+            // calculate total explicit layout length safely
+            size_t total_len = header_len + json_len;
+            file->data = tab_completion_buffer;
+            file->len = total_len;
+            file->index = total_len;
+            file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+
+            pending_get_text = file;        
+            return 1;
+        }
+        
+    }    
     return 0;
 }
 
@@ -717,36 +639,15 @@ void fs_close_custom(struct fs_file *file)
     {
         pending_listen_file = NULL;
     }
-    // *******THIS CODE IS UNRELATED TO THE SHELL -- it is for the CGI_SSI web_context memory to be released
-    // else if (file != NULL && file->state != NULL)
-    // {
-    //     printf("RELEASING web context memory @%p\n", file->state);
-    //     mem_free(file->state);
-    //     file->state = NULL;
-
-
-    //     hex_dump(file->data, 32);
-    // }
-
-    // TEST TEST TEST         AUTORUN BASIC SCRIPT AFTER FILE UPLOAD
-    // if (pending_get_text == file) 
-    // {
-    //     pending_get_text = NULL;
-    //     hc_queue_send(HC_CMD_BASIC_SCRIPT);        
-    // }    
 }
-
-
-
-/**
- * Standard HTTP POST Handlers for /exec commands
- */
 
 
 err_t httpd_post_begin(void *connection, const char *uri, const char *http_request,
                        uint16_t http_request_len, int content_len, char *response_uri,
-                       uint16_t response_uri_len, uint8_t *post_auto_wnd) {
-    if (strcmp(uri, "/exec") == 0) {
+                       uint16_t response_uri_len, uint8_t *post_auto_wnd) 
+{
+    if (strcmp(uri, "/exec") == 0) 
+    {
         post_len = 0;
         memset(post_buffer, 0, sizeof(post_buffer));
         *post_auto_wnd = 1;
@@ -755,12 +656,13 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
         return ERR_OK;
     }
 
-    if (strcmp(uri, "/save_ascii.cgi") == 0) {
-        // Clear old working workspace before accepting new streaming content
+    if (strcmp(uri, "/save_ascii.cgi") == 0) 
+    {
+        // clear old working workspace before accepting new streaming content
         memset(ASCII_HEADER_SIZE + ascii_ram_buffer, 0, sizeof(ascii_ram_buffer) - ASCII_HEADER_SIZE);
         strcpy(ascii_ram_buffer, http_ascii_buffer_header_tmpl);  // prepend http header to ascii ram buffer
         current_buffer_index = 0;
-        *post_auto_wnd = 1; // Direct lwIP to automatically manage TCP windows
+        *post_auto_wnd = 1; // direct lwIP to automatically manage TCP windows
 
         current_post = HTTP_RX_SAVE_ASCII;
         return ERR_OK;
@@ -791,12 +693,16 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
         if (p == NULL) return ERR_OK;
 
         // Loop through the current pbuf packet chains
-        for (q = p; q != NULL; q = q->next) {
+        for (q = p; q != NULL; q = q->next) 
+        {
             // Enforce safety limits to stop memory corruption overwrites
-            if (current_buffer_index + q->len < (MAX_PROGRAM_SIZE - 1)) {
+            if (current_buffer_index + q->len < (MAX_PROGRAM_SIZE - 1)) 
+            {
                 memcpy(&ascii_ram_buffer[ASCII_HEADER_SIZE + current_buffer_index], q->payload, q->len);
                 current_buffer_index += q->len;
-            } else {
+            } 
+            else 
+            {
                 // Payload is too large for the allocated RAM buffer
                 pbuf_free(p);
                 return ERR_MEM;
@@ -815,26 +721,33 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
  * @param str The null-terminated string to validate.
  * @return true if valid, false if malicious/corrupt characters or line overflows are found.
  */
-bool validate_ascii_buffer(const char *str) {
+bool validate_ascii_buffer(const char *str) 
+{
     size_t current_line_len = 0;
 
-    while (*str != '\0') {
+    while (*str != '\0') 
+    {
         char c = *str;
 
-        if (c == '\n') {
+        if (c == '\n') 
+        {
             // Line break reset
             current_line_len = 0;
-        } else {
+        }
+        else
+        {
             // Check for printable ASCII bounds (Space 0x20 to Tilde 0x7E)
             // Block structural escape codes like '\r', '\t', or '\0' derivatives
-            if (c < 32 || c > 126) {
+            if (c < 32 || c > 126) 
+            {
                 return false; // Invalid hidden binary data or bad formatting detected
             }
 
             current_line_len++;
             
             // Hard safety fallback checkpoint on the MCU side
-            if (current_line_len > 80) {
+            if (current_line_len > 80) 
+            {
                 return false; // Strict boundary violation
             }
         }
@@ -860,26 +773,28 @@ void httpd_post_finished(void *connection, char *response_uri, uint16_t response
         if (data_start != NULL) {
             data_start += 5; // Move past "text=" Prefix key
             
-            // 1. In-place URL-decode the string
+            // in-place URL-decode the string
             size_t final_len = url_decode_inplace(data_start);
             memmove(ASCII_HEADER_SIZE + ascii_ram_buffer, data_start, final_len + 1);
 
-            // 2. Perform the character and layout integrity validation check
-            if (validate_ascii_buffer(ASCII_HEADER_SIZE + ascii_ram_buffer)) {
+            // perform the character and layout integrity validation check
+            if (validate_ascii_buffer(ASCII_HEADER_SIZE + ascii_ram_buffer)) 
+            {
                 post_validation_success = true;
                 // The sanitized string is now safe to process or use in RAM here
             }
         }
 
-        // 3. Select virtual response path based on validation results
-        if (post_validation_success) {
+        // select virtual response path based on validation results
+        if (post_validation_success) 
+        {
             snprintf(response_uri, response_uri_len, "/post_ok.json");
-            //hc_queue_send(HC_CMD_BASIC_SCRIPT);    // run basic script after file downloaded
             
-            //sprintf(web.edit_text_filename, "automation%02d", ((WEB_SESSION_STATE_T *)connection)->automation_file_number);
-            
-            hc_queue_send(HC_CMD_SAVE_TEXT_FILE);    // save text file adfter file downloaded
-        } else {
+            // store the received file in the file system
+            shell_queue_save_text_file();
+        } 
+        else
+        {
             snprintf(response_uri, response_uri_len, "/post_fail.json");
             printf("Rejected response\n");
         }    
@@ -887,7 +802,8 @@ void httpd_post_finished(void *connection, char *response_uri, uint16_t response
     }
 }
 
-void init_shell_backend(void) {
+void init_shell_backend(void) 
+{
     // Hooks initialized implicitly via file architecture layer structures
 }
 
@@ -1022,24 +938,6 @@ void dump_text_buffer(void)
     printf("\n");    
 }
 
-// /*!
-//  * \brief boot the file
-//  *
-//  * \param[in]  filename  file to print to shell
-//  * \return nothing
-//  */
-// int shell_boot(char *filename)
-// {
-//     FILE *filePointer = NULL;
-//     int file_size = 0;
-//     char buffer[256];
-
- 
-//     // remember name of file to boot
-//     STRNCPY(web.boot_filename, filename, sizeof(web.boot_filename));
-
-//     return 0;
-// }
 
 /*!
  * \brief edit the content of a text file
@@ -1083,110 +981,6 @@ int shell_edit(char *filename)
     return 0;
 }
 
-// /*!
-//  * \brief print the contents of a text file to the shell
-//  *
-//  * \param[in]  filename  file to print to shell
-//  * \return nothing
-//  */
-// int shell_cat(char *filename)
-// {
-//     FILE *filePointer;
-//     char buffer[128];
-
-//     // open the file in read mode ("r")
-//     filePointer = fopen(filename, "r");
-
-//     // check if the file exists and opened successfully
-//     if (filePointer == NULL) 
-//     {
-//         shell_printf_nb("cat: %s: No such file\n", filename);
-//         return 1; 
-//     }
-
-//     // read and print the file line-by-line
-//     while (fgets(buffer, sizeof(buffer), filePointer) != NULL)
-//     {
-//         shell_printf_nb("%s", buffer);              //TODO: call shell_cat() from another task and use blocking shell_printf to avoid data loss
-//     }
-
-//     // close the file to free up system resources
-//     fclose(filePointer);
-
-//     return 0;
-// }
-
-// /*!
-//  * \brief print hex dump of buffer
-//  * 
-//  * \param[in]  filename  file to dump to shell
-//  * \return nothing
-//  */
-// int shell_hex_dump(char *filename)
-// {
-//     FILE *filePointer;
-//     unsigned char buffer[16];
-//     size_t bytes_read = 0;
-//     char output_line[160];
-//     char output_byte[8];
-//     int i;
-
-//     printf("hexdump %d\n", filename);
-
-//     // 1. Open the file in read binary mode ("r")
-//     filePointer = fopen(filename, "rb");
-
-//     // 2. Check if the file exists and opened successfully
-//     if (filePointer == NULL) 
-//     {
-//         shell_printf_nb("hd: %s: No such file\n", filename);
-//         return 1; 
-//     }
-
-//     // 3. Read and print the file 16 bytes at a time
-//     while (bytes_read = fread(buffer, 1, sizeof(buffer), filePointer))
-//     {
-//         if(bytes_read)
-//         {
-//             output_line[0] = 0;
-
-//             for (i = 0; i < bytes_read;i++) 
-//             {
-//                 snprintf(output_byte, sizeof(output_byte), "%02x ", buffer[i]);
-//                 STRAPPEND(output_line, output_byte);
-//             }            
-
-//              // add extra padding if less than 16 bytes (i.e. last line)
-//             for (; i<16; i++)
-//             {
-//                 STRAPPEND(output_line, "   ");
-//             }
-
-//             STRAPPEND(output_line, " ");  
-//             for (i = 0; i < bytes_read; i++) 
-//             {
-//                 if (isprint(buffer[i]))
-//                 {
-//                    snprintf(output_byte, sizeof(output_byte), "%c", buffer[i]);
-//                    STRAPPEND(output_line, output_byte);
-//                 }
-//                 else
-//                 {
-//                     snprintf(output_byte, sizeof(output_byte), "-");
-//                     STRAPPEND(output_line, output_byte);
-//                 }
-//             }
-
-//             STRAPPEND(output_line, "\n");
-//             shell_printf_nb("%s", output_line);                //TODO: call shell_hex_dump() from another task and use blocking shell_printf to avoid data loss
-//         }        
-//     }
-
-//     // 4. Close the file to free up system resources
-//     fclose(filePointer);
-
-//     return(0);
-// }
 
 
 /*!

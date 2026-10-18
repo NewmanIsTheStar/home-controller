@@ -205,7 +205,7 @@ body {
         params.set('afname', cleanAfnme);
         params.set('aname', inputValue);
     
-        // 5. Build the final destination URL with the combined parameters
+        // build the final destination URL with the combined parameters
         const destination = '/cgi_hc_automation_save.shtml?' + params.toString();
     
         // navigate to the new page

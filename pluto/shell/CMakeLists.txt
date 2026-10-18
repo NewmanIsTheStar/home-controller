@@ -19,7 +19,8 @@ target_sources(shell INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/shell_ping.c 
     ${CMAKE_CURRENT_LIST_DIR}/shell_boot.c 
     ${CMAKE_CURRENT_LIST_DIR}/shell_download.c 
-    ${CMAKE_CURRENT_LIST_DIR}/shell_basic.c               
+    ${CMAKE_CURRENT_LIST_DIR}/shell_basic.c 
+    ${CMAKE_CURRENT_LIST_DIR}/shell_save_text_file.c                    
 )
 
 # headers

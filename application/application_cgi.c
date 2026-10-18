@@ -86,13 +86,11 @@ const char * cgi_hc_automation_edit_handler(int iIndex, int iNumParams, char *pc
         i++;
     }
 
-    // NO NO No!  This is triggered by Javascript pushing the file
-    // // tell hc_task to save the file
-    // hc_queue_send(HC_CMD_SAVE_TEXT_FILE);
-
+    // Note: Javascript will push the file when the user hits the save button
+    // Once the file is receieved it is saved into our local flash file system
+    // in the function httpd_post_receive_data()
 
     // Send the next page back to the user
-    //config_changed();
     return "/edit.shtml";
 }
 

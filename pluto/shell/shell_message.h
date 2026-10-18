@@ -93,5 +93,7 @@ int shell_queue_basic_script(char *filename);
 int shell_do_basic_script(SM_GENERIC_FILE_T *msg);
 int shell_queue_basic_interactive(char *filename);
 int shell_do_basic_interactive(SM_GENERIC_FILE_T *msg);
+int shell_queue_save_text_file(void);
+int shell_do_save_text_file(SM_GENERIC_FILE_T *msg);
 
 #endif
