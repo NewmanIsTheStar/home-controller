@@ -202,15 +202,15 @@ void hc_task(__unused void *params)
                         basic_program[current_buffer_index++] = 0;
                         basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index, false);                
                         break;
-                    case HC_CMD_BASIC_FILE:
-                        basic_Interpreter(IM_MMAP_FILE, NULL, web.basic_file_to_execute, NULL, 0, false);                
-                        break; 
-                    case HC_CMD_CAT_FILE:
-                        hc_cat(web.file_to_cat);                
-                        break;      
-                    case HC_CMD_HEXDUMP_FILE:
-                        hc_hex_dump(web.file_to_hexdump);                
-                        break;                                                                        
+                    // case HC_CMD_BASIC_FILE:
+                    //     basic_Interpreter(IM_MMAP_FILE, NULL, web.basic_file_to_execute, NULL, 0, false);                
+                    //     break; 
+                    // case HC_CMD_CAT_FILE:
+                    //     hc_cat(web.file_to_cat);                
+                    //     break;      
+                    // case HC_CMD_HEXDUMP_FILE:
+                    //     hc_hex_dump(web.file_to_hexdump);                
+                    //     break;                                                                        
                     case HC_CMD_LIGHTS:
                         shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
                         //config_mmap_test();
@@ -231,9 +231,9 @@ void hc_task(__unused void *params)
                     case HC_CMD_LIST_CORRUPT:
                         picofs_list_all_files_from_flash(NULL, true);  // all files in flash including corrupted ones
                         break;                    
-                    case HC_CMD_PING:
-                        shell_ping(web.ping_target);
-                        break;
+                    // case HC_CMD_PING:
+                    //     shell_ping(web.ping_target);
+                    //     break;
                     case HC_CMD_PAGE_MAP:    
                         picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_MAP);
                         break;
@@ -250,9 +250,9 @@ void hc_task(__unused void *params)
                         //picofs_consolidate_all_files();
                         picofs_consolidate_all_files_in_flash();
                         break;
-                    case HC_CMD_STAT:                    
-                        picofs_stat(web.stat_filename);
-                        break;                        
+                    // case HC_CMD_STAT:                    
+                    //     picofs_stat(web.stat_filename);
+                    //     break;                        
                     case HC_CMD_DELETE_FILE:                    
                         hc_delete_file();
                         break;
@@ -675,27 +675,27 @@ int hc_download_file(void)
 {
     int err = -1;
 
-    if (web.download_url[0])
-    {
-        if (strstr(web.download_url, ".uf2"))
-        {
-            if (err = download_file_uf2(web.download_url))
-            {
-                shell_printf("wget: failed to download %s\n", web.download_url);
-            }
-        }
-        else
-        {
-            if (err = download_file(web.download_url))
-            {
-                shell_printf("wget: failed to download %s\n", web.download_url);
-            }
-        }
-    }
-    else
-    {
-        shell_printf("wget: error: no URL provided\n");
-    }
+    // if (web.download_url[0])
+    // {
+    //     if (strstr(web.download_url, ".uf2"))
+    //     {
+    //         if (err = download_file_uf2(web.download_url))
+    //         {
+    //             shell_printf("wget: failed to download %s\n", web.download_url);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         if (err = download_file(web.download_url))
+    //         {
+    //             shell_printf("wget: failed to download %s\n", web.download_url);
+    //         }
+    //     }
+    // }
+    // else
+    // {
+    //     shell_printf("wget: error: no URL provided\n");
+    // }
 
     return(err);
 }
@@ -704,17 +704,17 @@ int hc_verify_file(void)
 {
     int err = -1;
 
-    if (web.download_url[0])
-    {
-        if (err = verify_file(web.download_url))
-        {
-            shell_printf("wget: failed to download %s\n", web.download_url);
-        }
-    }
-    else
-    {
-        shell_printf("wget: error: no URL provided\n");
-    }
+    // if (web.download_url[0])
+    // {
+    //     if (err = verify_file(web.download_url))
+    //     {
+    //         shell_printf("wget: failed to download %s\n", web.download_url);
+    //     }
+    // }
+    // else
+    // {
+    //     shell_printf("wget: error: no URL provided\n");
+    // }
 
     return(err);
 }

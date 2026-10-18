@@ -92,56 +92,56 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
             }
         }
         break;        
-        case SSI_usurped:  // usurped
-        {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.last_usurped_timestring);    
-        }
-        break;
-        case SSI_cmplte:  // cmplte
-        {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.last_completed_timestring);    
-        }
-        break;        
+        // case SSI_usurped:  // usurped
+        // {
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", web.last_usurped_timestring);    
+        // }
+        // break;
+        // case SSI_cmplte:  // cmplte
+        // {
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", web.last_completed_timestring);    
+        // }
+        // break;        
         
-        case SSI_temp: // temp
-        {
-            if (!sys->use_archaic_units)
-            {
-                printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.outside_temperature<0?'-':' ', abs(web.outside_temperature/10), abs(web.outside_temperature%10)); 
-            }
-            else
-            {
-                temp = (web.outside_temperature*9)/5 + 320;
-                printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld", temp<0?'-':' ', abs(temp)/10, abs(temp%10));
-            }              
-        }
-        break;
-        case SSI_wind: // wind
-        {         
-            if (!sys->use_archaic_units)
-            {
-                printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.wind_speed/10, web.wind_speed%10); 
-            }
-            else
-            {
-                temp = (web.wind_speed*3281 + 500)/1000;
-                printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
-            }              
-        } 
-        break;  
-        case SSI_rain: // rain
-        {
-            if (!sys->use_archaic_units)
-            {
-                printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.daily_rain/10, web.daily_rain%10); 
-            }
-            else
-            {
-                temp = (10*web.daily_rain + 127)/254;
-                printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
-            }            
-        }  
-        break;
+        // case SSI_temp: // temp
+        // {
+        //     if (!sys->use_archaic_units)
+        //     {
+        //         printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.outside_temperature<0?'-':' ', abs(web.outside_temperature/10), abs(web.outside_temperature%10)); 
+        //     }
+        //     else
+        //     {
+        //         temp = (web.outside_temperature*9)/5 + 320;
+        //         printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld", temp<0?'-':' ', abs(temp)/10, abs(temp%10));
+        //     }              
+        // }
+        // break;
+        // case SSI_wind: // wind
+        // {         
+        //     if (!sys->use_archaic_units)
+        //     {
+        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.wind_speed/10, web.wind_speed%10); 
+        //     }
+        //     else
+        //     {
+        //         temp = (web.wind_speed*3281 + 500)/1000;
+        //         printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
+        //     }              
+        // } 
+        // break;  
+        // case SSI_rain: // rain
+        // {
+        //     if (!sys->use_archaic_units)
+        //     {
+        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.daily_rain/10, web.daily_rain%10); 
+        //     }
+        //     else
+        //     {
+        //         temp = (10*web.daily_rain + 127)/254;
+        //         printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
+        //     }            
+        // }  
+        // break;
         case SSI_lstpck: // lstpck
         {
             if (web.us_last_rx_packet)
@@ -156,19 +156,19 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         }  
         break;     
   
-        case SSI_rainwk: // rainwk
-        {          
-            if (!sys->use_archaic_units)
-            {
-                printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.weekly_rain/10, web.weekly_rain%10); 
-            }
-            else
-            {
-                temp = (10*web.weekly_rain + 127)/254;
-                printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
-            }             
-        }  
-        break;   
+        // case SSI_rainwk: // rainwk
+        // {          
+        //     if (!sys->use_archaic_units)
+        //     {
+        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.weekly_rain/10, web.weekly_rain%10); 
+        //     }
+        //     else
+        //     {
+        //         temp = (10*web.weekly_rain + 127)/254;
+        //         printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
+        //     }             
+        // }  
+        // break;   
 
         // case SSI_sun:    // sun
         // case SSI_mon:    // mon
@@ -382,16 +382,16 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
             
         // }                        
         // break;    
-        case SSI_wfail: //wfail
-        {
-            printed = snprintf(pcInsert, iInsertLen, "%d", web.weather_station_transmit_failures);
-        }               
-        break;  
-        case SSI_gfail: //gfail
-        {
-            printed = snprintf(pcInsert, iInsertLen, "%d", web.govee_transmit_failures);
-        }               
-        break;   
+        // case SSI_wfail: //wfail
+        // {
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.weather_station_transmit_failures);
+        // }               
+        // break;  
+        // case SSI_gfail: //gfail
+        // {
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.govee_transmit_failures);
+        // }               
+        // break;   
         case SSI_calpge: //calpge
         {
             if (web.access_point_mode)
@@ -529,11 +529,11 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // } 
         // break;
 
-        case SSI_soilm1: //soilm1
-        {
-            printed = snprintf(pcInsert, iInsertLen, "%d", web.soil_moisture[0]);
-        }                       
-        break;    
+        // case SSI_soilm1: //soilm1
+        // {
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.soil_moisture[0]);
+        // }                       
+        // break;    
         // case SSI_soilt1: //soilt1
         // {
         //     printed = snprintf(pcInsert, iInsertLen, "%d", cfg->soil_moisture_threshold[0]);

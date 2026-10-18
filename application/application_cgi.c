@@ -21,6 +21,7 @@
 #include "calendar.h"
 #include "web.h"
 #include "system_cgi.h"
+#include "shell_message.h"
 
 
 // typedef const char *(*tMYCGIHandler)(int iIndex, int iNumParams, char *pcParam[], char *pcValue[], WEB_SESSION_STATE_T *connection_state);
