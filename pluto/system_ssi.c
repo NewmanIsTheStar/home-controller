@@ -11,7 +11,7 @@
 #include "utility.h"
 #include "application_config.h"
 #include "pluto.h"
-#include "web.h"
+#include "system_web.h"
 #include "hc_task.h"
 #include "system_ssi.h"
 
@@ -21,7 +21,7 @@
 
 
 extern uint32_t unix_time;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 extern APP_CONFIG_T config;
 
 
@@ -67,12 +67,12 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_dogtme: // dogtme
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.watchdog_timestring); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.watchdog_timestring); 
         }  
         break; 
         case SSI_status: // status
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.status_message); 
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.status_message); 
         }  
         break;
         case SSI_tz:
@@ -151,7 +151,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                 if (strncasecmp(sys->ip_address, "automatic+via+DHCP", sizeof(sys->ip_address))==0)
                 {
                     //sys->ip_address[0] = 0;
-                    STRNCPY(sys->ip_address, web.ip_address_string, sizeof(sys->ip_address));   
+                    STRNCPY(sys->ip_address, sys_web.ip_address_string, sizeof(sys->ip_address));   
                 }
                 printed = snprintf(pcInsert, iInsertLen, "%s", sys->ip_address);
             }
@@ -168,7 +168,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                 if (strncasecmp(sys->network_mask, "automatic+via+DHCP", sizeof(sys->network_mask))==0)
                 {
                     //sys->network_mask[0] = 0;
-                    STRNCPY(sys->network_mask, web.network_mask_string, sizeof(sys->network_mask));  
+                    STRNCPY(sys->network_mask, sys_web.network_mask_string, sizeof(sys->network_mask));  
                 }                
                 printed = snprintf(pcInsert, iInsertLen, "%s", sys->network_mask);
             }
@@ -219,17 +219,17 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break; 
         case SSI_stck: //stck
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.stack_message);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.stack_message);
         }               
         break; 
         case SSI_ipaddr: //ipaddr
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.ip_address_string);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.ip_address_string);
         }               
         break;   
         case SSI_netmsk: //netmsk
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.network_mask_string);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.network_mask_string);
         }               
         break;   
         case SSI_gatewy: //gatewy
@@ -239,7 +239,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
                 if (strncasecmp(sys->gateway, "automatic+via+DHCP", sizeof(sys->gateway))==0)
                 {
                     //sys->gateway[0] = 0;
-                    STRNCPY(sys->gateway, web.gateway_string, sizeof(sys->gateway));                  
+                    STRNCPY(sys->gateway, sys_web.gateway_string, sizeof(sys->gateway));                  
                 }                
                 printed = snprintf(pcInsert, iInsertLen, "%s", sys->gateway);
             }
@@ -251,22 +251,22 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_msck: //msck
         {
-            printed = snprintf(pcInsert, iInsertLen, "%d", web.socket_max);
+            printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.socket_max);
         }               
         break;  
         case SSI_bfail: //bfail
         {
-            printed = snprintf(pcInsert, iInsertLen, "%d", web.bind_failures);
+            printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.bind_failures);
         }               
         break;  
         case SSI_cfail: //cfail
         {
-            printed = snprintf(pcInsert, iInsertLen, "%d", web.connect_failures);
+            printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.connect_failures);
         }               
         break;  
         case SSI_sfail: //sfail
         {
-            printed = snprintf(pcInsert, iInsertLen, "%d", web.syslog_transmit_failures);
+            printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.syslog_transmit_failures);
         }               
         break;  
         case SSI_simpe: //simpe
@@ -293,17 +293,17 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break; 
         case SSI_swlhst: //swlhst
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.software_server);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.software_server);
         }               
         break; 
         case SSI_swlurl: //swlurl
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.software_url);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.software_url);
         }               
         break; 
         case SSI_swlfle: //swlfle
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.software_file);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.software_file);
         }               
         break;    
         case SSI_sloge: //sloge
@@ -323,7 +323,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;  
         case SSI_gway: //gway
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.gateway_string);
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.gateway_string);
         }                       
         break;
         case SSI_pernme: //pernme
@@ -394,7 +394,7 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_macadr:                        
         {
-            printed = snprintf(pcInsert, iInsertLen, "%02x:%02x:%02x:%02x:%02x:%02x\n", web.mac[0], web.mac[1], web.mac[2], web.mac[3], web.mac[4], web.mac[5]);              
+            printed = snprintf(pcInsert, iInsertLen, "%02x:%02x:%02x:%02x:%02x:%02x\n", sys_web.mac[0], sys_web.mac[1], sys_web.mac[2], sys_web.mac[3], sys_web.mac[4], sys_web.mac[5]);              
         }
         break; 
         case SSI_hostn: // hostn
@@ -420,8 +420,8 @@ u16_t ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *connection_s
         break;
         case SSI_uptme: // uptme
         {
-            printed = get_delta_string_from_delta_seconds(pcInsert, iInsertLen, unix_time - web.boot_time);
-            //printed = snprintf(pcInsert, iInsertLen, "%d", unix_time - web.boot_time);
+            printed = get_delta_string_from_delta_seconds(pcInsert, iInsertLen, unix_time - sys_web.boot_time);
+            //printed = snprintf(pcInsert, iInsertLen, "%d", unix_time - sys_web.boot_time);
         }               
         break;
         case SSI_glat: // lattitude

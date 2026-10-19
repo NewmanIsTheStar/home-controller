@@ -38,7 +38,7 @@
 #include "pluto.h"
 #include "ping_core.h"
 #include "shell.h"
-#include "web.h"
+#include "system_web.h"
 
 #define GET_REQUEST "GET / HTTP/1.0\r\n\r\n"
 
@@ -69,7 +69,7 @@ typedef struct
 
 // external variables
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 // global variables
 JSON_PARSER_CONTEXT_T shelly_parser_context;
@@ -77,6 +77,7 @@ unsigned char rx_buffer[2048];
 DISCOVERED_SHELLY_T discovered_shelly[32];
 int num_discovered_shelly_devices = 0;
 SHELLY_CACHE_T shelly_cache;
+u32_t shelly_default_ip = 0;
 
 
 // prototypes
@@ -117,10 +118,10 @@ int shelly_discover_devices(void)
     {
         printf("Beginning new network scan for shelly devices\n");
 
-        printf("address = %s\n", web.ip_address_string);  
-        printf("netmask = %s\n", web.network_mask_string);
+        printf("address = %s\n", sys_web.ip_address_string);  
+        printf("netmask = %s\n", sys_web.network_mask_string);
 
-        sscanf(web.ip_address_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
+        sscanf(sys_web.ip_address_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
         printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
         ip   = 0x00000000;
         for(i=0; i<4; i++)
@@ -130,7 +131,7 @@ int shelly_discover_devices(void)
         }
         printf("ip = %08x\n", ip);
 
-        sscanf(web.network_mask_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);    
+        sscanf(sys_web.network_mask_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);    
         printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
 
         mask   = 0x00000000;
@@ -806,6 +807,26 @@ int shelly_cache_dump(void)
     return(0);
 }
 
+int shelly_cache_set_default_ip(char *ipv4_string)
+{
+    int err = 0;
+    int i;
+    u32_t ip;
+    u8_t byte = 0;
+    int values[4] = {0,0,0,0};
+
+    sscanf(ipv4_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
+    
+    shelly_default_ip = 0x00000000;
+    for(i=0; i<4; i++)
+    {
+        byte = (u8_t)values[i];
+        shelly_default_ip = shelly_default_ip<<8 | byte;
+    }
+
+    return(err);
+}
+
 int shelly_cache_device_dump(char *ipv4_string)
 {
     int i;
@@ -814,20 +835,23 @@ int shelly_cache_device_dump(char *ipv4_string)
     u8_t byte = 0;
     int num_cache_entries = 0;
 
-    sscanf(ipv4_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
-    
-    ip   = 0x00000000;
-    for(i=0; i<4; i++)
+    if (ipv4_string)
     {
-        byte = (u8_t)values[i];
-        ip = ip<<8 | byte;
+        // extract ip from passed string
+        sscanf(ipv4_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
+        
+        ip   = 0x00000000;
+        for(i=0; i<4; i++)
+        {
+            byte = (u8_t)values[i];
+            ip = ip<<8 | byte;
+        }
     }
-
-    shell_printf("shelly cache entries for device @ %d.%d.%d.%d\n",
-                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][3],
-                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][2],
-                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][1],
-                shelly_cache.shelly_device_ip[shelly_cache.shelly_triple_device_index[i]][0]);
+    else
+    {
+        // use default ip
+        ip = shelly_default_ip;
+    }
 
     for (i=0; i<NUM_ROWS(shelly_cache.shelly_triple_value); i++)
     {

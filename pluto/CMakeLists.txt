@@ -7,7 +7,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_uf2.c
     system_cgi.c
     # pluto_terminal.c
-    web.c    
+    system_web.c    
     system_config.c
     system_ssi.c
     swload_task.c

@@ -57,7 +57,7 @@
 // #include "config.h"
 #include "swload_task.h"
 #include "calendar.h"
-#include "web.h"
+#include "system_web.h"
 
 #include "ssi.h"
 #ifdef USE_GIT_HASH_AS_VERSION
@@ -83,7 +83,7 @@ REBOOT_REASON_T __uninitialized_ram(reboot_reason);
 // external variables
 extern u32_t unix_time;
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 extern WORKER_TASK_T worker_tasks[];
 
 // static variables
@@ -327,12 +327,12 @@ void boss_task(__unused void *params)
 #endif    
 
     // initialize the ip info used in the web interface
-    init_web_variables();
+    system_web_init();
     set_web_ip_network_info();
 
-    printf("Address = %s\n", web.ip_address_string);  
-    printf("Netmask = %s\n", web.network_mask_string);
-    printf("Gateway = %s\n", web.gateway_string);
+    printf("Address = %s\n", sys_web.ip_address_string);  
+    printf("Netmask = %s\n", sys_web.network_mask_string);
+    printf("Gateway = %s\n", sys_web.gateway_string);
 
     // initialize the clock 
     set_realtime_clock(); 
@@ -504,12 +504,12 @@ int ap_mode(void)
     dns_server_init(&dns_server, &gw);
 
     // start web server to allow user to configure wifi
-    init_web_variables();
+    system_web_init();
     httpd_init();
     ssi_init();
     cgi_init();	
 
-    web.access_point_mode = true;
+    sys_web.access_point_mode = true;
 
     // flash the led fast to indicate AP mode
     while(true)
@@ -538,7 +538,7 @@ int ap_mode(void)
         {
             cyw43_arch_disable_ap_mode();
             cyw43_arch_deinit();
-            web.access_point_mode = false;
+            sys_web.access_point_mode = false;
             watchdog_enable(1, 0);
         }
         else
@@ -558,7 +558,7 @@ int ap_mode(void)
             cyw43_arch_disable_ap_mode();
             cyw43_arch_deinit();
 
-            web.access_point_mode = false;
+            sys_web.access_point_mode = false;
             SLEEP_MS(100);
             
             watchdog_enable(1, 0);
@@ -580,16 +580,16 @@ int ap_mode(void)
 int set_web_ip_network_info(void)
 {
     // copy ip, netmask and gateway assigned by DHCP into web interface variables
-    STRNCPY(web.ip_address_string, ipaddr_ntoa(netif_ip4_addr(&cyw43_state.netif[0])), sizeof(web.ip_address_string));   
-    STRNCPY(web.network_mask_string, ipaddr_ntoa(netif_ip4_netmask(&cyw43_state.netif[0])), sizeof(web.network_mask_string)); 
-    STRNCPY(web.gateway_string, ipaddr_ntoa(netif_ip4_gw(&cyw43_state.netif[0])), sizeof(web.gateway_string)); 
+    STRNCPY(sys_web.ip_address_string, ipaddr_ntoa(netif_ip4_addr(&cyw43_state.netif[0])), sizeof(sys_web.ip_address_string));   
+    STRNCPY(sys_web.network_mask_string, ipaddr_ntoa(netif_ip4_netmask(&cyw43_state.netif[0])), sizeof(sys_web.network_mask_string)); 
+    STRNCPY(sys_web.gateway_string, ipaddr_ntoa(netif_ip4_gw(&cyw43_state.netif[0])), sizeof(sys_web.gateway_string)); 
 
     if (sys->dhcp_enable)
     {
         // set the static network config to match current DHCP assignments
-        STRNCPY(sys->ip_address, web.ip_address_string, sizeof(sys->ip_address));
-        STRNCPY(sys->network_mask, web.network_mask_string, sizeof(sys->network_mask));        
-        STRNCPY(sys->gateway, web.gateway_string, sizeof(sys->gateway));    
+        STRNCPY(sys->ip_address, sys_web.ip_address_string, sizeof(sys->ip_address));
+        STRNCPY(sys->network_mask, sys_web.network_mask_string, sizeof(sys->network_mask));        
+        STRNCPY(sys->gateway, sys_web.gateway_string, sizeof(sys->gateway));    
     }
 
     return(0);
@@ -651,7 +651,7 @@ int set_realtime_clock(void)
     // determine daylight savings dates for the current year
     set_daylight_saving_dates(); 
 
-    web.boot_time = unix_time;
+    sys_web.boot_time = unix_time;
 
     return(0);
 }
@@ -673,7 +673,7 @@ int monitor_stacks(void)
     int spam_throttle = 0;
 
     // monitor stack sizes
-    chars_remaining = sizeof(web.stack_message);
+    chars_remaining = sizeof(sys_web.stack_message);
     chars_written = 0;
     char_offset = 0;
 
@@ -684,11 +684,11 @@ int monitor_stacks(void)
         // print stack message for web interface
         if (chars_remaining)
         {
-            chars_written = snprintf(web.stack_message+char_offset, chars_remaining, "%s=%lu  ", worker_tasks[worker].name, worker_tasks[worker].stack_high_water_mark);
+            chars_written = snprintf(sys_web.stack_message+char_offset, chars_remaining, "%s=%lu  ", worker_tasks[worker].name, worker_tasks[worker].stack_high_water_mark);
             if ((chars_written >0) && (chars_written < chars_remaining))
             {
                 char_offset += chars_written;
-                chars_remaining = sizeof(web.stack_message) - char_offset;
+                chars_remaining = sizeof(sys_web.stack_message) - char_offset;
             }
         }
 
@@ -1041,15 +1041,15 @@ int pluto_download_software(void)
 {
     int err = -1;
 
-    if (web.download_now && web.software_url[0])
+    if (sys_web.software_download_now && sys_web.software_url[0])
     {
-        web.download_now = 0;
+        sys_web.software_download_now = 0;
 
-        urldecode(web.software_url, web.software_url);
+        urldecode(sys_web.software_url, sys_web.software_url);
 
-        if (err = download_file(web.software_url))
+        if (err = download_file(sys_web.software_url))
         {
-            printf("pluto_download_software: failed to download %s\n", web.software_url);
+            printf("pluto_download_software: failed to download %s\n", sys_web.software_url);
         }
         else
         {

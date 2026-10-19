@@ -22,5 +22,6 @@ void http_validator_task(void *pvParameters);
 void init_mdns_scanner();
 void websocket_client_task(void *pvParameters);
 void webhook_server_task(void *pvParameters);
+int shelly_cache_set_default_ip(char *ipv4_string);
 
 #endif

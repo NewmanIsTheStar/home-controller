@@ -71,7 +71,8 @@
 #include "picofs.h"
 // #include "ping_core.h"
 #include "swload_task.h"
-#include "web.h"
+#include "system_web.h"
+#include "application_web.h"
 
 
 
@@ -106,7 +107,8 @@ int hc_automation_run(int automation_number);
 // external variables
 extern u32_t unix_time;
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
+extern APP_WEB_VARIABLES_T app_web;
 extern char *basic_program;
 extern size_t current_buffer_index;
 extern char ascii_ram_buffer[];
@@ -155,7 +157,7 @@ void hc_task(__unused void *params)
     // picofs_initialize();
 
     printf("home controller task started\n");
-    web.automation_running = -1;
+    app_web.automation_running = -1;
     
     while (true)
     {
@@ -203,13 +205,13 @@ void hc_task(__unused void *params)
                     //     basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index, false);                
                     //     break;
                     // case HC_CMD_BASIC_FILE:
-                    //     basic_Interpreter(IM_MMAP_FILE, NULL, web.basic_file_to_execute, NULL, 0, false);                
+                    //     basic_Interpreter(IM_MMAP_FILE, NULL, sys_web.basic_file_to_execute, NULL, 0, false);                
                     //     break; 
                     // case HC_CMD_CAT_FILE:
-                    //     hc_cat(web.file_to_cat);                
+                    //     hc_cat(sys_web.file_to_cat);                
                     //     break;      
                     // case HC_CMD_HEXDUMP_FILE:
-                    //     hc_hex_dump(web.file_to_hexdump);                
+                    //     hc_hex_dump(sys_web.file_to_hexdump);                
                     //     break;                                                                        
                     case HC_CMD_LIGHTS:
                         shelly_http_request(HTTP_GET, "/relay/1?turn=on", "192.168.33.165", NULL);
@@ -220,7 +222,7 @@ void hc_task(__unused void *params)
                         // picofs_msync(cfg, sizeof(APP_CONFIG_T), MS_SYNC);
                         break; 
                     case HC_CMD_SHELLY_DEVICE_DUMP :
-                        shelly_cache_device_dump(web.shelly_device_ip);
+                        shelly_cache_device_dump(NULL);
                         break;
                     case HC_CMD_DUMP_PROGRAM:
                         dump_text_buffer();
@@ -232,7 +234,7 @@ void hc_task(__unused void *params)
                     //     picofs_list_all_files_from_flash(NULL, true);  // all files in flash including corrupted ones
                     //     break;                    
                     // case HC_CMD_PING:
-                    //     shell_ping(web.ping_target);
+                    //     shell_ping(sys_web.ping_target);
                     //     break;
                     // case HC_CMD_PAGE_MAP:    
                     //     picofs_find_page_status(PFS_DISPLAY_SHELL_PAGE_MAP);
@@ -251,7 +253,7 @@ void hc_task(__unused void *params)
                     //     picofs_consolidate_all_files_in_flash();
                     //     break;
                     // case HC_CMD_STAT:                    
-                    //     picofs_stat(web.stat_filename);
+                    //     picofs_stat(sys_web.stat_filename);
                     //     break;                        
                     // case HC_CMD_DELETE_FILE:                    
                     //     hc_delete_file();
@@ -279,7 +281,7 @@ void hc_task(__unused void *params)
             //     hc_automation_run(i);
             // }
             // printf("Completed Automaitons\n");
-            web.automation_running = -1;
+            app_web.automation_running = -1;
         }
         else
         {
@@ -435,7 +437,7 @@ int hc_save_text_file_from_ascii_buffer(void)
    
     // nothing prepended to the file
     body = (char *)editor_text;
-    STRNCPY(filename, web.edit_text_filename, sizeof(filename));
+    STRNCPY(filename, sys_web.edit_text_filename, sizeof(filename));
 
     if ((body - editor_text) < MAX_PROGRAM_SIZE)
     {
@@ -628,11 +630,11 @@ int hc_get_new_automation_number(void)
 // {
 //     int err = -1;
 
-//     if (web.delete_filename[0])
+//     if (sys_web.delete_filename[0])
 //     {
-//         if (err = remove(web.delete_filename))
+//         if (err = remove(sys_web.delete_filename))
 //         {
-//             shell_printf("rm: failed to delete %s\n", web.delete_filename);
+//             shell_printf("rm: failed to delete %s\n", sys_web.delete_filename);
 //         }
 //     }
 //     else
@@ -648,20 +650,20 @@ int hc_download_file(void)
 {
     int err = -1;
 
-    // if (web.download_url[0])
+    // if (sys_web.download_url[0])
     // {
-    //     if (strstr(web.download_url, ".uf2"))
+    //     if (strstr(sys_web.download_url, ".uf2"))
     //     {
-    //         if (err = download_file_uf2(web.download_url))
+    //         if (err = download_file_uf2(sys_web.download_url))
     //         {
-    //             shell_printf("wget: failed to download %s\n", web.download_url);
+    //             shell_printf("wget: failed to download %s\n", sys_web.download_url);
     //         }
     //     }
     //     else
     //     {
-    //         if (err = download_file(web.download_url))
+    //         if (err = download_file(sys_web.download_url))
     //         {
-    //             shell_printf("wget: failed to download %s\n", web.download_url);
+    //             shell_printf("wget: failed to download %s\n", sys_web.download_url);
     //         }
     //     }
     // }
@@ -677,11 +679,11 @@ int hc_verify_file(void)
 {
     int err = -1;
 
-    // if (web.download_url[0])
+    // if (sys_web.download_url[0])
     // {
-    //     if (err = verify_file(web.download_url))
+    //     if (err = verify_file(sys_web.download_url))
     //     {
-    //         shell_printf("wget: failed to download %s\n", web.download_url);
+    //         shell_printf("wget: failed to download %s\n", sys_web.download_url);
     //     }
     // }
     // else
@@ -698,10 +700,10 @@ int hc_verify_file(void)
 //     int exe_fd = -1;
 //     char *map;    
 
-//     if (web.boot_filename[0])
+//     if (sys_web.boot_filename[0])
 //     {
 //         // open the file with for read
-//         exe_fd = open(web.boot_filename, O_RDONLY, 0644);
+//         exe_fd = open(sys_web.boot_filename, O_RDONLY, 0644);
 //         if (exe_fd == -1) 
 //         {
 //             perror("hc_boot_file: Error opening/creating file");
@@ -731,7 +733,7 @@ int hc_verify_file(void)
 //     // for now we assume executable was linked to be loaded at the standard location (XIP_BASE)
 //     pluto_boot_setup((u_int32_t)map - FS_BASE, (char *)XIP_BASE);
 
-//     shell_printf("boot file set to: %s @ %p\n", web.boot_filename, map);
+//     shell_printf("boot file set to: %s @ %p\n", sys_web.boot_filename, map);
 
 //     return(err);
 // }
@@ -741,9 +743,9 @@ bool hc_automation_condition(bool condition)
     static bool automation_condition[64];
     bool automation_abort = false;
 
-    if ((web.automation_running >=0) && (web.automation_running <=31))
+    if ((app_web.automation_running >=0) && (app_web.automation_running <=31))
     {
-        if (condition == automation_condition[web.automation_running])
+        if (condition == automation_condition[app_web.automation_running])
         {
             // no change in condition so abort BASIC program
             automation_abort = true;
@@ -754,12 +756,12 @@ bool hc_automation_condition(bool condition)
             automation_abort = false;
 
             // store the new condition
-            automation_condition[web.automation_running] = condition;
+            automation_condition[app_web.automation_running] = condition;
 
             if (condition)
             {
                 // condition is true so BASIC THEN statement is executed (i.e. automation is run)
-                cfg->automation_triggered[web.automation_running] = unix_time;
+                cfg->automation_triggered[app_web.automation_running] = unix_time;
             }
         }
     }
@@ -777,9 +779,9 @@ int hc_automation_run(int automation_number)
 
     if (access(automation_filename, F_OK))   //TODO: Move this check into the basic_Interpreter
     {
-        web.automation_running = automation_number;
+        app_web.automation_running = automation_number;
         basic_Interpreter(IM_MMAP_FILE, NULL, automation_filename, NULL, 0, true);
-        web.automation_running = -1;
+        app_web.automation_running = -1;
     }
 
     return(err);

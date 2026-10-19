@@ -108,7 +108,7 @@
 // external variables
 extern u32_t unix_time;
 extern APP_CONFIG_T config;
-//extern WEB_VARIABLES_T web;
+//extern SYS_WEB_VARIABLES_T sys_web;
 // extern WORKER_TASK_T worker_tasks[];
 
 // static variables

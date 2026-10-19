@@ -19,7 +19,8 @@
 #include "pluto.h"
 #include "hc_task.h"
 #include "calendar.h"
-#include "web.h"
+#include "system_web.h"
+#include "application_web.h"
 #include "system_cgi.h"
 #include "shell_message.h"
 
@@ -32,7 +33,7 @@
 // } MY_CGI_T;
 
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 extern WORKER_TASK_T worker_tasks[];
 
 extern char current_calendar_web_page[50];
@@ -262,7 +263,7 @@ const char * cgi_hc_automation_save_handler(int iIndex, int iNumParams, char *pc
 
             if (strcasecmp("afname", param) == 0)
             {                              
-                STRNCPY(web.edit_text_filename, value, sizeof(web.edit_text_filename));  //TODO: why is this here?
+                STRNCPY(sys_web.edit_text_filename, value, sizeof(sys_web.edit_text_filename));  //TODO: why is this here?
 
                  sscanf(value, "automation%02d", &extracted_automation_number);
 
@@ -337,3 +338,50 @@ void application_cgi_handler(struct fs_file *file, const char* uri, int iNumPara
     }
 }
 
+
+/**
+ * Called by lwIP when an HTTP file is opened.
+ * Return a pointer to your state data or NULL if not needed.
+ */
+void *fs_state_init(struct fs_file *file, const char *name)
+{
+    WEB_SESSION_STATE_T *session = NULL;
+
+    if (strncasecmp("/cgi_", name, 5) == 0)
+    {
+        if (file->state == NULL)
+        {
+            // allocate block memory for this specific file request session
+            session = (WEB_SESSION_STATE_T *)mem_malloc(sizeof(WEB_SESSION_STATE_T));
+            if (session) 
+            {
+                // set baseline defaults
+                session->automation_file_number = 0; 
+
+                // bind custom tracking struct directly to the file instance
+                file->state = session;             
+                //printf("allocated memory for web context @%p\n", session);
+            }
+        }
+        else
+        {
+            printf("refusing to allocate memory for web context as it already exists\n");
+        } 
+    }
+
+    return session; 
+}
+
+/**
+ * Called by lwIP when an HTTP file is closed.
+ * Use this to free memory allocated in fs_state_init.
+ */
+void fs_state_free(struct fs_file *file, void *state)
+{
+    if (state != NULL) 
+    {
+        //printf("RELEASING web context memory @%p\n", file->state);    
+        mem_free(state);
+        file->state = NULL;
+    }    
+}

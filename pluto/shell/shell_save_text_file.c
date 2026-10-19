@@ -13,9 +13,9 @@
 #include "shell_message.h"
 #include "shell.h"
 #include "picofs.h"
-#include "web.h"
+#include "system_web.h"
 
-extern WEB_VARIABLES_T web; 
+extern SYS_WEB_VARIABLES_T sys_web; 
 extern MessageBufferHandle_t xMessageBuffer;
 extern const char *editor_text;
 
@@ -50,7 +50,7 @@ int shell_do_save_text_file(SM_GENERIC_FILE_T *msg)
    
     // get the filename
     // ideally the web browser would pass the file name, but we just remember what it was when we last opened the page
-    STRNCPY(filename, web.edit_text_filename, sizeof(filename));  
+    STRNCPY(filename, sys_web.edit_text_filename, sizeof(filename));  
 
     file_ptr = fopen(filename, "w");
 

@@ -35,7 +35,7 @@
 #include "application_config.h"
 // #include "watchdog.h"
 // #include "pluto.h"
-#include "web.h"
+#include "system_web.h"
 
 
 //prototype
@@ -43,7 +43,7 @@ int get_socket(char *address_string, int port, int type);
 
 // external variables
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 //global
 ip_addr_t dns_cache_response;  //temporary need per thread/ per call variable
@@ -115,14 +115,14 @@ int establish_multicast_socket(struct sockaddr_in *ipv4_address, int port, int t
 
     if (socket >= 0)
     {
-        if (socket > web.socket_max) web.socket_max = socket;
+        if (socket > sys_web.socket_max) sys_web.socket_max = socket;
         
         if (lwip_bind(socket, (struct sockaddr *)ipv4_address , sizeof(struct sockaddr_in)))
         {
             printf("closing socket due to bind failure\n");
             lwip_close(socket); 
             socket = -1;
-            web.bind_failures++;
+            sys_web.bind_failures++;
         }
         else
         {
@@ -213,7 +213,7 @@ int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/
 
     if (socket >= 0)
     {
-        if (socket > web.socket_max) web.socket_max = socket;
+        if (socket > sys_web.socket_max) sys_web.socket_max = socket;
 
         //cyw43_arch_lwip_begin();        
         if (connect(socket, (struct sockaddr *)ipv4_address, sizeof(struct sockaddr_in)))
@@ -223,7 +223,7 @@ int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/
             close(socket); 
 
             socket = -1;
-            web.connect_failures++;
+            sys_web.connect_failures++;
         }
         //cyw43_arch_lwip_end();
     }
@@ -274,7 +274,7 @@ int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/
             if (socket >= 0)
             {
                 //printf("Got socket [%s, %s, %d]\n", address_string, port_string, type);
-                if (socket > web.socket_max) web.socket_max = socket;
+                if (socket > sys_web.socket_max) sys_web.socket_max = socket;
     
                 if (!connect(socket, rp->ai_addr, rp->ai_addrlen))
                 {
@@ -290,7 +290,7 @@ int establish_socket(char *address_string, /*struct sockaddr_in *ipv4_address,*/
                     close(socket); 
 
                     socket = -1;
-                    web.connect_failures++;
+                    sys_web.connect_failures++;
                 }
             }
             else

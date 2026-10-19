@@ -30,7 +30,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         # shell_download.c
         # shell_basic.c
         kasa_discovery.c 
-        application_config.c       
+        application_config.c  
+        application_web.c     
 )
 
 # headers

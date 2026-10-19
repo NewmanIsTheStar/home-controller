@@ -35,7 +35,7 @@
 #include "application_config.h"
 // #include "watchdog.h"
 #include "pluto.h"
-#include "web.h"
+#include "system_web.h"
 
 
 
@@ -44,7 +44,7 @@
 
 // external variables
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 //global
 
@@ -102,7 +102,7 @@ int send_syslog_message(char *log_name, const char *format, ...)
                     close(syslog_socket);
                     //cyw43_arch_lwip_end();
                     syslog_socket = -1;
-                    web.syslog_transmit_failures++;
+                    sys_web.syslog_transmit_failures++;
                 }          
             }
         }

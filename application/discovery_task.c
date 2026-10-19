@@ -59,7 +59,7 @@
 // #include "powerwall.h"
 #include "shelly.h"
 // #include "discovery_task.h"
-#include "web.h"
+#include "system_web.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -76,7 +76,7 @@
 // external variables
 extern u32_t unix_time;
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 //static variables
 TaskHandle_t validator_task_handle;

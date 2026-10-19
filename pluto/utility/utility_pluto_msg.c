@@ -35,7 +35,7 @@
 #include "application_config.h"
 // #include "watchdog.h"
 // #include "pluto.h"
-#include "web.h"
+#include "system_web.h"
 
 
 //prototype
@@ -43,7 +43,7 @@
 
 // external variables
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 
 
@@ -75,7 +75,7 @@ int send_pluto_message(char *message)
         {
             lwip_close(pluto_socket);
             pluto_socket = -1;
-            web.pluto_transmit_failures++;
+            sys_web.pluto_transmit_failures++;
         }  
 
     }  

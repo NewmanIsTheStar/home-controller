@@ -14,9 +14,10 @@
 #include "ping_core.h"
 #include "picofs.h"
 #include "calendar.h"
-#include "web.h"
+#include "system_web.h"
 #include "shell.h"
 #include "shell_message.h"
+#include "shelly.h"
 
 // defines
 #define ITEM_BUF_LEN (128)
@@ -33,7 +34,7 @@ typedef enum
 
 // external variables
 extern u32_t unix_time;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 extern int tab_completion_sequence; 
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
@@ -325,7 +326,7 @@ static void execute_shell_command(const char* cmd)
     {
         if (strlen(cmd) > 13)
         {
-            web.shelly_device_ip = ((char *)(cmd+12)); 
+            shelly_cache_set_default_ip((char *)(cmd+12));
             hc_queue_send(HC_CMD_SHELLY_DEVICE_DUMP);  
         }
     }     
@@ -399,12 +400,12 @@ static void execute_shell_command(const char* cmd)
     }          
     else if (strncmp(cmd, "uptime", 4) == 0) 
     {                
-        get_delta_string_from_delta_seconds(reply, ITEM_BUF_LEN, unix_time - web.boot_time);
+        get_delta_string_from_delta_seconds(reply, ITEM_BUF_LEN, unix_time - sys_web.boot_time);
         pico_send_async_text(reply);
     } 
     else if (strncmp(cmd, "ip", 4) == 0) 
     {                
-        snprintf(reply, ITEM_BUF_LEN, "ip address: %s\nnet mask:  %s\ngateway:   %s\n", web.ip_address_string, web.network_mask_string, web.gateway_string);
+        snprintf(reply, ITEM_BUF_LEN, "ip address: %s\nnet mask:  %s\ngateway:   %s\n", sys_web.ip_address_string, sys_web.network_mask_string, sys_web.gateway_string);
         pico_send_async_text(reply);   
     } 
     else if (strncmp(cmd, "date", 4) == 0) 
@@ -956,7 +957,7 @@ int shell_edit(char *filename)
     strcpy(ascii_ram_buffer, http_ascii_buffer_header_tmpl);  // prepend http header to ascii ram buffer
     
     // remember name of file under edit
-    STRNCPY(web.edit_text_filename, filename, sizeof(web.edit_text_filename));
+    STRNCPY(sys_web.edit_text_filename, filename, sizeof(sys_web.edit_text_filename));
 
     // empty the ascii buffer data section
     ascii_ram_buffer[ASCII_HEADER_SIZE] = 0;

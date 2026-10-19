@@ -35,13 +35,13 @@
 #include "application_config.h"
 // #include "watchdog.h"
 // #include "pluto.h"
-#include "web.h"
+#include "system_web.h"
 
 //prototype
 
 // external variables
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 //global
 

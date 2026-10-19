@@ -42,7 +42,7 @@
 // #include "pluto.h"
 // #include "ping_core.h"
 // #include "shell.h"
-#include "web.h"
+#include "system_web.h"
 
 
 // defines
@@ -52,7 +52,7 @@
 
 // external variables
 extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 // global variables
 static QueueHandle_t device_queue = NULL; 

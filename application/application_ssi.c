@@ -11,7 +11,8 @@
 #include "utility.h"
 #include "application_config.h"
 #include "pluto.h"
-#include "web.h"
+#include "system_web.h"
+#include "application_web.h"
 #include "hc_task.h"
 #include "system_ssi.h"
 
@@ -20,7 +21,7 @@
 #endif
 
 extern uint32_t unix_time;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 extern APP_CONFIG_T config;
 
 
@@ -49,7 +50,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 
         case SSI_tfnme:  // text file name
         {
-            printed = snprintf(pcInsert, iInsertLen, "%s", web.edit_text_filename);    
+            printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.edit_text_filename);    
         }
         break;       
         case SSI_afnme:  // automation file name
@@ -94,12 +95,12 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         break;        
         // case SSI_usurped:  // usurped
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", web.last_usurped_timestring);    
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.last_usurped_timestring);    
         // }
         // break;
         // case SSI_cmplte:  // cmplte
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", web.last_completed_timestring);    
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.last_completed_timestring);    
         // }
         // break;        
         
@@ -107,11 +108,11 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // {
         //     if (!sys->use_archaic_units)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.outside_temperature<0?'-':' ', abs(web.outside_temperature/10), abs(web.outside_temperature%10)); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", sys_web.outside_temperature<0?'-':' ', abs(sys_web.outside_temperature/10), abs(sys_web.outside_temperature%10)); 
         //     }
         //     else
         //     {
-        //         temp = (web.outside_temperature*9)/5 + 320;
+        //         temp = (sys_web.outside_temperature*9)/5 + 320;
         //         printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld", temp<0?'-':' ', abs(temp)/10, abs(temp%10));
         //     }              
         // }
@@ -120,11 +121,11 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // {         
         //     if (!sys->use_archaic_units)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.wind_speed/10, web.wind_speed%10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", sys_web.wind_speed/10, sys_web.wind_speed%10); 
         //     }
         //     else
         //     {
-        //         temp = (web.wind_speed*3281 + 500)/1000;
+        //         temp = (sys_web.wind_speed*3281 + 500)/1000;
         //         printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
         //     }              
         // } 
@@ -133,21 +134,21 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // {
         //     if (!sys->use_archaic_units)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.daily_rain/10, web.daily_rain%10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", sys_web.daily_rain/10, sys_web.daily_rain%10); 
         //     }
         //     else
         //     {
-        //         temp = (10*web.daily_rain + 127)/254;
+        //         temp = (10*sys_web.daily_rain + 127)/254;
         //         printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
         //     }            
         // }  
         // break;
         case SSI_lstpck: // lstpck
         {
-            if (web.us_last_rx_packet)
+            if (sys_web.us_last_rx_packet)
             {
                 us_now = time_us_32();
-                printed = snprintf(pcInsert, iInsertLen, "%lu s", (us_now - web.us_last_rx_packet)/1000000);   
+                printed = snprintf(pcInsert, iInsertLen, "%lu s", (us_now - sys_web.us_last_rx_packet)/1000000);   
             }
             else
             {
@@ -160,11 +161,11 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // {          
         //     if (!sys->use_archaic_units)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.weekly_rain/10, web.weekly_rain%10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", sys_web.weekly_rain/10, sys_web.weekly_rain%10); 
         //     }
         //     else
         //     {
-        //         temp = (10*web.weekly_rain + 127)/254;
+        //         temp = (10*sys_web.weekly_rain + 127)/254;
         //         printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
         //     }             
         // }  
@@ -372,11 +373,11 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // {
         //     if (!sys->use_archaic_units)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.trailing_seven_days_rain/10, web.trailing_seven_days_rain%10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d.%d", sys_web.trailing_seven_days_rain/10, sys_web.trailing_seven_days_rain%10); 
         //     }
         //     else
         //     {
-        //         temp = (10*web.trailing_seven_days_rain + 127)/254;
+        //         temp = (10*sys_web.trailing_seven_days_rain + 127)/254;
         //         printed = snprintf(pcInsert, iInsertLen, "%ld.%ld", temp/10, temp%10);
         //     }                
             
@@ -384,17 +385,17 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break;    
         // case SSI_wfail: //wfail
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.weather_station_transmit_failures);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.weather_station_transmit_failures);
         // }               
         // break;  
         // case SSI_gfail: //gfail
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.govee_transmit_failures);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.govee_transmit_failures);
         // }               
         // break;   
         case SSI_calpge: //calpge
         {
-            if (web.access_point_mode)
+            if (sys_web.access_point_mode)
             {
                 printed = snprintf(pcInsert, iInsertLen, "/network.shtml");
             }
@@ -455,7 +456,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         break; 
         case SSI_porpge: //porpge
         {
-            if (web.access_point_mode)
+            if (sys_web.access_point_mode)
             {
                 printed = snprintf(pcInsert, iInsertLen, "/network.shtml");
             }
@@ -531,7 +532,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 
         // case SSI_soilm1: //soilm1
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.soil_moisture[0]);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.soil_moisture[0]);
         // }                       
         // break;    
         // case SSI_soilt1: //soilt1
@@ -683,17 +684,17 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break;        
         // case SSI_clpat: //clpat
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.led_current_pattern);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.led_current_pattern);
         // } 
         // break;
         // case SSI_cltran: //cltran
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%d", web.led_current_transition_delay);
+        //     printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.led_current_transition_delay);
         // } 
         // break;  
         // case SSI_clreq: //clreq
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", web.led_last_request_ip);
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.led_last_request_ip);
         // } 
         // break;         
         // case SSI_z1gpio:
@@ -826,7 +827,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 
         // case SSI_irgnow: //irgnow
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", web.irrigation_test_enable?"checked":"");
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", sys_web.irrigation_test_enable?"checked":"");
         // }   
         // break;
         // case SSI_sp1viz:
@@ -1164,23 +1165,23 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break; 
         // case SSI_tday:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", day_name(web.thermostat_day));            
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", day_name(sys_web.thermostat_day));            
         // }
         // break;   
         // case SSI_tpst:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow));
-        //     //printed = mow_to_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[web.thermostat_period_row]);
-        //     printed = mow_to_time_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[web.thermostat_period_row]);            
+        //     CLIP(sys_web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_start_mow));
+        //     //printed = mow_to_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[sys_web.thermostat_period_row]);
+        //     printed = mow_to_time_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[sys_web.thermostat_period_row]);            
         // }
         // break; 
         // case SSI_tptmp:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_temperaturex10));
+        //     CLIP(sys_web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_temperaturex10));
 
-        //     if (cfg->setpoint_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
+        //     if (cfg->setpoint_temperaturex10[sys_web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_temperaturex10[web.thermostat_period_row]/10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_temperaturex10[sys_web.thermostat_period_row]/10); 
         //     }
         //     else
         //     {
@@ -1190,11 +1191,11 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break;  
         // case SSI_tphtmp:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_heating_temperaturex10));
+        //     CLIP(sys_web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_heating_temperaturex10));
 
-        //     if (cfg->setpoint_heating_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
+        //     if (cfg->setpoint_heating_temperaturex10[sys_web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_heating_temperaturex10[web.thermostat_period_row]/10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_heating_temperaturex10[sys_web.thermostat_period_row]/10); 
         //     }
         //     else
         //     {
@@ -1204,11 +1205,11 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break;  
         // case SSI_tpctmp:
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_cooling_temperaturex10));
+        //     CLIP(sys_web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_cooling_temperaturex10));
 
-        //     if (cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
+        //     if (cfg->setpoint_cooling_temperaturex10[sys_web.thermostat_period_row] > SETPOINT_TEMP_UNDEFINED)
         //     {
-        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_cooling_temperaturex10[web.thermostat_period_row]/10); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d", cfg->setpoint_cooling_temperaturex10[sys_web.thermostat_period_row]/10); 
         //     }
         //     else
         //     {
@@ -1223,9 +1224,9 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // case SSI_tpsm5:
         // case SSI_tpsm6:        
         // {
-        //     CLIP(web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_mode));
+        //     CLIP(sys_web.thermostat_period_row, 0, NUM_ROWS(cfg->setpoint_mode));
 
-        //     if (cfg->setpoint_mode[web.thermostat_period_row] == (iIndex-SSI_tpsm1))
+        //     if (cfg->setpoint_mode[sys_web.thermostat_period_row] == (iIndex-SSI_tpsm1))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "selected"); 
         //     }
@@ -1329,18 +1330,18 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 //             switch(grid_x)
 //             {
 //             case 0:
-//                 printed = mow_to_time_string(pcInsert, iInsertLen, web.thermostat_grid[grid_x][grid_y]);
+//                 printed = mow_to_time_string(pcInsert, iInsertLen, sys_web.thermostat_grid[grid_x][grid_y]);
 //                 break;
 //             default:
-//                 if (web.thermostat_grid[grid_x][grid_y] > SETPOINT_TEMP_UNDEFINED)
+//                 if (sys_web.thermostat_grid[grid_x][grid_y] > SETPOINT_TEMP_UNDEFINED)
 //                 {
-//                     printed = snprintf(pcInsert, iInsertLen, "%d&deg;", (web.thermostat_grid[grid_x][grid_y]+5)/10); 
+//                     printed = snprintf(pcInsert, iInsertLen, "%d&deg;", (sys_web.thermostat_grid[grid_x][grid_y]+5)/10); 
 //                 }
-//                 else if (web.thermostat_grid[grid_x][grid_y] == SETPOINT_TEMP_INVALID_OFF)
+//                 else if (sys_web.thermostat_grid[grid_x][grid_y] == SETPOINT_TEMP_INVALID_OFF)
 //                 {
 //                     printed = snprintf(pcInsert, iInsertLen, "OFF");
 //                 }
-//                 else if (web.thermostat_grid[grid_x][grid_y] == SETPOINT_TEMP_INVALID_FAN)
+//                 else if (sys_web.thermostat_grid[grid_x][grid_y] == SETPOINT_TEMP_INVALID_FAN)
 //                 {
 //                     printed = snprintf(pcInsert, iInsertLen, "FAN");
 //                 }                
@@ -1354,14 +1355,14 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 //         break; 
 //         case SSI_tct:  // thermostat current temperature
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.thermostat_temperature<0?'-':' ', abs(web.thermostat_temperature/10), abs(web.thermostat_temperature%10)); 
+//             printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", sys_web.thermostat_temperature<0?'-':' ', abs(sys_web.thermostat_temperature/10), abs(sys_web.thermostat_temperature%10)); 
 //             // if (!sys->use_archaic_units)
 //             // {
-//             //     printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", web.thermostat_temperature<0?'-':' ', abs(web.thermostat_temperature/10), abs(web.thermostat_temperature%10)); 
+//             //     printed = snprintf(pcInsert, iInsertLen, "%c%d.%d", sys_web.thermostat_temperature<0?'-':' ', abs(sys_web.thermostat_temperature/10), abs(sys_web.thermostat_temperature%10)); 
 //             // }
 //             // else
 //             // {
-//             //     temp = (web.thermostat_temperature*9)/5 + 320;
+//             //     temp = (sys_web.thermostat_temperature*9)/5 + 320;
 //             //     printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld", temp<0?'-':' ', abs(temp)/10, abs(temp%10));
 //             // }  
 //         }       
@@ -1370,7 +1371,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 //         case SSI_tcs:  // thermostat current setpoint
 //         {
 //             //temp = update_current_setpoints();
-//             temp = web.thermostat_set_point;
+//             temp = sys_web.thermostat_set_point;
 
 //             printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld", temp<0?'-':' ', abs(temp)/10, abs(temp%10));                           
 //         }
@@ -1430,21 +1431,21 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 // #ifdef INCORPORATE_THERMOSTAT  
 //         case SSI_tint:  // thermostat indoor temperature
 //         {
-//             lower = web.thermostat_temperature;
-//             upper = web.thermostat_heating_set_point + cfg->thermostat_hysteresis;
+//             lower = sys_web.thermostat_temperature;
+//             upper = sys_web.thermostat_heating_set_point + cfg->thermostat_hysteresis;
 
 //             printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld", lower<0?'-':' ', abs(lower)/10, abs(lower%10));
 //         }
 //         break;            
 //         case SSI_tchs:  // thermostat current heating thresholds
 //         {
-//             switch (web.thermostat_effective_mode)
+//             switch (sys_web.thermostat_effective_mode)
 //             {
 //             case HVAC_AUTO:
 //             case HVAC_HEATING_ONLY:
 //             case HVAC_HEAT_AND_COOL:
-//                 lower = web.thermostat_heating_set_point - cfg->thermostat_hysteresis;
-//                 upper = web.thermostat_heating_set_point + cfg->thermostat_hysteresis;
+//                 lower = sys_web.thermostat_heating_set_point - cfg->thermostat_hysteresis;
+//                 upper = sys_web.thermostat_heating_set_point + cfg->thermostat_hysteresis;
 
 //                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", sys->use_archaic_units?"F":"C");
 //                 break;
@@ -1459,13 +1460,13 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 //         break;
 //         case SSI_tccs:  // thermostat current cooling thresholds
 //         {
-//             switch (web.thermostat_effective_mode)
+//             switch (sys_web.thermostat_effective_mode)
 //             {
 //             case HVAC_AUTO:
 //             case HVAC_COOLING_ONLY:
 //             case HVAC_HEAT_AND_COOL:
-//                 lower = web.thermostat_cooling_set_point - cfg->thermostat_hysteresis;
-//                 upper = web.thermostat_cooling_set_point + cfg->thermostat_hysteresis;
+//                 lower = sys_web.thermostat_cooling_set_point - cfg->thermostat_hysteresis;
+//                 upper = sys_web.thermostat_cooling_set_point + cfg->thermostat_hysteresis;
 
 //                 printed = snprintf(pcInsert, iInsertLen, "%c%ld.%ld to %c%ld.%ld %s%s", lower<0?'-':' ', abs(lower)/10, abs(lower%10), upper<0?'-':' ', abs(upper)/10, abs(upper%10), "&deg;", sys->use_archaic_units?"F":"C");
 //                 break;
@@ -1480,7 +1481,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 //         break;   
 //         case SSI_grids:  // grid status
 //         {
-//             switch(web.powerwall_grid_status)
+//             switch(sys_web.powerwall_grid_status)
 //             {
 //                 case GRID_DOWN:
 //                 printed = snprintf(pcInsert, iInsertLen, "DOWN");
@@ -1499,7 +1500,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 //         break;  
 //         case SSI_batp:  // battery percentage
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d.%d", web.powerwall_battery_percentage/10, web.powerwall_battery_percentage%10);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d.%d", sys_web.powerwall_battery_percentage/10, sys_web.powerwall_battery_percentage%10);                           
 //         }
 //         break;         
 //         case SSI_tacgpio:  // temperature sensor clock
@@ -1728,17 +1729,17 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
 //         break;
 //         case SSI_ttma:  // thermostat temperature moving average
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", web.thermostat_temperature_moving_average);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.thermostat_temperature_moving_average);                           
 //         }
 //         break;
 //         case SSI_ttgrd:  // thermostat temperature gradient
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", web.thermostat_temperature_gradient);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.thermostat_temperature_gradient);                           
 //         }
 //         break;
 //         case SSI_ttpred:  // thermostat temperature prediction (samples until target reached)
 //         {
-//             printed = snprintf(pcInsert, iInsertLen, "%d", web.thermostat_temperature_prediction);                           
+//             printed = snprintf(pcInsert, iInsertLen, "%d", sys_web.thermostat_temperature_prediction);                           
 //         }
 //         break;    
 //         case SSI_disdig:  // display number of digits
@@ -1786,7 +1787,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         //         // printed += snprintf(pcInsert+printed, iInsertLen-printed, "<td><label for=\"inact\">ON</label></td>");
 
         //         // show live values -- conflating live state with configuration
-        //         printed =  snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"ON\" %s></td>", (iIndex-SSI_rsrly1)%8+1, (iIndex-SSI_rsrly1)%8+1, web.rmtsw_relay_desired_state[(iIndex-SSI_rsrly1)%8]?"checked":"");
+        //         printed =  snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"ON\" %s></td>", (iIndex-SSI_rsrly1)%8+1, (iIndex-SSI_rsrly1)%8+1, sys_web.rmtsw_relay_desired_state[(iIndex-SSI_rsrly1)%8]?"checked":"");
         //         printed += snprintf(pcInsert+printed, iInsertLen-printed, "<td><label for=\"inact\">ON</label></td>");                
         //     }                       
         // }
@@ -1810,7 +1811,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         //         // printed += snprintf(pcInsert+printed, iInsertLen-printed, "<td><label for=\"inact\">OFF</label></td>");
 
         //         // show live values -- conflating live state with configuration
-        //         printed += snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"OFF\" %s></td>", (iIndex-SSI_rsoff1)%8+1, (iIndex-SSI_rsoff1)%8+1, web.rmtsw_relay_desired_state[(iIndex-SSI_rsoff1)%8]?"":"checked");                
+        //         printed += snprintf(pcInsert, iInsertLen, "<td><input type=\"radio\" id=\"rs%d\" name=\"rsrly%d\" value=\"OFF\" %s></td>", (iIndex-SSI_rsoff1)%8+1, (iIndex-SSI_rsoff1)%8+1, sys_web.rmtsw_relay_desired_state[(iIndex-SSI_rsoff1)%8]?"":"checked");                
         //         printed += snprintf(pcInsert+printed, iInsertLen-printed, "<td><label for=\"inact\">OFF</label></td>");                
         //     }                       
         // }
@@ -2158,9 +2159,9 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break;
         // case SSI_rsst:
         // {
-        //     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
-        //     //printed = mow_to_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[web.rmtsw_relay_period_row]);
-        //     printed = mow_to_time_string(pcInsert, iInsertLen, cfg->rmtsw_relay_schedule_start_mow[web.rmtsw_relay_period_row]);            
+        //     CLIP(sys_web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
+        //     //printed = mow_to_string(pcInsert, iInsertLen, cfg->setpoint_start_mow[sys_web.rmtsw_relay_period_row]);
+        //     printed = mow_to_time_string(pcInsert, iInsertLen, cfg->rmtsw_relay_schedule_start_mow[sys_web.rmtsw_relay_period_row]);            
         // }
         // break;   
         // case SSI_rs1st:
@@ -2232,7 +2233,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // case SSI_rs31vz:
         // case SSI_rs32vz:                        
         // {
-        //     if ((get_day_from_mow(cfg->rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1vz]) != web.rmtsw_relay_day) ||
+        //     if ((get_day_from_mow(cfg->rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1vz]) != sys_web.rmtsw_relay_day) ||
         //         (cfg->rmtsw_relay_schedule_start_mow[iIndex-SSI_rs1vz] <0))
         //     {     
         //         printed = snprintf(pcInsert, iInsertLen, "style=\"display:none;\"");
@@ -2288,19 +2289,19 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // case SSI_rsact81:
         // case SSI_rsact82:                                                      
         // {
-        //     CLIP(web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
+        //     CLIP(sys_web.rmtsw_relay_period_row, 0, NUM_ROWS(cfg->rmtsw_relay_schedule_start_mow));
 
         //     schedule_relay = (iIndex-SSI_rsact10) / 3;   // relay number
         //     schedule_slot  = (iIndex-SSI_rsact10) % 3;   // action number
 
-        //     //printf("tag = %d row = %d relay = %d action = %d  OFF = %08b  ON = %08bn ", iIndex, web.rmtsw_relay_period_row, schedule_relay, schedule_slot, cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row], cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row]);
+        //     //printf("tag = %d row = %d relay = %d action = %d  OFF = %08b  ON = %08bn ", iIndex, sys_web.rmtsw_relay_period_row, schedule_relay, schedule_slot, cfg->rmtsw_relay_schedule_action_off[sys_web.rmtsw_relay_period_row], cfg->rmtsw_relay_schedule_action_on[sys_web.rmtsw_relay_period_row]);
 
-        //     if ((cfg->rmtsw_relay_schedule_action_on[web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_ON))
+        //     if ((cfg->rmtsw_relay_schedule_action_on[sys_web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_ON))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "selected");
         //         //printf("relay %d ON\n", schedule_relay);   
         //     }
-        //     else if ((cfg->rmtsw_relay_schedule_action_off[web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_OFF))
+        //     else if ((cfg->rmtsw_relay_schedule_action_off[sys_web.rmtsw_relay_period_row] & (1<<schedule_relay)) && (schedule_slot == RMSW_ACTION_OFF))
         //     {
         //         printed = snprintf(pcInsert, iInsertLen, "selected");
         //         //printf("relay %d OFF\n", schedule_relay);   
@@ -2315,7 +2316,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break;         
         // case SSI_rsday:
         // {
-        //     printed = snprintf(pcInsert, iInsertLen, "%s", day_name(web.rmtsw_relay_day));            
+        //     printed = snprintf(pcInsert, iInsertLen, "%s", day_name(sys_web.rmtsw_relay_day));            
         // }
         // break; 
         // case SSI_rscvz1:
@@ -2342,7 +2343,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // break;
         case SSI_home:
         {
-            if (web.access_point_mode)
+            if (sys_web.access_point_mode)
             {
                 printed = snprintf(pcInsert, iInsertLen, "/network.shtml");
             }
@@ -2383,7 +2384,7 @@ u16_t application_ssi_handler(int iIndex, char *pcInsert, int iInsertLen, void *
         // {
         //     if ((iIndex-SSI_rsbulb1) < cfg->rmtsw_relay_max)
         //     {     
-        //         printed = snprintf(pcInsert, iInsertLen, "%d%s", (iIndex-SSI_rsbulb1+1), web.rmtsw_relay_desired_state[iIndex-SSI_rsbulb1]?"&#x1F7E2;":"&#x1F534;"); 
+        //         printed = snprintf(pcInsert, iInsertLen, "%d%s", (iIndex-SSI_rsbulb1+1), sys_web.rmtsw_relay_desired_state[iIndex-SSI_rsbulb1]?"&#x1F7E2;":"&#x1F534;"); 
         //     }
         //     else
         //     {

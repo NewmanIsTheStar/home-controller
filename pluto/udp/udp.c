@@ -13,11 +13,11 @@
 
 #include "udp.h"
 // #include "weather.h"
-#include "web.h"
+#include "system_web.h"
 
 //#define DEBUG_UDP_MESSAGES
 
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 /*!
  * \brief create a socket for UDP communication
@@ -36,7 +36,7 @@ SOCKET upd_establish_socket (int receive_port)
 
     if (new_socket >= 0)
     {
-        if (new_socket > web.socket_max) web.socket_max = new_socket;
+        if (new_socket > sys_web.socket_max) sys_web.socket_max = new_socket;
 
         // bind socket to UDP port
         memset (&sInAddr, 0, sizeof (sInAddr));
@@ -51,7 +51,7 @@ SOCKET upd_establish_socket (int receive_port)
             printf("Could not bind socket to UDP port %d, result = %d.  Closing socket.\n", receive_port, nResult);
             close(new_socket); 
             new_socket = -1;
-            web.bind_failures++;
+            sys_web.bind_failures++;
         }
     }
     else
@@ -92,7 +92,7 @@ int udp_transmit (SOCKET socket, char *buffer, int buffer_length, SOCKADDR_IN de
     if (sent_bytes < 0)
     {
         perror("sendto failed: ");
-        web.pluto_transmit_failures++;
+        sys_web.pluto_transmit_failures++;
     }
 
     return (sent_bytes);

@@ -20,7 +20,8 @@
 //#include "worker_tasks.h"
 #include "pluto.h"
 #include "calendar.h"
-#include "web.h"
+#include "system_web.h"
+#include "application_web.h"
 #include "application_cgi.h"
 #include "shell_message.h"
 
@@ -32,7 +33,7 @@
 // } MY_CGI_T;
 
 // extern APP_CONFIG_T config;
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 // extern WORKER_TASK_T worker_tasks[];
 
 extern char current_calendar_web_page[50];
@@ -257,7 +258,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
                     STRNCPY(sys->ip_address, value, sizeof(sys->ip_address));
                     if (!sys->dhcp_enable)
                     {
-                        STRNCPY(web.ip_address_string, value, sizeof(web.ip_address_string));
+                        STRNCPY(sys_web.ip_address_string, value, sizeof(sys_web.ip_address_string));
                     }                    
                 }
 
@@ -271,7 +272,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
                     STRNCPY(sys->network_mask, value, sizeof(sys->network_mask));
                     if (!sys->dhcp_enable)
                     {
-                        STRNCPY(web.network_mask_string, value, sizeof(web.network_mask_string));
+                        STRNCPY(sys_web.network_mask_string, value, sizeof(sys_web.network_mask_string));
                     }                     
                 }                   
                 
@@ -285,7 +286,7 @@ const char * cgi_network_handler(int iIndex, int iNumParams, char *pcParam[], ch
                     STRNCPY(sys->gateway, value, sizeof(sys->gateway));
                     if (!sys->dhcp_enable)
                     {
-                        STRNCPY(web.gateway_string, value, sizeof(web.gateway_string));
+                        STRNCPY(sys_web.gateway_string, value, sizeof(sys_web.gateway_string));
                     }                     
                 }                   
                 
@@ -525,19 +526,19 @@ const char * cgi_software_load_handler(int iIndex, int iNumParams, char *pcParam
             
             if (strcasecmp("swlhst", param) == 0)
             {
-                STRNCPY(web.software_server, value, sizeof(web.software_server));
+                STRNCPY(sys_web.software_server, value, sizeof(sys_web.software_server));
             }  
             if (strcasecmp("swlurl", param) == 0)
             {
-                STRNCPY(web.software_url, value, sizeof(web.software_url));
-                urldecode(web.software_url, web.software_url);
+                STRNCPY(sys_web.software_url, value, sizeof(sys_web.software_url));
+                urldecode(sys_web.software_url, sys_web.software_url);
             }  
             if (strcasecmp("swlfle", param) == 0)
             {
-                STRNCPY(web.software_file, value, sizeof(web.software_file));
+                STRNCPY(sys_web.software_file, value, sizeof(sys_web.software_file));
             }                          
 
-            web.download_now = 1;
+            sys_web.software_download_now = 1;
         }
 
         i++;
@@ -897,59 +898,55 @@ void httpd_cgi_handler(struct fs_file *file, const char* uri, int iNumParams,
         }
 
         // scan application handlers
-        httpd_cgi_handler(file, uri, iNumParams, pcParam, pcValue, connection_state); 
+        application_cgi_handler(file, uri, iNumParams, pcParam, pcValue, connection_state); 
 
     }
 }
 
 
-/**
- * Called by lwIP when an HTTP file is opened.
- * Return a pointer to your state data or NULL if not needed.
- */
-void *fs_state_init(struct fs_file *file, const char *name)
-{
-    WEB_SESSION_STATE_T *session = NULL;
+// /**
+//  * Called by lwIP when an HTTP file is opened.
+//  * Return a pointer to your state data or NULL if not needed.
+//  */
+// void *fs_state_init(struct fs_file *file, const char *name)
+// {
+//     WEB_SESSION_STATE_T *session = NULL;
 
-    if (strncasecmp("/cgi_", name, 5) == 0)
-    {
-        if (file->state == NULL)
-        {
-            // allocate block memory for this specific file request session
-            session = (WEB_SESSION_STATE_T *)mem_malloc(sizeof(WEB_SESSION_STATE_T));
-            if (session) 
-            {
-                // set baseline defaults
-                session->thermostat_day = 0;
-                session->thermostat_period_row = 0;
-                session->rmtsw_relay_day = 0;
-                session->rmtsw_relay_period_row = 0;
-                session->automation_file_number = 0; 
+//     if (strncasecmp("/cgi_", name, 5) == 0)
+//     {
+//         if (file->state == NULL)
+//         {
+//             // allocate block memory for this specific file request session
+//             session = (WEB_SESSION_STATE_T *)mem_malloc(sizeof(WEB_SESSION_STATE_T));
+//             if (session) 
+//             {
+//                 // set baseline defaults
+//                 session->automation_file_number = 0; 
 
-                // bind custom tracking struct directly to the file instance
-                file->state = session;             
-                //printf("allocated memory for web context @%p\n", session);
-            }
-        }
-        else
-        {
-            printf("refusing to allocate memory for web context as it already exists\n");
-        } 
-    }
+//                 // bind custom tracking struct directly to the file instance
+//                 file->state = session;             
+//                 //printf("allocated memory for web context @%p\n", session);
+//             }
+//         }
+//         else
+//         {
+//             printf("refusing to allocate memory for web context as it already exists\n");
+//         } 
+//     }
 
-    return session; 
-}
+//     return session; 
+// }
 
-/**
- * Called by lwIP when an HTTP file is closed.
- * Use this to free memory allocated in fs_state_init.
- */
-void fs_state_free(struct fs_file *file, void *state)
-{
-    if (state != NULL) 
-    {
-        //printf("RELEASING web context memory @%p\n", file->state);    
-        mem_free(state);
-        file->state = NULL;
-    }    
-}
+// /**
+//  * Called by lwIP when an HTTP file is closed.
+//  * Use this to free memory allocated in fs_state_init.
+//  */
+// void fs_state_free(struct fs_file *file, void *state)
+// {
+//     if (state != NULL) 
+//     {
+//         //printf("RELEASING web context memory @%p\n", file->state);    
+//         mem_free(state);
+//         file->state = NULL;
+//     }    
+// }

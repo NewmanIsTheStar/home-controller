@@ -27,10 +27,10 @@
 #include <pluto.h>
 // #include <shelly.h>
 #include "json_parser.h"
-#include "web.h"
+#include "system_web.h"
 
 
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 
 // prototypes

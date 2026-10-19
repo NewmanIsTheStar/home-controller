@@ -37,11 +37,11 @@
 #include "worker_tasks.h"
 #include "pluto.h"
 #include "calendar.h"
-#include "web.h"
+#include "system_web.h"
 
 // external variables
 extern WORKER_TASK_T worker_tasks[];
-extern WEB_VARIABLES_T web;
+extern SYS_WEB_VARIABLES_T sys_web;
 
 /*!
  * \brief Tell watchdog taskdog task that we are alive!
@@ -139,14 +139,14 @@ int check_watchdog_reboot(void)
     if (watchdog_reset && !web_page_updated)
     {
         // update web page
-        get_timestamp(web.watchdog_timestring, sizeof(web.watchdog_timestring), false, true); 
+        get_timestamp(sys_web.watchdog_timestring, sizeof(sys_web.watchdog_timestring), false, true); 
         web_page_updated = true;  
     }
 
     if (watchdog_reset && sys->syslog_enable && !syslog_sent)
     {
         // log watchdog event
-        if ((send_syslog_message("usurper", "REBOOT @ %s [reason = %lu]", web.watchdog_timestring, pluto_get_reboot_reason())) > 0)   
+        if ((send_syslog_message("usurper", "REBOOT @ %s [reason = %lu]", sys_web.watchdog_timestring, pluto_get_reboot_reason())) > 0)   
         {
             syslog_sent = true;
         }

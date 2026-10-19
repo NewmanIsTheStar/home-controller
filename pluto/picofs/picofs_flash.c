@@ -83,7 +83,7 @@ typedef struct picofs_flash_range
 // external variables
 // extern uint32_t unix_time;
 // extern APP_CONFIG_T config;
-// extern WEB_VARIABLES_T web;
+// extern SYS_WEB_VARIABLES_T sys_web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
