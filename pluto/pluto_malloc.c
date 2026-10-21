@@ -127,4 +127,10 @@ void* __wrap_realloc(void* ptr, size_t size)
 
 // # # Disable the Pico SDK's default memory and C++ allocation overrides
 // # add_compile_definitions(SKIP_PICO_MALLOC=1)
-// # add_compile_definitions(PICO_CXX_DISABLE_ALLOCATION_OVERRIDES=1)
+// # add_compile_definitions(PICO_CXX_DISABLE_ALLOCATION_OVERRIDES=1)// Map reentrant variants to the clean wrapper configurations
+
+void* __wrap__malloc_r(struct _reent *r, size_t size) { (void)r; return __wrap_malloc(size); }
+void __wrap__free_r(struct _reent *r, void* ptr) { (void)r; __wrap_free(ptr); }
+void* __wrap__calloc_r(struct _reent *r, size_t nmemb, size_t size) { (void)r; return __wrap_calloc(nmemb, size); }
+void* __wrap__realloc_r(struct _reent *r, void* ptr, size_t size) { (void)r; return __wrap_realloc(ptr, size); }
+

@@ -18,10 +18,12 @@ int shell_queue_cat(char *filename)
 {
     SM_GENERIC_FILE_T msg;
 
-    msg.message_id = SHELL_MSG_CAT_FILE;
-    STRNCPY(msg.filename, filename, sizeof(msg.filename));
-
-    xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
+    if (filename)
+    {
+        msg.message_id = SHELL_MSG_CAT_FILE;
+        STRNCPY(msg.filename, filename, sizeof(msg.filename));
+        xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
+    }
 
     return(0);
 }

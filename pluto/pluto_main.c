@@ -138,7 +138,7 @@ int pluto(void)
     const char *rtos_name;
     TaskHandle_t task;
 
-    pluto_boot_launch();
+    //pluto_boot_launch();
 
     stdio_init_all();
 

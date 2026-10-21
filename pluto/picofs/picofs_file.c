@@ -498,3 +498,26 @@ bool picofs_deleted_file_ready_for_erasure(FILE_TRAILER_T *candidate_file)
 
     return(may_erase);
 }
+
+/*!
+ * \brief check if file is deleted and can erased
+ * 
+ * \param[in]   candidate_file     candidate file trailer
+ *     
+ * \return 0 on success
+ */
+bool picofs_is_filename_valid(const char *filename)
+{
+    if (*filename == '\0') return false;
+
+    while (*filename) 
+    {
+        if (!isalnum((unsigned char)*filename) && *filename != '.')
+        {
+            return false; // Found a non-alphanumeric character
+        }
+        filename++;
+    }
+
+    return true; // All characters were alphanumeric
+}

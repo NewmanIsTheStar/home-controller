@@ -113,8 +113,9 @@ int config_mmap(char *filename, void **configuration_buffer, size_t config_size)
     // update the configuration pointer
     *configuration_buffer = map;
 
-    close(config_fd);
-    config_fd = -1;
+    // TODO: need to fix close / wrapper to prevent fd from being released
+    // close(config_fd);
+    // config_fd = -1;
 
     return EXIT_SUCCESS;
 }

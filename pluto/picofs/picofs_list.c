@@ -344,7 +344,7 @@ int picofs_list_all_files_from_flash(char *filter, bool ignore_crc)
         {
             if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED))
             {
-                if ((!filter) || picofs_wildcard_match(filter, list_files[i].trailer->name))
+                if ((!filter) || (filter[0] == 0) || picofs_wildcard_match(filter, list_files[i].trailer->name))
                 {
                     // calculate crc
                     calculated_crc = picofs_calculate_crc32(((const uint8_t *)(list_files[i].trailer)) + sizeof(FILE_TRAILER_T) - list_files[i].trailer->file_size, list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T));
@@ -371,7 +371,7 @@ int picofs_list_all_files_from_flash(char *filter, bool ignore_crc)
                     picofs_printf("Size\t\tFID\tSEQ\tCRC calc\tCRC file\tName\n");
                 }    
 
-                if ((!filter) || picofs_wildcard_match(filter, current->name))
+                if ((!filter) || (filter[0] == 0) || picofs_wildcard_match(filter, current->name))
                 {
                     // calculate crc
                     calculated_crc = picofs_calculate_crc32(((const uint8_t *)current + sizeof(FILE_TRAILER_T) - current->file_size), current->file_size - sizeof(FILE_TRAILER_T));
@@ -427,7 +427,7 @@ int picofs_list_all_files_from_cache(char *filter)
                 heading = true;
             }
             
-            if ((!filter) || picofs_wildcard_match(filter, list_files[i].trailer->name))
+            if ((!filter) || (filter[0] == 0) || picofs_wildcard_match(filter, list_files[i].trailer->name))
             {
                 picofs_printf("%8d\t%3d\t%3d\t%8x\t%-16s\n", list_files[i].trailer->file_size - sizeof(FILE_TRAILER_T), list_files[i].trailer->file_id, list_files[i].trailer->file_sequence, list_files[i].trailer->crc, list_files[i].trailer->name);
                 size_files += list_files[i].trailer->file_size;
@@ -567,11 +567,12 @@ int picofs_stat(char *filename)
     {
         for (i=0; i<FS_NUM_FID; i++)
         {
-            if (list_files[i].valid && !(list_files[i].trailer->file_status & STS_DELETED))
+            if (picofs_files[i].valid && !(picofs_files[i].trailer->file_status & STS_DELETED))
             {                
-                if ((!filename) || picofs_wildcard_match(filename, picofs_files[i].trailer->name))
+                if ((!filename) || (filename[0] == 0) || picofs_wildcard_match(filename, picofs_files[i].trailer->name))
                 {
-                    picofs_print_trailer_info(trailer);                  
+                    picofs_print_trailer_info(picofs_files[i].trailer);
+                    picofs_printf("\n");                  
                 }           
             }
         }        

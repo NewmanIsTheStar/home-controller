@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 // #include "pico/cyw43_arch.h"
 // #include "pico/stdlib.h"
@@ -32,6 +34,7 @@
 #include "pluto.h"
 // #include "shell.h"
 #include "picofs.h"
+#include "shell.h"
 
 
 int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart);

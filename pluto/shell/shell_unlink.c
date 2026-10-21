@@ -17,9 +17,12 @@ int shell_queue_unlink(char *filename)
 {
     SM_GENERIC_FILE_T msg;
 
-    msg.message_id = SHELL_MSG_UNLINK;
-    STRNCPY(msg.filename, filename, sizeof(msg.filename));
-    xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
+    if (filename)
+    {
+        msg.message_id = SHELL_MSG_UNLINK;
+        STRNCPY(msg.filename, filename, sizeof(msg.filename));
+        xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
+    }
 
     return(0);
 }

@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-// #include <stdio.h>
-// #include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 // #include <fcntl.h>
 
 // #include "hardware/pio.h"
@@ -149,30 +149,12 @@ int picofs_find_page_status(PFS_DISPLAY_TYPE_T display)
             case PFS_DISPLAY_QUIET:
                 break;
             case PFS_DISPLAY_PAGE_NUMBERS:
-                // file_id = picofs_find_file_at_location(cell, &trailer);
-                // if (trailer)
-                // {
-                //     file_sequence = trailer->file_sequence;
-                // }
-                // else
-                // {
-                //     file_sequence = 0;
-                // }
                 picofs_printf("[Sector%04d, Page%02d]\tused\n", erase_sector_relative, page_relative);
                 break;
             case PFS_DISPLAY_PAGE_MAP:
                 picofs_printf("\u25A0");
                 break;
             case PFS_DISPLAY_SHELL_PAGE_NUMBERS:
-                // file_id = picofs_find_file_at_location(cell, &trailer);
-                // if (trailer)
-                // {
-                //     file_sequence = trailer->file_sequence;
-                // }
-                // else
-                // {
-                //     file_sequence = 0;
-                // }
                 picofs_printf("[Sector%04d, Page%02d]\tused\n", erase_sector_relative, page_relative);
                 //hex_dump((char *)test_filesystem, 512);
                 break;            

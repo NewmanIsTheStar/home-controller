@@ -19,7 +19,16 @@ int shell_queue_stat(char *filename)
     SM_GENERIC_FILE_T msg;
 
     msg.message_id = SHELL_MSG_STAT;
-    STRNCPY(msg.filename, filename, sizeof(msg.filename));
+    
+    if (filename)
+    {
+        STRNCPY(msg.filename, filename, sizeof(msg.filename));
+    }
+    else
+    {
+        msg.filename[0] = 0;
+    }
+    
     xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
 
     return(0);

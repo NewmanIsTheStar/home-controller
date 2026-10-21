@@ -72,7 +72,7 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, uint32_t 
                 return(MAP_FAILED);
             }
 
-            custom_fds[fd].mmap_ref_count++;
+            custom_fds[target_fd].mmap_ref_count++;
 
             return((void *)(custom_fds[target_fd].cache + offset));
         }
@@ -83,7 +83,7 @@ void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, uint32_t 
                 return(MAP_FAILED);
             }
 
-            custom_fds[fd].mmap_ref_count++;
+            custom_fds[target_fd].mmap_ref_count++;
 
             return((void *)(custom_fds[target_fd].file + offset));
         }        
@@ -118,22 +118,12 @@ int picofs_munmap(void *addr, size_t len)
     uintptr_t address = (uintptr_t)addr;
     int fd = -1;
 
-    // if it points inside the Flash XIP window, nothing to free
-    if (address >= FS_BASE && address < (FS_BASE + PICO_FLASH_SIZE_BYTES)) 
-    {
-        if (custom_fds[fd].mmap_ref_count > 0)
-        {
-            custom_fds[fd].mmap_ref_count--;   // TODO: needs to be atomic
-        }
-        
-        return(0); 
-    }
      
     fd = picofs_get_fd_from_mmap_address(addr);
 
     if ((fd >= 0) && (fd < FS_MAX_FILE_DESCRIPTORS))
     {
-        // RAM associated with a file descriptor (i.e. points within the cache)
+
         if (custom_fds[fd].mmap_ref_count > 0)
         {
             custom_fds[fd].mmap_ref_count--;   // TODO: needs to be atomic
@@ -149,6 +139,12 @@ int picofs_munmap(void *addr, size_t len)
     }
     else
     {
+        // if it points inside the Flash XIP window, nothing to free
+        if (address >= FS_BASE && address < (FS_BASE + PICO_FLASH_SIZE_BYTES)) 
+        {
+            // do nothing
+        }
+
         // RAM not associated with a file descriptor so assume anonymous mapping and free the malloc'd buffer
         if (addr != NULL && addr != MAP_FAILED) 
         {
@@ -169,11 +165,19 @@ int picofs_get_fd_from_mmap_address(void *addr)
 
     for(i=0; i < FS_MAX_FILE_DESCRIPTORS; i++)
     {
+        // check if matches a file cache 
         if ((addr >= (void *)custom_fds[i].cache) && (addr < (void *)(custom_fds[i].cache + custom_fds[i].cache_len)))
         {
             fd = i;
             break;
         }
+
+        // check if matches a file (i.e. mmap readonly which points directly to a file in flash)
+        if ((addr >= (void *)custom_fds[i].data) && (addr < (void *)(custom_fds[i].data + custom_fds[i].data_len)))
+        {
+            fd = i;
+            break;
+        }        
     }
     
     return(fd);

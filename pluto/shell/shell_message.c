@@ -42,7 +42,7 @@ void shell_task(void *params)
         xReceivedBytes = xMessageBufferReceive(xMessageBuffer, 
                                                ucRxBuffer, 
                                                MAX_MSG_SIZE, 
-                                               portMAX_DELAY);
+                                               30000);
 
         if (xReceivedBytes > 0) 
         {
@@ -66,7 +66,11 @@ void shell_task(void *params)
                 break;                
             case SHELL_MSG_STAT:
                 shell_do_stat((SM_GENERIC_FILE_T *)ucRxBuffer);
-                break;    
+                break; 
+            case SHELL_MSG_PAGE_MAP:  
+            case SHELL_MSG_PAGE_NUMBERS:
+                shell_do_page_map((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;                                   
             case SHELL_MSG_COPY:
                 shell_do_copy((SM_GENERIC_DST_SRC_T *)ucRxBuffer);
                 break;  

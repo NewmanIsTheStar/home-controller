@@ -19,7 +19,15 @@ int shell_queue_list(char *filename)
     SM_GENERIC_FILE_T msg;
 
     msg.message_id = SHELL_MSG_LIST;
-    STRNCPY(msg.filename, filename, sizeof(msg.filename));
+
+    if (filename)
+    {
+        STRNCPY(msg.filename, filename, sizeof(msg.filename));
+    }
+    else
+    {
+        msg.filename[0] = 0;
+    }
 
     xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
 
@@ -35,7 +43,7 @@ int shell_queue_list(char *filename)
  */
 int shell_do_list(SM_GENERIC_FILE_T *msg)
 {
-    if (!msg || !(msg->filename[0]))
+    if (!msg)
     {
         // error no filename
         return(-1);
@@ -52,7 +60,17 @@ int shell_queue_list_all(char *filename)
     SM_GENERIC_FILE_T msg;
 
     msg.message_id = SHELL_MSG_LIST_ALL;
-    STRNCPY(msg.filename, filename, sizeof(msg.filename));
+
+    if (filename)
+    {
+        STRNCPY(msg.filename, filename, sizeof(msg.filename));
+    }
+    else
+    {
+        msg.filename[0] = 0;
+    }
+
+    xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
 
     return(0);
 }
@@ -66,7 +84,7 @@ int shell_queue_list_all(char *filename)
  */
 int shell_do_list_all(SM_GENERIC_FILE_T *msg)
 {
-    if (!msg || !(msg->filename[0]))
+    if (!msg)
     {
         // error no filename
         return(-1);

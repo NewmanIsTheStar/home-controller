@@ -117,7 +117,8 @@ NOTE:       Using the standard XIP address range is not an option because we all
 #include "shell.h"
 #define picofs_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
 #else
-#define picofs_printf(format, ...) picofs_printf("[picoFS] " format, ##__VA_ARGS__)
+//#define picofs_printf(format, ...) printf("[picoFS] " format, ##__VA_ARGS__)
+#define picofs_printf(format, ...) printf(format, ##__VA_ARGS__)
 #endif
 
 typedef struct file_trailer
@@ -254,5 +255,5 @@ bool picofs_cache_contains_entire_file(int fd);
 int picofs_cache_expand(int fd);
 int picofs_stat(char *filename);
 bool picofs_wildcard_match(const char *pattern, const char *str);
-
+bool picofs_is_filename_valid(const char *filename);
 #endif

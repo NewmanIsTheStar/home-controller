@@ -100,6 +100,7 @@ HTTP_RX_TYPE_T current_post = HTTP_RX_UNKNOWN;
 static char post_buffer[ITEM_BUF_LEN];
 static uint16_t post_len = 0;
 static char last_client_etag[16] = {0};
+static bool client_connected = false;
 
 /*!
  * \brief Decodes a URL-encoded string in-place.
@@ -310,14 +311,22 @@ static void execute_shell_command(const char* cmd)
     {
         hc_queue_send(HC_CMD_LIGHTS);  
     } 
-    else if (strcmp(cmd, "ls a") == 0) 
+    else if (strncmp(cmd, "ls -a ", 6) == 0) 
     { 
-        shell_queue_list_all(((char *)(cmd+5)));         
+        shell_queue_list_all(((char *)(cmd+6)));         
     } 
-    else if (strcmp(cmd, "ls") == 0) 
+    else if (strcmp(cmd, "ls -a ") == 0) 
+    { 
+        shell_queue_list_all(NULL);         
+    }     
+    else if (strncmp(cmd, "ls ", 3) == 0) 
     {
         shell_queue_list(((char *)(cmd+3)));         
-    }     
+    }   
+    else if (strcmp(cmd, "ls") == 0) 
+    {
+        shell_queue_list(NULL);         
+    }       
     else if (strcmp(cmd, "dump program") == 0) 
     {
         hc_queue_send(HC_CMD_DUMP_PROGRAM);  
@@ -543,6 +552,9 @@ int fs_open_custom(struct fs_file *file, const char *name)
     
     if (strncmp(name, "/commands.json", 14) == 0) 
     {
+        // proof that a client has connected!
+        client_connected = true;
+
         tab_completion_buffer[0] = 0;
         static int system_file_version = 1; 
 
@@ -821,6 +833,7 @@ void shell_print_string(const char* text)
     bool complete = false;
 
     if (text == NULL) return;
+    if (!client_connected) return;
 
     do
     {
@@ -869,7 +882,8 @@ void shell_printf(const char *format, ...)
     bool complete = false;
 
     if (format == NULL) return;
-    
+    if (!client_connected) return;
+
     do
     {
         // Guard against potential thread concurrency collisions

@@ -18,12 +18,15 @@ int shell_queue_move(char *dst, char *src)
 {
     SM_GENERIC_DST_SRC_T msg;
 
-    msg.message_id = SHELL_MSG_MOVE;
-    STRNCPY(msg.dst, dst, sizeof(msg.dst));
-    STRNCPY(msg.src, src, sizeof(msg.src));
+    if (dst && src)
+    {
+        msg.message_id = SHELL_MSG_MOVE;
+        STRNCPY(msg.dst, dst, sizeof(msg.dst));
+        STRNCPY(msg.src, src, sizeof(msg.src));
 
-    xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
-
+        xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
+    }
+    
     return(0);
 }
 

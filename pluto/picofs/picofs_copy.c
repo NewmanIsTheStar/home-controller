@@ -104,6 +104,9 @@ int picofs_copy(const char *dst, const char *src)
     FILE_TRAILER_T *existing_dst = NULL;
 
 
+    if (!picofs_is_filename_valid(dst)) return EXIT_FAILURE;
+    if (!picofs_is_filename_valid(src)) return EXIT_FAILURE;
+
     if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
     { 
 

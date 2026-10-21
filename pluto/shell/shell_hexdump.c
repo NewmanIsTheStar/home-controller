@@ -19,7 +19,15 @@ int shell_queue_hexdump(char *filename)
     SM_GENERIC_FILE_T msg;
 
     msg.message_id = SHELL_MSG_CAT_FILE;
-    STRNCPY(msg.filename, filename, sizeof(msg.filename));
+    
+    if (filename)
+    {
+        STRNCPY(msg.filename, filename, sizeof(msg.filename));
+    }
+    else
+    {
+        msg.filename[0] = 0;
+    }
 
     xMessageBufferSend(xMessageBuffer, &msg, sizeof(msg), portMAX_DELAY);
     

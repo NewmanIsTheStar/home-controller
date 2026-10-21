@@ -11,3 +11,23 @@ NOTES
 3. If you build the code using make from the command line, then it will fail to build from within VSCode until you remove the remnants of the previous build from the build directory:
     rm CMakeCache.txt 
     rm -rf CMakeFiles/
+
+Update picotool
+
+# Move out of your project tree to a temporary directory
+cd ~
+git clone https://github.com/raspberrypi/picotool.git
+cd picotool
+git checkout 2.3.0
+
+# Create a clean build container
+mkdir build && cd build
+
+# Pass the relative or absolute path straight to your project's submodule folder
+cmake -DPICO_SDK_PATH=/path/to/your/project/submodules/pico-sdk ..
+
+# Compile the binary
+make
+
+# Install globally to your system utility path (/usr/local/bin)
+sudo make install

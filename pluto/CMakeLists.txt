@@ -58,6 +58,10 @@ target_link_options(${PROJECT_NAME} PRIVATE
     "-Wl,--wrap=free"
     "-Wl,--wrap=calloc"
     "-Wl,--wrap=realloc"
+    "-Wl,--wrap=_malloc_r"
+    "-Wl,--wrap=_free_r"
+    "-Wl,--wrap=_calloc_r"
+    "-Wl,--wrap=_realloc_r"
 )
 
 # output memory use 
