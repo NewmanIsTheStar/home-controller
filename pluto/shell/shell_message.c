@@ -97,7 +97,10 @@ void shell_task(void *params)
                 break; 
             case SHELL_MSG_BASIC_INTERACTIVE:
                 shell_do_basic_interactive((SM_GENERIC_FILE_T *)ucRxBuffer);
-                break;                                                                                                                                                          
+                break;     
+            case SHELL_MSG_SAVE_TEXT_FILE:
+                shell_do_save_text_file((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;                                                                                                                                                                        
             default:
                 // Unknown or corrupted packet ID handler
                 break;

@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "lwip/sockets.h"
+ #include <string.h>
+ #include <fcntl.h>
 #include "FreeRTOS.h"
 #include "picofs.h"
 

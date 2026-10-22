@@ -4,42 +4,24 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-//#include <errno.h>
-// #include <fcntl.h>
-// #include "pico/cyw43_arch.h"
-
-// #include "lwip/opt.h"
-// #include "lwip/sockets.h"
-#include "lwip/netdb.h"
-// #include "lwip/sys.h"
-// #include <lwip/dns.h>
-
-
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
-
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
 #include "FreeRTOS.h"
-// #include "semphr.h"
-// #include "shell.h"
 #include "picofs.h"
-// #include "pluto.h"
+
 
 
 //prototypes
 
 // external variables
-// extern uint32_t unix_time;
-// extern APP_CONFIG_T config;
-// extern SYS_WEB_VARIABLES_T sys_web;
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 
 //static variables
-// AD BD Oct 16
+
+
 /*
 • EBADF: The file descriptor (fd) is invalid or not open.
 • EINVAL: The whence (or dir) argument is invalid, or the resulting file offset would be negative (e.g., trying to seek backward past the start of the file).

@@ -315,7 +315,7 @@ static void execute_shell_command(const char* cmd)
     { 
         shell_queue_list_all(((char *)(cmd+6)));         
     } 
-    else if (strcmp(cmd, "ls -a ") == 0) 
+    else if (strcmp(cmd, "ls -a") == 0) 
     { 
         shell_queue_list_all(NULL);         
     }     

@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-
+#include <fcntl.h>
 #include "lwip/netdb.h"
 #include "FreeRTOS.h"
 #include "picofs.h"

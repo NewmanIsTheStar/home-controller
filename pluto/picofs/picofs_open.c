@@ -3,68 +3,13 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-// #include <stdio.h>
-// #include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
-
-// #include "hardware/flash.h"
-// #include "hardware/structs/qmi.h"
-// #include "pico/bootrom.h"
-// #include "hardware/structs/xip_ctrl.h"
-// #include "hardware/pio.h"
-// #include "hardware/clocks.h"
-// #include "generated/ws2812.pio.h"
-
-// Prune this list of includes
-// #include "pico/cyw43_arch.h"
-// #include "pico/stdlib.h"
-// #include "pico/rand.h"
-// #include "pico/util/datetime.h"
-// #include "hardware/rtc.h"
-// #include "hardware/watchdog.h"
-// #include "pico/flash.h"
-// #include <hardware/flash.h>
-
-// #include "lwip/opt.h"
-// #include "lwip/sockets.h"
-#include "lwip/netdb.h"
-// #include "lwip/sys.h"
-// #include <lwip/dns.h>
-
-
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
-
-// #include "time.h"
+#include <errno.h>
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
 #include "semphr.h"
-
-// #include "stdarg.h"
-
-// #include "weather.h"
-// #include "cgi.h"
-// #include "ssi.h"
-
-// #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
-// #include "watchdog.h"
-// #include "pluto.h"
-// #include "led_strip.h"
-// #include "udp.h"
-// #include "message.h"
-// #include "message_defs.h"
-// #include "powerwall.h"
-// #include "shelly.h"
-// #include "discovery_task.h"
 #include "picofs.h"
 
 
@@ -103,6 +48,8 @@ SemaphoreHandle_t crc_mutex = NULL;
  * O_TRUNC: Truncate the file length to 0 if it already exists and is opened for writing.
  * O_APPEND: Move the file offset pointer to the end of the file before every write.
  * O_EXCL: Ensure that this call creates the file; if the file already exists, the call fails (used alongside O_CREAT).
+ * 
+ * IMPORTANT: Direct callers must #include <fcntl.h> before any lwip headers! lwip has conflicting bit defintions
  * 
  * \param fd                    file descriptor
  * \param name                  A pointer to a null-terminated string specifying the path to the file you want to open.

@@ -5,70 +5,12 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-// #include <fcntl.h>
-
-// #include "hardware/pio.h"
-// #include "hardware/clocks.h"
-// #include "generated/ws2812.pio.h"
-
-// Prune this list of includes
-// #include "pico/cyw43_arch.h"
-// #include "pico/stdlib.h"
-// #include "pico/rand.h"
-// #include "pico/util/datetime.h"
-//#include "hardware/rtc.h"
-// #include "hardware/watchdog.h"
-// #include "pico/flash.h"
+#include <fcntl.h>
 #include <hardware/flash.h>
-
-// #include "lwip/opt.h"
-// #include "lwip/sockets.h"
-// #include "lwip/netdb.h"
-// #include "lwip/sys.h"
-// #include <lwip/dns.h>
-
-
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
-
-
 #include "time.h"
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
 #include "task.h"
-
-// #include "stdarg.h"
-
-// #include "weather.h"
-// #include "cgi.h"
-// #include "ssi.h"
-
-// #include "utility.h"
-// #include "config.h"
-// #include "system_config.h"
-// #include "application_config.h"
-// #include "watchdog.h"
-// #include "pluto.h"
-// #include "led_strip.h"
-// #include "udp.h"
-// #include "message.h"
-// #include "message_defs.h"
-// #include "powerwall.h"
-// #include "shelly.h"
-// #include "discovery_task.h"
-// #include "shell.h"
 #include "picofs.h"
-
-
-//#define DEBUG_UDP_MESSAGES
-
-//#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
-
 
 
 
@@ -78,9 +20,7 @@ bool picofs_is_cell_reserved(uint8_t *cell);
 
 
 // external variables
-// extern uint32_t unix_time;
-// extern APP_CONFIG_T config;
-// extern SYS_WEB_VARIABLES_T sys_web;
+
 extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 #if FAKE_FLASH == 1
 extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
