@@ -81,7 +81,7 @@
 REBOOT_REASON_T __uninitialized_ram(reboot_reason);
 
 // external variables
-extern u32_t unix_time;
+extern uint32_t unix_time;
 extern APP_CONFIG_T config;
 extern SYS_WEB_VARIABLES_T sys_web;
 extern WORKER_TASK_T worker_tasks[];

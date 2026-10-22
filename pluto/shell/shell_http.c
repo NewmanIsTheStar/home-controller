@@ -33,7 +33,7 @@ typedef enum
 } HTTP_RX_TYPE_T;
 
 // external variables
-extern u32_t unix_time;
+extern uint32_t unix_time;
 extern SYS_WEB_VARIABLES_T sys_web;
 extern int tab_completion_sequence; 
 #if FAKE_FLASH == 1

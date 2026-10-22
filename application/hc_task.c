@@ -6,87 +6,36 @@
  */
 #define _GNU_SOURCE 
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
-// #include <stdio.h>
-// #include <stdlib.h>
 #include <fcntl.h>
-
-
-// #include "hardware/pio.h"
-// #include "hardware/clocks.h"
-// #include "generated/ws2812.pio.h"
-
-// Prune this list of includes
-// #include "pico/cyw43_arch.h"
-
-// #include "pico/stdlib.h"
-// #include "pico/rand.h"
-// #include "pico/util/datetime.h"
-//#include "hardware/rtc.h"
-// #include "hardware/watchdog.h"
-
-// #include "lwip/opt.h"
-// #include "lwip/sockets.h"
-#include "lwip/netdb.h"
-// #include "lwip/sys.h"
-// #include <lwip/dns.h>
-
-
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
-
-// #include "time.h"
+#include <ctype.h>
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
 #include "queue.h"
-
-// #include "stdarg.h"
-
-// #include "weather.h"
-// #include "cgi.h"
-// #include "ssi.h"
-
-// #include "utility.h"
-// #include "config.h"
 #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
-// #include "pluto.h"
-// #include "led_strip.h"
 #include "udp.h"
-// #include "message.h"
-// #include "message_defs.h"
-// #include "powerwall.h"
 #include "shelly.h"
 #include "hc_task.h"
 #include "basic.h"
-//#include "http_post.h"
-// #include "shell.h"
 #include "picofs.h"
-// #include "ping_core.h"
 #include "swload_task.h"
 #include "system_web.h"
 #include "application_web.h"
 
 
-
-//#define DEBUG_UDP_MESSAGES
 #define HC_TASK_LOOP_DELAY (60*1000)
 
-//#define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
+
 // typdedefs
 typedef struct
 {
     int (*initialization)(void);
     bool initialization_complete;
 } HC_INITIALIZATION_T;
-
 
 
 
@@ -105,7 +54,7 @@ int hc_automation_run(int automation_number);
 // int hc_boot_file(void);
 
 // external variables
-extern u32_t unix_time;
+extern uint32_t unix_time;
 extern APP_CONFIG_T config;
 extern SYS_WEB_VARIABLES_T sys_web;
 extern APP_WEB_VARIABLES_T app_web;
@@ -116,10 +65,6 @@ extern const char *editor_text;
 
 //static variables
 void *watchdog_params = NULL;
-char my_program[] = "FOR x = 1 TO 100\nPRINT \"HELLO WORLD! \";X\nNEXT";
-//char my_program[] = "5 X = 1\n10 PRINT \"HELLO WORLD! \" + X\n15 X = X +1\n20 GOTO 10";
-//char my_program[] = "5 X = 1\n15 X = X +1\n20 GOTO 15";
-//char my_program[] = "5 X = 1\n10 PRINT \"HELLO WORLD!\" + X\n12 SLEEP 1\n15 X = X +1\n20 GOTO 10";
 static HC_INITIALIZATION_T hc_initialization_table[] =
 {
 
@@ -139,7 +84,7 @@ char basic_program_buffer[4096];
  */
 void hc_task(__unused void *params) 
 {
-    SOCKADDR_IN sClientAddress;  
+    // SOCKADDR_IN sClientAddress;  
     int received_bytes = 0; 
     int hc_request = 0;  
     int i; 
@@ -152,9 +97,6 @@ void hc_task(__unused void *params)
         // force personality to match single purpose application
         sys->personality = HOME_CONTROLLER;
     }    
-    
-    // printf("home controller task initializing file system...\n");
-    // picofs_initialize();
 
     printf("home controller task started\n");
     app_web.automation_running = -1;
@@ -164,29 +106,12 @@ void hc_task(__unused void *params)
         // initialize all subsystems that are not already up
         hc_initialize();
 
-        //basic_Interpreter(NULL, NULL, my_program, sizeof(my_program));
-
-        //dump_text_buffer();
-
         if ((sys->personality == HOME_CONTROLLER))
         {
-            //TEST TEST TEST
-            // printf("Begin shelly test\n");
-            // discover_shelly_devices();
-            // printf("End shelly test\n");
-            printf("Home Controller\n");
-            //pico_send_async_text("This is async text from hc_task");
 
-            // TEST TEST TEST
-            // SLEEP_MS(30000);
-            // printf("Begin Test of shell buffer satuartion\n");
-            // for(i=0; i<100; i++)
-            // {
-            //     // snprintf(reply, sizeof(reply), "pong line a quick brown fox jumps over the lazy dog %012d!\n", i);
-            //     // pico_send_async_text(reply);         
-            //     shell_printf("pong line a quick brown fox jumps over the lazy dog %012d!\n", i); 
-            // }
-            // printf("End Test of shell buffer satuartion\n");
+            printf("Home Controller\n");
+
+
 
             // wait for timeout period but abort immediately if a command is received
             hc_request = hc_wait(HC_TASK_LOOP_DELAY);

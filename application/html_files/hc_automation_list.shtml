@@ -154,7 +154,7 @@ body {
 
 
 <div class="main">
-  <h2>Automation List</h2> 
+  <h2>Automations</h2> 
   
   <table id="automation-table">
     <tr>

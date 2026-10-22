@@ -11,10 +11,10 @@
 <script>
     function load_page() {
         if(screen.availHeight > screen.availWidth){
-            window.location = "<!--#porpge-->"; 
+            window.location = "/hc_automation_list.shtml"; 
         }
         else {
-            window.location = "<!--#calpge-->";
+            window.location = "/hc_automation_list.shtml";
         }
     }
 </script>

@@ -74,7 +74,7 @@
 
 
 // external variables
-extern u32_t unix_time;
+extern uint32_t unix_time;
 extern APP_CONFIG_T config;
 extern SYS_WEB_VARIABLES_T sys_web;
 

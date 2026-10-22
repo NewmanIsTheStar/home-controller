@@ -31,3 +31,10 @@ make
 
 # Install globally to your system utility path (/usr/local/bin)
 sudo make install
+
+
+Update SDK
+cd pico-sdk
+git fetch --tags
+git checkout 2.3.1   # use version you want
+git submodule update --init --recursive

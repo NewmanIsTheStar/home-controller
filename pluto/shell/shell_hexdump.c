@@ -18,7 +18,7 @@ int shell_queue_hexdump(char *filename)
 {
     SM_GENERIC_FILE_T msg;
 
-    msg.message_id = SHELL_MSG_CAT_FILE;
+    msg.message_id = SHELL_MSG_HEXDUMP_FILE;
     
     if (filename)
     {

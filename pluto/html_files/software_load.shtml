@@ -60,7 +60,7 @@ body {
   </div>
 
 <div class="main">
-  <h2>Software Load</h2>     
+  <h2>Software Upgrade</h2>     
   <form action="/cgi_swload.shtml">             
     <!-- <label for="swload">HTTP server hostname</label>
     <input type="text" id="swlhst" name="swlhst" value="<!--#swlhst-->"><br><br>    -->
