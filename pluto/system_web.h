@@ -28,7 +28,8 @@ typedef struct SYS_WEB_VARIABLES
   char software_url[100];        
   char software_file[100];
   int software_download_now;    
-  char edit_text_filename[16];          
+  char edit_text_filename[16]; 
+  char basic_file_to_execute[16];        
 } SYS_WEB_VARIABLES_T;                  //remember to add initialization code when adding to this structure !!!
 
 int system_web_init(void);

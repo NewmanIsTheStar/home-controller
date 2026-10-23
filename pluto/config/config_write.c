@@ -112,11 +112,11 @@ int config_sync_changes(char *filename, void *configuration_buffer, int configur
     // compare ram and flash copies
     if (config_compare_flash_ram(filename, configuration_buffer, false, false))
     {
-        printf("Writing configuration to flash\n");
+        printf("Writing %s to flash\n", filename);
 
         if (err = config_sync_file(configuration_buffer, configuration_len))
         {
-            printf("Failed to write system configuration to flash (%d)\n", err);                
+            printf("Failed to write %s to flash (%d)\n", filename, err);                
         } 
         else if (config_compare_flash_ram(filename, configuration_buffer, false, true))  // we just wrote the config so there shoud now be no differences
         {
@@ -133,7 +133,7 @@ int config_sync_changes(char *filename, void *configuration_buffer, int configur
     if (*((uint16_t *)((uint8_t *)configuration_buffer + conversion_table[row].crc_offset)) != crc_buffer((uint8_t *)configuration_buffer, conversion_table[row].crc_offset))
     {
         // config was updated by another task after we computed the crc and possibly before we wrote to flash
-        printf("System configuration update occured while writing to flash, will retry\n");
+        printf("Configuration update occured while writing %s to flash, will retry\n", filename);
         
         config_changed();
 

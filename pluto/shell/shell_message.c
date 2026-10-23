@@ -100,7 +100,16 @@ void shell_task(void *params)
                 break;     
             case SHELL_MSG_SAVE_TEXT_FILE:
                 shell_do_save_text_file((SM_GENERIC_FILE_T *)ucRxBuffer);
-                break;                                                                                                                                                                        
+                break;    
+            case SHELL_MSG_CLEANUP:
+                shell_do_cleanup((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;  
+            case SHELL_MSG_DEFRAGMENT:
+                shell_do_defragment((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;
+            case SHELL_MSG_UNLINK:
+                shell_do_unlink((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;                                                                                                                                                                                                                     
             default:
                 // Unknown or corrupted packet ID handler
                 break;

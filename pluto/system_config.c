@@ -64,7 +64,7 @@ void syscfg_blank_to_v1(void *previous_config)
 {
     int i;
 
-    printf("Initializing configuration version 1\n");
+    printf("Initializing system configuration version 1\n");
 
     // version
     sys->version = 1;

@@ -129,9 +129,9 @@ void hc_task(__unused void *params)
                     //     basic_program[current_buffer_index++] = 0;
                     //     basic_Interpreter(IM_EXECUTE_IN_PASSED_RAM_BUFFER, NULL, NULL, basic_program, current_buffer_index, false);                
                     //     break;
-                    // case HC_CMD_BASIC_FILE:
-                    //     basic_Interpreter(IM_MMAP_FILE, NULL, sys_web.basic_file_to_execute, NULL, 0, false);                
-                    //     break; 
+                    case HC_CMD_BASIC_FILE:
+                        basic_Interpreter(IM_MMAP_FILE, NULL, sys_web.basic_file_to_execute, NULL, 0, false);                
+                        break; 
                     // case HC_CMD_CAT_FILE:
                     //     hc_cat(sys_web.file_to_cat);                
                     //     break;      

@@ -18,6 +18,7 @@
 #include "shell.h"
 #include "shell_message.h"
 #include "shelly.h"
+#include "pluto.h"
 
 // defines
 #define ITEM_BUF_LEN (128)
@@ -343,7 +344,9 @@ static void execute_shell_command(const char* cmd)
     {
         if (strlen(cmd) > 5)
         {
-            shell_queue_basic_file(((char *)(cmd+4)));
+            //shell_queue_basic_file(((char *)(cmd+4)));  ***shell task has insuffient stack to run basic programs***
+            STRNCPY(sys_web.basic_file_to_execute, (char *)(cmd+4), sizeof(sys_web.basic_file_to_execute));
+            hc_queue_send(HC_CMD_BASIC_FILE);
         }
     }     
     else if (strcmp(cmd, "df") == 0) 
