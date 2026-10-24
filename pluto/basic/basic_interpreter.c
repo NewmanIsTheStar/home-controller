@@ -6,36 +6,12 @@ Description:A BASIC interpreter with langauge extensions for SNMP and automatic
 //Use this define to enable parent scripts to continue after a child has crashed
 //#define PARENTS_CONTINUE_AFTER_ERROR
 
-// #include <stdio.h>
+
 #include <sys/stat.h> 
 #include <string.h>
-// #include <errno.h>
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
 #include "dnsserver.h"
-//#include "lwip/sockets.h"
-
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
-
-/*Include Files*/
-// #include <stdio.h>
-// #include <stdlib.h>
-//#include <conio.h>
-//#include <windows.h>
-// #include "setjmp.h"
-// #include "math.h"
-// #include "ctype.h"
-// #include "string.h"
-//#include "snmp_def.h"
-#include "basic.h"
-//#include "Gpib_cmd.h"
-//#include "Relay.h"  
+#include "basic.h" 
 #include "hc_task.h"       
 #include "picofs.h"              
 #include "calendar.h"
@@ -156,11 +132,22 @@ tsCommand asCommandTable[] =
     "wend",             WEND,               basic_Wend,
     "while",            WHILE,              basic_While,
 
+    // picofs file trailer -- indicating we have overrun the end of file
+    // this hack added because the original code always ran from RAM and 
+    // automatically appended an END statement and zero termination before
+    // starting execution
+    "pfs",              END,                basic_End,
+
     /*Insert new commands above this line*/
     "",                 END,                basic_Ignore    
 };
 
+int basic_Kill(void)
+{
+    bScriptFileActive = 0;
+    bTerminateWithExtremePrejudice = 0;
 
+}
 int basic_ResetInteractiveContext(void)
 {
     // recreate context
@@ -251,6 +238,7 @@ int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileNam
             if (stat(pcFileName, &file_status) == 0)
             { 
                 apsContextStack[iContextIndex]->iProgramLength = file_status.st_size;
+                printf("IMMAP Basic program length = %d\n", apsContextStack[iContextIndex]->iProgramLength);
             }
         }
         break;           
@@ -258,7 +246,7 @@ int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileNam
 
 	if(!load_ok)        
 	{
-		basic_printf("Could not load BASIC to execute\n");
+		basic_printf("Could not load BASIC program\n");
        
         /*Erase the current context*/
         basic_DestroyContext();
@@ -410,7 +398,7 @@ int basic_Interpreter(teInterpreterMode mode, char *pcArguments, char *pcFileNam
 
        hc_pat_watchdog();
 
-	} while (psContext->eToken != FINISHED);
+	} while ((psContext->eToken != FINISHED) && bScriptFileActive);
 
     // if (/*reset_context || */syntax_error_occured)   // TODO -- is this needed?  original explanation: temporary hack to clean up interactive shell after syntax error
     // {
@@ -520,37 +508,45 @@ Returns     :  1 = Rock and Roll
 ***************************************************************************/
 int load_program_using_mmap(char *p, char *fname, tsBasicContext *psContext)
 {
+    int status = 0;
     FILE *fp;
-    int i=0;
-    const char acProgramTerminator[] = "\r\nEND";
     char *program = NULL;
     int fd;
 
     program = p;
 
-    if(!(fp=fopen(fname, "rb"))) return 0;
+    if (!(fp=fopen(fname, "rb")))
+    {
+        basic_printf("failed to open file\n");        
+        status = 0;
+        return(status);
+    } 
 
     // get file descriptor
     fd = fileno(fp);
 
     program = picofs_mmap(NULL, 0, PROT_READ, MAP_SHARED, fd, 0);
 
-    if (program)
+    if (program != MAP_FAILED)
     {
         psContext->pcProgram = program;
         psContext->pcProgramCounter = program;
 
         STRNCPY(psContext->acFileName, fname, sizeof(psContext->acFileName));
+
+        // success
+        status = 1;
     }
     else
     {
-        printf("basic: mmap failure\n");
+        basic_printf("mmap failure\n");
+        status = 0;
     }
 
   
     fclose(fp);
     
-    return 1;
+    return (status);
 }
 
 /***************************************************************************
@@ -608,11 +604,13 @@ Returns     :  Nothing
 ***************************************************************************/
 void find_eol(void)
 {
-  while((*psContext->pcProgramCounter!='\n')  && (*psContext->pcProgramCounter!='\0'))
+  while((*psContext->pcProgramCounter!='\n')  && (*psContext->pcProgramCounter!='\0') && bScriptFileActive)
   {
-      ++psContext->pcProgramCounter;
+      //++psContext->pcProgramCounter;
+      increment_program_counter();
   }
-  if(*psContext->pcProgramCounter) psContext->pcProgramCounter++;
+
+  if(*psContext->pcProgramCounter) /*psContext->pcProgramCounter++*/increment_program_counter();
 }
 
 
@@ -651,7 +649,7 @@ void scan_labels(void)
     do
     {
         get_token();
-	    if( (psContext->eTokenType==NUMBER) || (psContext->eTokenType==LABEL) )
+	    if( ((psContext->eTokenType==NUMBER) || (psContext->eTokenType==LABEL)) && bScriptFileActive )
 	    {
 	        addr = get_next_label(psContext->acToken);
             if(addr==-1 || addr==-2)
@@ -665,10 +663,10 @@ void scan_labels(void)
             psContext->sLabelTable[addr].p = psContext->pcProgramCounter;
         }
         
-        /* if not on a blank line, find basic_Next line */
+        /* if not on a blank line, find next line */
         if(psContext->eToken!=EOL) find_eol();
 
-    } while(psContext->eToken!=FINISHED);
+    } while((psContext->eToken!=FINISHED) && bScriptFileActive);
 
     // restore
     psContext->pcProgramCounter = pcTempProgramCounter;  
@@ -820,7 +818,7 @@ void scan_UserFunctions(void)
         /* if not on a blank line, find next line */
         if(psContext->eToken!=EOL) find_eol();
 
-    } while(psContext->eToken!=FINISHED);
+    } while((psContext->eToken!=FINISHED) && bScriptFileActive);
 
     // restore
     psContext->pcProgramCounter = pcTempProgramCounter;  
@@ -2154,3 +2152,39 @@ int basic_InterpretFunction(char *pcFunctionBody, int iFuncNum)
 	return 0;
 }
     
+inline void increment_program_counter(void)
+{
+    if((*psContext->pcProgramCounter==0) ||
+        (*psContext->pcProgramCounter==-1) ||
+        (psContext->pcProgramCounter >= (psContext->pcProgram + psContext->iProgramLength)) ||
+        (psContext->pcProgramCounter < psContext->pcProgram) ||
+        syntax_error_occured)
+    {
+        // force stop
+        //printf("program counter out of bounds during increment -- refusing to alter it and aborting execution\n");
+        bScriptFileActive = false;
+    }
+    else
+    {
+        ++psContext->pcProgramCounter;
+    }   
+}
+
+
+inline void decrement_program_counter(void)
+{
+    if((*psContext->pcProgramCounter==0) ||
+        (*psContext->pcProgramCounter==-1) ||
+        (psContext->pcProgramCounter > (psContext->pcProgram + psContext->iProgramLength)) ||
+        (psContext->pcProgramCounter < psContext->pcProgram) ||
+        syntax_error_occured)
+    {
+        // force stop
+        //printf("program counter out of bounds during decrement -- refusing to alter it and aborting execution\n");
+        bScriptFileActive = false;
+    }
+    else
+    {
+        --psContext->pcProgramCounter;
+    }   
+}

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ #include <stdio.h>
 #include "FreeRTOS.h"
 #include "message_buffer.h"
 #include "shell_message.h"
@@ -109,7 +110,13 @@ void shell_task(void *params)
                 break;
             case SHELL_MSG_UNLINK:
                 shell_do_unlink((SM_GENERIC_FILE_T *)ucRxBuffer);
-                break;                                                                                                                                                                                                                     
+                break;
+            case SHELL_MSG_HEAP:
+                shell_do_heap((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;                     
+            case SHELL_MSG_BASIC_KILL:
+                shell_do_basic_kill((SM_GENERIC_FILE_T *)ucRxBuffer);
+                break;                                                                                                                                                                                                                                   
             default:
                 // Unknown or corrupted packet ID handler
                 break;

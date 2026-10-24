@@ -56,3 +56,36 @@ git push origin <your-branch-name>
 
 # clone repo using ssh
 git clone --recurse-submodules git@github.com:NewmanIsTheStar/home-controller.git
+
+# check static buffer allocations
+arm-none-eabi-nm --print-size --size-sort --radix=d build/home-controller.elf | grep -i ' [b d] '
+
+• --print-size: Shows exactly how many bytes the variable consumes.
+• --size-sort: Places the largest allocations at the bottom of the terminal output.
+• --radix=d: Displays sizes in human-readable decimal bytes instead of hexadecimal.
+• grep -i ' [b d] ': Filters out function execution symbols (.text), isolating only .bss (Uninitialized/zeroed b or B) and .data (Initialized d or D) symbols
+
+
+HEAVY HITTERS as at 2026-10-23
+536914436 00001024 b httpd_req_buf
+537081892 00001024 B tab_completion_buffer
+536904224 00002040 B consoldation_files
+536915584 00002040 B list_files
+536998436 00002040 B picofs_files
+537000652 00002040 b purge_list
+537395200 00002048 b core1_stack
+537346068 00002048 B end
+537022216 00002048 B rx_buffer
+536907064 00002464 B cyw43_state
+536994372 00003075 B memp_memory_TCP_SEG_base
+536893260 00004096 B basic_program_buffer
+536888952 00004227 B ascii_ram_buffer
+536909864 00004352 b dns_table
+537003468 00006400 b queue_storage
+536897612 00006528 b bulk_http_payload
+537009880 00012307 B ram_heap
+537024272 00017150 B shelly_cache
+537041428 00039332 B shelly_parser_context
+536918700 00073539 B memp_memory_PBUF_POOL_base
+537083004 00262144 b ucHeap
+537395200 -0047084 B __HeapLimit

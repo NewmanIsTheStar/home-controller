@@ -2041,14 +2041,24 @@ Returns     :  Nothing
 ***************************************************************************/
 void basic_End(void)
 {
-    get_token();
-
-    /*Check for END IF statement*/
-    if (psContext->eToken != IF)
+    // hack for picofs files with no END statement and no zero termination
+    if (strcasecmp(psContext->acToken, "pfs") == 0)
     {
-        /*Terminate the script*/
-        putback();
-		bScriptFileActive = 0;
+        printf("BUG! We have overrun the end of file due to lack of zero termination\n");
+        bScriptFileActive = 0;
+    }
+    else // regular code
+    {
+        // peek at next token
+        get_token();
+
+        /*Check for END IF statement*/
+        if (psContext->eToken != IF)
+        {
+            /*Terminate the script*/
+            putback();
+            bScriptFileActive = 0;
+        }
     }
 }
 

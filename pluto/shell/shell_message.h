@@ -27,6 +27,8 @@ typedef enum
     SHELL_MSG_STAT,
     SHELL_MSG_COPY,
     SHELL_MSG_MOVE,
+    SHELL_MSG_HEAP,
+    SHELL_MSG_BASIC_KILL,    
 
     SHELL_MSG_BE_FOUR_BYTES      =   4294967295     // force enum to be 4 bytes long
 } SHELL_MSG_T;
@@ -95,5 +97,9 @@ int shell_queue_basic_interactive(char *filename);
 int shell_do_basic_interactive(SM_GENERIC_FILE_T *msg);
 int shell_queue_save_text_file(void);
 int shell_do_save_text_file(SM_GENERIC_FILE_T *msg);
+int shell_queue_heap(void);
+int shell_do_heap(SM_GENERIC_FILE_T *msg);
+int shell_queue_basic_kill(void);
+int shell_do_basic_kill(SM_GENERIC_FILE_T *msg);
 
 #endif

@@ -361,10 +361,11 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
             iLineFeed = 0;
         }
 
-    } while (!iEndOfString);
+
+    } while (!iEndOfString && bScriptFileActive);
     
 
-    if(iProcessEol && iLineFeed)
+    if(iProcessEol && iLineFeed && bScriptFileActive)
     {
         pcActivePos += sprintf(pcActivePos, "\n");
     }
@@ -374,7 +375,7 @@ void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol)
 
     *pcActivePos = '\0';
 
-    if (syntax_error_occured)
+    if (syntax_error_occured || !bScriptFileActive)
     {
         // discard result and return empty string
         *pcResult = '\0';
@@ -607,7 +608,7 @@ void eval_bitwise(int *piAnswer, double *pfAnswer)
         get_token();
 
         //Newman added in 2026  -- allow conditions on multiple lines if line break occurs immediately after AND or OR
-        while (psContext->eToken == EOL)
+        while ((psContext->eToken == EOL) && bScriptFileActive)
         {
             get_token();
         } 
@@ -631,6 +632,8 @@ void eval_bitwise(int *piAnswer, double *pfAnswer)
         }
 
         op = *psContext->acToken;
+
+        if (!bScriptFileActive) break;
     }
 }
 
@@ -669,6 +672,8 @@ void eval_bitshift(int *piAnswer, double *pfAnswer)
             *pfAnswer = (double)(*piAnswer);
             break;
         }
+
+        if (!bScriptFileActive) break;
     }
 }
 
@@ -747,6 +752,7 @@ void eval_relational(int *piAnswer, double *pfAnswer)
 
 		    *pfAnswer = (double)(*piAnswer);
     
+            if (!bScriptFileActive) break;
         }
     }
 }
@@ -783,6 +789,8 @@ void eval_AdditionAndSubtraction(int *piAnswer, double *pfAnswer)
             *pfAnswer = *pfAnswer + fTemp;
             break;
         }
+
+        if (!bScriptFileActive) break;
     }
 }
 
@@ -818,6 +826,8 @@ void eval_MultiplicationAndDivision(int *piAnswer, double *pfAnswer)
             *pfAnswer = *pfAnswer / fTemp;
             break;
         }
+
+        if (!bScriptFileActive) break;
     }
 }
 
@@ -1310,9 +1320,10 @@ int get_token(void)
     temp = psContext->acToken;
 
     /*Check for End of File or program termination*/
-    if((*psContext->pcProgramCounter==0) ||
-       (*psContext->pcProgramCounter==-1) ||
-       (psContext->pcProgramCounter >= (psContext->pcProgram + psContext->iProgramLength)) ||
+    if((psContext->pcProgramCounter >= (psContext->pcProgram + psContext->iProgramLength)) ||
+       (psContext->pcProgramCounter < psContext->pcProgram) ||
+       (*psContext->pcProgramCounter==0) ||
+       (*psContext->pcProgramCounter==-1) ||       
        syntax_error_occured)
     {
         *psContext->acToken = 0;
@@ -1321,7 +1332,7 @@ int get_token(void)
     }
 
     /*Skip over white space*/
-    while(iswhite(*psContext->pcProgramCounter)) ++psContext->pcProgramCounter;
+    while(iswhite(*psContext->pcProgramCounter)) /*++psContext->pcProgramCounter*/increment_program_counter();;
 
     /*Check for DOS end of line*/
     if(*psContext->pcProgramCounter=='\r')
@@ -1329,13 +1340,15 @@ int get_token(void)
         i = 0;
         psContext->acToken[i]=*psContext->pcProgramCounter;        // copy \r into acTokem
 
-        ++psContext->pcProgramCounter;
+        //++psContext->pcProgramCounter;
+        increment_program_counter();
         
         if(*psContext->pcProgramCounter=='\n')
         {
             psContext->acToken[++i]=*psContext->pcProgramCounter;  // copy \n into acTokem
 
-            ++psContext->pcProgramCounter;                         // point to next token
+            //++psContext->pcProgramCounter;                         // point to next token
+            increment_program_counter();
         }
         else
         {
@@ -1351,7 +1364,8 @@ int get_token(void)
     /*Check for UNIX end of line*/
     if(*psContext->pcProgramCounter=='\n')
     {
-        ++psContext->pcProgramCounter; // next token
+        //++psContext->pcProgramCounter; // next token
+        increment_program_counter();
         psContext->eToken = EOL;
         psContext->acToken[0]='\n';
         psContext->acToken[1]=0;
@@ -1363,14 +1377,16 @@ int get_token(void)
     {
         /*Delimiter*/
         *temp = *psContext->pcProgramCounter;
-        psContext->pcProgramCounter++; /* advance to next position */
+        //psContext->pcProgramCounter++; /* advance to next position */
+        increment_program_counter();
         temp++;
 
         /*Grab second half of two character operators: >=, <= <> >> <<*/
         if ((strchr("><", *psContext->acToken)) && (strchr("><=", *psContext->pcProgramCounter)))
         {
             *temp = *psContext->pcProgramCounter;
-            psContext->pcProgramCounter++; /* advance to next position */
+            //psContext->pcProgramCounter++; /* advance to next position */
+            increment_program_counter();
             temp++;
         }
         *temp = 0;
@@ -1381,12 +1397,16 @@ int get_token(void)
     if(*psContext->pcProgramCounter=='"')
     {
         /*quoted string*/
-        psContext->pcProgramCounter++;
+        //psContext->pcProgramCounter++;
+        increment_program_counter();
         while(*psContext->pcProgramCounter!='"'  &&
               *psContext->pcProgramCounter!='\r' &&      // DOS EOL
               *psContext->pcProgramCounter!='\n')        // UNIX EOL
         {
-            *temp++ = *psContext->pcProgramCounter++;
+            //*temp++ = *psContext->pcProgramCounter++;
+
+            *temp++ = *psContext->pcProgramCounter;
+            increment_program_counter();
 
             if ((temp - psContext->acToken) >= sizeof(psContext->acToken))
             {
@@ -1394,6 +1414,8 @@ int get_token(void)
                 syntax_error(MISS_QUOTE);
                 break;
             }
+
+            if (!bScriptFileActive) break;
         }
 
         if((*psContext->pcProgramCounter=='\r') ||       // DOS EOL
@@ -1402,7 +1424,8 @@ int get_token(void)
             syntax_error(MISS_QUOTE);
         } 
 
-        psContext->pcProgramCounter++;
+        //psContext->pcProgramCounter++;
+        increment_program_counter();
         *temp = 0;
         
         return(psContext->eTokenType=QUOTE);
@@ -1414,14 +1437,19 @@ int get_token(void)
         /* number */
         while(!isdelim(*psContext->pcProgramCounter))
         {
-            *temp++ = *psContext->pcProgramCounter++;
+            //*temp++ = *psContext->pcProgramCounter++;
+
+            *temp++ = *psContext->pcProgramCounter;
+            increment_program_counter();
 
             if ((temp - psContext->acToken) >= sizeof(psContext->acToken))
             {
                 // too many characters
                 syntax_error(SYNTAX);
                 break;
-            }            
+            }
+            
+            if (!bScriptFileActive) break;
         }
 
         *temp = '\0';
@@ -1435,14 +1463,19 @@ int get_token(void)
         /* var or command */
         while(!isdelim(*psContext->pcProgramCounter))
         {
-            *temp++ = *psContext->pcProgramCounter++;
+            //*temp++ = *psContext->pcProgramCounter++;
+
+            *temp++ = *psContext->pcProgramCounter;
+            increment_program_counter();
 
             if ((temp - psContext->acToken) >= sizeof(psContext->acToken))
             {
                 // too many characters
                 syntax_error(SYNTAX);
                 break;
-            }              
+            }
+            
+            if (!bScriptFileActive) break;
         }
         psContext->eTokenType = STRING;
     }
@@ -1513,7 +1546,8 @@ int get_token(void)
         If an unrecognised token is found then move the PC forward one character.
         This prevents a lockup occuring in any code that loops calling get_token
         unitl a particular token is found or the end of file is reached.*/
-        psContext->pcProgramCounter++;
+        //psContext->pcProgramCounter++;
+        increment_program_counter();
     }
 
     //shell_printf("Token type = %d Token = %s\n", psContext->eTokenType, psContext->acToken);
@@ -1532,12 +1566,19 @@ void putback(void)
 
     char *t;
 
-    t = psContext->acToken;
-    for(; *t; t++) psContext->pcProgramCounter--;
+    if (bScriptFileActive)
+    {
+        t = psContext->acToken;
+        for(; *t; t++) /*psContext->pcProgramCounter--*/decrement_program_counter();
 
-    /*If putting back a quoted string must move back two extra characters for quotes*/
-    if (psContext->eTokenType == QUOTE) psContext->pcProgramCounter -= 2;
-
+        /*If putting back a quoted string must move back two extra characters for quotes*/
+        if (psContext->eTokenType == QUOTE)
+        {
+            //psContext->pcProgramCounter -= 2;
+            decrement_program_counter();
+            decrement_program_counter();
+        } 
+    }
 }
 
 

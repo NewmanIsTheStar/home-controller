@@ -19,7 +19,7 @@
 // #include "lwip/sys.h"
 // #include <lwip/dns.h>
 
-// #include "FreeRTOS.h"
+#include "FreeRTOS.h"
 // #include "FreeRTOSConfig.h"
 // #include "task.h"
 
@@ -519,4 +519,18 @@ int print_gpio_pins_matching_default(char *buffer, int len, GPIO_DEFAULT_T gpio_
     }  
 
     return(printed);
+}
+
+
+void print_heap_statistics(void)
+{
+    HeapStats_t xHeapStats;
+
+    vPortGetHeapStats(&xHeapStats);
+
+    printf("Available Space: %u bytes\n", xHeapStats.xAvailableHeapSpaceInBytes);
+    printf("Largest Free Block: %u bytes\n", xHeapStats.xSizeOfLargestFreeBlockInBytes);
+    printf("Smallest Free Block: %u bytes\n", xHeapStats.xSizeOfSmallestFreeBlockInBytes);
+    printf("Number of Free Blocks: %u\n", xHeapStats.xNumberOfFreeBlocks);
+    printf("Historical Minimum Free Bytes: %u\n", xHeapStats.xMinimumEverFreeBytesRemaining);
 }

@@ -262,6 +262,32 @@
                 this.value = '';
             }
         }
+
+        if (e.key === 'Escape') {
+            const command = 'kill';
+            if (!command) return;
+
+            output.textContent += `\npico-shell> ${command}\n`;
+            this.value = '';
+
+            matchingCommands = [];
+            lastTabPrintedList = false;
+
+            history.push(command);
+            historyIndex = history.length;
+
+            try {
+                await fetch('/exec', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: command
+                });
+            } catch (err) {
+                output.textContent += "System Error: Unable to transmit command.\n";
+            }
+            
+            window.scrollTo(0, document.body.scrollHeight);
+        }         
     });
 
     output.textContent = "Shell Ready. Waiting for data...\n";

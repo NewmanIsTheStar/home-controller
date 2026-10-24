@@ -365,7 +365,15 @@ static void execute_shell_command(const char* cmd)
     else if (strcmp(cmd, "defrag") == 0) 
     {
         shell_queue_defragment();
-    }     
+    } 
+    else if (strcmp(cmd, "heap") == 0) 
+    {
+        shell_queue_heap();
+    }      
+    else if (strcmp(cmd, "kill") == 0) 
+    {
+        shell_queue_basic_kill();
+    }           
     else if (strncmp(cmd, "boot ", 5) == 0) 
     { 
         shell_queue_boot((char *)(cmd+5));

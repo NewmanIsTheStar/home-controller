@@ -323,6 +323,8 @@ int set_StringArrayVariable(char *pcName, int aiIndex[MAX_ARRAY_DIM], char *pcVa
 int string_atom(char *pcAnswer, int iLength);
 void eval_StringLine(char *pcResult, int nResultLen, int iProcessEol);
 int eval_StringLogic(void);
-
+void increment_program_counter(void);
+void decrement_program_counter(void);
+int basic_Kill(void);
 
 #endif
