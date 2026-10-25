@@ -103,4 +103,3 @@ int shell_copy(char *src_space_dst)
 
     return 0;
 }
-

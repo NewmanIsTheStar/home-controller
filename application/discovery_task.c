@@ -133,7 +133,8 @@ void discovery_task(__unused void *params)
 
     while (true)
     {        
-        if ((sys->personality == HOME_CONTROLLER))
+        // if ((sys->personality == HOME_CONTROLLER))
+        if(0)
         {
             if ((unix_time - last_shelly_scan) > (60*60))
             {

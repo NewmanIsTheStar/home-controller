@@ -118,7 +118,10 @@ void shell_task(void *params)
                 break;                     
             case SHELL_MSG_BASIC_KILL:
                 shell_do_basic_kill((SM_GENERIC_FILE_T *)ucRxBuffer);
-                break;                                                                                                                                                                                                                                   
+                break;      
+            case SHELL_MSG_MEMCMP:
+                shell_do_memcmp((SM_GENERIC_DST_SRC_LEN_T *)ucRxBuffer);
+                break;                                                                                                                                                                                                                                              
             default:
                 // Unknown or corrupted packet ID handler
                 break;

@@ -28,7 +28,8 @@ typedef enum
     SHELL_MSG_COPY,
     SHELL_MSG_MOVE,
     SHELL_MSG_HEAP,
-    SHELL_MSG_BASIC_KILL,    
+    SHELL_MSG_BASIC_KILL, 
+    SHELL_MSG_MEMCMP,       
 
     SHELL_MSG_BE_FOUR_BYTES      =   4294967295     // force enum to be 4 bytes long
 } SHELL_MSG_T;
@@ -58,6 +59,14 @@ typedef struct
     SHELL_MSG_T message_id;
     char address[24];
 } SM_PING_T;
+
+typedef struct 
+{
+    SHELL_MSG_T message_id;
+    char src[16];
+    char dst[16];  
+    char len[16]; 
+} SM_GENERIC_DST_SRC_LEN_T;
 
 int shell_queue_cat(char *filename);
 int shell_do_cat(SM_GENERIC_FILE_T *msg);
@@ -101,5 +110,7 @@ int shell_queue_heap(void);
 int shell_do_heap(SM_GENERIC_FILE_T *msg);
 int shell_queue_basic_kill(void);
 int shell_do_basic_kill(SM_GENERIC_FILE_T *msg);
+int shell_queue_memcmp(char *dst, char *src, char *len);
+int shell_do_memcmp(SM_GENERIC_DST_SRC_LEN_T *msg);
 
 #endif

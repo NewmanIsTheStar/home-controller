@@ -148,7 +148,7 @@ int __wrap__write(int fd, char *ptr, int len)
     return(bytes_written);
 }
 
-// Hook for fseek()  -- untested
+// Hook for fseek()  
 /*!
  * \brief repositions the file offset of the open file fd to offset (ptr?) according to the directive whence (dir?)
  *
@@ -167,7 +167,7 @@ int __wrap__lseek(int fd, int ptr, int dir)
         return -1;
     }
     
-    return (picofs_seek(target_fd, ptr, dir));
+    return (picofs_lseek(target_fd, ptr, dir));
 }
 
 // Hook for fclose()

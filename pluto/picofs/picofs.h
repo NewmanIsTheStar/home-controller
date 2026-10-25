@@ -189,7 +189,7 @@ int picofs_deallocate_cache(int fd);
 int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disable_fid_rollover, size_t known_size);
 int picofs_read(int fd, char *ptr, int len);
 int picofs_write(int fd, char *ptr, int len);
-int picofs_seek(int fd, int ptr, int dir);
+int picofs_lseek(int fd, int ptr, int dir);
 int picofs_create_file_trailer(int fd, const char *name);
 int picofs_close_file(int fd, bool disable_purge);
 int picofs_delete(char *filename);

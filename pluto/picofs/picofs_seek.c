@@ -27,7 +27,9 @@ extern PICOFS_FD_T custom_fds[FS_MAX_FILE_DESCRIPTORS];
 • EINVAL: The whence (or dir) argument is invalid, or the resulting file offset would be negative (e.g., trying to seek backward past the start of the file).
 • ESPIPE: The file descriptor is associated with a pipe, socket, or FIFO, which do not support seeking.
 */
-int picofs_seek(int fd, int ptr, int dir)
+
+
+int picofs_lseek(int fd, int ptr, int dir)
 {
     int err = 0;
     int i;
@@ -35,6 +37,7 @@ int picofs_seek(int fd, int ptr, int dir)
     size_t requested_offset = 0;
 
     // TODO: a *lot* of bounds checking and memory allocation! (i.e. seeking outside range of existing file)
+    // ALSO seek should move freely if open read-only
     switch(dir)
     {
     default:
@@ -83,16 +86,28 @@ int picofs_seek(int fd, int ptr, int dir)
         break;
     }
 
-    if (!picofs_cache_contains_entire_file(fd))
+    if (!err && !(custom_fds[fd].flags & FWRITE))
     {
-        // check if new position is within the existing cache  
-        //  TODO: this test needs to be stricter, only allow seek to move to the next page otherwise the cache could have a hole in it which will casue chaos when we write to flash
-        if ((requested_offset >= custom_fds[fd].cache_offset) && (requested_offset < custom_fds[fd].cache_offset + custom_fds[fd].cache_len))
+        //TODO: apparently seek() should allow the pointer (data_offset) to move beyond EOF and subsequent reads should return an empty response or EOF
+
+        // read only so seek may move freely within the file
+        CLIP(requested_offset, 0, custom_fds[fd].file_len);  
+        custom_fds[fd].data_offset = requested_offset;
+
+        return custom_fds[fd].data_offset;
+    }
+
+    if (!err && !picofs_cache_contains_entire_file(fd))
+    {
+        // check if new position is within the existing cache and sequential (i.e. where the data_offset is already) 
+        if ((requested_offset >= custom_fds[fd].cache_offset) && (requested_offset < custom_fds[fd].cache_offset + custom_fds[fd].cache_len) &&
+            (requested_offset == custom_fds[fd].data_offset))
         {
-            custom_fds[fd].cache_offset = requested_offset;
+            //printf("picofs: seek() cache hit. Writing sequential data.\n");
         }
         else // need to move cache window
         {
+            //printf("picofs: seek() cache miss.  requested_offset = %d data_offset = %d cache range [%p, %p]\n", requested_offset, custom_fds[fd].data_offset, custom_fds[fd].cache_offset, custom_fds[fd].cache_offset+custom_fds[fd].cache_len);
             cache_index = custom_fds[fd].data_offset - custom_fds[fd].cache_offset;
 
             if (cache_index%FS_PAGE_SIZE)

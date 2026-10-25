@@ -417,7 +417,11 @@ static void execute_shell_command(const char* cmd)
     else if (strncmp(cmd, "cp ", 3) == 0) 
     {        
         if (strlen(cmd) > 5) shell_copy((char *)cmd+3);   
-    }          
+    }    
+    else if (strncmp(cmd, "memcmp ", 7) == 0) 
+    {        
+        if (strlen(cmd) > 5) shell_memcmp((char *)cmd+7);   
+    }            
     else if (strncmp(cmd, "uptime", 4) == 0) 
     {                
         get_delta_string_from_delta_seconds(reply, ITEM_BUF_LEN, unix_time - sys_web.boot_time);
