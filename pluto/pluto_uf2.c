@@ -11,8 +11,7 @@
 // defines
 #define UF2_MAGIC_START0 0x0A324655
 #define UF2_MAGIC_START1 0x9E5D5157
-#define UF2_MAGIC_END    0x0AB41357
-
+#define UF2_MAGIC_END    0x0AB16F30
 
 // process a completely reconstructed 512-byte UF2 block
 void pluto_write_uf2_block(int fd, const uf2_block_t *block) 
@@ -28,11 +27,16 @@ void pluto_write_uf2_block(int fd, const uf2_block_t *block)
     }
 
     // Skip payload blocks meant for other architectures (e.g. RP2040)
-    // RP2350-ARM-S Family ID is 0xe48bff56; RP2350-RISCV is 0x78f240e3
-    if ((block->flags & 0x00002000) && 
-        (block->family_id != 0xe48bff56 && block->family_id != 0x78f240e3)) 
+    // Valid RP2350 Family IDs cover both Secure (S) and Non-secure (NS) variants
+    if (block->flags & 0x00002000) 
     {
-        return; 
+        if (block->family_id != 0xe48bff56 && // RP2350 ARM Secure
+            block->family_id != 0xe48bff59 && // RP2350 ARM Non-secure
+            block->family_id != 0x78f240e3 && // RP2350 RISC-V Secure
+            block->family_id != 0x78f240e4)   // RP2350 RISC-V Non-secure
+        {
+            return; 
+        }
     }
 
     // Flash the 256-byte payload (adjust according to standard UF2 block sizes)

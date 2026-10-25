@@ -85,7 +85,8 @@ int picofs_seek(int fd, int ptr, int dir)
 
     if (!picofs_cache_contains_entire_file(fd))
     {
-        // check if new position is within the existing cache
+        // check if new position is within the existing cache  
+        //  TODO: this test needs to be stricter, only allow seek to move to the next page otherwise the cache could have a hole in it which will casue chaos when we write to flash
         if ((requested_offset >= custom_fds[fd].cache_offset) && (requested_offset < custom_fds[fd].cache_offset + custom_fds[fd].cache_len))
         {
             custom_fds[fd].cache_offset = requested_offset;

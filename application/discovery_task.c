@@ -60,6 +60,8 @@
 #include "shelly.h"
 // #include "discovery_task.h"
 #include "system_web.h"
+#include "application_config.h"
+#include "system_config.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -131,7 +133,7 @@ void discovery_task(__unused void *params)
 
     while (true)
     {        
-        if ((/*cfg->personality == HOME_CONTROLLER)*/0))
+        if ((sys->personality == HOME_CONTROLLER))
         {
             if ((unix_time - last_shelly_scan) > (60*60))
             {

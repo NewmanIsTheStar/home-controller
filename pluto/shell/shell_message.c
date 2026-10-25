@@ -38,6 +38,8 @@ void shell_task(void *params)
 
     shell_buffer_init();
 
+    shell_printf("*\n");
+    
     for (;;) 
     {
         xReceivedBytes = xMessageBufferReceive(xMessageBuffer, 

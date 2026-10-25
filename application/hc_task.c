@@ -73,7 +73,7 @@ static HC_INITIALIZATION_T hc_initialization_table[] =
 static QueueHandle_t hc_queue = NULL;                     
 static uint8_t hc_message = 0;                            
 static bool hc_queue_initialized = false;
-char basic_program_buffer[4096];    
+//char basic_program_buffer[4096];    
 
 /*!
  * \brief home controller task
@@ -341,7 +341,7 @@ void hc_load_basic_program(char *program, int len)
 {
 
     //memcpy(basic_program_buffer, program, len);
-    strcpy(basic_program_buffer, program);
+    // strcpy(basic_program_buffer, program);
     //strcat(basic_program_buffer, "\r\nEND\r\n");  // not needed because interpreter does this when loading from ram
 }
 

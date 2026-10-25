@@ -110,7 +110,7 @@ int shell_do_basic_interactive(SM_GENERIC_FILE_T *msg)
         return(-1);
     }
 
-    basic_Interpreter(IM_INTERACTIVE, NULL, NULL, basic_program_buffer, strlen(basic_program_buffer), false);
+    //basic_Interpreter(IM_INTERACTIVE, NULL, NULL, basic_program_buffer, strlen(basic_program_buffer), false);
     
     return(0);
 }

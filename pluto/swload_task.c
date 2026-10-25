@@ -600,7 +600,7 @@ int verify_file(char *url)
         // generate filename from uri
         for(i=0; i < sizeof(uri); i++)
         {
-            if (isalpha(uri[i]) || isdigit(uri[i]) || uri[i] == 0)
+            if (isalpha(uri[i]) || isdigit(uri[i]) || (uri[i] == '.') || uri[i] == 0)
             {
                 filename[j++] = uri[i];
                 if ((j >= 16) || (uri[i] == 0)) 
@@ -818,7 +818,7 @@ int download_file_uf2(char *url)
         // generate filename from uri
         for(i=0; i < sizeof(uri); i++)
         {
-            if (isalpha(uri[i]) || isdigit(uri[i]) || uri[i] == 0)
+            if (isalpha(uri[i]) || isdigit(uri[i]) || (uri[i] == '.') || uri[i] == 0)
             {
                 filename[j++] = uri[i];
                 if ((j >= 16) || (uri[i] == 0)) 
@@ -886,7 +886,7 @@ int download_file_uf2(char *url)
                             if (filePointer < 0)
                             {
                                 //filePointer = fopen(filename, "wb");
-                                filePointer = picofs_open_download_file(filename, file_len); 
+                                filePointer = picofs_open_download_file(filename, file_len/2); 
 
                                 // check if the file exists and opened successfully
                                 if (filePointer < 0) 

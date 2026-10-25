@@ -7,25 +7,13 @@
 // set this to 1 to use a chunk of RAM to simulate flash for testing/development purposes
 #define FS_FAKE_FLASH (0)
 
-/*set the FLASH BASE for file system access
-OPTION 1:   Use the uncached and never translated address range.
-            This avoids cache cohenrency issues and slowing down executable code by pushing it out
-            of the cache.  This is the preferred approach for most applications because files are
-            normally accessed infrequently.
-OPTION 2:   Use the cached but untranslated region starting at 0x10400000.
-            This uses the cache, so it is good for frequent file access.  However, this will
-            potentially displace executable code from the cache, suffers from cache duplication
-            and requires flash_flush_cache() to be called every time flash is modified because
-            modifications are written via the temporarily untranslated XIP region.  
-            Using the 0x10400000 region relies on the fact that the high bits will be ignored
-            so reading 0x10400000 will access the first byte of flash that is nominally at 
-            0x10000000 and avoids any address translation that might be occuring at 0x10000000.
-NOTE:       Using the standard XIP address range is not an option because we allow the executable
-            to be linked for the standard XIP location (0x10000000) but stored elsewhre in flash.
-            Then we use address translation to shift the executable to the expected address.
-*/
-#define FS_BASE XIP_NOCACHE_NOALLOC_NOTRANSLATE_BASE // uncached -- best for most applicaitons
-//#define FS_BASE _u(0x10400000)                     // cached   -- could stall execution
+// uncached and untranslated file system access to flash
+// Explanation: the file system always sees flash at the same location even when the executable code  
+// is using address translation to run from a non-standard location (aka "virtual memory")
+#define FS_BASE XIP_NOCACHE_NOALLOC_NOTRANSLATE_BASE 
+
+// set this to 1 if FS_BASE is set to use cache when the file system accesses flash (this will slow code execution)
+#define FLASH_CACHE_DUPLICATION_POSSIBLE (0)
 
 #if FS_FAKE_FLASH == 1
 #define FS_SECTOR_SIZE (1024)
@@ -117,7 +105,6 @@ NOTE:       Using the standard XIP address range is not an option because we all
 #include "shell.h"
 #define picofs_printf(format, ...) shell_printf(format, ##__VA_ARGS__)
 #else
-//#define picofs_printf(format, ...) printf("[picoFS] " format, ##__VA_ARGS__)
 #define picofs_printf(format, ...) printf(format, ##__VA_ARGS__)
 #endif
 

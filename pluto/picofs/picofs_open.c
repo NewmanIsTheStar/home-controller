@@ -56,6 +56,7 @@ SemaphoreHandle_t crc_mutex = NULL;
  * \param flags                 bitwise flags O_RDONLY, O_WRONLY, O_RDWR, O_CREAT, O_TRUNC, O_APPEND, O_EXCL 
  * \param fid                   file identifier to use instead of text name 
  * \param disable_fid_rollover  allow file with maximum sequence number to be opened (this is only used for deletion of the file) 
+ * \param known_size            pre-allocate flash for large files that cannot be fully cached in RAM (e.g. executables)
  * \return 0 on success
  */
 int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disable_fid_rollover, size_t known_size)

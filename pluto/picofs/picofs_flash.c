@@ -114,8 +114,8 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     }
     else
     {
-        #if FS_BASE == _u(0x10400000) 
-        flash_flush_cache();
+        #if FLASH_CACHE_DUPLICATION_POSSIBLE == 1
+            flash_flush_cache();
         #endif
 
         // verify programming result

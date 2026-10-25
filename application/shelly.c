@@ -736,9 +736,9 @@ int shelly_cache_insert_device(uint8_t *device_ip, uint8_t *device_index)
         for(i=0; i < NUM_ROWS(shelly_cache.shelly_device_ip); i++)
         {
            if ((shelly_cache.shelly_device_ip[i][0] == 0) &&
-                (shelly_cache.shelly_device_ip[i][1] == 0) &&
-                (shelly_cache.shelly_device_ip[i][2] == 0) &&
-                (shelly_cache.shelly_device_ip[i][3] == 0))
+               (shelly_cache.shelly_device_ip[i][1] == 0) &&
+               (shelly_cache.shelly_device_ip[i][2] == 0) &&
+               (shelly_cache.shelly_device_ip[i][3] == 0))
             {
                 err = 0;
                 *device_index = i;
