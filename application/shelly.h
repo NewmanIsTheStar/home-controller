@@ -8,7 +8,8 @@ typedef enum
     HTTP_POST
 } HTTP_REQUEST_TYPE_T;
 
-int shelly_discover_devices(void);
+int shelly_new_discover_devices(FILE *file_ptr);
+int shelly_discover_devices(FILE *file_ptr);
 int shelly_http_request(HTTP_REQUEST_TYPE_T type, char *url, char *host, char *content);
 int shelly_cache_set_value(char *device_ip, char *device_parameter, char *parameter_value);
 int shelly_cache_get_value(uint8_t *device_ip, char *parameter_name, char *value, size_t value_len);

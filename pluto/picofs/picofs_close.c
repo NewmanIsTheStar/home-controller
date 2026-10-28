@@ -319,7 +319,7 @@ int picofs_deallocate_cache(int fd)
         // free cache memory
         if (custom_fds[fd].cache)
         {
-            vPortFree(custom_fds[fd].cache);
+            vPortFree(custom_fds[fd].cache);   // <== DIRTY GREAT BUG!  free of NULL pointer, someone changes it after the previous line runs to check for NULL 
             custom_fds[fd].cache = NULL;
         }
 
@@ -331,6 +331,22 @@ int picofs_deallocate_cache(int fd)
 
     return(err);
 }
+
+/*BUG!!!
+cache deallocate crash with attempt to free a NULL pointer -- even though the preceding line checks if pointer is NULL
+
+picoFS: write error shifting cache window -- not on a page boundary 12257
+ci = fffffcf1 do = 2cd2 co = 2fe1
+picofs: Internal error : left_over_trailer is too big!!!!! ffffed11
+padding length = 0 left_over_trailer = ffffed11
+writing FINAL pages to flash @ 1c362fe1 with size = 1000 [datalen = fffffcf1]
+picofs: error: picofs_flash_program(): invalid page offset (3551201)
+writing LEFT OVER trailer single page to flash @ 473317345 with size = 256
+picofs: error: picofs_flash_program(): invalid page offset (3555297)
+
+Occured while shelly disvoery was running.  It is possible the file grew too large to fit into cache as it was being written in append mode.
+*/
+
 
 /*!
  * \brief purge files with duplicate names keeping only one file with the given FID

@@ -90,13 +90,16 @@ int shelly_cache_insert_json_kvps(char *device_ip);
 int strip_quotes(char *dst, char *src);
 //void ip_string_to_int_array_pton(const char* ip_str, unsigned char* ip_array);
 
+//NEW
+int shelly_new_get_search_range(uint32_t *search_start, uint32_t *search_end);
+int shelly_new_discover_devices(FILE *file_ptr);
 
 /*!
  * \brief clear cache used to store shelly device responses
  * 
- * \return 0 on success, -1 on error
+ * \return 1 if search in progress, 0 if search ended
  */
-int shelly_discover_devices(void)
+int shelly_discover_devices(FILE *file_ptr)
 {
     u32_t ip;
     u32_t mask;
@@ -249,6 +252,12 @@ int shelly_discover_devices(void)
                     shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_UNKNOWN);
                 }
 
+                if (file_ptr)
+                {
+                    fprintf(file_ptr, "%s, %s, %s\n", ipstring, device_type, device_id);
+                    shell_printf("%s, %s, %s\n", ipstring, device_type, device_id);
+                }
+                                
                 printf("IP = %s SHELLY_DEVICE_TYPE = %s SHELLY_DEVICE_ID = %s\n", ipstring, device_type, device_id);
                 //shelly_dump_discovered_devices();
                 
@@ -905,4 +914,173 @@ int strip_quotes(char *dst, char *src)
     dst[j] = 0;
 
     return(err);
+}
+
+
+//NEW STUFF======================================================================
+
+
+/*!
+ * \brief find first and last ip addresses in the local subnet
+ * 
+ * \return 1 if search in progress, 0 if search ended
+ */
+int shelly_new_get_search_range(uint32_t *search_start, uint32_t *search_end)
+{
+    int i;
+    u32_t ip;
+    u32_t mask;
+    int values[4] = {0,0,0,0};
+    uint8_t byte;
+
+    sscanf(sys_web.ip_address_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);
+    printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
+    
+    ip   = 0x00000000;
+    for(i=0; i<4; i++)
+    {
+        byte = (u8_t)values[i];
+        ip = ip<<8 | byte;
+    }
+    printf("ip = %08x\n", ip);
+
+    sscanf(sys_web.network_mask_string, "%d.%d.%d.%d", &values[0], &values[1], &values[2], &values[3]);    
+    printf("%d.%d.%d.%d\n", values[0], values[1], values[2], values[3]);
+
+    mask   = 0x00000000;
+    for(i=0; i<4; i++)
+    {
+        byte = (u8_t)values[i];
+        mask = mask<<8 | byte;
+    }
+    printf("mask = %08x\n", mask); 
+
+    *search_start = ip & mask;
+    *search_end = *search_start | (0xffffffff ^ mask);
+ 
+    return(0);
+}
+
+/*!
+ * \brief scan network for shelly devices and store info in file system
+ * 
+ * \return 1 if search in progress, 0 if search ended
+ */
+int shelly_new_discover_devices(FILE *file_ptr)
+{
+    u32_t ip;
+    u32_t mask;
+    static u32_t search_start;
+    static u32_t search_end;
+    static u32_t ip_to_query;
+    static bool search_in_progress = false;
+    int values[4] = {0,0,0,0};
+    u8_t byte = 0;
+    int i;
+    char ipstring[32];
+    static int number_of_shelly_devices = 0;
+    char device_type[32];
+    char device_id[32];
+    ip_addr_t ping_addr;
+    int ping_err = -1;
+
+    if (!search_in_progress)
+    {
+        printf("Beginning new network scan for shelly devices\n");
+
+        printf("address = %s\n", sys_web.ip_address_string);  
+        printf("netmask = %s\n", sys_web.network_mask_string);
+
+        shelly_new_get_search_range(&search_start, &search_end);
+    
+        printf("search range: %08x to %08x\n", search_start, search_end);
+
+        ip_to_query = search_start;
+        number_of_shelly_devices = 0;
+        search_in_progress = true;
+    }
+
+    if (ip_to_query < search_end)
+    {
+        sprintf(ipstring, "%d.%d.%d.%d", ((u8_t *)&ip_to_query)[3], ((u8_t *)&ip_to_query)[2], ((u8_t *)&ip_to_query)[1], ((u8_t *)&ip_to_query)[0]);
+
+        printf("querying %s\n", ipstring);
+
+        // quick ping
+        ping_addr.addr = htonl(ip_to_query);
+        ping_err = ping_device(&ping_addr, 2); 
+
+
+        if (!ping_err && (shelly_http_request(HTTP_GET, "/shelly", ipstring, NULL) == 200))
+        {
+            shelly_cache_insert_json_kvps((char *)&ip_to_query);
+
+            // get device type
+            if (jsonp_get_value(&shelly_parser_context, "root.\"type\"", device_type, sizeof(device_type), false))
+            {
+                STRNCPY(device_type, "UNKNOWN", sizeof(device_type));
+            }
+
+            // get device id
+            if (jsonp_get_value(&shelly_parser_context, "root.\"id\"", device_id, sizeof(device_id), false))
+            {
+                STRNCPY(device_id, "UNKNOWN", sizeof(device_id));
+            }
+
+            if (strcasecmp(device_type, "\"SHSW-25\"") == 0)
+            {
+                shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_SHSW_25);
+                shelly_cache_set_value((char *)&ip_to_query, "known_type", device_type);
+            }
+            else if (strncasecmp(device_id, "\"shellypluswdus", 15) == 0)
+            {
+                shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_PLUSWDUS);
+                shelly_cache_set_value((char *)&ip_to_query, "known_type", device_id);
+            }      
+            else if (strncasecmp(device_id, "\"shellyplus1", 12) == 0)
+            {
+                shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_PLUS1);
+                shelly_cache_set_value((char *)&ip_to_query, "known_type", device_id);
+            }  
+            else if (strncasecmp(device_id, "\"shellyplus2pm", 14) == 0)
+            {
+                shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_PLUS2PM);
+                shelly_cache_set_value((char *)&ip_to_query, "known_type", device_id);
+            }                                            
+            else
+            {
+                shelly_add_discovered_device(ip_to_query, SHELLY_TYPE_UNKNOWN);
+            }
+
+            if (file_ptr)
+            {
+                fprintf(file_ptr, "%s, %s, %s\n", ipstring, device_type, device_id);
+                shell_printf("%s, %s, %s\n", ipstring, device_type, device_id);
+            }
+                            
+            printf("IP = %s SHELLY_DEVICE_TYPE = %s SHELLY_DEVICE_ID = %s\n", ipstring, device_type, device_id);
+            //shelly_dump_discovered_devices();
+            
+            number_of_shelly_devices++;
+            printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);
+
+
+            
+        }
+        printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>SHELLY DEVICES FOUND  = %d\n", number_of_shelly_devices);
+    }
+    else
+    {
+        printf("Network scan for shelly devices complete\n");
+        search_in_progress = false;
+
+        printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);
+        shelly_dump_discovered_devices();
+
+        shelly_cache_dump();
+    }
+
+    ip_to_query++;
+
+    return(search_in_progress);
 }

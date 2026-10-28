@@ -62,6 +62,7 @@
 #include "system_web.h"
 #include "application_config.h"
 #include "system_config.h"
+#include "shell.h"
 
 
 //#define DEBUG_UDP_MESSAGES
@@ -95,7 +96,9 @@ void discovery_task(__unused void *params)
     SOCKADDR_IN sClientAddress;  
     int received_bytes = 0;  
     u32_t last_shelly_scan = 0; 
-    BaseType_t task_creation_status = 0;      
+    BaseType_t task_creation_status = 0;
+     FILE *file_ptr = NULL;  
+     int task_delay = 1000;    
     
     printf("discovery task started\n");
 
@@ -133,23 +136,39 @@ void discovery_task(__unused void *params)
 
     while (true)
     {        
-        // if ((sys->personality == HOME_CONTROLLER))
-        if(0)
+        if ((sys->personality == HOME_CONTROLLER))
+        //if(0)
         {
             if ((unix_time - last_shelly_scan) > (60*60))
             {
-                if (!shelly_discover_devices())
+                task_delay = 1;
+
+                if (!file_ptr)
+                {
+                    file_ptr = fopen("shelly-devs.txt", "a");
+                }
+
+                if (!shelly_new_discover_devices(file_ptr))
                 {
                     last_shelly_scan = unix_time;
+                    task_delay = 1000;
+
+                    if (file_ptr)
+                    {
+                        shell_printf("closing file\n");
+                        fclose(file_ptr);
+                        file_ptr = NULL;
+                    }
                 }
             }
         }
         else
         {
-            SLEEP_MS(1000);
+            SLEEP_MS(task_delay);
         }
 
         // tell watchdog task that we are still alive
         watchdog_pulse((int *)params);  
     } 
 }
+

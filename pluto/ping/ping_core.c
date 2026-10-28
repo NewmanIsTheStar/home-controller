@@ -60,6 +60,9 @@
 #endif /* PING_USE_SOCKETS */
 
 
+#define PING_RCV_TIMEO 250
+#define PING_DELAY 250
+
 /**
  * PING_DEBUG: Enable debugging for PING.
  */

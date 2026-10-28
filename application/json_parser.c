@@ -299,6 +299,8 @@ int jsonp_parse_buffer(JSON_PARSER_CONTEXT_T *context, char *buffer, bool contin
         context->i++;
     }
 
+    printf("kvp_index = %d\n", context->kvp_index);
+    
     return(0);
 }
 

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<div id="shell-view">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pico 2 W Async Shell</title>
+        <style>
+            body {
+                background-color: #121212;
+                color: #00ff00;
+                font-family: 'Courier New', Courier, monospace;
+                padding: 20px;
+                margin: 0;
+                height: 100vh;       /* Forces the layout container to lock to view heights */
+                overflow-y: auto;    /* Tells the browser engine to scroll the text container area */
+                box-sizing: border-box; /* Ensures padding does not break full-bleed limits */                
+            }
+
+            #shell-view {
+                height: 100vh;
+                width: 100vw;
+                overflow-y: auto;       /* Creates the scrollbar context on this element */
+                box-sizing: border-box;
+                padding: 20px;          /* Moves your terminal text safely back out to its original padding */
+            }
+                        
+            /* Custom styling for highlighted text selection */
+            ::selection {
+                background: #00ff00;
+                color: #121212;
+            }
+            /* For older Firefox support */
+            ::-moz-selection {
+                background: #00ff00;
+                color: #121212;
+            }
+            #terminal {
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+            #output {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                margin-bottom: 10px;
+            }
+            #input-line {
+                display: flex;
+                align-items: center;
+            }
+            #prompt {
+                margin-right: 10px;
+                white-space: nowrap;
+            }
+            #cmd {
+                background: transparent;
+                border: none;
+                color: #00ff00;
+                font-family: inherit;
+                font-size: inherit;
+                flex-grow: 1;
+                outline: none;
+                padding: 0;
+            }
+        </style>
+    </head>
+    <body>
+
+    <div id="terminal">
+        <div id="output">Pico 2 W Shell Initialized. Waiting for connection...</div>
+        <div id="input-line">
+            <span id="prompt">pico-shell></span>
+            <input type="text" id="cmd" autofocus autocomplete="off" spellcheck="false">
+        </div>
+    </div>
+
+    <script>
+        const output = document.getElementById('output');
+        const cmdInput = document.getElementById('cmd');
+        
+        let history = [];
+        let historyIndex = -1;
+
+        // Word Dictionary (Baseline fallbacks until server populates them)
+        let serverCommands = [
+            'help', 'ip', 'ping', 'ls', 'cat', 'uptime', 'date',
+            'hd', 'rm', 'mv', 'cp', 'df', 'defrag', 'disk', 'cleanup', 'run'
+        ]; 
+        let matchingCommands = [];
+        let completionIndex = 0;
+        let currentPrefix = '';
+        let commandPrefixStr = ''; 
+        let lastTabPrintedList = false;
+
+        // Option 2 Client Variable: Local cache version tracker
+        let currentDictionaryVersion = 0; 
+
+        // Robust Dictionary Update Loop
+        async function listenForCommandUpdates() {
+            try {
+                // Pass local version and a cache-buster timestamp explicitly
+                const response = await fetch(`/commands.json?v=${currentDictionaryVersion}&ts=${Date.now()}`);
+                
+                // Status 200 means server generated a fresh payload structure envelope
+                if (response.ok && response.status === 200) {
+                    const data = await response.json(); // Expects: { v: X, words: [...] }
+                    
+                    console.log("Successfully fetched dictionary from Pico:", data);
+                    
+                    // Safety check to ensure incoming data layout contains our payload keys
+                    if (data && data.words && data.v !== currentDictionaryVersion) {
+                        currentDictionaryVersion = data.v;
+                        serverCommands = data.words;
+                        
+                        // Break active auto-complete loops to safely match new arrays
+                        matchingCommands = []; 
+                        console.log("Tab completion updated to server version:", currentDictionaryVersion);
+                    }
+                }
+            } catch (err) {
+                console.error("Dictionary engine parsing block error:", err);
+            }
+            
+            // Keep this at a relaxed 3 seconds to save Pico CPU power
+            setTimeout(listenForCommandUpdates, 3000);
+        }
+
+        // Refocus on click if user isn't highlighting text
+        document.addEventListener('click', (e) => {
+            const selection = window.getSelection().toString();
+            if (!selection && e.target !== cmdInput) {
+                cmdInput.focus();
+            }
+        });
+
+        // Auto-focus input when typing alphanumeric keys anywhere
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.altKey || e.metaKey || e.key.startsWith('Arrow') || e.key === 'Tab') {
+                return;
+            }
+            if (document.activeElement !== cmdInput) {
+                cmdInput.focus();
+            }
+        });
+
+        // Reset completion loops on normal input typing
+        cmdInput.addEventListener('input', () => {
+            matchingCommands = [];
+            completionIndex = 0;
+            currentPrefix = '';
+            commandPrefixStr = '';
+            lastTabPrintedList = false;
+        });
+
+        // Ctrl + Shift + C clipboard shortcut
+        document.addEventListener('keydown', async (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c') {
+                e.preventDefault();
+                const selectedText = window.getSelection().toString();
+                if (selectedText) {
+                    try {
+                        await navigator.clipboard.writeText(selectedText);
+                    } catch (err) {
+                        console.error("Failed to copy text: ", err);
+                    }
+                }
+            }
+        });
+
+        // Hardened Log Streaming Loop with backoff protection
+        async function listenForBackendUpdates() {
+            let nextDelay = 50; 
+
+            try {
+                const response = await fetch(`/listen.shtml?ts=${Date.now()}`);
+                
+                if (response.ok) {
+                    const text = await response.text();
+                    if (text.length > 0) {
+                        output.textContent += text;
+                        
+                        // scroll the specific container holding the terminal text
+                        const shellView = document.getElementById('shell-view');
+                        if (shellView) {
+                            shellView.scrollTop = shellView.scrollHeight;
+                        } else {
+                            // Fallback: If output itself has the scrollbar layout rule
+                            output.scrollTop = output.scrollHeight;
+                        }
+                    }
+                } else {
+                    nextDelay = 1000; 
+                }
+            } catch (err) {
+                nextDelay = 1000; 
+            }
+    
+    setTimeout(listenForBackendUpdates, nextDelay);
+}
+
+
+        // Input handlers for command line interactions
+        cmdInput.addEventListener('keydown', async function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+
+                const currentInputValue = this.value;
+                if (matchingCommands.length === 0) {
+                    const words = currentInputValue.split(' ');
+                    currentPrefix = words[words.length - 1];
+                    
+                    commandPrefixStr = words.slice(0, words.length - 1).join(' ');
+                    if (commandPrefixStr.length > 0) commandPrefixStr += ' ';
+
+                    matchingCommands = serverCommands.filter(cmd => 
+                        cmd.toLowerCase().startsWith(currentPrefix.toLowerCase())
+                    );
+                    completionIndex = 0;
+                    lastTabPrintedList = false;
+                }
+
+                if (matchingCommands.length > 0) {
+                    this.value = commandPrefixStr + matchingCommands[completionIndex];
+                    completionIndex = (completionIndex + 1) % matchingCommands.length;
+                }
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                const command = this.value.trim();
+                if (!command) return;
+
+                output.textContent += `\npico-shell> ${command}\n`;
+                this.value = '';
+
+                matchingCommands = [];
+                lastTabPrintedList = false;
+
+                history.push(command);
+                historyIndex = history.length;
+
+                try {
+                    await fetch('/exec', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: command
+                    });
+                } catch (err) {
+                    output.textContent += "System Error: Unable to transmit command.\n";
+                }
+                
+                window.scrollTo(0, document.body.scrollHeight);
+
+                if (command.startsWith("edit ")) {
+                    const filename = command.substring(5).trim();
+                    
+                    // fire the download request manually now that the page isn't reloading
+                    loadFileContent(filename);
+                    
+                    // switch views
+                    document.getElementById("shell-view").style.display = "none";
+                    document.getElementById("editor-view").style.display = "block";
+                    
+                    // focus the editor area
+                    editor.focus();
+                }
+
+            } 
+            
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    this.value = history[historyIndex];
+                }
+            } 
+            
+            else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < history.length - 1) {
+                    historyIndex++;
+                    this.value = history[historyIndex];
+                } else {
+                    historyIndex = history.length;
+                    this.value = '';
+                }
+            }
+
+            if (e.key === 'Escape') {
+                const command = 'kill';
+                if (!command) return;
+
+                output.textContent += `\npico-shell> ${command}\n`;
+                this.value = '';
+
+                matchingCommands = [];
+                lastTabPrintedList = false;
+
+                history.push(command);
+                historyIndex = history.length;
+
+                try {
+                    await fetch('/exec', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: command
+                    });
+                } catch (err) {
+                    output.textContent += "System Error: Unable to transmit command.\n";
+                }
+                
+                window.scrollTo(0, document.body.scrollHeight);
+            }         
+        });
+
+        output.textContent = "Shell Ready. Waiting for data...\n";
+        
+        // Boot up both background loop engines independently
+        listenForCommandUpdates();
+        listenForBackendUpdates();
+    </script>
+    </body>
+</div>
+
+<div id="editor-view" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 1000;">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Text Editor</title>
+        <style>
+            /* force the root browser layout to lock to screen edges */
+            html, body {
+                background-color: #000000;
+                color: #00ff00;
+                font-family: 'Courier New', Courier, monospace;
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                width: 100%;
+                overflow: hidden; /* Prevents double scrollbars */
+            }
+
+            /* break the container out of its 800px constraint when active */
+            .container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                flex-direction: column;
+                padding: 15px;
+                box-sizing: border-box;
+            }
+
+            .heading-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background-color: #000000;
+                color: #00ff00;
+                font-family: 'Courier New', Courier, monospace;        
+            }
+
+            .flex-heading {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;           
+                background-color: #000000;    
+                color: #00ff00;
+                padding: 10px 0;
+            }
+
+            .reverse-video-link {
+                text-decoration: none;          
+                background-color: #00ff00;      
+                color: #000000;               
+                padding: 6px 12px;             
+                border-radius: 4px;          
+            }
+
+            .reverse-video-link:hover {
+                background-color: #333333;
+                color: #00ff00;
+            }                
+
+            h2 {
+                font-size: 1.2rem;
+                margin: 0 0 10px 0;
+                letter-spacing: 1px;
+            }
+
+            /* force the textarea to expand into all remaining vertical space */
+            textarea {
+                flex-grow: 1;
+                width: 100%;
+                background-color: #121212;
+                color: #00ff00;
+                border: 1px solid #00ff00;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 14px;
+                line-height: 18px;
+                padding: 10px;
+                box-sizing: border-box;
+                resize: none;
+                white-space: pre;
+                overflow-x: auto;
+            }
+
+            textarea:focus {
+                outline: none;
+                border-color: #ffffff;      
+            }
+
+            .footer {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 8px;
+                font-size: 0.8rem;
+                color: #888;
+            }
+
+            #status { color: #1c2e6e; }
+            #status.error { color: #ff3333; }
+        </style>
+
+
+    </head>
+    <body>
+
+    <div class="container">
+        <h2 class="flex-heading">
+            <span>Text Editor</span>
+            <a id="saveTrigger" href="/save_text_file.cgi" class="reverse-video-link">SAVE</a>        
+        </h2>     
+        <textarea id="editor" autocomplete="off" spellcheck="false" placeholder="Enter text here..."></textarea>
+        <div class="footer">
+            <span id="counter">Line: 1 | Col: 0</span>
+            <span id="status">Status: Ready</span>
+        </div>
+    </div>
+
+
+    <script>
+        const editor = document.getElementById('editor');
+        const status = document.getElementById('status');
+        const counter = document.getElementById('counter');
+        const saveTrigger = document.getElementById('saveTrigger');
+        
+        // LWIP HTTPD endpoint path
+        const SERVER_ENDPOINT = '/save_ascii.cgi'; 
+
+        // Attach a global listener for key presses
+        window.addEventListener('keydown', function(event) {
+            // Check if the user pressed the Escape key (ESC)
+            if (event.key === 'Escape' || event.keyCode === 27) {
+                
+                // Find your editor container view
+                const editorView = document.getElementById('editor-view');
+                
+                // Only trigger exit if the editor is currently visible on screen
+                if (editorView && editorView.style.display !== 'none') {
+                    
+                    // Prevent any default browser behavior for standard ESC interactions
+                    event.preventDefault(); 
+                    
+                    // Hide editor, restore shell exactly as it was left
+                    document.getElementById("editor-view").style.display = "none";
+                    document.getElementById("shell-view").style.display = "block";
+                }
+            }
+        });
+
+        // Trigger save when the hyperlink is clicked
+        saveTrigger.addEventListener('click', (e) => {
+            e.preventDefault(); // Stop default browser anchor routing action
+            sendDataToServer();
+            // Hide editor, restore shell exactly as it was left
+            document.getElementById("editor-view").style.display = "none";
+            document.getElementById("shell-view").style.display = "block";
+        });
+
+        function loadFileContent(filename) {
+            status.innerText = "Status: Loading " + filename + "...";
+            
+            // TODO: Pass the filename parameter to the backend (at present it simply remembers the filename from the edit command)
+            // e.g., fetch(`/get_text?file=${encodeURIComponent(filename)}`)
+            fetch('/get_text')
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    return res.text();
+                })
+                .then(data => { 
+                    editor.value = data; 
+                    status.innerText = "Status: File loaded successfully";
+                })
+                .catch(() => { 
+                    status.innerText = "Status: Failed to load text"; 
+                });
+        }
+
+        // Track cursor and line limits
+        function updateMetricsAndEnforce() {
+            const text = editor.value;
+            const selStart = editor.selectionStart;
+            
+            const lines = text.split('\n');
+            let currentLineIdx = 0;
+            let accumChars = 0;
+
+            // Determine which line the cursor is currently on
+            for (let i = 0; i < lines.length; i++) {
+                if (selStart >= accumChars && selStart <= accumChars + lines[i].length + 1) {
+                    currentLineIdx = i;
+                    break;
+                }
+                accumChars += lines[i].length + 1; 
+            }
+
+            const currentColIdx = selStart - accumChars;
+            counter.textContent = `Line: ${currentLineIdx + 1} | Col: ${currentColIdx}`;
+        }
+
+        editor.addEventListener('keydown', function(e) {
+            const text = editor.value;
+            const start = editor.selectionStart;
+            
+            // Find current line text boundaries
+            const lastNewline = text.lastIndexOf('\n', start - 1);
+            const nextNewline = text.indexOf('\n', start);
+            const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
+            const lineEnd = nextNewline === -1 ? text.length : nextNewline;
+            const currentLineLen = lineEnd - lineStart;
+
+            // Enforce 80 character limit per line for standard typing characters
+            if (currentLineLen >= 80 && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                e.preventDefault(); 
+            }
+        });
+
+        // Automatically format chunks if text is pasted inside the editor
+        editor.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+            const lines = pasteData.split('\n');
+            
+            // Sanitize every line to fit exactly 80 characters max
+            const sanitizedLines = lines.map(line => line.substring(0, 80));
+            const finalPaste = sanitizedLines.join('\n');
+            
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            editor.value = editor.value.substring(0, start) + finalPaste + editor.value.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + finalPaste.length;
+            
+            updateMetricsAndEnforce();
+        });
+
+        editor.addEventListener('keyup', updateMetricsAndEnforce);
+        editor.addEventListener('click', updateMetricsAndEnforce);
+
+
+        function sendDataToServer() {
+            status.textContent = 'Saving...';
+            status.className = '';
+
+            // const tfnmeVal = '<!--#tfnme-->';
+            
+            // strip raw carriage returns/newlines injected by the SSI handler string
+            // const cleanTfnme = tfnmeVal.replace(/[\r\n]+/g, '');
+            
+            // normalize textarea newlines to Unix LF only, removing the problematic \r
+            const cleanEditorContent = editor.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            
+            // assemble the payload using a single standard LF (\n) separator
+            const payload = 'text=' + encodeURIComponent(cleanEditorContent);
+
+            fetch(SERVER_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: payload
+            })
+            .then(response => {
+                if (!response.ok) throw new Error();
+                status.textContent = 'Saved (' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) + ')';
+            })
+            .catch(() => {
+                status.textContent = 'Save Failed';
+                status.className = 'error';
+            });
+        } 
+        
+        function exitEditor() {
+            // hide the editor view, restore the shell layout container
+            document.getElementById("editor-view").style.display = "none";
+            document.getElementById("shell-view").style.display = "block";
+            
+            // locate shell input element and force browser focus back to it
+            const cmdInput = document.getElementById("cmd");
+            if (cmdInput) {
+                cmdInput.focus();
+            }
+        }
+        
+    </script>
+
+    </body>
+</div>
+</html>

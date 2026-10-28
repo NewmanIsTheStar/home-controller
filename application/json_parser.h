@@ -24,6 +24,9 @@ typedef struct
     char jsonp_token[128][32];
     u8_t jsonp_key[255][8];
     char jsonp_value[255][128];
+    // char jsonp_token[20][32];
+    // u8_t jsonp_key[20][8];
+    // char jsonp_value[20][128];    
 } JSON_PARSER_CONTEXT_T;
 
 int jsonp_initialize_context(JSON_PARSER_CONTEXT_T *context);
