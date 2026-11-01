@@ -4,10 +4,12 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
- #include <string.h>
- #include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
 #include "FreeRTOS.h"
 #include "picofs.h"
+#include "utility.h"
 
 //prototypes
 
@@ -130,6 +132,13 @@ int picofs_sync_file_regular(int fd, bool disable_purge)
             memcpy(custom_fds[fd].cache + custom_fds[fd].data_len, &(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
             err = 0;
         }
+        else if (custom_fds[fd].cache_len > sizeof(FILE_TRAILER_T))
+        {
+            picofs_printf("picoFS: discarded last %d bytes written to file due to lack of cache on close\n", custom_fds[fd].data_len - (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T)));
+            custom_fds[fd].data_len = custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T);
+            memcpy(custom_fds[fd].cache + custom_fds[fd].data_len, &(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
+            err = 0;            
+        }
         else
         {
             //TODO: expand cache as needed
@@ -205,12 +214,17 @@ int picofs_sync_file_large(int fd, bool disable_purge)
 
     if (!((fd >=0) && (fd < FS_MAX_FILE_DESCRIPTORS)))
     {
-        return(err);
+        return(-1);
     }
 
     if (!custom_fds[fd].in_use)
     {
-        return(err);
+        return(-2);
+    }
+
+    if (custom_fds[fd].data_offset <= custom_fds[fd].cache_offset)
+    {
+        return(-3);
     }
 
     cache_index = custom_fds[fd].data_offset - custom_fds[fd].cache_offset;
@@ -245,6 +259,7 @@ int picofs_sync_file_large(int fd, bool disable_purge)
         if (left_over_trailer > sizeof(FILE_TRAILER_T))
         {
             picofs_printf("picofs: Internal error : left_over_trailer is too big!!!!! %0x\n", left_over_trailer);
+            return(-4);
         }
         
         // copy as much of trailer into cache as will fit
@@ -272,10 +287,14 @@ int picofs_sync_file_large(int fd, bool disable_purge)
             custom_fds[fd].cache_offset += custom_fds[fd].cache_len;
 
             // copy remainder of trailer into cache
-            memcpy(custom_fds[fd].cache, ((char *)&(custom_fds[fd].cache_trailer))+(sizeof(FILE_TRAILER_T) - left_over_trailer), (sizeof(FILE_TRAILER_T) - left_over_trailer));
-
-            picofs_printf("writing LEFT OVER trailer single page to flash @ %d with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
-            picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, FS_PAGE_SIZE);            
+            memcpy(custom_fds[fd].cache, ((char *)&(custom_fds[fd].cache_trailer))+(sizeof(FILE_TRAILER_T) - left_over_trailer), left_over_trailer);
+            printf("last page containing trailer\n");
+            hex_dump(custom_fds[fd].cache, FS_PAGE_SIZE);
+            picofs_printf("writing LEFT OVER trailer single page to flash @ %0x with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
+            picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, FS_PAGE_SIZE); 
+            
+            // final page written
+            err = 0;
         }
 
         if (!err && !disable_purge)

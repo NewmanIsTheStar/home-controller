@@ -46,7 +46,7 @@ int picofs_write(int fd, char *ptr, int len)
         if (picofs_cache_contains_entire_file(fd))
         {
             // cache holds entire file
-            if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T))))
+            if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len /*- sizeof(FILE_TRAILER_T)  TODO: handle pathelogical cache expansion during close*/)))
             {
                 // data fits within the current cache
                 custom_fds[fd].data[cache_index] = ptr[i];            
@@ -54,6 +54,13 @@ int picofs_write(int fd, char *ptr, int len)
             else if (!picofs_cache_expand(fd))
             {
                 custom_fds[fd].data[cache_index] = ptr[i];
+            }
+            else if (!picofs_cache_convert_to_large_file(fd, custom_fds[fd].data_offset+i, 4*FS_FILE_CACHE_MAX, PFS_ALIGN_SECTOR))
+            {
+                picofs_printf("picoFS: converted to large file :: previous cache written to flash\n");
+
+                // store data in the first byte of the new cache allocated for the large file
+                custom_fds[fd].data[0] = ptr[i]; 
             }
             else
             {
@@ -70,9 +77,9 @@ int picofs_write(int fd, char *ptr, int len)
                 // data fits within the cache window
                 custom_fds[fd].data[cache_index] = ptr[i];            
             }
-            else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + cache_index) <= custom_fds[fd].reserved_flash_end)
+            else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + cache_index + FS_PAGE_SIZE) <= custom_fds[fd].reserved_flash_end)
             {
-                //picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
+                picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
                 // write the cache to flash
                 picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, custom_fds[fd].cache_len);
 

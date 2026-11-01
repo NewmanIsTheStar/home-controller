@@ -468,6 +468,8 @@ int download_file(char *url)
                                 total_wrtitten += (total_expected - total_wrtitten);
                             }
                         }
+                        
+                        printf("total written = %d\n", total_wrtitten);
 
                         // accumulate total bytes received
                         total_read += read_bytes;

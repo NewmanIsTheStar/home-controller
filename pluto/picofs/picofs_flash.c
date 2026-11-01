@@ -4,11 +4,15 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+ #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include "pico/flash.h"
 #include <hardware/flash.h>
+#include "FreeRTOS.h"
+#include "task.h"
 #include "picofs.h"
+#include "utility.h"
 
 
 
@@ -86,7 +90,7 @@ int picofs_flash_program(char *dst, char *src, size_t len)
         return(-1);
     }
 
-    if ((len%FS_PAGE_SIZE) || ((dst+len) > FS_END))
+    if ((len%FS_PAGE_SIZE) || ((dst) < FS_START) || ((dst+len) >= FS_END))
     {
         picofs_printf("picofs: error: picofs_flash_program(): invalid length (%#0x) [dst+len = %#0p FS_END = $%p]\n", len, dst+len, FS_END);
         return(-2);
@@ -97,10 +101,22 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     shim_parameters.src = src;
     shim_parameters.len = len;
 
-    //picofs_printf("FLASH PROGRAM: offset = %#0x len = %#0x plus FS_BASE = %#0x\n", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
-    //hex_dump(src, len);
+    // printf("FLASH PROGRAM: offset = %#0x len = %#0x plus FS_BASE = %#0x\n", shim_parameters.dst_offset, shim_parameters.len, FS_FLASH_BASE+shim_parameters.dst_offset+shim_parameters.len);
+    // hex_dump(src, len);
 
     err = flash_safe_execute(picofs_flash_program_shim, &shim_parameters, 5000);
+    
+    if (!err)
+    {
+        // yeild to let the lockout thread delete itself (otherwise heap can be totally consumed and we get a nasty crash)
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
+    else
+    {
+        // one retry after a long delay
+        vTaskDelay(pdMS_TO_TICKS(100));
+        err = flash_safe_execute(picofs_flash_program_shim, &shim_parameters, 5000);
+    }
 
     if (err)
     {

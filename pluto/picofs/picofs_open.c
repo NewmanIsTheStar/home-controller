@@ -558,6 +558,9 @@ int picofs_open_download_file(const char *name, size_t known_size)
         return -1;
     }
 
+    // add an extra page so that we always have space for the trailer
+    known_size += FS_PAGE_SIZE;
+
     // open file
     if (err = picofs_open_file(fd, name, O_WRONLY | O_CREAT | O_TRUNC /*| O_APPEND*/, FS_INVALID_FID, true, known_size))
     {

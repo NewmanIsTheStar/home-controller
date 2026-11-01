@@ -157,12 +157,20 @@ typedef struct file_test
 
 typedef enum
 {
-    PFS_DISPLAY_QUIET = 0,
-    PFS_DISPLAY_PAGE_NUMBERS = 1,
-    PFS_DISPLAY_PAGE_MAP = 2,
+    PFS_DISPLAY_QUIET              = 0,
+    PFS_DISPLAY_PAGE_NUMBERS       = 1,
+    PFS_DISPLAY_PAGE_MAP           = 2,
     PFS_DISPLAY_SHELL_PAGE_NUMBERS = 3,
-    PFS_DISPLAY_SHELL_PAGE_MAP = 4    
+    PFS_DISPLAY_SHELL_PAGE_MAP     = 4    
 } PFS_DISPLAY_TYPE_T;
+
+typedef enum
+{
+    PFS_ALIGN_BYTE   = 0,
+    PFS_ALIGN_PAGE   = 1,
+    PFS_ALIGN_SECTOR = 2,
+    PFS_ALIGN_BLOCK =  3
+} PFS_ALIGNMENT_TYPE_T;
 
 #define picofs_open(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false), 0))
 #define picofs_open_by_name(fd, name, flags)  (picofs_open_file((fd), (name), (flags), (FS_INVALID_FID), (false), 0))
@@ -181,7 +189,7 @@ int picofs_find_file(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer
 int picofs_list_all_files_from_flash(char *filter, bool ignore_crc);
 int picofs_list_all_files_from_cache(char *filter);
 int picofs_find_page_status(PFS_DISPLAY_TYPE_T display);
-int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_area, size_t *actual_size, bool executable_alignment);
+int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_area, size_t *actual_size, PFS_ALIGNMENT_TYPE_T flash_alignment);
 bool picofs_file_in_use(FILE_TRAILER_T *file_trailer, int fd);
 int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer);
 int picofs_cache_allocate(int fd, int flags, size_t known_size);
@@ -243,4 +251,6 @@ int picofs_cache_expand(int fd);
 int picofs_stat(char *filename);
 bool picofs_wildcard_match(const char *pattern, const char *str);
 bool picofs_is_filename_valid(const char *filename);
+int picofs_cache_convert_to_large_file(int fd, size_t offset, size_t flash_reservation_size, PFS_ALIGNMENT_TYPE_T flash_alignment);
+
 #endif

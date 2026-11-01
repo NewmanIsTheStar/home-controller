@@ -93,13 +93,15 @@ TaskHandle_t validator_task_handle;
  */
 void discovery_task(__unused void *params) 
 {
+    int i;
     SOCKADDR_IN sClientAddress;  
     int received_bytes = 0;  
     u32_t last_shelly_scan = 0; 
     BaseType_t task_creation_status = 0;
      FILE *file_ptr = NULL;  
      int task_delay = 1000;    
-    
+
+    SLEEP_MS(30000);
     printf("discovery task started\n");
 
 // THIS CODE connects to the multicast group used by shelly devices to announce status changes.  Gen1 devices are very talkative. 
@@ -139,16 +141,59 @@ void discovery_task(__unused void *params)
         if ((sys->personality == HOME_CONTROLLER))
         //if(0)
         {
-            if ((unix_time - last_shelly_scan) > (60*60))
+            // if ((unix_time - last_shelly_scan) > (60*60))
+            // {
+            //     task_delay = 1;
+
+            //     if (!file_ptr)
+            //     {
+            //         file_ptr = fopen("shelly-devs.txt", "a");
+            //     }
+
+            //     if (!shelly_new_discover_devices(file_ptr))
+            //     {
+            //         last_shelly_scan = unix_time;
+            //         task_delay = 1000;
+
+            //         if (file_ptr)
+            //         {
+            //             shell_printf("closing file\n");
+            //             fclose(file_ptr);
+            //             file_ptr = NULL;
+            //         }
+            //     }
+            // }
+
+            // TEST TEST TEST == bunch of writes!
+            if ((unix_time - last_shelly_scan) > (30*60*1000))
             {
                 task_delay = 1;
 
                 if (!file_ptr)
                 {
-                    file_ptr = fopen("shelly-devs.txt", "a");
+                    file_ptr = fopen("gremlin.txt", "a");
                 }
 
-                if (!shelly_new_discover_devices(file_ptr))
+                if (file_ptr)
+                {
+                    for(i=0; i<5000; i++)
+                    {
+                        if (file_ptr)
+                        {
+                            if (fprintf(file_ptr, "Monkey See Monkey Do %08d\n", i) < 0)
+                            {
+                                printf("ABORT writing to file due to error\n");
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    printf("fopen failed\n");
+                }
+
+                // if (!shelly_new_discover_devices(file_ptr))
                 {
                     last_shelly_scan = unix_time;
                     task_delay = 1000;
@@ -160,7 +205,7 @@ void discovery_task(__unused void *params)
                         file_ptr = NULL;
                     }
                 }
-            }
+            }            
         }
         else
         {
