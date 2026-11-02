@@ -214,3 +214,17 @@ int picofs_msync(void *addr, size_t length, int flags)
 
     return(err);
 }
+
+// when you are tired of doing the right thing...
+char *picofs_get_file_data_ptr(char *filename)
+{
+    char *address = NULL;
+    FILE_TRAILER_T *file_trailer;
+
+    if (!picofs_find_file(filename, FS_INVALID_FID, &file_trailer))
+    {
+        address = (char *)file_trailer + sizeof(FILE_TRAILER_T) - file_trailer->file_size;
+    }
+    
+    return(address);
+}

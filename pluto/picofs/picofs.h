@@ -252,5 +252,7 @@ int picofs_stat(char *filename);
 bool picofs_wildcard_match(const char *pattern, const char *str);
 bool picofs_is_filename_valid(const char *filename);
 int picofs_cache_convert_to_large_file(int fd, size_t offset, size_t flash_reservation_size, PFS_ALIGNMENT_TYPE_T flash_alignment);
+char *picofs_get_file_data_ptr(char *filename);
 
 #endif
+

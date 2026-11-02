@@ -25,6 +25,7 @@ int picofs_write(int fd, char *ptr, int len)
     int err = 0;
     int i;
     int cache_index = 0;
+    bool fully_cached = false;
 
     if ((custom_fds[fd].data >= FLASH_SCAN_START) && (custom_fds[fd].data  < FLASH_SCAN_END))
     {
@@ -38,12 +39,14 @@ int picofs_write(int fd, char *ptr, int len)
         custom_fds[fd].data_offset = custom_fds[fd].data_len;
     }
 
+    fully_cached = picofs_cache_contains_entire_file(fd);
+
     for(i=0; i<len; i++)
     { 
         // get index within the cache window (cache_offset is the start of the cache window within the file) 
         cache_index = custom_fds[fd].data_offset + i - custom_fds[fd].cache_offset;
 
-        if (picofs_cache_contains_entire_file(fd))
+        if (fully_cached)
         {
             // cache holds entire file
             if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len /*- sizeof(FILE_TRAILER_T)  TODO: handle pathelogical cache expansion during close*/)))
@@ -58,7 +61,8 @@ int picofs_write(int fd, char *ptr, int len)
             else if (!picofs_cache_convert_to_large_file(fd, custom_fds[fd].data_offset+i, 4*FS_FILE_CACHE_MAX, PFS_ALIGN_SECTOR))
             {
                 picofs_printf("picoFS: converted to large file :: previous cache written to flash\n");
-
+                fully_cached = picofs_cache_contains_entire_file(fd);
+                
                 // store data in the first byte of the new cache allocated for the large file
                 custom_fds[fd].data[0] = ptr[i]; 
             }

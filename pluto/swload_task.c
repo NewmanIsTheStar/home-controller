@@ -38,9 +38,9 @@
 
 
 int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart);
-int image_compare(char *ptr1, char *ptr2, int len);
 int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t uri_size);
 int pluto_write_uf2(int fd, char *ptr, int len);
+int pluto_compare_uf2(char *file_data, char *server_data, int len);
 
 #define HTTPC_CLIENT_AGENT "MonkeyBuntBob"
 
@@ -297,19 +297,19 @@ int image_compare(char *ptr1, char *ptr2, int len)
     {
         if (ptr1[i] != ptr2[i])
         {
-            if ((ptr1[i] != 0xFF) && (ptr2[i]!= 0x00))
+            //if ((ptr1[i] != 0xFF) && (ptr2[i]!= 0x00))
             {
                 num_different_bytes++;
-                printf("@%08x %02x vs %02x\n", ptr1 - (char *)XIP_BASE+i, ptr1[i], ptr2[i]);                
+                printf("@%08x %02x vs %02x\n", ptr1+i, ptr1[i], ptr2[i]);                
             }
 
         }
     }
 
-    if (!num_different_bytes)
-    {
-        printf("@%08x OK\n", ptr1 - (char *)XIP_BASE+i);
-    }
+    // if (!num_different_bytes)
+    // {
+    //     printf("%08x to %08x OK\n", ptr1, ptr1+i-1);
+    // }
 
     return(num_different_bytes);
 }
@@ -321,7 +321,7 @@ int image_compare(char *ptr1, char *ptr2, int len)
  * 
  * \return nothing
  */
-int download_file(char *url)
+int download_file_bin(char *url)
 {
     int err = 0;
     int ret;
@@ -353,7 +353,7 @@ int download_file(char *url)
         // generate filename from uri
         for(i=0; i < sizeof(uri); i++)
         {
-            if (isalpha(uri[i]) || isdigit(uri[i]) || uri[i] == 0)
+            if (isalpha(uri[i]) || isdigit(uri[i]) || (uri[i] == '.') || uri[i] == 0)
             {
                 filename[j++] = uri[i];
                 if ((j >= 16) || (uri[i] == 0)) 
@@ -568,7 +568,7 @@ int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t u
  * 
  * \return nothing
  */
-int verify_file(char *url)
+int verify_file_bin(char *url)
 {
     int err = 0;
     int ret;
@@ -669,7 +669,7 @@ int verify_file(char *url)
             
                             if (fd < 0)
                             {
-                                // open the file with for read
+                                // open the file for read
                                 fd = open(filename, O_RDONLY);
                                 
                                 // check if the file exists and opened successfully
@@ -773,7 +773,16 @@ int verify_file(char *url)
         picofs_munmap(flash_data, file_len);
     }
 
-    shell_printf("verification errors = %d\n", differences_found);
+    if (err || differences_found || (total_read != total_expected))
+    {
+        shell_printf("verification failed\n");
+        shell_printf("differences found: %d\n", differences_found);
+    }
+    else
+    {
+        shell_printf("verification succeeded: local file matches remote file\n");
+    }
+    
 
     return(err);
 }
@@ -1012,4 +1021,247 @@ int pluto_write_uf2(int fd, char *ptr, int len)
         }
     }
 
+}
+
+/*!
+ * \brief compare file on server with local file in flash memory (NB UF2 is stored locally in binary format)
+ *
+ * \param params unused garbage
+ * 
+ * \return nothing
+ */
+int verify_file_uf2(char *url)
+{
+    int err = 0;
+    int ret;
+    int wrote_bytes;
+    int read_bytes;
+    static int msg_to_snd;
+    int retry;
+    fd_set readset;
+    struct timeval tv;  
+    char buffer[1600];
+    int web_socket = -1;    
+    int file_len;
+    char *file_start;
+    int total_read = 0;
+    int total_expected = 0;
+    int compare;
+    int file_offset = 0;
+    int total_bad_compares = 0;
+    char host[256];
+    char uri[256];
+    char filename[16];
+    char *file_data = NULL;
+    int i = 0;
+    int j = 0;
+    int total_compared = 0;
+    char *flash_data = NULL;
+    int differences_found = 0;
+
+    if (parse_url(url, host, sizeof(host), uri, sizeof(uri)) == 0) 
+    {
+        // generate filename from uri
+        for(i=0; i < sizeof(uri); i++)
+        {
+            if (isalpha(uri[i]) || isdigit(uri[i]) || (uri[i] == '.') || uri[i] == 0)
+            {
+                filename[j++] = uri[i];
+                if ((j >= 16) || (uri[i] == 0)) 
+                {
+                    // force zero termination
+                    filename[15] = 0;
+                    break;
+                }
+            }
+        }
+
+        shell_printf("Host:      %s\n", host);
+        shell_printf("URI:       %s\n", uri);
+        shell_printf("Filename:  %s\n", filename);                
+    } 
+    else 
+    {
+        shell_printf("download_file: URL parsing failed.\n");
+        return (-1);
+    }
+    
+
+
+    // establish socket connection
+    if (web_socket < 0) web_socket = establish_socket(host, 80, SOCK_STREAM);
+    
+    if(web_socket >= 0)
+    {
+        // create request
+        snprintf(buffer, sizeof(buffer), HTTPC_REQ_11_HOST_FORMAT(uri, host));
+
+        //hex_dump(buffer, strlen(buffer));
+
+        // send a request
+        wrote_bytes = send(web_socket, buffer, strlen(buffer), 0);
+
+        if (wrote_bytes == strlen(buffer))    //TODO: handle short write by sending rest of the buffer
+        {
+            shell_printf("Downloading file...\n");                    
+            total_expected = 0;
+            for (retry=0; retry<5; retry++)
+            {
+                FD_ZERO(&readset);
+                FD_SET(web_socket, &readset);
+                tv.tv_sec = 5;
+                tv.tv_usec = 500;
+
+                ret = select(web_socket + 1, &readset, NULL, NULL, &tv);
+
+                if ((ret > 0) && FD_ISSET(web_socket, &readset))
+                {
+                    read_bytes = recv(web_socket, buffer, sizeof(buffer), 0);
+                    if (read_bytes > 0)
+                    {
+                        // reset retry counter
+                        retry = 0;
+
+                        //hex_dump(buffer, read_bytes);
+                        
+                        // attempt to find http header -- only works if header is completely contained in a buffer
+                        if (!total_expected && !http_parse_header(buffer, read_bytes, &file_len, &file_start))
+                        {
+                            shell_printf("Size:      %d\n", file_len);  
+            
+                            if (file_data == NULL)
+                            {
+                                file_data = picofs_get_file_data_ptr(filename);
+
+                                // check if the file exists and data found successfully
+                                if (file_data == NULL) 
+                                {
+                                    shell_printf("verify_file_uf2: failed to open local file %s for verification\n", filename);
+                                    lwip_close(web_socket);
+                                    web_socket = -1;                                    
+                                    return 1; 
+                                }
+                            }
+
+                            file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
+                            total_expected = file_offset + file_len;
+                            
+                            if (((read_bytes - file_offset) + total_compared) < total_expected)
+                            {
+                                // write all data after the http header to file
+                                differences_found += pluto_compare_uf2(file_data, buffer + file_offset, (read_bytes - file_offset));  
+                                
+                                // printf("First DATA\n");
+                                // hex_dump(buffer + file_offset, (read_bytes - file_offset));
+
+                                total_compared += (read_bytes - file_offset);
+                            }
+                            else if (total_compared < total_expected)
+                            {
+                                // truncate at total_expected -- remainder of buffer is http
+                                differences_found += pluto_compare_uf2(file_data, buffer + file_offset, total_expected - total_compared);
+                                total_compared += (total_expected - total_compared);
+                            }                            
+                        }
+                        else
+                        {
+                            if ((read_bytes + total_compared) < total_expected)
+                            {
+                                // write all data to file
+                                differences_found += pluto_compare_uf2(file_data, buffer, read_bytes);    
+                                total_compared += read_bytes;
+                            }
+                            else if (total_compared < total_expected)
+                            {
+                                // truncate at total_expected -- remainder of buffer is http
+                                differences_found += pluto_compare_uf2(file_data, buffer, total_expected - total_compared);
+                                total_compared += (total_expected - total_compared);
+                            }
+                        }
+
+                        // accumulate total bytes received
+                        total_read += read_bytes;
+
+                        //printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);
+                        if (total_expected && (total_read >= total_expected))
+                        {
+                            shell_printf("Download complete\n");
+                            break;
+                        } 
+                    }
+                    else {
+                        perror("READ ERROR = ");
+                        printf("read returned %d  ||| retry = %d\n", read_bytes, retry);
+                        err = -1;
+                    }
+                }
+                else
+                {
+                    printf("select returned %d  and FD_ISSET was not set  ||| retry = %d\n", ret, retry);
+                    err = -1;
+                }  
+
+            }         
+        }
+        else
+        {
+            shell_printf("download_file: error failed to send HTTP GET :: bytes sent = %d [expected %d]\n", wrote_bytes, strlen(buffer));
+            
+            printf("wrote_bytes = %d\n", wrote_bytes);
+
+            // close socket
+            lwip_close(web_socket);
+            web_socket = -1;
+            err = -1;
+        }
+    }
+
+    printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);        
+
+    if (web_socket >= 0)
+    {
+        lwip_close(web_socket);
+        web_socket = -1;
+    } 
+
+    if (err || differences_found || (total_read != total_expected))
+    {
+        shell_printf("verification failed\n");
+        shell_printf("differences found: %d\n", differences_found);
+    }
+    else
+    {
+        shell_printf("verification succeeded: local file matches remote file\n");
+    }
+
+    return(err);
+}
+
+int pluto_compare_uf2(char *file_data, char *server_data, int len)
+{
+    int err = 0;
+    static char uf2_block[512];
+    static int dst_index = 0;
+    int src_index = 0;
+
+    while (src_index < len)
+    {
+        // copy as much data as possible into the block buffer
+        for( ; (src_index < len) && (dst_index < 512); dst_index++)
+        {
+            uf2_block[dst_index] = server_data[src_index++];
+        }
+
+        // check if we have received an entire block
+        if (dst_index >= 512)
+        {
+            err = pluto_compare_uf2_block(file_data, (const uf2_block_t *)uf2_block);
+                        
+            // clear block buffer
+            dst_index = 0;
+            memset(uf2_block, FS_ERASED_CELL_VALUE, 512);
+        }
+    }
+
+    return(err);
 }

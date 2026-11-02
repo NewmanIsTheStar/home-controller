@@ -14,7 +14,7 @@
 #include "picofs.h"
 #include "utility.h"
 
-
+#define BREAKPOINT_FLASH_WRTIE_FAIL (1)
 
 
 // typedefs

@@ -52,7 +52,7 @@ int shell_do_download(SM_GENERIC_URL_T *msg)
     }
     else
     {
-        if (err = download_file(msg->url))
+        if (err = download_file_bin(msg->url))
         {
             shell_printf("wget: failed to download %s\n", msg->url);
         }
@@ -89,17 +89,19 @@ int shell_do_verify(SM_GENERIC_URL_T *msg)
         return(-1);
     }
 
-    if (msg->url[0])
+    if (strstr(msg->url, ".uf2"))
     {
-        //TODO: add support for UF2 file verification
-        if (err = verify_file(msg->url))
+        if (err = verify_file_uf2(msg->url))
         {
-            shell_printf("wget: failed to download %s\n", msg->url);
+            shell_printf("verification failed: local file differs from %s\n", msg->url);
         }
     }
     else
     {
-        shell_printf("wget: error: no URL provided\n");
+        if (err = verify_file_bin(msg->url))
+        {
+            shell_printf("verification failed: local file differs from %s\n", msg->url);
+        }
     }
 
     return(err);

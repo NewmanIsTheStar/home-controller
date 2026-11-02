@@ -40,7 +40,7 @@ WORKER_TASK_T worker_tasks[] =
   {   discovery_task,      "Discovery Task",       8096,   1},          
  // {   kasa_discovery_task, "Kasa Discovery Task",  8096,   1},   
   {   swload_task,      "Software Load Task",       2048,   1},  
-  {   shell_task,       "Shell Task",               2048,   1},   
+  {   shell_task,       "Shell Task",               8096,   1},   
 
     // end of table
     {   NULL,           NULL,               0,      0,         }
