@@ -188,6 +188,11 @@ int picofs_cache_realloc(int fd, size_t requested_size, uint8_t fill)
         {
             // no previous cache to copy from so fill the newly created cache
             memset(new_cache, fill, new_cache_size);
+        }
+        else
+        {
+            picofs_printf("picofs_cache_realloc: failed to allocate new memory while adjusting cache size\n");
+            err = -5;
         }  
         
         if (new_cache)

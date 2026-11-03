@@ -1040,6 +1040,7 @@ void pluto_get_program_size(void)
 int pluto_download_software(void)
 {
     int err = -1;
+    DOWNLOAD_MODE_T mode;
 
     if (sys_web.software_download_now && sys_web.software_url[0])
     {
@@ -1047,7 +1048,16 @@ int pluto_download_software(void)
 
         urldecode(sys_web.software_url, sys_web.software_url);
 
-        if (err = download_file(sys_web.software_url))
+        if (strstr(sys_web.software_url, ".uf2"))
+        {
+            mode = DOWNLOAD_SAVE_UF2;
+        }
+        else
+        {
+            mode = DOWNLOAD_SAVE_BIN;
+        }
+
+        if (err = download_file(sys_web.software_url, mode))
         {
             printf("pluto_download_software: failed to download %s\n", sys_web.software_url);
         }

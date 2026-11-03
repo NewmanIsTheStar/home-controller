@@ -43,22 +43,20 @@ int shell_do_download(SM_GENERIC_URL_T *msg)
         return(-1);
     }
 
-    err = download_file(msg->url);
-
-    // if (strstr(msg->url, ".uf2"))
-    // {
-    //     if (err = download_file_uf2(msg->url))
-    //     {
-    //         shell_printf("wget: failed to download %s\n", msg->url);
-    //     }
-    // }
-    // else
-    // {
-    //     if (err = download_file(msg->url))
-    //     {
-    //         shell_printf("wget: failed to download %s\n", msg->url);
-    //     }
-    // }
+    if (strstr(msg->url, ".uf2"))
+    {
+        if (err = download_file(msg->url, DOWNLOAD_SAVE_UF2))
+        {
+            shell_printf("wget: failed to download %s\n", msg->url);
+        }
+    }
+    else
+    {
+        if (err = download_file(msg->url, DOWNLOAD_SAVE_BIN))
+        {
+            shell_printf("wget: failed to download %s\n", msg->url);
+        }
+    }
     
     return(err);
 }
@@ -91,21 +89,20 @@ int shell_do_verify(SM_GENERIC_URL_T *msg)
         return(-1);
     }
 
-    err = verify_file(msg->url);
-    // if (strstr(msg->url, ".uf2"))
-    // {
-    //     if (err = verify_file_uf2(msg->url))
-    //     {
-    //         shell_printf("verification failed: local file differs from %s\n", msg->url);
-    //     }
-    // }
-    // else
-    // {
-    //     if (err = verify_file(msg->url))
-    //     {
-    //         shell_printf("verification failed: local file differs from %s\n", msg->url);
-    //     }
-    // }
+    if (strstr(msg->url, ".uf2"))
+    {
+        if (err = download_file(msg->url, DOWNLOAD_VERIFY_UF2))
+        {
+            shell_printf("verification failed: local file differs from %s\n", msg->url);
+        }
+    }
+    else
+    {
+        if (err = download_file(msg->url, DOWNLOAD_VERIFY_BIN))
+        {
+            shell_printf("verification failed: local file differs from %s\n", msg->url);
+        }
+    }
 
     return(err);
 }
