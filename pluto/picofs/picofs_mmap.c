@@ -132,7 +132,8 @@ int picofs_munmap(void *addr, size_t len)
         // release fd if the file was closed but fd was held open by this mapping
         if ((custom_fds[fd].mmap_delayed_close) && (custom_fds[fd].mmap_ref_count == 0))
         {
-            close(fd);
+            picofs_close(fd);
+            picofs_release_fd(fd);
         }
         
         return(0);

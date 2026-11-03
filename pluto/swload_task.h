@@ -9,8 +9,8 @@
 
 void swload_task(__unused void *params);
 int download_file_uf2(char *url);
-int download_file_bin(char *url);
-int verify_file_bin(char *url);
+int download_file(char *url);
+int verify_file(char *url);
 int verify_file_uf2(char *url);
 int image_compare(char *ptr1, char *ptr2, int len);
 

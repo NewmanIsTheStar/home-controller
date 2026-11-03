@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include <unistd.h>
 #include <fcntl.h>
 #include "pico/cyw43_arch.h"
 #include "FreeRTOS.h"
@@ -1108,7 +1109,7 @@ int shell_map_test(char *filename)
     shell_printf_nb("mt: mapping via open(): %p\n", file_data);
     shell_printf_nb("%s\n", file_data);
     
-    close(fd);
+    (close)(fd);
 
     return(0);
 }

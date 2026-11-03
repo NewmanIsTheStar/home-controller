@@ -60,14 +60,14 @@ int shell_do_boot(SM_GENERIC_FILE_T *msg)
         if (map == MAP_FAILED) 
         {
             perror("shell_do_boot: Error mapping the file");
-            close(exe_fd);
+            (close)(exe_fd);
             exe_fd = -1;
             return EXIT_FAILURE;
         }
 
         picofs_munmap(map, 0);
 
-        close(exe_fd);
+        (close)(exe_fd);
         exe_fd = -1;
 
         // for now we assume executable was linked to be loaded at the standard location (XIP_BASE)

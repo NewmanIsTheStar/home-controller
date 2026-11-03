@@ -1047,7 +1047,7 @@ int pluto_download_software(void)
 
         urldecode(sys_web.software_url, sys_web.software_url);
 
-        if (err = download_file_bin(sys_web.software_url))
+        if (err = download_file(sys_web.software_url))
         {
             printf("pluto_download_software: failed to download %s\n", sys_web.software_url);
         }

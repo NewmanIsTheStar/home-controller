@@ -93,7 +93,7 @@ int config_mmap(char *filename, void **configuration_buffer, size_t config_size)
     if (ftruncate(config_fd, config_size) == -1) 
     {
         perror("config_mmap: Error setting file size");
-        close(config_fd);
+        (close)(config_fd);
         config_fd = -1;
         return EXIT_FAILURE;
     }
@@ -103,7 +103,7 @@ int config_mmap(char *filename, void **configuration_buffer, size_t config_size)
     if (map == MAP_FAILED) 
     {
         perror("config_mmap: Error mapping the file");
-        close(config_fd);
+        (close)(config_fd);
         config_fd = -1;
         return EXIT_FAILURE;
     }
