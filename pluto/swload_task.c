@@ -30,7 +30,7 @@ int http_parse_header(char *buffer, int buflen, int *filelen, char **filestart);
 int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t uri_size);
 int pluto_write_uf2(int fd, char *ptr, int len);
 int pluto_compare_uf2(char *file_data, char *server_data, int len);
-int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int len, DOWNLOAD_MODE_T mode);
+int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int len, int *num_differences, DOWNLOAD_MODE_T mode);
 
 
 #define HTTPC_CLIENT_AGENT "MonkeyBuntBob"
@@ -317,6 +317,7 @@ int image_compare(char *ptr1, char *ptr2, int len)
 int download_file(char *url, DOWNLOAD_MODE_T mode)
 {
     int err = 0;
+    int file_error = 0;
     int ret;
     int wrote_bytes;
     int read_bytes;
@@ -326,7 +327,8 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
     struct timeval tv;  
     char buffer[1600];
     int web_socket = -1;    
-    int file_len;
+    int server_file_len;
+    int local_file_len;
     char *file_start;
     int total_read = 0;
     int total_expected = 0;
@@ -383,10 +385,10 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
             }
         }
 
-        shell_printf("Host:      %s\n", host);
-        shell_printf("URI:       %s\n", uri);
-        shell_printf("Filename:  %s\n", filename);
-        shell_printf("Mode:      %s\n", mode_string);                
+        shell_printf("Host:               %s\n", host);
+        shell_printf("URI:                %s\n", uri);
+        shell_printf("Filename:           %s\n", filename);
+        shell_printf("Mode:               %s\n", mode_string);                      
     } 
     else 
     {
@@ -414,7 +416,10 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
             shell_printf("Downloading file...\n");                    
             total_expected = 0;
             download_position = 0;
-            for (retry=0; retry<5; retry++)
+            file_error = 0;
+
+            // read file from server with 5 retries until the end of file or a fatal error occurs
+            for (retry=0; (retry<5) && !file_error; retry++)
             {
                 FD_ZERO(&readset);
                 FD_SET(web_socket, &readset);
@@ -428,16 +433,16 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                     read_bytes = recv(web_socket, buffer, sizeof(buffer), 0);
                     if (read_bytes > 0)
                     {
+                        //hex_dump(buffer, read_bytes);
+
                         // reset retry counter
                         retry = 0;
-
-                        //hex_dump(buffer, read_bytes);
                         
                         // attempt to find http header -- only works if header is completely contained in a buffer
-                        if (!total_expected && !http_parse_header(buffer, read_bytes, &file_len, &file_start))
+                        if (!total_expected && !http_parse_header(buffer, read_bytes, &server_file_len, &file_start))
                         {
-                            shell_printf("Size:      %d\n", file_len);  
-            
+                            shell_printf("Server file size:   %d\n", server_file_len);
+                                       
                             if (fd < 0)
                             {
                                 // onpen file
@@ -447,7 +452,14 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                                 }
                                 else
                                 {
-                                    fd = picofs_open_download_file(filename, file_len);
+                                    if (mode == DOWNLOAD_SAVE_UF2)
+                                    {
+                                        // uf2 files have roughly 50% overhead
+                                        local_file_len = (server_file_len/2) + FS_PAGE_SIZE;
+                                        shell_printf("Local file size:    %d\n", local_file_len); 
+                                    }
+
+                                    fd = picofs_open_download_file(filename, local_file_len);
                                 }
                                 
                                 // check if the file exists and opened successfully
@@ -462,7 +474,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                                 // mmap file for direct memory access when verifying file
                                 if (verify_only)
                                 {
-                                    flash_data = picofs_mmap(NULL, file_len, PROT_READ, MAP_SHARED, fd, 0);
+                                    flash_data = picofs_mmap(NULL, server_file_len, PROT_READ, MAP_SHARED, fd, 0);
                                     if (flash_data == MAP_FAILED) 
                                     {
                                         perror("download_file: Error mapping the file for direct memory access\n");
@@ -474,12 +486,12 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                             }
 
                             file_offset = (int)(file_start - buffer);  // offset from start of received byte stream to file start
-                            total_expected = file_offset + file_len;
+                            total_expected = file_offset + server_file_len;
                             
                             if (((read_bytes - file_offset) + total_processed) < total_expected)
                             {
                                 // write all data after the http header to file
-                                differences_found += pluto_download_process_chunk(fd, flash_data, buffer + file_offset, (read_bytes - file_offset), mode);  
+                                file_error = pluto_download_process_chunk(fd, flash_data, buffer + file_offset, (read_bytes - file_offset), &differences_found, mode);  
                                 
                                 // printf("First DATA\n");
                                 // hex_dump(buffer + file_offset, (read_bytes - file_offset));
@@ -489,7 +501,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                             else if (total_processed < total_expected)
                             {
                                 // truncate at total_expected -- remainder of buffer is http
-                                differences_found += pluto_download_process_chunk(fd, flash_data, buffer + file_offset, total_expected - total_processed, mode);
+                                file_error = pluto_download_process_chunk(fd, flash_data, buffer + file_offset, total_expected - total_processed, &differences_found, mode);
                                 total_processed += (total_expected - total_processed);
                             }                            
                         }
@@ -498,13 +510,13 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                             if ((read_bytes + total_processed) < total_expected)
                             {
                                 // write all data to file
-                                differences_found += pluto_download_process_chunk(fd, flash_data, buffer, read_bytes, mode);    
+                                file_error = pluto_download_process_chunk(fd, flash_data, buffer, read_bytes, &differences_found, mode);    
                                 total_processed += read_bytes;
                             }
                             else if (total_processed < total_expected)
                             {
                                 // truncate at total_expected -- remainder of buffer is http
-                                differences_found += pluto_download_process_chunk(fd, flash_data, buffer, total_expected - total_processed, mode);
+                                file_error = pluto_download_process_chunk(fd, flash_data, buffer, total_expected - total_processed, &differences_found, mode);
                                 total_processed += (total_expected - total_processed);
                             }
                         }
@@ -550,14 +562,11 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
 
     printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);        
 
-
-
     if (web_socket >= 0)
     {
         lwip_close(web_socket);
         web_socket = -1;
     } 
-
 
     if (verify_only)
     {
@@ -566,7 +575,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
 
         if (flash_data)
         {
-            picofs_munmap(flash_data, file_len);
+            picofs_munmap(flash_data, server_file_len);
         }
 
         // print verification result
@@ -582,6 +591,10 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
     }
     else
     {
+        if (file_error)
+        {
+            shell_printf("downlaod aborted : file error\n");
+        }        
         // close the file
         picofs_close(fd);       // directly call picofs_close() bypassing the wrapper since we used picofs_open_download_file() rather than a standard open()
         picofs_release_fd(fd);  // as we are bypassing the wrapper me must release the file descriptor
@@ -633,6 +646,7 @@ int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t u
 
 int pluto_write_uf2(int fd, char *ptr, int len)
 {
+    int err = 0;
     static char uf2_block[512];
     static int dst_index = 0;
     int src_index = 0;
@@ -648,7 +662,7 @@ int pluto_write_uf2(int fd, char *ptr, int len)
         // check if we have received an entire block
         if (dst_index >= 512)
         {
-            pluto_write_uf2_block(fd, (const uf2_block_t *)uf2_block);
+            err = pluto_write_uf2_block(fd, (const uf2_block_t *)uf2_block);
             
             // clear block buffer
             dst_index = 0;
@@ -656,12 +670,14 @@ int pluto_write_uf2(int fd, char *ptr, int len)
         }
     }
 
+    return(err);
 }
 
 
 int pluto_compare_uf2(char *file_data, char *server_data, int len)
 {
     int err = 0;
+    int num_bytes = 0;
     static char uf2_block[512];
     static int dst_index = 0;
     int src_index = 0;
@@ -677,7 +693,12 @@ int pluto_compare_uf2(char *file_data, char *server_data, int len)
         // check if we have received an entire block
         if (dst_index >= 512)
         {
-            err = pluto_compare_uf2_block(file_data, (const uf2_block_t *)uf2_block);
+            num_bytes = pluto_compare_uf2_block(file_data, (const uf2_block_t *)uf2_block);
+
+            if (num_bytes)
+            {
+                err = -1;
+            }
                         
             // clear block buffer
             dst_index = 0;
@@ -685,41 +706,60 @@ int pluto_compare_uf2(char *file_data, char *server_data, int len)
         }
     }
 
-    return(err);
+    return(num_bytes);
 }
 
 
 /*!
  * \brief process a chunk of downloaded file
  *
- * \param handle destination file descriptor
- * \param dst_fd destination address
+ * \param dst_fd destination file descriptor
+ * \param dst_address destination address
  * \param ptr received chunk of file
  * \param len length of chunk
+ * \param num_differences number of byte differences found
  * \param mode type of processing to perform: write binary, write uf2, compare binary, compare uf2
  * 
  * \return nothing
  */
-int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int len, DOWNLOAD_MODE_T mode)
+int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int len, int *num_differences, DOWNLOAD_MODE_T mode)
 {
     int err = 0;
+    int num_bytes = 0;
 
     switch(mode)
     {
     default:
         break;
     case DOWNLOAD_SAVE_BIN:
-        err = picofs_write(dst_fd, ptr, len);
+        num_bytes = picofs_write(dst_fd, ptr, len);
+
+        if (num_bytes < 0)
+        {
+            err = num_bytes;
+        }
         break;
     case DOWNLOAD_SAVE_UF2:
-        err = pluto_write_uf2(dst_fd, ptr, len);
+        err = pluto_write_uf2(dst_fd, ptr, len);    
         break;
     case DOWNLOAD_VERIFY_BIN:
-        err = image_compare((dst_address+download_position), ptr, len);
+        num_bytes = image_compare((dst_address+download_position), ptr, len);
         download_position += len;
+
+        if (num_bytes)
+        {
+            err = -1;
+            *num_differences += num_bytes;
+        }
         break;
     case DOWNLOAD_VERIFY_UF2:
-        err = pluto_compare_uf2(dst_address, ptr, len);
+        num_bytes = pluto_compare_uf2(dst_address, ptr, len);
+
+        if (num_bytes)
+        {
+            err = -1;
+            *num_differences += num_bytes;
+        }        
         break;
     }
 

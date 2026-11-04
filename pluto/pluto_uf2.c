@@ -8,7 +8,7 @@
 #include "pluto.h"
 #include "picofs.h"
 #include "utility.h"
-//#include "swload_task.h"  // TEST TEST TEST for image_compare()
+#include "swload_task.h"  // for image_compare()
 
 // defines
 #define UF2_MAGIC_START0   0x0A324655
@@ -17,9 +17,10 @@
 #define KLUDGE_ERRATA_E10  0xe48bff57
 
 // process a completely reconstructed 512-byte UF2 block
-void pluto_write_uf2_block(int fd, const uf2_block_t *block) 
+int pluto_write_uf2_block(int fd, const uf2_block_t *block) 
 {
     int err = 0;
+    int bytes_written = 0;
 
     // Validate block integrity signatures
     if (block->magic_start0 != UF2_MAGIC_START0 || 
@@ -28,7 +29,8 @@ void pluto_write_uf2_block(int fd, const uf2_block_t *block)
     {
         // Ignore corrupt or malformed blocks
         printf("pluto_write_uf2_block: Ignore corrupt or malformed blocks\n");
-        return; 
+        hex_dump((char *)block, 512);
+        return(err); 
     }
 
     // Skip payload blocks meant for other architectures (e.g. RP2040)
@@ -39,7 +41,7 @@ void pluto_write_uf2_block(int fd, const uf2_block_t *block)
         if (block->family_id == KLUDGE_ERRATA_E10)
         {
             printf("pluto_write_uf2_block: Ignore kludge block used for the ERRATA E10 fix\n");
-            return;        
+            return(err);        
         }    
 
         if (block->family_id != 0xe48bff56 && // RP2350 ARM Secure
@@ -48,7 +50,7 @@ void pluto_write_uf2_block(int fd, const uf2_block_t *block)
             block->family_id != 0x78f240e4)   // RP2350 RISC-V Non-secure
         {
             printf("pluto_write_uf2_block: Ignore blocks for different CPU [%0x]\n", block->family_id);
-            return; 
+            return(err); 
         }
     }
 
@@ -63,11 +65,12 @@ void pluto_write_uf2_block(int fd, const uf2_block_t *block)
 
         if (err != -1)
         {
-            err = picofs_write(fd, (char *)block->data, 256);
+            bytes_written = picofs_write(fd, (char *)block->data, 256);
 
-            if (err != 256)
+            if (bytes_written != 256)
             {
                 printf("write failure @ %08x\n", target_offset);
+                err = -2;
             }
         }
         else
@@ -75,11 +78,14 @@ void pluto_write_uf2_block(int fd, const uf2_block_t *block)
             printf("seek failure  @ %08x\n", target_offset);
         }
     }
+
+    return(err);
 }
 
 int pluto_compare_uf2_block(char *file_data, const uf2_block_t *block) 
 {
     int err = 0;
+    int num_bytes = 0;
 
     // Validate block integrity signatures
     if (block->magic_start0 != UF2_MAGIC_START0 || 
@@ -112,15 +118,19 @@ int pluto_compare_uf2_block(char *file_data, const uf2_block_t *block)
         }
     }
 
-    // Flash the 256-byte payload (adjust according to standard UF2 block sizes)
+    // compare the 256-byte payload 
     if (block->payload_size == 256) 
     {
         // we presume the UF2 is targeted at XIP_BASE and find the offset from XIP_BASE
         uint32_t target_offset = block->target_addr - XIP_BASE;
 
-        err = memcmp(file_data + target_offset, (char *)block->data, 256);
-        //err = image_compare(file_data + target_offset, (char *)block->data, 256);        
+        //err = memcmp(file_data + target_offset, (char *)block->data, 256);
+        num_bytes = image_compare(file_data + target_offset, (char *)block->data, 256);        
+    }
+    else
+    {
+        num_bytes = 256;
     }
 
-    return(err);
+    return(num_bytes);
 }

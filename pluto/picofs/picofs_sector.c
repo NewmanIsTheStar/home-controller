@@ -77,12 +77,10 @@ int picofs_erase_obsolete_sectors(bool picofs_mutext_held)
 
                 if (start_sector == end_sector)
                 {
-                    //picofs_printf("--ERASING Sector %d\n", start_sector);
                     picofs_printf("--ERASING Sector %d\n", start_sector);
                 }
                 else
                 {
-                    //picofs_printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
                     picofs_printf("--ERASING Sectors %d to %d\n", start_sector, end_sector);
                 }
 

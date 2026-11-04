@@ -547,7 +547,6 @@ int picofs_access(const char *filename)
 int picofs_open_download_file(const char *name, size_t known_size) 
 {
     int err = -1;
-    int i;
     int fd = -1;
 
     fd = picofs_find_available_fd();   // NB we are bypassing the wrappers so have to manage file descriptors directly in this function
@@ -575,6 +574,11 @@ int picofs_open_download_file(const char *name, size_t known_size)
     {
         picofs_printf("picofs_open_download_file: set fd = %d to IN_USE = TRUE\n", fd);
         custom_fds[fd].in_use = true;
+    }
+    else
+    {
+        picofs_release_fd(fd);
+        fd = -1;
     }
 
     return(fd);

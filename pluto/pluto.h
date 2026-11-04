@@ -58,7 +58,7 @@ int pluto_boot_setup(uint32_t exe_flash_offset, char *exe_linker_start_addr);
 int pluto_boot_launch(void);
 void pluto_boot_menu_task(void *pvParameters);
 int pluto_boot_status(void);
-void pluto_write_uf2_block(int fd, const uf2_block_t *block);
+int pluto_write_uf2_block(int fd, const uf2_block_t *block);
 int pluto_compare_uf2_block(char *file_data, const uf2_block_t *block);
 
 #endif 
