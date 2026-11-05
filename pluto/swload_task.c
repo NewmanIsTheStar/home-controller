@@ -31,7 +31,7 @@ int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t u
 int pluto_write_uf2(int fd, char *ptr, int len);
 int pluto_compare_uf2(char *file_data, char *server_data, int len);
 int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int len, int *num_differences, DOWNLOAD_MODE_T mode);
-
+int pluto_initialize_uf2_buffer(void);
 
 #define HTTPC_CLIENT_AGENT "MonkeyBuntBob"
 
@@ -72,6 +72,10 @@ int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int l
 
 // static variables
 static int download_position = 0;
+static char uf2_block[512];
+static int dst_index = 0;
+static int uf2_blocks_processed = 0;
+static int uf2_blocks_written = 0;
 
 /*!
  * \brief Monitor weather and control relay based on conditions and time of day
@@ -327,8 +331,8 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
     struct timeval tv;  
     char buffer[1600];
     int web_socket = -1;    
-    int server_file_len;
-    int local_file_len;
+    int server_file_len = 0;
+    int local_file_len = 0;
     char *file_start;
     int total_read = 0;
     int total_expected = 0;
@@ -412,8 +416,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
         wrote_bytes = send(web_socket, buffer, strlen(buffer), 0);
 
         if (wrote_bytes == strlen(buffer))    //TODO: handle short write by sending rest of the buffer
-        {
-            shell_printf("Downloading file...\n");                    
+        {                 
             total_expected = 0;
             download_position = 0;
             file_error = 0;
@@ -445,9 +448,10 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                                        
                             if (fd < 0)
                             {
-                                // onpen file
+                                // open file
                                 if (verify_only)
                                 {
+                                    shell_printf("Downloading file ...\n"); 
                                     fd = open(filename, O_RDONLY);
                                 }
                                 else
@@ -456,9 +460,15 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                                     {
                                         // uf2 files have roughly 50% overhead
                                         local_file_len = (server_file_len/2) + FS_PAGE_SIZE;
-                                        shell_printf("Local file size:    %d\n", local_file_len); 
+                                        shell_printf("Local file size:    %d\n", local_file_len);
+                                        pluto_initialize_uf2_buffer(); 
+                                    }
+                                    else
+                                    {
+                                        local_file_len = server_file_len;
                                     }
 
+                                    shell_printf("Downloading file ...\n");   
                                     fd = picofs_open_download_file(filename, local_file_len);
                                 }
                                 
@@ -505,7 +515,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                                 total_processed += (total_expected - total_processed);
                             }                            
                         }
-                        else
+                        else if (server_file_len)
                         {
                             if ((read_bytes + total_processed) < total_expected)
                             {
@@ -520,8 +530,13 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                                 total_processed += (total_expected - total_processed);
                             }
                         }
+                        else
+                        {
+                            shell_printf("ABORT: missed header\n");
+                            err = -7;
+                        }
                         
-                        printf("total processed = %d\n", total_processed);
+                        //printf("total processed = %d\n", total_processed);
 
                         // accumulate total bytes received
                         total_read += read_bytes;
@@ -551,7 +566,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
         {
             shell_printf("download_file: error failed to send HTTP GET :: bytes sent = %d [expected %d]\n", wrote_bytes, strlen(buffer));
             
-            printf("wrote_bytes = %d\n", wrote_bytes);
+            //printf("wrote_bytes = %d\n", wrote_bytes);
 
             // close socket
             lwip_close(web_socket);
@@ -560,7 +575,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
         }
     }
 
-    printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);        
+    //printf("TOTAL_READ = %d TOTAL_EXPECTED = %d\n", total_read, total_expected);        
 
     if (web_socket >= 0)
     {
@@ -598,6 +613,8 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
         // close the file
         picofs_close(fd);       // directly call picofs_close() bypassing the wrapper since we used picofs_open_download_file() rather than a standard open()
         picofs_release_fd(fd);  // as we are bypassing the wrapper me must release the file descriptor
+
+        //shell_printf("UF2: blocks processed = %d blocked written = %d\n", uf2_blocks_processed, uf2_blocks_written);
     }
 
     return(err);
@@ -642,13 +659,19 @@ int parse_url(const char *url, char *host, size_t host_size, char *uri, size_t u
     return 0;
 }
 
+int pluto_initialize_uf2_buffer(void)
+{
+    dst_index = 0;
+    memset(uf2_block, FS_ERASED_CELL_VALUE, 512);
+    uf2_blocks_processed = 0;
+    uf2_blocks_written = 0;
 
+    return(0);
+}
 
 int pluto_write_uf2(int fd, char *ptr, int len)
 {
     int err = 0;
-    static char uf2_block[512];
-    static int dst_index = 0;
     int src_index = 0;
 
     while (src_index < len)
@@ -664,6 +687,13 @@ int pluto_write_uf2(int fd, char *ptr, int len)
         {
             err = pluto_write_uf2_block(fd, (const uf2_block_t *)uf2_block);
             
+            if (!err)
+            {
+                uf2_blocks_written++;
+            }
+
+            uf2_blocks_processed++;
+
             // clear block buffer
             dst_index = 0;
             memset(uf2_block, FS_ERASED_CELL_VALUE, 512);
@@ -762,6 +792,9 @@ int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int l
         }        
         break;
     }
+
+    // progress indicator
+    //shell_printf("."); 
 
     return(err);
 }

@@ -228,7 +228,7 @@ int picofs_sync_file_large(int fd, bool disable_purge)
     }
 
     cache_index = custom_fds[fd].data_offset - custom_fds[fd].cache_offset;
-    picofs_printf("ci = %0x do = %0x co = %0x\n", cache_index, custom_fds[fd].data_offset, custom_fds[fd].cache_offset);
+    //picofs_printf("ci = %0x do = %0x co = %0x\n", cache_index, custom_fds[fd].data_offset, custom_fds[fd].cache_offset);
 
     if (custom_fds[fd].cache)
     {
@@ -267,8 +267,8 @@ int picofs_sync_file_large(int fd, bool disable_purge)
 
         // compute padding for final data write
         padding_len = left_over_trailer?0:(cache_index + sizeof(FILE_TRAILER_T))%256?(256 - (cache_index + sizeof(FILE_TRAILER_T))%256):0;
-        picofs_printf("padding length = %0x left_over_trailer = %0x\n", padding_len, left_over_trailer);
-        picofs_printf("writing FINAL pages to flash @ %0x with size = %0x [datalen = %0x]\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len, cache_index);
+        //picofs_printf("padding length = %0x left_over_trailer = %0x\n", padding_len, left_over_trailer);
+        //picofs_printf("writing FINAL pages to flash @ %0x with size = %0x [datalen = %0x]\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len, cache_index);
         picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, cache_index + sizeof(FILE_TRAILER_T) - left_over_trailer + padding_len);
 
         if (!left_over_trailer)
@@ -288,9 +288,9 @@ int picofs_sync_file_large(int fd, bool disable_purge)
 
             // copy remainder of trailer into cache
             memcpy(custom_fds[fd].cache, ((char *)&(custom_fds[fd].cache_trailer))+(sizeof(FILE_TRAILER_T) - left_over_trailer), left_over_trailer);
-            printf("last page containing trailer\n");
+            //printf("last page containing trailer\n");
             hex_dump(custom_fds[fd].cache, FS_PAGE_SIZE);
-            picofs_printf("writing LEFT OVER trailer single page to flash @ %0x with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
+            //picofs_printf("writing LEFT OVER trailer single page to flash @ %0x with size = %d\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, FS_PAGE_SIZE);
             picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, FS_PAGE_SIZE); 
             
             // final page written
@@ -318,7 +318,7 @@ int picofs_sync_file_large(int fd, bool disable_purge)
 
     final_crc = picofs_calculate_crc32(custom_fds[fd].reserved_flash_start, custom_fds[fd].data_len);
 
-    picofs_printf("FINAL_DATA_LEN = %d\n\nFILE CRC SUMMARY\nflash=%0x\nram=%0x\ncombined=%0x\nfinal=%0x\n", custom_fds[fd].data_len, flash_crc, ram_crc, combined_crc, final_crc);
+    //picofs_printf("FINAL_DATA_LEN = %d\n\nFILE CRC SUMMARY\nflash=%0x\nram=%0x\ncombined=%0x\nfinal=%0x\n", custom_fds[fd].data_len, flash_crc, ram_crc, combined_crc, final_crc);
 
     return(err);
 }

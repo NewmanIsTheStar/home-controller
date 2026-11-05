@@ -60,8 +60,11 @@ int pluto_write_uf2_block(int fd, const uf2_block_t *block)
         // we presume the UF2 is targeted at XIP_BASE and find the offset from XIP_BASE
         uint32_t target_offset = block->target_addr - XIP_BASE;
 
-        // move to the offset withing the file
-        err = picofs_lseek(fd, target_offset, SEEK_SET);
+        //printf("writing at offset %08x\n", target_offset);
+
+        // move to the offset within the file
+        // err = picofs_lseek(fd, target_offset, SEEK_SET);   // this triggers a bug where we constantly hit the cache without acutally writing to flash because underlying code assumes sequential writes for large files
+        err = 0;
 
         if (err != -1)
         {

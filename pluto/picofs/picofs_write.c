@@ -76,14 +76,15 @@ int picofs_write(int fd, char *ptr, int len)
         else
         {
              // cache only holds a portion of the file, we move the cache window forward as the file grows
-            if (custom_fds[fd].cache_len && (cache_index < (custom_fds[fd].cache_len)))
+            if (custom_fds[fd].cache_len && (cache_index >= 0) && (cache_index < (custom_fds[fd].cache_len)))
             {
                 // data fits within the cache window
                 custom_fds[fd].data[cache_index] = ptr[i];            
             }
-            else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + cache_index + FS_PAGE_SIZE) <= custom_fds[fd].reserved_flash_end)
+            //else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + cache_index + FS_PAGE_SIZE) <= custom_fds[fd].reserved_flash_end)  // concern about negative cache_index
+            else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + custom_fds[fd].cache_len) <= custom_fds[fd].reserved_flash_end)            
             {
-                picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
+                //picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
                 // write the cache to flash
                 picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, custom_fds[fd].cache_len);
 

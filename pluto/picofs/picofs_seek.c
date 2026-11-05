@@ -103,11 +103,11 @@ int picofs_lseek(int fd, int ptr, int dir)
         if ((requested_offset >= custom_fds[fd].cache_offset) && (requested_offset < custom_fds[fd].cache_offset + custom_fds[fd].cache_len) &&
             (requested_offset == custom_fds[fd].data_offset))
         {
-            //printf("picofs: seek() cache hit. Writing sequential data.\n");
+            // printf("picofs: seek() cache hit. Writing sequential data.***********************************************************\n");
         }
         else // need to move cache window
         {
-            //printf("picofs: seek() cache miss.  requested_offset = %d data_offset = %d cache range [%p, %p]\n", requested_offset, custom_fds[fd].data_offset, custom_fds[fd].cache_offset, custom_fds[fd].cache_offset+custom_fds[fd].cache_len);
+            // printf("picofs: seek() cache miss.  requested_offset = %d data_offset = %d cache range [%p, %p]\n", requested_offset, custom_fds[fd].data_offset, custom_fds[fd].cache_offset, custom_fds[fd].cache_offset+custom_fds[fd].cache_len);
             cache_index = custom_fds[fd].data_offset - custom_fds[fd].cache_offset;
 
             if (cache_index%FS_PAGE_SIZE)
@@ -120,7 +120,7 @@ int picofs_lseek(int fd, int ptr, int dir)
             {
                 if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + cache_index) <= custom_fds[fd].reserved_flash_end)
                 {
-                    //picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
+                    // picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
                     // write the cache to flash
                     picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, cache_index);
 
