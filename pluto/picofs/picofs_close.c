@@ -117,6 +117,16 @@ int picofs_sync_file_regular(int fd, bool disable_purge)
         return(err);
     }
 
+    // check if file has changed
+    if (custom_fds[fd].cache && 
+        picofs_cache_contains_entire_file(fd) &&
+        (custom_fds[fd].file_len == (custom_fds[fd].data_len + sizeof(FILE_TRAILER_T))) &&
+        (memcmp(custom_fds[fd].file, custom_fds[fd].cache, custom_fds[fd].data_len) == 0))
+    {
+        // no changes to write to flash
+        return(0);
+    }
+
     if (custom_fds[fd].cache)
     {
         // update trailer

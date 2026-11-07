@@ -109,10 +109,12 @@ int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disa
                 if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
                 {
                     // increment sequence
-                    ((FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)))->file_sequence++;
+                    //((FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)))->file_sequence++;
+                    custom_fds[fd].cache_trailer.file_sequence++;
 
                     // reinitialize the file descriptor using the cache
-                    picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
+                    //picofs_fd_initialize(fd, flags, (FILE_TRAILER_T *)(custom_fds[fd].cache + custom_fds[fd].file_len - sizeof(FILE_TRAILER_T)));
+                    picofs_fd_initialize(fd, flags, &(custom_fds[fd].cache_trailer));
 
                     // since we are writing to the file set the file descriptor to use the cached trailer
                     custom_fds[fd].file_trailer = &(custom_fds[fd].cache_trailer);
@@ -229,16 +231,32 @@ int picofs_fd_initialize(int fd, int flags, FILE_TRAILER_T *trailer)
 
         if (trailer)
         {
-            // cache the trailer in case we write data to the file -- this will overwrite the original trailer
-            memcpy(&(custom_fds[fd].cache_trailer), (char *)trailer, sizeof(FILE_TRAILER_T));
+            // copy the trailer into dedicated cache
+            if (trailer != &(custom_fds[fd].cache_trailer))
+            {
+                // copy the trailer from flash
+                memcpy(&(custom_fds[fd].cache_trailer), (char *)trailer, sizeof(FILE_TRAILER_T));
+
+                // set the file pointer to the original file in flash
+                custom_fds[fd].file = (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size;
+            }
 
             // initialize the file descriptor from the trailer
-            custom_fds[fd].file = (char *)trailer + sizeof(FILE_TRAILER_T) - trailer->file_size;
-            
             custom_fds[fd].file_len = trailer->file_size;
             custom_fds[fd].file_status = trailer->file_status;
             custom_fds[fd].file_trailer = trailer;
-            custom_fds[fd].data = custom_fds[fd].file;
+
+            // set the data pointer
+            if (custom_fds[fd].cache)
+            {
+                custom_fds[fd].data = custom_fds[fd].cache;
+            }
+            else
+            {
+                custom_fds[fd].data = custom_fds[fd].file;
+            }
+
+            // set the data length
             if (custom_fds[fd].file_len >= (sizeof(FILE_TRAILER_T)))
             {
                 custom_fds[fd].data_len = custom_fds[fd].file_len - sizeof(FILE_TRAILER_T);
