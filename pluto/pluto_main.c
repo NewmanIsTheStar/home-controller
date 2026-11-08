@@ -20,8 +20,8 @@
 //#include "hardware/rtc.h"
 #include "pico/util/datetime.h"
 #include "hardware/watchdog.h"
-// #include "hardware/structs/powman.h"
-// #include "hardware/regs/powman.h"
+#include "hardware/structs/powman.h"
+#include "hardware/regs/powman.h"
 // #include "pico/flash.h"
 #include <hardware/flash.h>
 
@@ -88,6 +88,7 @@ extern WORKER_TASK_T worker_tasks[];
 
 // static variables
 static bool restart_requested = false;
+static uint32_t reset_reason;
 
 long long atomic_variable = 0;
 
@@ -121,6 +122,11 @@ int pluto_download_software(void);
  * *******************************************************/
 int __attribute__((__section__(".applet_entry"))) main(void)
 {
+    #if defined(PICO_RP2350)
+    // read the current live status flags from the RP2350 power manager
+    reset_reason = powman_hw->chip_reset;
+    #endif
+
     pluto();
 
     return(0); 
@@ -923,9 +929,9 @@ uint32_t pluto_get_reboot_reason(void)
  */
 void print_reset_reason(void)   // TODO: solve for pico_w
 {
-#if defined(PICO_BOARD_PICO2) || defined(PICO_BOARD_PICO2W)
-    // Read the current live status flags from the RP2350 power manager
-    uint32_t reset_reason = powman_hw->chip_reset;
+#if defined(PICO_RP2350)
+
+    printf("Evaluating reset reason...\n");
 
     // Check for Power-On Reset / Brown-out (Bit 16)
     if (reset_reason & POWMAN_CHIP_RESET_HAD_POR_BITS) {

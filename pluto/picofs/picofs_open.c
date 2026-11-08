@@ -93,12 +93,14 @@ int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disa
                     custom_fds[fd].file_len = sizeof(FILE_TRAILER_T);
                     custom_fds[fd].data_len = 0;
 
-                    // copy the original trailer into the cache
-                    memcpy(custom_fds[fd].cache, file_trailer, sizeof(FILE_TRAILER_T));
+                // NEEEDS TO USE DEDICATED TRAILER CACHE !!!                   
+                //     // copy the original trailer into the cache
+                //     memcpy(custom_fds[fd].cache, file_trailer, sizeof(FILE_TRAILER_T));
 
-                    // set file size of the cached trailer 
-                    // an empty file contains only a trailer
-                   ((FILE_TRAILER_T *)(custom_fds[fd].cache))->file_size = sizeof(FILE_TRAILER_T);                       
+                //     // set file size of the cached trailer 
+                //     // an empty file contains only a trailer
+                //    ((FILE_TRAILER_T *)(custom_fds[fd].cache))->file_size = sizeof(FILE_TRAILER_T);                       
+                    custom_fds[fd].cache_trailer.file_size = sizeof(FILE_TRAILER_T); 
                 }
                 else if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
                 {

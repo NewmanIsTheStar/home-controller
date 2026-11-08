@@ -6,6 +6,8 @@
 
 #include <fcntl.h> 
 #include <string.h>
+#include "pico/flash.h"
+#include <hardware/flash.h>
 #include "FreeRTOS.h"
 #include "picofs.h"
 
@@ -79,7 +81,7 @@ int picofs_cache_expand(int fd)
         cache_size = ((custom_fds[fd].cache_len + (4*1024))/(4*1024))*(4*1024); 
         //cache_size = custom_fds[fd].cache_len;                
                 
-        err = picofs_cache_realloc(fd, cache_size, 0xFF);        
+        err = picofs_cache_realloc(fd, cache_size, FS_ERASED_CELL_VALUE);        
     }
 
     return(err);
@@ -142,13 +144,23 @@ int picofs_cache_realloc(int fd, size_t requested_size, uint8_t fill)
         // reserve flash and make 64K aligned [for now we assume all large files are executable but this should be a passed parameter in future]
         if (!picofs_find_contiguous_free_area(flash_reservation_size, &(custom_fds[fd].reserved_flash_start), &actual_reservation_size, true))
         {
-            custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + flash_reservation_size;
-            custom_fds[fd].cache_offset = 0;
+            // sanity check
+            if ((actual_reservation_size >= flash_reservation_size) && ((char *)custom_fds[fd].reserved_flash_start >= FS_START) && ((char *)custom_fds[fd].reserved_flash_start < FS_END))
+            {
+                custom_fds[fd].reserved_flash_end = custom_fds[fd].reserved_flash_start + flash_reservation_size;
+                custom_fds[fd].cache_offset = 0;
 
-            picofs_printf("picofs_cache_realloc:RESERVED FLASH: size = %d start = %08x end = %08x filename = %s\n", flash_reservation_size, custom_fds[fd].reserved_flash_start, custom_fds[fd].reserved_flash_end, custom_fds[fd].cache_trailer.name);            
+                picofs_printf("picofs_cache_realloc:RESERVED FLASH: size = %d start = %08x end = %08x filename = %s\n", flash_reservation_size, custom_fds[fd].reserved_flash_start, custom_fds[fd].reserved_flash_end, custom_fds[fd].cache_trailer.name);            
 
-            // TODO: pass explicit parameter or set this bit externally for EXE files -- at present we presume large files (>16KB) are EXE
-            custom_fds[fd].file_status |= STS_EXECUTABLE;
+                // TODO: pass explicit parameter or set this bit externally for EXE files -- at present we presume large files (>16KB) are EXE
+                custom_fds[fd].file_status |= STS_EXECUTABLE;
+            }
+            else
+            {
+                picofs_printf("picofs_cache_realloc: Internal error.  picofs_find_contiguous_free_area returned invald data\n"); 
+                new_cache_size = 0;
+                err = -4;               
+            }
         }
         else
         {
@@ -247,7 +259,7 @@ int picofs_cache_convert_to_large_file(int fd, size_t offset, size_t flash_reser
     size_t actual_reservation_size = 0;
 
     // transition from fully cached file to parially cached (one time transition)  TODO: limit this to append mode
-    picofs_printf("picofs: transitioning file from fully cached to partially cached\n");
+    picofs_printf("picofs: transitioning file %s from fully cached to partially cached\n", custom_fds[fd].cache_trailer.name);
 
     if (offset%FS_PAGE_SIZE)
     {

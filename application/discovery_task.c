@@ -135,6 +135,8 @@ void discovery_task(__unused void *params)
 
     //init_mdns_scanner();
 
+    last_shelly_scan = unix_time - (60*60) + 20;
+
     while (true)
     {        
         if ((sys->personality == HOME_CONTROLLER))
@@ -142,34 +144,49 @@ void discovery_task(__unused void *params)
         {
             if ((unix_time - last_shelly_scan) > (60*60))
             {
-                // TEST TEST TEST
-                // if (!file_ptr)
-                // {
-                //     file_ptr = fopen("shelly-devs.txt", "w");
-                // }
-
-                if (!shelly_discover_devices(file_ptr))
+                if (!file_ptr)
                 {
-                    last_shelly_scan = unix_time;
-                    task_delay = 30*60*1000;
+                    file_ptr = fopen("shelly-devs.txt", "w");
+                }
 
-                    if (file_ptr)
+                if (file_ptr)
+                {
+                    // TEST TEST TEST
+                    // for(i=0; i <100; i++)
+                    // {
+                    //     fprintf(file_ptr, "%04x: The quick brown fox jumps over the lazy dog.\n", i);                    
+                    // }
+
+                    // fclose(file_ptr);
+                    // file_ptr = NULL;  
+
+                    // // discover devices
+                    if (!shelly_discover_devices(file_ptr))
                     {
-                        shell_printf("closing file\n");
+                        // search complete -- one minute delay
+                        last_shelly_scan = unix_time;
+                        task_delay = 1*60*1000;  
                         fclose(file_ptr);
-                        file_ptr = NULL;
+                        file_ptr = NULL;                                             
+                    }
+                    else
+                    {
+                        // search in progress -- poll next device in 10ms
+                        task_delay = 10; 
                     }
                 }
                 else
                 {
-                    task_delay = 2*60*1000;
+                    printf("failed to open shelly-devs.txt for write\n");
+
+                    // file i/o error -- try again in 10 seconds
+                    task_delay = 10*1000;
                 }
-            }           
+                
+            }
         }
-        else
-        {
-            SLEEP_MS(task_delay);
-        }
+
+        SLEEP_MS(task_delay);
 
         // tell watchdog task that we are still alive
         watchdog_pulse((int *)params);  

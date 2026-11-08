@@ -211,6 +211,12 @@ int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_a
         if (picofs_is_cell_reserved(cell, NULL, &reserved_flash_end))
         {
             cell = reserved_flash_end;
+
+            // reset counter
+            contiguous_pages_found = 0;
+
+            // remember start address
+            *start_of_area = cell;            
         }
 
         if ((*cell != FS_ERASED_CELL_VALUE))
@@ -301,7 +307,7 @@ bool picofs_is_cell_reserved(uint8_t *cell, uint8_t **reserved_flash_start, uint
         {
             if ((cell >= custom_fds[i].reserved_flash_start) && (cell < custom_fds[i].reserved_flash_end))
             {
-                picofs_printf("CELL is RESERVED! cell @ %p fd = %d start = %p end = %p\n", cell, i, custom_fds[i].reserved_flash_start, custom_fds[i].reserved_flash_end);
+                picofs_printf("CELL is RESERVED! cell @ %p fd = %d start = %p end = %p name = %s\n", cell, i, custom_fds[i].reserved_flash_start, custom_fds[i].reserved_flash_end, custom_fds[i].cache_trailer.name);
                 
                 if (reserved_flash_start)
                 {

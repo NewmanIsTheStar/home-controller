@@ -144,7 +144,7 @@ int picofs_sync_file_regular(int fd, bool disable_purge)
         }
         else if (custom_fds[fd].cache_len > sizeof(FILE_TRAILER_T))
         {
-            picofs_printf("picoFS: discarded last %d bytes written to file due to lack of cache on close\n", custom_fds[fd].data_len - (custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T)));
+            picofs_printf("picoFS: discarded last %d bytes written to file %s due to lack of cache on close\n", sizeof(FILE_TRAILER_T) - (custom_fds[fd].cache_len - custom_fds[fd].data_len), custom_fds[fd].cache_trailer.name);
             custom_fds[fd].data_len = custom_fds[fd].cache_len - sizeof(FILE_TRAILER_T);
             memcpy(custom_fds[fd].cache + custom_fds[fd].data_len, &(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
             err = 0;            
