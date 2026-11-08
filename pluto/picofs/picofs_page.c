@@ -16,7 +16,7 @@
 
 
 //prototypes
-bool picofs_is_cell_reserved(uint8_t *cell);
+bool picofs_is_cell_reserved(uint8_t *cell, uint8_t **reserved_flash_start, uint8_t **reserved_flash_end);
 
 
 // external variables
@@ -192,7 +192,7 @@ int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_a
     TickType_t elapsed_ticks = 0;
     uint32_t contiguous_pages_required = 0;
     uint32_t contiguous_pages_found = 0;    
-
+    uint8_t *reserved_flash_end = NULL;
     start_tick = xTaskGetTickCount();
 
     contiguous_pages_required = requested_size/FS_PAGE_SIZE + (requested_size%FS_PAGE_SIZE?1:0);
@@ -207,22 +207,30 @@ int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_a
         executable_block_relative = (uint32_t)(cell - FLASH_SCAN_START)/FS_EXE_BLOCK_SIZE;            
         page_relative = ((uint32_t)(cell - FLASH_SCAN_START)%FS_SECTOR_SIZE)/FS_PAGE_SIZE;          
         
-        if ((*cell != FS_ERASED_CELL_VALUE) || picofs_is_cell_reserved(cell))  //TODO: extremely inefficient should look at reservation and skip entire reserved region
+        // skip past reserved flash
+        if (picofs_is_cell_reserved(cell, NULL, &reserved_flash_end))
         {
-            if ((flash_alignment == PFS_ALIGN_BYTE) || (flash_alignment == PFS_ALIGN_PAGE))
-            {            
+            cell = reserved_flash_end;
+        }
+
+        if ((*cell != FS_ERASED_CELL_VALUE))
+        {
+            switch(flash_alignment)
+            {
+            default:
+            case PFS_ALIGN_BYTE:
+            case PFS_ALIGN_PAGE:
                 // skip to next page
                 cell = FLASH_SCAN_START + erase_sector_relative*FS_SECTOR_SIZE+((page_relative+1)*FS_PAGE_SIZE);
-            }
-            if (flash_alignment == PFS_ALIGN_SECTOR)
-            {            
+                break;
+            case PFS_ALIGN_SECTOR:
                 // skip to next sector
                 cell = FLASH_SCAN_START + (erase_sector_relative+1)*FS_SECTOR_SIZE;
-            }            
-            else // PFS_ALIGN_BLOCK
-            {
+                break;
+            case PFS_ALIGN_BLOCK:
                 // skip to next executable block
-                cell = FLASH_SCAN_START + (executable_block_relative+1)*FS_EXE_BLOCK_SIZE;                
+                cell = FLASH_SCAN_START + (executable_block_relative+1)*FS_EXE_BLOCK_SIZE; 
+                break;                            
             }
 
             // reset counter
@@ -274,7 +282,7 @@ int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_a
 
 
 /*!
- * \brief Identify contiguous erased area large enough to hold size bytes
+ * \brief check if flash cell is reserved by an open file
  * 
  * \param[in]   size             number of bytes
  * 
@@ -282,7 +290,7 @@ int picofs_find_contiguous_free_area(size_t requested_size, uint8_t **start_of_a
  *  *     
  * \return 0 on success
  */
-bool picofs_is_cell_reserved(uint8_t *cell)
+bool picofs_is_cell_reserved(uint8_t *cell, uint8_t **reserved_flash_start, uint8_t **reserved_flash_end)
 {
     bool reserved = false;
     int i;
@@ -294,6 +302,17 @@ bool picofs_is_cell_reserved(uint8_t *cell)
             if ((cell >= custom_fds[i].reserved_flash_start) && (cell < custom_fds[i].reserved_flash_end))
             {
                 picofs_printf("CELL is RESERVED! cell @ %p fd = %d start = %p end = %p\n", cell, i, custom_fds[i].reserved_flash_start, custom_fds[i].reserved_flash_end);
+                
+                if (reserved_flash_start)
+                {
+                    *reserved_flash_start = custom_fds[i].reserved_flash_start;
+                }
+
+                if (reserved_flash_end)
+                {
+                    *reserved_flash_end = custom_fds[i].reserved_flash_end;
+                }
+
                 // cell is within a region reserved for a large open file
                 reserved = true;
                 break;

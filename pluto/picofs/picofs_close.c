@@ -175,7 +175,7 @@ int picofs_sync_file_regular(int fd, bool disable_purge)
         }
         else
         {
-            picofs_printf("picoFS: out of space writing %s to flash\n",custom_fds[fd].cache_trailer.name);
+            picofs_printf("picoFS: out of space writing %s to flash [%d bytes]\n",custom_fds[fd].cache_trailer.name, custom_fds[fd].cache_trailer.file_size);
             err = -2;
         }
 

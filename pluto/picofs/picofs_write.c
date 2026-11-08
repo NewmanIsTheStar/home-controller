@@ -27,6 +27,12 @@ int picofs_write(int fd, char *ptr, int len)
     int cache_index = 0;
     bool fully_cached = false;
 
+    // TEST TEST TEST
+    if (strcasecmp(custom_fds[fd].cache_trailer.name, "hc.bin") == 0)
+    {
+        printf("WRITE ptr = %p len = %d\n", ptr, len);
+    }
+
     if ((custom_fds[fd].data >= FLASH_SCAN_START) && (custom_fds[fd].data  < FLASH_SCAN_END))
     {
         picofs_printf("picoFS: ABORT!!!  data pointer is pointing to flash %p\n", custom_fds[fd].data);
@@ -84,7 +90,7 @@ int picofs_write(int fd, char *ptr, int len)
             //else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + cache_index + FS_PAGE_SIZE) <= custom_fds[fd].reserved_flash_end)  // concern about negative cache_index
             else if ((custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset + custom_fds[fd].cache_len) <= custom_fds[fd].reserved_flash_end)            
             {
-                //picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
+                picofs_printf("writing to flash @ %0x do+i = %0x len = %0x\n", custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].data_offset+i, custom_fds[fd].cache_len);
                 // write the cache to flash
                 picofs_flash_program(custom_fds[fd].reserved_flash_start + custom_fds[fd].cache_offset, custom_fds[fd].cache, custom_fds[fd].cache_len);
 

@@ -84,6 +84,20 @@ int picofs_flash_program(char *dst, char *src, size_t len)
     uint32_t flash_offset = (uint32_t)dst - (uint32_t)FS_FLASH_BASE;
     PICOFS_FLASH_RANGE_T shim_parameters;
 
+    // TEST TEST TEST
+    {
+        int i;
+        for(i=0; i<len; i++)
+        {
+            if (dst[i] != 0xFF)
+            {
+                printf("ERROR: ATTEMPTING TO WRITE TO NON-EMPTY FLASH PAGE\n");
+                return(-1);
+                break;
+            }
+        }
+    }
+    
     if (flash_offset%FS_PAGE_SIZE)
     {
         picofs_printf("picofs: error: picofs_flash_program(): invalid page offset (%d)\n", flash_offset);

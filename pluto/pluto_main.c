@@ -734,6 +734,9 @@ int monitor_heap(void)
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName) 
 {
+    // Hardcoded breakpoint instruction tells the SWD debugger to freeze right here
+    __asm volatile("bkpt #0"); 
+
     while(true)
     {
         printf("stack overflow\n");

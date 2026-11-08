@@ -282,9 +282,9 @@ int shelly_discover_devices(FILE *file_ptr)
         search_in_progress = false;
 
         printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);
-        shelly_dump_discovered_devices();
+        // shelly_dump_discovered_devices();
 
-        shelly_cache_dump();
+        // shelly_cache_dump();
     }
 
     return(search_in_progress);

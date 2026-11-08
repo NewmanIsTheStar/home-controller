@@ -35,7 +35,7 @@ extern FILE_TEST_T test_filesystem[FS_TEST_ROWS];
 void *picofs_mmap(void *addr, size_t len, int prot, int flags, int fd, uint32_t offset) 
 {
     int target_fd = fd - 3;
-
+    
     // handle RAM-only anonymous mappings
     if (flags & MAP_ANONYMOUS) 
     {

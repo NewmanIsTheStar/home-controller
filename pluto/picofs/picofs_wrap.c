@@ -20,44 +20,46 @@ extern int __real__read(int fd, char *ptr, int len);
 int __wrap__open(const char *name, int flags, int mode) 
 {
     int fd = -1;
-    
-    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) == pdTRUE)
+
+    if (xSemaphoreTake(picofs_mutex, pdMS_TO_TICKS(1000)) != pdTRUE)
     {
-        // find a free slot in custom_fds
-        for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
-        {
-            if (!custom_fds[i].in_use) 
-            {
-                fd = i;
-                break;
-            }
-        }
-        
-        if (fd == -1) 
-        {
-            errno = ENFILE; // Too many open files
-            xSemaphoreGive(picofs_mutex);
-            return -1;
-        }
-
-        custom_fds[fd].in_use = true;
-
-        if (picofs_open_by_name(fd, (char *)name, flags))
-        {
-            errno = ENOENT; // File not found
-            custom_fds[fd].in_use = false;
-            xSemaphoreGive(picofs_mutex);
-            return -1;
-        }
-
-        xSemaphoreGive(picofs_mutex);
+        errno = EAGAIN; // EBUSY / ETIME 
+        return -1;
     }
     
-   
+    // find a free slot in custom_fds
+    for (int i = 0; i < FS_MAX_FILE_DESCRIPTORS; i++) 
+    {
+        if (!custom_fds[i].in_use) 
+        {
+            fd = i;
+            break;
+        }
+    }
+    
+    if (fd == -1) 
+    {
+        errno = ENFILE; // too many open files
+        xSemaphoreGive(picofs_mutex);
+        return -1;
+    }
 
-    // Return index offset to avoid colliding with standard stdin/stdout/stderr (0, 1, 2)
+    custom_fds[fd].in_use = true;
+
+    if (picofs_open_by_name(fd, (char *)name, flags))
+    {
+        // File not found
+        errno = ENOENT; 
+        custom_fds[fd].in_use = false;
+        xSemaphoreGive(picofs_mutex);
+        return -1;
+    }
+
+    xSemaphoreGive(picofs_mutex);
+    
     return fd + 3; 
 }
+
 
 // Hook for open()  -- forwards to __wrap__open
 int __wrap_open(const char *name, int flags, ...) 

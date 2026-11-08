@@ -490,6 +490,8 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
                                         perror("download_file: Error mapping the file for direct memory access\n");
                                         (close)(fd);
                                         fd = -1;
+                                        lwip_close(web_socket);
+                                        web_socket = -1;                                        
                                         return EXIT_FAILURE;
                                     }
                                 }                                
