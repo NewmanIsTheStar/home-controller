@@ -265,7 +265,7 @@ int shelly_discover_devices(FILE *file_ptr)
                 }
                                 
                 //printf("IP = %s SHELLY_DEVICE_TYPE = %s SHELLY_DEVICE_ID = %s\n", ipstring, device_type, device_id);
-                //shelly_dump_discovered_devices();
+                shelly_dump_discovered_devices();
                 
                 number_of_shelly_devices++;
                 //printf("number of shelly devices discovered = %d\n", number_of_shelly_devices);

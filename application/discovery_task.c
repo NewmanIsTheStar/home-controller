@@ -142,7 +142,7 @@ void discovery_task(__unused void *params)
         if ((sys->personality == HOME_CONTROLLER))
         // if(0)
         {
-            if ((unix_time - last_shelly_scan) > (60*60))
+            if ((unix_time - last_shelly_scan) > (5*60))
             {
                 if (!file_ptr)
                 {
