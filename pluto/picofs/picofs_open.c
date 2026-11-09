@@ -90,7 +90,7 @@ int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disa
                 {
                     // truncate file
                     custom_fds[fd].data_offset = 0;
-                    custom_fds[fd].file_len = sizeof(FILE_TRAILER_T);
+                    //custom_fds[fd].file_len = sizeof(FILE_TRAILER_T);
                     custom_fds[fd].data_len = 0;
 
                 // NEEEDS TO USE DEDICATED TRAILER CACHE !!!                   
@@ -100,7 +100,9 @@ int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disa
                 //     // set file size of the cached trailer 
                 //     // an empty file contains only a trailer
                 //    ((FILE_TRAILER_T *)(custom_fds[fd].cache))->file_size = sizeof(FILE_TRAILER_T);                       
-                    custom_fds[fd].cache_trailer.file_size = sizeof(FILE_TRAILER_T); 
+                
+                // Really? Basically the cache trailer length is unused until we write it on close?
+                //custom_fds[fd].cache_trailer.file_size = sizeof(FILE_TRAILER_T); 
                 }
                 else if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
                 {
@@ -336,38 +338,55 @@ int picofs_find_file(const char *filename, uint8_t fid, FILE_TRAILER_T **trailer
 {
     int err = -1;
     int i = -1;
-
+    int j = -1;
+    bool search_flash = false;
 
     // special case -- fid given as filename (example FID:49)
     if ((fid == FS_INVALID_FID) && (strncasecmp(filename, "FID:", 4) == 0))
     {
-        sscanf(filename+4, "%d", &i);
+        sscanf(filename+4, "%d:%d", &i, &j);
 
-        if ((i>=0) && (i<(FS_MAX_SEQ-1)))
+        if ((i>=0) && (i<FS_NUM_FID))
         {
             fid = i;
         }
-    }
 
-    // if fid is known then index it directly, otherwise search for file name
-    if ((fid != FS_INVALID_FID) && picofs_files[fid].valid && (fid == picofs_files[fid].trailer->file_id) && !(picofs_files[fid].trailer->file_status & STS_DELETED))
-    {
-        *trailer = picofs_files[fid].trailer;
-        err = 0;
-    }
-    else if ((fid == FS_INVALID_FID) && filename)
-    {
-        for(i=0; i < FS_NUM_FID; i++)
+        if ((j>=0) && (j<FS_MAX_SEQ))
         {
-            if ((strcmp(filename, picofs_files[i].trailer->name) == 0) && !(picofs_files[i].trailer->file_status & STS_DELETED))
-            {
-                *trailer = picofs_files[i].trailer;
-                err = 0;
-                break;
-            }
+            search_flash = true;
         }
     }
 
+    if (!search_flash)
+    {
+        // if fid is known then index it directly, otherwise search for file name
+        if ((fid != FS_INVALID_FID) &&
+            picofs_files[fid].valid &&
+            (fid == picofs_files[fid].trailer->file_id) &&
+            !(picofs_files[fid].trailer->file_status & STS_DELETED))
+        {
+            *trailer = picofs_files[fid].trailer;
+            err = 0;
+        }
+        else if ((fid == FS_INVALID_FID) && filename)
+        {
+            // search ram list of latest files
+            for(i=0; i < FS_NUM_FID; i++)
+            {
+                if ((strcmp(filename, picofs_files[i].trailer->name) == 0) && !(picofs_files[i].trailer->file_status & STS_DELETED))
+                {
+                    *trailer = picofs_files[i].trailer;
+                    err = 0;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        // special case: user specified sequence number (used to access old versions of file that remain in flash)
+        err = picofs_find_old_file_in_flash(filename, fid, (uint8_t)j, trailer); 
+    }
     return(err);
 }
 

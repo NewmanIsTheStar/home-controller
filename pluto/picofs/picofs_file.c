@@ -459,3 +459,39 @@ bool picofs_is_filename_valid(const char *filename)
 
     return true; // All characters were alphanumeric
 }
+
+/*!
+ * \brief find old file in flash by fid and sequence
+ * 
+ * \param[in]   filename     name to find
+ * \param[in]   file_id      fid to find
+ * 
+ * \param[out]  sequence       pointer to file header
+ *  *     
+ * \return 0 if latest, 1 if not latest sequence
+ */
+int picofs_find_old_file_in_flash(const char *filename, uint8_t file_id, uint8_t sequence, FILE_TRAILER_T **trailer) 
+{
+    bool found = false;
+    FILE_TRAILER_T *t = NULL;
+
+    while(!picofs_iter_next_file(&t, false))
+    {
+        if (t)
+        {
+            if (((t->file_id == file_id) || (strcmp(t->name, filename) == 0)) && (t->file_sequence == sequence))
+            {
+               found = true; 
+               *trailer = t;
+               break;
+            }
+        }
+        else
+        {
+            picofs_printf("picofs: error: next iter unexpectedly returned a NULL pointer without an error return value\n");
+            break;
+        }
+    }
+
+    return(!found);
+}

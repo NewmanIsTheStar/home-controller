@@ -160,7 +160,7 @@ void discovery_task(__unused void *params)
                     // fclose(file_ptr);
                     // file_ptr = NULL;  
 
-                    // // discover devices
+                    // discover devices
                     if (!shelly_discover_devices(file_ptr))
                     {
                         // search complete -- one minute delay

@@ -126,7 +126,7 @@ typedef struct
     int flags;                    // flags passed to open file
     char *file;                   // flash: file start
     size_t file_len;              // flash: length of file including trailer   
-    uint8_t file_status;             // flash: file status  
+    uint8_t file_status;          // flash: file status  
     char *cache;                  // RAM: file start
     size_t cache_len;             // RAM: cache size
     size_t cache_offset;          // RAM: offset used when cache is too small to hold entire file
@@ -253,6 +253,7 @@ bool picofs_wildcard_match(const char *pattern, const char *str);
 bool picofs_is_filename_valid(const char *filename);
 int picofs_cache_convert_to_large_file(int fd, size_t offset, size_t flash_reservation_size, PFS_ALIGNMENT_TYPE_T flash_alignment);
 char *picofs_get_file_data_ptr(char *filename);
+int picofs_find_old_file_in_flash(const char *filename, uint8_t file_id, uint8_t sequence, FILE_TRAILER_T **trailer);
 
 #endif
 
