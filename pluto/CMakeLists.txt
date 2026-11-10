@@ -1,4 +1,41 @@
+#*******************************************
+# If a parent project hasn't already defined the SDK path, provide the local fallback
+if(NOT DEFINED PICO_SDK_PATH)
+    message(STATUS "[pluto] No global SDK path found. Using local submodule fallback.")
+    set(PICO_SDK_PATH "${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk" CACHE PATH "Path to Pico SDK")
+endif()
+
+# Only initialize the SDK if pluto is the actual entry point of the entire build
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    include("${PICO_SDK_PATH}/pico_sdk_init.cmake")
+    project(pluto_standalone_project C CXX ASM)
+    pico_sdk_init()
+endif()
+
+# Define the library or application target universally
+# add_executable(my_pico_app src/main.cpp)
+# target_link_libraries(my_pico_app pico_stdlib)
+# pico_add_extra_outputs(my_pico_app)
+
+# **********************************************
+#set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-Kernel)
+set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-Kernel)
+include(${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
+
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# consider adding these -- might be able to remove hard coded include paths below
+# pico_lwip_mbedtls
+# pico_mbedtls
+
+# if(PICO_BOARD STREQUAL "pico_w") 
+#     include(FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
+# elseif(PICO_BOARD STREQUAL "pico2_w") 
+#     include(FreeRTOS-Kernel/portable/ThirdParty/Community-Supported-Ports/GCC/RP2350_ARM_NTZ/FreeRTOS_Kernel_import.cmake)
+# else()
+#     message(FATAL_ERROR "Unsupported board type: ${BOARD_TYPE}")
+# endif()
+
 target_sources(${PROJECT_NAME} PRIVATE
     pluto_main.c
     pluto_wifi.c    
@@ -6,7 +43,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     pluto_boot.c
     pluto_uf2.c
     system_cgi.c
-    # pluto_terminal.c
+    # pluto_terminal.c   # provides boot menu on serial terminal
     system_web.c    
     system_config.c
     system_ssi.c
@@ -34,19 +71,31 @@ endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}
-        ${FREERTOS_PORT_DIR}
-        ${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/include/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_base_headers/include/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_rand/include/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/src/include/  
-        ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_lwip/include/ 
-        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/ports/freertos/include/ 
-        ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_arch/include/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/cyw43-driver/src/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_driver/include/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/src/apps/altcp_tls/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/mbedtls/include/
-        ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/apps/ping/
+        # ${FREERTOS_PORT_DIR}
+        # ${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS-Kernel/include/
+        # ${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/include/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_base_headers/include/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/src/common/pico_rand/include/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/src/include/  
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_lwip/include/ 
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/ports/freertos/include/ 
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_arch/include/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/lib/cyw43-driver/src/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_driver/include/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/src/apps/altcp_tls/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/lib/mbedtls/include/
+        # ${PROJECT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/apps/ping/
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/src/common/pico_base_headers/include/
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/src/common/pico_rand/include/
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/lib/lwip/src/include/  
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_lwip/include/ 
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/ports/freertos/include/ 
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_arch/include/
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/lib/cyw43-driver/src/
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/src/rp2_common/pico_cyw43_driver/include/
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/lib/lwip/src/apps/altcp_tls/
+        # ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/lib/mbedtls/include/
+        ${CMAKE_CURRENT_SOURCE_DIR}/pico-sdk/lib/lwip/contrib/apps/ping/        
 )
 
 
@@ -76,6 +125,8 @@ set(pluto_link_libraries
         pico_lwip_sntp
         pico_lwip_http
         pico_lwip_mqtt
+        pico_lwip_mbedtls
+        pico_mbedtls
         pico_stdlib
         pico_rand
         pico_base_headers

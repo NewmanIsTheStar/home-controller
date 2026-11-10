@@ -33,15 +33,14 @@ make
 sudo make install
 
 
-Update SDK
+# Update SDK
 cd pico-sdk
 git fetch --tags
 git checkout 2.3.1   # use version you want
 git submodule update --init --recursive
 
-Update FreeRTOS
+# Update FreeRTOS
 git submodule update --remote --merge --recursive FreeRTOS-Kernel/   # this gets the latest version
-
 
 # After submodules are updated the parent needs to point to the new updates
 
