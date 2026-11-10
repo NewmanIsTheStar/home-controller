@@ -1,3 +1,6 @@
 [submodule "pluto/FreeRTOS-Kernel"]
 	path = pluto/FreeRTOS-Kernel
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+[submodule "pluto/pico-sdk"]
+	path = pluto/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
