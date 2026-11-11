@@ -17,6 +17,7 @@
 #include "picofs.h"
 #include "shell.h"
 #include "pluto_swload.h"
+#include "system_web.h"
 
 /*WARNING
     In this file we have a combination of newlib stanard file operations and lwip socket operations.  LWIP uses a macro for close so that it may be used for network sockets.
@@ -69,6 +70,9 @@ int pluto_initialize_uf2_buffer(void);
     "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
     "\r\n"
 #define HTTPC_REQ_11_PROXY_PORT_FORMAT(host, host_port, uri, srv_name) HTTPC_REQ_11_PROXY_PORT, host, host_port, uri, HTTPC_CLIENT_AGENT, srv_name
+
+// extern variables
+extern SYS_WEB_VARIABLES_T sys_web;
 
 // static variables
 static int download_position = 0;
@@ -797,6 +801,40 @@ int pluto_download_process_chunk(int dst_fd, char *dst_address, char *ptr, int l
 
     // progress indicator
     //shell_printf("."); 
+
+    return(err);
+}
+
+
+int pluto_download_software(void)
+{
+    int err = -1;
+    DOWNLOAD_MODE_T mode;
+
+    if (sys_web.software_download_now && sys_web.software_url[0])
+    {
+        sys_web.software_download_now = 0;
+
+        urldecode(sys_web.software_url, sys_web.software_url);
+
+        if (strstr(sys_web.software_url, ".uf2"))
+        {
+            mode = DOWNLOAD_SAVE_UF2;
+        }
+        else
+        {
+            mode = DOWNLOAD_SAVE_BIN;
+        }
+
+        if (err = download_file(sys_web.software_url, mode))
+        {
+            printf("pluto_download_software: failed to download %s\n", sys_web.software_url);
+        }
+        else
+        {
+            pluto_application_restart(REBOOT_SOFTWARE_UPGRADE);
+        }
+    }
 
     return(err);
 }

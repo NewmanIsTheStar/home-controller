@@ -6,7 +6,7 @@
 
 #include "pico/cyw43_arch.h"
 #include "pluto.h"
-#include "pluto_wifi.h"
+#include "pluto_wifi_country.h"
 
 
 typedef struct

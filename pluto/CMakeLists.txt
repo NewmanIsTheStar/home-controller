@@ -25,17 +25,16 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(${PROJECT_NAME} PRIVATE
     pluto_main.c
-    pluto_wifi.c    
+    pluto_boss.c
+    pluto_gpio.c
+    pluto_wifi_sta.c    
+    pluto_wifi_ap.c
+    pluto_wifi_country.c    
     pluto_malloc.c
     pluto_boot.c
     pluto_uf2.c
     pluto_swload.c
-    # pluto_terminal.c   # provides boot menu on serial terminal
-    # system_cgi.c    
-    # system_web.c    
-    # system_config.c
-    # system_ssi.c
-
+    pluto_test.c
 )
 
 add_subdirectory(system)

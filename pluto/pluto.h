@@ -61,4 +61,22 @@ int pluto_boot_status(void);
 int pluto_write_uf2_block(int fd, const uf2_block_t *block);
 int pluto_compare_uf2_block(char *file_data, const uf2_block_t *block);
 
+
+void boss_task(__unused void *params);
+int pluto_ap_mode(void);
+int set_web_ip_network_info(void);
+int set_realtime_clock(void);
+int monitor_stacks(void);
+int monitor_heap(void);
+int pluto_ap_mode_for_developers(void);
+void atomic_write_task(__unused void *params);
+void atomic_read_task(__unused void *params);
+int set_gpio_defaults(void);
+void print_tasks_list(void);
+int test_myfilesystem(void);
+int test_stat(void);
+void pluto_get_program_size(void);
+int pluto_download_software(void);
+int pluto_wifi_connect(void);
+
 #endif 
