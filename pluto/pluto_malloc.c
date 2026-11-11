@@ -4,11 +4,9 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-// #include <stddef.h>
+
 #include <string.h>
-// #include <stdint.h>
 #include "FreeRTOS.h"
-// #include "task.h"
 
 // Structural alignment layout matching FreeRTOS heap_4.c internal definitions
 #define heapALLOCATION_BYTE_ALIGNMENT    8

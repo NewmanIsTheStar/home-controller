@@ -1,3 +1,5 @@
+# =====================================================================================================
+# bash scripts
 The two bash scripts in this directory are used for step through debugging with gdb using the pico debug probe. It is usually best to run these in two separate terminal windows so that you can easily see what is going on.  Run these scripts prior to starting VSCode.
 
 debugserver - establish connection via pico probe, this shows you what gdb is doing during a debug session
@@ -11,8 +13,22 @@ NOTES
 3. If you build the code using make from the command line, then it will fail to build from within VSCode until you remove the remnants of the previous build from the build directory:
     rm CMakeCache.txt 
     rm -rf CMakeFiles/
+# =====================================================================================================
 
-Update picotool
+
+
+# =====================================================================================================
+# python scripts
+include_cleaner.py  -- brute force removal of unused #includes by commenting out one #include and
+                       attempting to build, the process is repeated until all #includes have been checked
+
+root directory:
+    python3 include_cleaner.py
+# =====================================================================================================
+
+
+# =====================================================================================================
+# Update picotool
 
 # Move out of your project tree to a temporary directory
 cd ~
@@ -31,14 +47,19 @@ make
 
 # Install globally to your system utility path (/usr/local/bin)
 sudo make install
+# =====================================================================================================
 
 
+# =====================================================================================================
 # Update SDK
 cd pico-sdk
 git fetch --tags
 git checkout 2.3.1   # use version you want
 git submodule update --init --recursive
+# =====================================================================================================
 
+
+# =====================================================================================================
 # Update FreeRTOS
 git submodule update --remote --merge --recursive FreeRTOS-Kernel/   # this gets the latest version
 
@@ -52,10 +73,16 @@ git commit -m "Update specific submodule and its nested submodules to latest rem
 
 # Push to your remote repo
 git push origin <your-branch-name>
+# =====================================================================================================
 
+
+# =====================================================================================================
 # clone repo using ssh
 git clone --recurse-submodules git@github.com:NewmanIsTheStar/home-controller.git
+# =====================================================================================================
 
+
+# =====================================================================================================
 # check static buffer allocations
 arm-none-eabi-nm --print-size --size-sort --radix=d build/home-controller.elf | grep -i ' [b d] '
 
@@ -88,3 +115,4 @@ HEAVY HITTERS as at 2026-10-23
 536918700 00073539 B memp_memory_PBUF_POOL_base
 537083004 00262144 b ucHeap
 537395200 -0047084 B __HeapLimit
+# =====================================================================================================

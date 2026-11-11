@@ -11,7 +11,7 @@
 #include "shell_message.h"
 #include "shell.h"
 #include "picofs.h"
-#include "swload_task.h"
+#include "pluto_swload.h"
 
 extern MessageBufferHandle_t xMessageBuffer;
 

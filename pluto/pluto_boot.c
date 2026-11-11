@@ -116,7 +116,7 @@ extern APP_CONFIG_T config;
 
 // prototypes
 void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_offset);
-u32_t __attribute__((section(".boot_entry"))) picofs_software_crc32(u8_t *ptr, u32_t length);
+u32_t __attribute__((section(".boot_entry"))) pluto_boot_software_crc32(u8_t *ptr, u32_t length);
 int pluto_boot_strcmp(char *str_a, char *str_b);
 int pluto_find_boot_image(uint32_t *physical_flash_offset);
 
@@ -348,7 +348,7 @@ int pluto_boot_find_file(char *filename, FILE_TRAILER_T **trailer)
                 (t->file_sequence >= best_sequence))
             {
                 // calculate crc
-                calculated_crc = picofs_software_crc32(p + sizeof(FILE_TRAILER_T) - t->file_size, t->file_size - sizeof(FILE_TRAILER_T));
+                calculated_crc = pluto_boot_software_crc32(p + sizeof(FILE_TRAILER_T) - t->file_size, t->file_size - sizeof(FILE_TRAILER_T));
 
                 // check if file crc is correct
                 if (calculated_crc == t->crc)
@@ -367,10 +367,10 @@ int pluto_boot_find_file(char *filename, FILE_TRAILER_T **trailer)
 
 /*!
  * \brief find the boot image using minimal software (no file system functions, no dma based crc)
- * \details This is the boot method of last resort. This code lives at the start of flash and should
- *          NEVER be erased!
- *          This function will find the boot image if it exists in flash.  It is only
- *          relied upon used when all else fails due to flash corruption.
+ * \details This is also the boot method of last resort. This code lives at the start of flash and
+ *          should NEVER be erased!
+ *          This function will find the boot image if it exists in flash.  It is intended to work
+ *          when all else fails due to flash corruption.
  * \param[in]   filename     name to find
  * \param[in]   fid          fid to find or FS_INVALID_FID, if valid the fid is used instead of the name
  * \param[out]  trailer      pointer to file trailer
@@ -419,7 +419,7 @@ int pluto_find_boot_image(uint32_t *physical_flash_offset)
  * Pure software CRC32 engine. Operates bit-by-bit to avoid 1KB lookup tables.
  * Leaves the RP2350 DMA and Sniffer hardware completely untouched.
  */
-u32_t __attribute__((section(".boot_entry"))) picofs_software_crc32(u8_t *ptr, u32_t length)
+u32_t __attribute__((section(".boot_entry"))) pluto_boot_software_crc32(u8_t *ptr, u32_t length)
 {
     u32_t crc = 0xFFFFFFFF;
     //volatile u8_t *ptr = (volatile u8_t *)(RAW_FLASH_BASE + physical_start);

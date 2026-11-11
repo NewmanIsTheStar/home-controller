@@ -22,7 +22,7 @@
 #include "hc_task.h"
 #include "discovery_task.h"
 // #include "kasa.h"
-#include "swload_task.h"
+#include "pluto_swload.h"
 #include "shell.h"
 
 // worker tasks to launch and monitor
@@ -39,7 +39,7 @@ WORKER_TASK_T worker_tasks[] =
   {   hc_task,             "Home Controller Task", 2*8096,   1},      
   {   discovery_task,      "Discovery Task",       8096,   1},          
  // {   kasa_discovery_task, "Kasa Discovery Task",  8096,   1},   
-  {   swload_task,      "Software Load Task",       2048,   1},  
+ // {   swload_task,      "Software Load Task",       2048,   1},  
   {   shell_task,       "Shell Task",               8096,   1},   
 
     // end of table

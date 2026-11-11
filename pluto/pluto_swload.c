@@ -16,7 +16,7 @@
 #include "pluto.h"
 #include "picofs.h"
 #include "shell.h"
-#include "swload_task.h"
+#include "pluto_swload.h"
 
 /*WARNING
     In this file we have a combination of newlib stanard file operations and lwip socket operations.  LWIP uses a macro for close so that it may be used for network sockets.

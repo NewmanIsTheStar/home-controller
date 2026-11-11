@@ -28,7 +28,6 @@ set(sdkVersion 2.1.1)
 
 set(toolchainVersion 14_2_Rel1)
 set(picotoolVersion 2.1.1)
-# set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 set(picoVscode ${CMAKE_CURRENT_SOURCE_DIR}/pluto/pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
@@ -37,8 +36,7 @@ endif()
 #set(CMAKE_EXECUTE_PROCESS_COMMAND_ECHO STDOUT)
 
 
-# set(PICO_SDK_PATH ${CMAKE_CURRENT_LIST_DIR}/pico-sdk)
-# set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-Kernel)
+# TODO: move to pluto
 set(SKIP_PICO_MALLOC 1)
 
 add_compile_definitions(PLUTO_VER="${APP_VERSION}")
@@ -46,43 +44,16 @@ add_compile_definitions(PICO_CYW43_ARCH_FREERTOS)
 add_compile_definitions(PICO_INCLUDE_RTC_DATETIME)
 add_compile_definitions(FAKE_RTC)
 
-#***************************************
-# Dynamically locate pluto relative to this root folder.
-# Even if a user renames "pluto" to "deps/pluto", this remains valid.
+
+# initialize sdk for entire project
 set(PLUTO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pluto")
-
-# Point to the SDK using pluto's internal relative layout
 set(PICO_SDK_PATH "${PLUTO_DIR}/pico-sdk" CACHE PATH "Path to Pico SDK")
-
-# Pull the initialization macro from pluto's nested copy
 include("${PICO_SDK_PATH}/pico_sdk_init.cmake")
-
-# Formally lock down the master toolchain/compilers
-project(home-controller C CXX ASM)   # set the project name ${PROJECT_NAME}
-
-# 5. Initialize the SDK globally
+project(home-controller C CXX ASM) 
 pico_sdk_init()
 
-# 6. Now pull in Submodule A's build targets securely
-# add_subdirectory("${SUBMODULE_A_DIR}")
-
-#***************************************
-
-# ====================================================================================
-# include(pico-sdk/pico_sdk_init.cmake)
-
-# Initialise the Raspberry Pi Pico SDK
-#pico_sdk_init()
-
+# TODO: move to pluto
 set(pico_lwip_user_options_path ${CMAKE_CURRENT_SOURCE_DIR}/pluto)
-
-# if(PICO_BOARD STREQUAL "pico_w") 
-#     include(FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
-# elseif(PICO_BOARD STREQUAL "pico2_w") 
-#     include(FreeRTOS-Kernel/portable/ThirdParty/Community-Supported-Ports/GCC/RP2350_ARM_NTZ/FreeRTOS_Kernel_import.cmake)
-# else()
-#     message(FATAL_ERROR "Unsupported board type: ${BOARD_TYPE}")
-# endif()
 
 # create "generated" directory
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
@@ -95,29 +66,13 @@ endif()
 # ====================================================================================
 # home-controller
 
-# project(home-controller C CXX ASM)   # set the project name ${PROJECT_NAME}
-
 add_executable(${PROJECT_NAME})
 
-# target_link_libraries(home-controller PRIVATE 
-#     pico_stdlib
-#     pico_cyw43_arch_lwip_sys_freertos
-# )
-
-
-# # Initialize a global property to hold web file paths
-# set_property(GLOBAL PROPERTY GLOBAL_WEB_FILES "")
 
 # Process both subdirectories
 add_subdirectory(pluto)  
 add_subdirectory(application)
 
-# # Retrieve the combined list after subdirectories have run
-# get_property(ALL_WEB_FILES GLOBAL PROPERTY GLOBAL_WEB_FILES)
-
-# # Generate the single combined blob with html from pluto and app
-# pico_add_library(pico_httpd_content NOFLAG)
-# pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${ALL_WEB_FILES})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_NAME="${PROJECT_NAME}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_HOME_CONTROLLER)

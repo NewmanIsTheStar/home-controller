@@ -4,68 +4,45 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
- #include "lwip/opt.h"
+#include "lwip/opt.h"
 #if !LWIP_HTTPD_SUPPORT_WEBSOCKET
 #error "LWIP_HTTPD_SUPPORT_WEBSOCKET must be enabled in lwipopts.h to use this file!"
 #endif
 
-// #include <stdio.h>
 #include <sys/stat.h> 
-// #include <string.h>
-// #include <errno.h>
-
 #include "pico/cyw43_arch.h"
-// #include "pico/types.h"
-// #include "pico/stdlib.h"
-//#include "hardware/rtc.h"
 #include "pico/util/datetime.h"
 #include "hardware/watchdog.h"
 #include "hardware/structs/powman.h"
 #include "hardware/regs/powman.h"
-// #include "pico/flash.h"
 #include <hardware/flash.h>
-
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
 #include "lwip/apps/sntp.h"
 #include "lwip/apps/httpd.h"
 #include "dhcpserver.h"
 #include "dnsserver.h"
-
 #include "lwip/sockets.h"
-
-// #include "time.h"
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
 #include "task.h"
-
 #include "cgi.h"
-
 #include "utility.h"
 #include "config.h"
-// #include "config.h"
-// #include "system_config.h"
 #include "application_config.h"
 #include "watchdog.h"
 #include "worker_tasks.h"
 #include "pluto_wifi.h"
-// #include "calendar.h"
 #include "pluto.h"
-// #include "shell.h"
 #include "picofs.h"
-// #include "config.h"
-#include "swload_task.h"
+#include "pluto_swload.h"
 #include "calendar.h"
 #include "system_web.h"
-
 #include "ssi.h"
+
 #ifdef USE_GIT_HASH_AS_VERSION
 #include "githash.h"
 #endif
 
 #ifndef APP_NAME
-#define APP_NAME "USURPER"
+#define APP_NAME "PLUTO"
 #endif
 
 #ifndef RUN_FREERTOS_ON_CORE
@@ -111,11 +88,6 @@ int test_stat(void);
 void pluto_get_program_size(void);
 int pluto_download_software(void);
 
-// TODO -- put in header file
-//void init_websocket_subsystem(void);
-
-//TODO put in header file
-//void init_shell_backend(void);
 
 /*********************************************************
  * THIS MUST BE THE FIRST FUNCTION DEFINED IN THIS FILE!!!
@@ -254,37 +226,7 @@ void boss_task(__unused void *params)
     printf("Searching for configuration...\n");
     
     // get system configuration from flash
-    //config_read("system.cfg", config_info, syscfg_info_rows, (void **)&sys); 
     config_read(); 
-
-    // // check system configuration
-    // if (!sys)
-    // {
-    //     printf("Guru Meditation: failed to allocate memory for the system configuration.\n");
-    //     for(;;)
-    //     {
-    //         SLEEP_MS(60000); 
-    //     }
-    // }
-
-    // // transition TEST TEST TEST
-    // //picofs_copy("config.bin", "application.cfg");
-
-    // // get application configuration from flash
-    // config_read(CONFIG_FILE); 
-
-    // // check application configuration
-    // if (!cfg)
-    // {
-    //     printf("Guru Meditation: failed to allocate memory for the applciation configuration.\n");
-    //     for(;;)
-    //     {
-    //         SLEEP_MS(60000); 
-    //     }
-    // }
-
-    // transition TEST TEST TEST
-    //memcpy((char *)sys, (char *)cfg, sizeof(SYSTEM_VARIABLES_T));
 
     // default gpio settings  -- primarily for unused hardware connected to gpios
     set_gpio_defaults();
@@ -347,29 +289,6 @@ void boss_task(__unused void *params)
     httpd_init();
     ssi_init();
     cgi_init();
-    // init_websocket_subsystem();
-
-    // for the long poll shell test
-    //init_shell_backend(); // <-- Registers standard CGI endpoints safely
-
-    // TEST TEST TEST 
-    // picofs_find_page_status(PFS_DISPLAY_PAGE_NUMBERS);
-    // picofs_find_page_status(PFS_DISPLAY_PAGE_MAP);
-    // picofs_find_page_status(PFS_DISPLAY_QUIET);
-    // picofs_find_contiguous_free_area(8000, &free_flash);
-    // picofs_list_all_files();
-    picofs_load_test_data();
-    //test_myfilesystem();
-        
-    //SLEEP_MS(60000);
-    // {
-    //     int found_file = -1;
-    //     char *file_ptr = NULL;
-    //     found_file = picofs_find_by_name("elephant", &file_ptr);
-
-    //     printf("found_file = %d file_ptr = %p\n", found_file, file_ptr);
-    //     SLEEP_MS(60000);
-    // }
 
     // start worker tasks
     printf("Starting worker tasks\n");       
@@ -386,7 +305,6 @@ void boss_task(__unused void *params)
     }    
 
     print_tasks_list();
-    //hex_dump((char *)0x102db000, 0x400);
     
     // flash the led for attention while doing no actual work (like a boss!)
     while(true) 
@@ -397,7 +315,6 @@ void boss_task(__unused void *params)
 
         // copy configuration changes from RAM into flash
         config_write();
-        //config_write(CONFIG_FILE);
 
         // check stack high water mark for each worker task
         monitor_stacks();    
@@ -557,7 +474,6 @@ int ap_mode(void)
 
         if (restart_requested)
         {
-            //config_write(CONFIG_FILE);
             config_write();
             
             printf("***REBOOT in 100 ms***\n");
@@ -637,14 +553,7 @@ int set_realtime_clock(void)
     for(i=0; i < 2*10; i++)
     {
         SLEEP_MS(500);
-        // if (rtc_get_datetime(&date))
-        // {
-        //     // set day of week since ntp does not provide this  TODO check sdk_callback.c      
-        //     date.dotw = get_day_of_week(date.month, date.day, date.year);
-        //     #ifndef FAKE_RTC
-        //     rtc_set_datetime(&date);
-        //     #endif
-        // }
+
         rtc_get_datetime(&date);
         datetime_to_str(buffer, sizeof(buffer), &date);
         printf("\r%s Zulu         ", buffer);

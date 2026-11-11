@@ -8,7 +8,7 @@
 #include "pluto.h"
 #include "picofs.h"
 #include "utility.h"
-#include "swload_task.h"  // for image_compare()
+#include "pluto_swload.h"  // for image_compare()
 
 // defines
 #define UF2_MAGIC_START0   0x0A324655
