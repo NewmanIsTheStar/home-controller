@@ -333,7 +333,7 @@ int download_file(char *url, DOWNLOAD_MODE_T mode)
     int retry;
     fd_set readset;
     struct timeval tv;  
-    char buffer[1600];
+    char buffer[1600];           // TODO: move to heap
     int web_socket = -1;    
     int server_file_len = 0;
     int local_file_len = 0;

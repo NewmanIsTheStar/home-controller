@@ -51,20 +51,14 @@
 
 #define BOSS_TASK_PRIORITY              ( 0 + 1UL )
 
-// external variables
-extern uint32_t unix_time;
-extern APP_CONFIG_T config;
-extern SYS_WEB_VARIABLES_T sys_web;
-extern WORKER_TASK_T worker_tasks[];
 
-// static variables
-
+// static variable
 static uint32_t reset_reason;
-
 
 // prototypes
 int pluto(void);
 int pluto_print_startup_status(void);
+void pluto_get_program_size(void);
 void print_reset_reason(void);
 
 
@@ -186,7 +180,18 @@ int pluto_print_startup_status(void)
     return(0);
 }
 
+void pluto_get_program_size(void)
+{
+    int flash_percentage = 0;
+    extern char __flash_binary_start;  // defined in linker script
+    extern char __flash_binary_end;    // defined in linker script
 
+    uintptr_t start = (uintptr_t) &__flash_binary_start;
+    uintptr_t end = (uintptr_t) &__flash_binary_end;
+    printf("Binary start: %08x\nBinary end:   %08x\nBinary size:  %08x\n", start, end, end-start);
+    flash_percentage = ((end-start)*1000)/(PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE);
+    printf("Flash used:   %d.%d%%\n\n", flash_percentage/10, flash_percentage%10);
+}
 
 /*!
  * \brief print reason for reset based on hardware register(s)

@@ -4,80 +4,24 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
- #include "lwip/opt.h"
+#include "lwip/opt.h"
 #if !LWIP_HTTPD_SUPPORT_WEBSOCKET
 #error "LWIP_HTTPD_SUPPORT_WEBSOCKET must be enabled in lwipopts.h to use this file!"
 #endif
 
-// #include "hardware/structs/qmi.h"
-// #include "hardware/watchdog.h"
-// #include "pico/bootrom.h"
-// #include <stdio.h>
-// #include <sys/stat.h> 
-// #include <string.h>
-// #include <errno.h>
-// #include "hardware/structs/xip_ctrl.h"
-// #include "pico/cyw43_arch.h"
-// #include "pico/types.h"
-// #include "pico/stdlib.h"
-// #include "pico/util/datetime.h"
 #include "hardware/watchdog.h"
-// #include "hardware/structs/powman.h"
-// #include "hardware/regs/powman.h"
-// #include "pico/flash.h"
-// #include <hardware/flash.h>
-
-// #include "hardware/sync.h"
-// #include "hardware/structs/xip_ctrl.h"
-
-// #include "pico/stdlib.h"
 #include "hardware/flash.h"
-// #include "hardware/regs/qmi.h"
 #include "hardware/structs/qmi.h"
 #include "pico/bootrom.h"
-
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
-
-// #include "lwip/sockets.h"
-
-// #include "time.h"
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-// #include "task.h"
-
-// #include "cgi.h"
-
-// #include "utility.h"
-// #include "config.h"
-// #include "config.h"
-// #include "system_config.h"
 #include "application_config.h"
-// #include "watchdog.h"
-// #include "worker_tasks.h"
-// #include "pluto_wifi_country.h"
-// #include "calendar.h"
-// #include "pluto.h"
-// #include "shell.h"
-// #include "picofs.h"
-// #include "config.h"
 #include "picofs.h"
-
-// #include "ssi.h"
-#ifdef USE_GIT_HASH_AS_VERSION
-// #include "githash.h"
-#endif
 
 
 // Strict hardware base mappings for dependency-free processing
-#define RAW_FLASH_BASE      0x1C000000    // RP2350 Physical Flash Flat Array View
+#define RAW_FLASH_BASE      0x1C000000     // RP2350 Physical Flash Flat Array View
 #define FLASH_CHIP_SIZE     (4*1024*1024)  // 4 MB Chip Limit
-#define SCAN_GRID_STEP      (64*1024)     // 64 KB Grid Alignments
+#define SCAN_GRID_STEP      (64*1024)      // 64 KB Grid Alignments
 
 #define QMI_BASE            0x400D0000
 #define QMI_ATRANS0         (*(volatile uint32_t *)(QMI_BASE + 0x00))
@@ -85,33 +29,6 @@
 //#define PPB_BASE            0xE000E000
 #define SYSTICK_CTRL        (*(volatile uint32_t *)(PPB_BASE + 0x10))
 #define SCB_VTOR            (*(volatile uint32_t *)(PPB_BASE + 0xD08))
-
-// typedef unsigned char  u8_t;
-// typedef unsigned int   u32_t;
-
-// typedef struct file_trailer
-// {
-//     u8_t magic_number[4];   // "pfs"
-//     u8_t picofs_version;
-//     u8_t file_id;     
-//     u8_t file_sequence;
-//     u8_t file_status;
-//     u32_t file_size;        
-//     u32_t crc;
-//     char name[16];
-// } FILE_TRAILER_T;
-
-
-// uninitialized variable
-
-
-// external variables
-extern uint32_t unix_time;
-extern APP_CONFIG_T config;
-//extern SYS_WEB_VARIABLES_T sys_web;
-// extern WORKER_TASK_T worker_tasks[];
-
-// static variables
 
 
 // prototypes
@@ -172,8 +89,23 @@ int pluto_boot_setup(u_int32_t exe_flash_offset, char *exe_linker_start_addr)
 }
 
 /*!
- * \brief select and execute code
- *
+* \brief select and execute code
+* \details Uses information stored in watchdog scratch registers to orchestrate boot boot sequence.
+ *         This function may be executed under several different conditions so be careful in modifying it.
+ *         In a typical boot it will run twice.
+ *             1. The copy of this function in the first sector of flash will run.  It will scan flash
+ *                to find the file "boot.txt" and look for an executable file name.  It will then 
+ *                scan flash to find that file.   Once the location of that file is found its memory 
+ *                location is loaded into the scratch registers, memory is remapped and execution
+ *                jumps into the executable at that location; now running in remapped or "virtual" memory.
+ *             2. The copy of this function at start of the executable we jumped to will then execute.  
+ *                Using the information stored in the scratch registers it will recognize that it is
+ *                the code that we intend to execute, update the scratch registers and then return from
+ *                this function so that the rest of the application can execute. 
+ *          This function also handles booting an image by setting the scratch registers and then performing 
+ *          a CPU reset.   Failure to find the desired boot image will result in this function returning
+ *          so that the application it is attached to will run (usually the first execuable in flash).  
+ * 
  * \param none
  *
  * \return 0
@@ -282,13 +214,8 @@ void __no_inline_not_in_flash_func(remap_and_boot_app)(uint32_t physical_flash_o
 
 
 
-// *******************************************************************************************************
-
-
-// *******************************************************************************************************
-
 /*!
- * \brief check if filenames are the same
+ * \brief check if filenames are the same without relying on library code
  * \param[in]   str_a     file name to compare
  * \param[out]  str_b     file name to compare
  * \return 0 on success

@@ -37,19 +37,6 @@
 #include "system_web.h"
 #include "ssi.h"
 
-#ifdef USE_GIT_HASH_AS_VERSION
-#include "githash.h"
-#endif
-
-#ifndef APP_NAME
-#define APP_NAME "PLUTO"
-#endif
-
-#ifndef RUN_FREERTOS_ON_CORE
-#define RUN_FREERTOS_ON_CORE 0
-#endif
-
-#define BOSS_TASK_PRIORITY              ( 0 + 1UL )
 #define WATCHDOG_TASK_PRIORITY          ( 0 + 1UL )
 #define PAUSE_FOR_INITIAL_SNTP_RESPONSE (1)
 //#define LOG_CLOCK_SLEW                  (1) 
@@ -59,37 +46,18 @@ REBOOT_REASON_T __uninitialized_ram(reboot_reason);
 
 // external variables
 extern uint32_t unix_time;
-extern APP_CONFIG_T config;
 extern SYS_WEB_VARIABLES_T sys_web;
 extern WORKER_TASK_T worker_tasks[];
 
-// // static variables
+// static variables
 bool restart_requested = false;
-// static uint32_t reset_reason;
-
-// long long atomic_variable = 0;
 
 // prototypes
-// int pluto(void);
-// void boss_task(__unused void *params);
-// int pluto_ap_mode(void);
-// int set_web_ip_network_info(void);
-// int set_realtime_clock(void);
-// int monitor_stacks(void);
-// int monitor_heap(void);
-// int pluto_ap_mode_for_developers(void);
-// void atomic_write_task(__unused void *params);
-// void atomic_read_task(__unused void *params);
-// int set_gpio_defaults(void);
-// void print_reset_reason(void);
-// void print_tasks_list(void);
-// int test_myfilesystem(void);
-// int test_stat(void);
-// void pluto_get_program_size(void);
-// int pluto_download_software(void);
-// int pluto_print_startup_status(void);
-// int pluto_wifi_connect(void);
-
+int set_web_ip_network_info(void);
+int set_realtime_clock(void);
+int monitor_stacks(void);
+int monitor_heap(void);
+void print_tasks_list(void);
 
 
 
@@ -196,7 +164,7 @@ void boss_task(__unused void *params)
         #endif
         #endif
 
-        // update daylight savings start and end dates  TODO: make this less frequent only needed twice per year
+        // update daylight savings start and end dates 
         set_daylight_saving_dates(); 
 
         // report watchdog reboot to syslog server
