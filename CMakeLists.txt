@@ -74,6 +74,7 @@ add_subdirectory(pluto)
 add_subdirectory(application)
 
 
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_NAME="${PROJECT_NAME}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_HOME_CONTROLLER)
 

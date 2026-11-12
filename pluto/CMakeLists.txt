@@ -1,3 +1,6 @@
+# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/pluto_core)
+# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/system)
+
 # ====================================================================================
 # SDK
 # If a parent project hasn't already defined the SDK path, provide the local sdk
@@ -23,21 +26,27 @@ include(${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_i
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_sources(${PROJECT_NAME} PRIVATE
-    pluto_main.c
-    pluto_boss.c
-    pluto_gpio.c
-    pluto_wifi_sta.c    
-    pluto_wifi_ap.c
-    pluto_wifi_country.c    
-    pluto_malloc.c
-    pluto_boot.c
-    pluto_uf2.c
-    pluto_swload.c
-    pluto_test.c
-)
+# target_sources(${PROJECT_NAME} PRIVATE
+#     pluto_main.c
+#     pluto_boss.c
+#     pluto_gpio.c
+#     pluto_wifi_sta.c    
+#     pluto_wifi_ap.c
+#     pluto_wifi_country.c    
+#     pluto_malloc.c
+#     pluto_boot.c
+#     pluto_uf2.c
+#     pluto_swload.c
+#     pluto_test.c
+# )
+
+
+add_subdirectory(pluto_core)
+# link_libraries(project::pluto_core)
 
 add_subdirectory(system)
+# link_libraries(project::system)
+
 add_subdirectory(shell)
 add_subdirectory(picofs)
 add_subdirectory(config) 
@@ -63,17 +72,17 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 
-# redirect memory allocation to wrappers for FreeRTOS
-target_link_options(${PROJECT_NAME} PRIVATE
-    "-Wl,--wrap=malloc"
-    "-Wl,--wrap=free"
-    "-Wl,--wrap=calloc"
-    "-Wl,--wrap=realloc"
-    "-Wl,--wrap=_malloc_r"
-    "-Wl,--wrap=_free_r"
-    "-Wl,--wrap=_calloc_r"
-    "-Wl,--wrap=_realloc_r"
-)
+# # redirect memory allocation to wrappers for FreeRTOS
+# target_link_options(${PROJECT_NAME} PRIVATE
+#     "-Wl,--wrap=malloc"
+#     "-Wl,--wrap=free"
+#     "-Wl,--wrap=calloc"
+#     "-Wl,--wrap=realloc"
+#     "-Wl,--wrap=_malloc_r"
+#     "-Wl,--wrap=_free_r"
+#     "-Wl,--wrap=_calloc_r"
+#     "-Wl,--wrap=_realloc_r"
+# )
 
 # output memory use 
 # to determine the maximum heap size temporarily set configTOTAL_HEAP_SIZE to 0 then Region Size - Used Size = free RAM
@@ -81,6 +90,8 @@ target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--print-memory-usage")
 
 # pluto common libraries
 set(pluto_link_libraries
+        pluto_core
+        system
         pico_cyw43_arch_lwip_sys_freertos
         pico_lwip_freertos
         pico_lwip_api        

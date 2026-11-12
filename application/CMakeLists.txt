@@ -1,51 +1,59 @@
+# # source files
+# target_sources(${PROJECT_NAME} PRIVATE
+#         worker_tasks.c        
+#         hc_task.c
+#         discovery_task.c
+#         shelly.c 
+#         shelly_discovery.c
+#         shelly_monitor.c
+#         json_parser.c
+#         application_cgi.c   
+#         application_ssi.c
+#         kasa_discovery.c 
+#         application_config.c  
+#         application_web.c     
+# )
+
+# # headers
+# target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# # picofs library
+# target_link_libraries(${PROJECT_NAME} PRIVATE project::picofs)
+
+
+# INTERFACE library
+add_library(application INTERFACE)
+add_library(project::application ALIAS application)
+
 # source files
-target_sources(${PROJECT_NAME} PRIVATE
-        worker_tasks.c        
-        hc_task.c
-        discovery_task.c
-        shelly.c 
-        shelly_discovery.c
-        shelly_monitor.c
-        json_parser.c
-        # basic_commands.c
-        # basic_extensions.c
-        # basic_interpreter.c
-        # basic_parser.c                  
-        application_cgi.c   
-        application_ssi.c
-        # shell_http.c   
-        # shell_message.c
-        # shell_cat.c
-        # shell_hexdump.c
-        # shell_list.c
-        # shell_stat.c
-        # shell_page_map.c
-        # shell_defragment.c
-        # shell_cleanup.c
-        # shell_unlink.c
-        # shell_copy.c
-        # shell_move.c
-        # shell_ping.c
-        # shell_boot.c
-        # shell_download.c
-        # shell_basic.c
-        kasa_discovery.c 
-        application_config.c  
-        application_web.c     
+target_sources(application INTERFACE
+    
+    ${CMAKE_CURRENT_LIST_DIR}/worker_tasks.c 
+    ${CMAKE_CURRENT_LIST_DIR}/hc_task.c 
+    ${CMAKE_CURRENT_LIST_DIR}/discovery_task.c 
+    ${CMAKE_CURRENT_LIST_DIR}/shelly.c 
+    ${CMAKE_CURRENT_LIST_DIR}/shelly_discovery.c 
+    ${CMAKE_CURRENT_LIST_DIR}/shelly_monitor.c 
+    ${CMAKE_CURRENT_LIST_DIR}/json_parser.c 
+    ${CMAKE_CURRENT_LIST_DIR}/application_cgi.c 
+    ${CMAKE_CURRENT_LIST_DIR}/application_ssi.c 
+    ${CMAKE_CURRENT_LIST_DIR}/kasa_discovery.c 
+    ${CMAKE_CURRENT_LIST_DIR}/application_config.c 
+    ${CMAKE_CURRENT_LIST_DIR}/application_web.c     
 )
 
 # headers
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(application INTERFACE 
+    ${CMAKE_CURRENT_LIST_DIR}
+)
 
-# picofs library
-target_link_libraries(${PROJECT_NAME} PRIVATE project::picofs)
-
-# web server ***MOVED TO top level CMakeLists.txt
-# set(WEB_FILES)
-# file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.shtml")
-# pico_add_library(pico_httpd_content NOFLAG)
-# pico_set_lwip_httpd_content(pico_httpd_content INTERFACE ${WEB_FILES})
-
-# # add html files to global property to be picked up by top level CMakeLists.txt
-# file(GLOB WEB_FILES "${CMAKE_CURRENT_SOURCE_DIR}/html_files/*.shtml")
-# set_property(GLOBAL PROPERTY GLOBAL_WEB_FILES APPEND PROPERTY GLOBAL_WEB_FILES ${WEB_FILES})
+# link dependencies
+target_link_libraries(system INTERFACE
+    pluto_core 
+    pico_stdlib 
+    hardware_pio
+    hardware_flash
+    hardware_dma
+    pico_cyw43_arch_lwip_sys_freertos
+    basic
+)
