@@ -83,14 +83,14 @@
 #define MS_INVALIDATE (4)
 
 // file_status bit definitions
-#define STS_DELETED (BIT0)
+#define STS_DELETED    (BIT0)
 #define STS_EXECUTABLE (BIT1)
-#define STS_UNUSED2 (BIT2)
-#define STS_UNUSED3 (BIT3)
-#define STS_UNUSED4 (BIT4)
-#define STS_UNUSED5 (BIT5)
-#define STS_UNUSED6 (BIT6)
-#define STS_UNUSED7 (BIT7)
+#define STS_DUPLICATE  (BIT2)
+#define STS_UNUSED3    (BIT3)
+#define STS_UNUSED4    (BIT4)
+#define STS_UNUSED5    (BIT5)
+#define STS_UNUSED6    (BIT6)
+#define STS_UNUSED7    (BIT7)
 
 // REAL FLASH
 // #define FLASH_SCAN_START (0x10000000UL)
@@ -123,20 +123,20 @@ typedef struct file_trailer
 typedef struct 
 {
     bool in_use;
-    int flags;                    // flags passed to open file
-    char *file;                   // flash: file start
-    size_t file_len;              // flash: length of file including trailer   
-    uint8_t file_status;          // flash: file status  
-    char *cache;                  // RAM: file start
-    size_t cache_len;             // RAM: cache size
-    size_t cache_offset;          // RAM: offset used when cache is too small to hold entire file
-    FILE_TRAILER_T cache_trailer; // holds trailer while file is being written to cache
-    FILE_TRAILER_T *file_trailer; // flash or RAM: file trailer
-    char *data;                   // flash or RAM: data contained in the file 
-    size_t data_len;              // flash or RAM: data length
-    size_t data_offset;           // flash or RAM: offset used by standard C library functions e.g. fread
-    int mmap_ref_count;           // number of active mappings
-    bool mmap_delayed_close;      // close was postponed due to an active mapping   
+    int flags;                       // flags passed to open file
+    char *file;                      // flash: file start
+    size_t file_len;                 // flash: length of file including trailer   
+    uint8_t file_status;             // flash: file status  
+    char *cache;                     // RAM: file start
+    size_t cache_len;                // RAM: cache size
+    size_t cache_offset;             // RAM: offset used when cache is too small to hold entire file
+    FILE_TRAILER_T cache_trailer;    // holds trailer while file is being written to cache
+    FILE_TRAILER_T *file_trailer;    // flash or RAM: file trailer
+    char *data;                      // flash or RAM: data contained in the file 
+    size_t data_len;                 // flash or RAM: data length
+    size_t data_offset;              // flash or RAM: offset used by standard C library functions e.g. fread
+    int mmap_ref_count;              // number of active mappings
+    bool mmap_delayed_close;         // close was postponed due to an active mapping   
     uint8_t rollover_fid;            // previous fid pending deletion  
     uint8_t *reserved_flash_start;   // start of flash reservation for large files that cannot be cached in RAM
     uint8_t *reserved_flash_end;     // end of flash reservation for large files that cannot be cached in RAM

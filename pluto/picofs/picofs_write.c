@@ -127,6 +127,7 @@ int picofs_write(int fd, char *ptr, int len)
         custom_fds[fd].data_offset += i; 
         //picofs_printf("do = %d dl = %d cl = %d\n", custom_fds[fd].data_offset, custom_fds[fd].data_len, custom_fds[fd].cache_len);
         
+
         // check if write increased data length
         if (custom_fds[fd].data_offset > custom_fds[fd].data_len)
         {

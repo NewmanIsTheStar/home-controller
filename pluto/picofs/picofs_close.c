@@ -119,6 +119,7 @@ int picofs_sync_file_regular(int fd, bool disable_purge)
 
     // check if file has changed
     if (custom_fds[fd].cache && 
+        !(custom_fds[fd].cache_trailer.file_status & STS_DUPLICATE) &&
         picofs_cache_contains_entire_file(fd) &&
         (custom_fds[fd].file_len == (custom_fds[fd].data_len + sizeof(FILE_TRAILER_T))) &&
         (memcmp(custom_fds[fd].file, custom_fds[fd].cache, custom_fds[fd].data_len) == 0))
@@ -133,7 +134,7 @@ int picofs_sync_file_regular(int fd, bool disable_purge)
 
         // set size and status
         custom_fds[fd].cache_trailer.file_size = custom_fds[fd].data_len + sizeof(FILE_TRAILER_T);
-        custom_fds[fd].cache_trailer.file_status = custom_fds[fd].file_status;
+        custom_fds[fd].cache_trailer.file_status = (custom_fds[fd].file_status & STS_DUPLICATE);
         custom_fds[fd].cache_trailer.crc = picofs_calculate_crc32(custom_fds[fd].cache, custom_fds[fd].data_len);
 
         // append trailer to end of cached file 
@@ -141,6 +142,16 @@ int picofs_sync_file_regular(int fd, bool disable_purge)
         {
             memcpy(custom_fds[fd].cache + custom_fds[fd].data_len, &(custom_fds[fd].cache_trailer), sizeof(FILE_TRAILER_T));
             err = 0;
+
+            // TEST TEST TEST  catch file close with accidental 0xFF padding 
+            if (custom_fds[fd].data_len > 0)
+            {
+                if (custom_fds[fd].cache[custom_fds[fd].data_len - 1] == 0xFF)
+                {
+                    // Hardcoded breakpoint instruction tells the SWD debugger to freeze right here
+                    __asm volatile("bkpt #0");             
+                }
+            }            
         }
         else if (custom_fds[fd].cache_len > sizeof(FILE_TRAILER_T))
         {

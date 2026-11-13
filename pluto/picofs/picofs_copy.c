@@ -97,6 +97,7 @@ int picofs_copy(const char *dst, const char *src)
         // assign new file id and name
         custom_fds[fd].cache_trailer.file_id = file_id;
         custom_fds[fd].cache_trailer.file_sequence = file_sequence;
+        custom_fds[fd].cache_trailer.file_status |= STS_DUPLICATE; 
         STRNCPY(custom_fds[fd].cache_trailer.name, dst, sizeof(custom_fds[fd].cache_trailer.name));
 
         err = picofs_close(fd);

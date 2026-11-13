@@ -101,8 +101,8 @@ int picofs_open_file(int fd, const char *name, int flags, uint8_t fid, bool disa
                 //     // an empty file contains only a trailer
                 //    ((FILE_TRAILER_T *)(custom_fds[fd].cache))->file_size = sizeof(FILE_TRAILER_T);                       
                 
-                // Really? Basically the cache trailer length is unused until we write it on close?
-                //custom_fds[fd].cache_trailer.file_size = sizeof(FILE_TRAILER_T); 
+                    // truncate the cache trailer as it will be used to reinitialize the file descriptor
+                    custom_fds[fd].cache_trailer.file_size = sizeof(FILE_TRAILER_T); 
                 }
                 else if (custom_fds[fd].cache_len >= custom_fds[fd].file_len)
                 {
