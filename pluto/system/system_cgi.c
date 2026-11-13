@@ -8,16 +8,10 @@
  
 #include "lwip/apps/fs.h"
 #include "lwip/sockets.h"
-
-
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
 #include "task.h"
-
 #include "utility.h"
 #include "config.h"
-
-//#include "worker_tasks.h"
 #include "pluto.h"
 #include "calendar.h"
 #include "system_web.h"

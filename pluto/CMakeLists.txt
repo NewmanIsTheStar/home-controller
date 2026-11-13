@@ -60,11 +60,11 @@ add_subdirectory(watchdog)
 add_subdirectory(basic)
 
 
-if(PICO_BOARD STREQUAL "pico_w")
-    set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/")
-else()
-    set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2350_ARM_NTZ/include/")
-endif()
+# if(PICO_BOARD STREQUAL "pico_w")
+#     set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/")
+# else()
+#     set(FREERTOS_PORT_DIR "${PROJECT_SOURCE_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2350_ARM_NTZ/include/")
+# endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}

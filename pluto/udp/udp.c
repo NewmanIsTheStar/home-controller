@@ -3,16 +3,9 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
-// #include "pico/stdlib.h"
-// #include "pico/rand.h"
 
 #include "lwip/sockets.h"
-
-// #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
-
 #include "udp.h"
-// #include "weather.h"
 #include "system_web.h"
 
 //#define DEBUG_UDP_MESSAGES

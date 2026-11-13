@@ -7,27 +7,13 @@ Description:This file contains all of the non-standard commands added to the
 
 /*Include Files*/
 #include <stdio.h>
-// #include <stdlib.h>
+
 #include <stdint.h>
 #include <stdbool.h>
-//#include <conio.h>
-//#include <windows.h>
-// #include "setjmp.h"
 #include "math.h"
-// #include "ctype.h"
-// #include "string.h"
-//#include "snmp_def.h"
 #include "basic.h"
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
-//#include "net.h"
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
 #include "lwip/sockets.h"
 #include "shelly.h"
 #include "utility.h"

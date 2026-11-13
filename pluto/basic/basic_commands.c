@@ -5,30 +5,12 @@ Description:This file contains the standard BASIC commands.
 
 /*Include Files*/
 #include "FreeRTOS.h"
-// #include "FreeRTOSConfig.h"
 #include "task.h"
-// #include "lwip/netif.h"
-// #include "lwip/ip4_addr.h"
-// #include "lwip/apps/lwiperf.h"
-// #include "lwip/apps/sntp.h"
-// #include "lwip/apps/httpd.h"
-// #include "dhcpserver.h"
-// #include "dnsserver.h"
 #include "lwip/sockets.h"
-// #include <stdio.h>
-// #include <stdlib.h>
-//#include <conio.h>
-//#include <windows.h>
-// #include "setjmp.h"
-// #include "math.h"
-// #include "ctype.h"
-// #include "string.h"
-//#include "snmp_def.h"
 #include "basic.h"
 //#include "Gpib_cmd.h"
 //#include "Relay.h"
 #include "hc_task.h"
-// #include "shell.h"
 
 
 /*External Variables*/
