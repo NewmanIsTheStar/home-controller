@@ -1,3 +1,0 @@
-// githash.h.in
-#define GITHASH "@GIT_HASH@"
-
