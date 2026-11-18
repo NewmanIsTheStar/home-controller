@@ -59,7 +59,7 @@ unset(picotool_DIR CACHE)
 # Initialize sdk for entire project
 set(SKIP_PICO_MALLOC 1)
 include("${PICO_SDK_PATH}/pico_sdk_init.cmake")
-project(home-controller C CXX ASM) 
+project(home-controller C CXX ASM)                  # <=== name must be explicitly set here
 pico_sdk_init()
 
 # Create "generated" directory
@@ -67,19 +67,20 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/generated)
 
     
 # =========================================================================================
-# home-controller
+# Executable
 add_executable(${PROJECT_NAME})
 
 # Process both subdirectories
 add_subdirectory(pluto)  
 add_subdirectory(application)
 
+# Application Name
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_NAME="${PROJECT_NAME}")
-target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_HOME_CONTROLLER)
+target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_TLS)
 
+# Metadata to be stored in output files (.elf, .uf2, .bin)
 pico_set_program_name(${PROJECT_NAME} "${PROJECT_NAME}")
 pico_set_program_version(${PROJECT_NAME} ${APP_VERSION})
-
 
 # Enable/disable output over UART/USB
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
