@@ -77,6 +77,7 @@ add_subdirectory(application)
 # Application Name
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_NAME="${PROJECT_NAME}")
 target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_TLS)
+target_compile_definitions(${PROJECT_NAME} PRIVATE INCORPORATE_SHELLY)
 
 # Metadata to be stored in output files (.elf, .uf2, .bin)
 pico_set_program_name(${PROJECT_NAME} "${PROJECT_NAME}")
